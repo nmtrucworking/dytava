@@ -1,3 +1,21 @@
 <resources>
-    <string name="app_name">dytava</string>
+    <string name="app_name">Dytava</string>
+    <string name="brand_tagline">Đối chiếu dữ liệu. Làm rõ khác biệt.</string>
+    <string name="brand_tagline_en">Understand every difference.</string>
+    <string name="brand_promise">Explain the diff</string>
+    <string name="app_desc">Ứng dụng đối chiếu dữ liệu có cấu trúc, định hướng Android-first và offline-first.</string>
+
+    <!-- Comparison States -->
+    <string name="state_exact">Trùng khớp</string>
+    <string name="state_equivalent">Tương đương</string>
+    <string name="state_different">Khác biệt</string>
+    <string name="state_unresolved">Chưa kết luận</string>
+
+    <!-- DType Labels -->
+    <string name="dtype_string">String</string>
+    <string name="dtype_number">Number</string>
+    <string name="dtype_datetime">DateTime</string>
+    <string name="dtype_boolean">Boolean</string>
+    <string name="dtype_identifier">Identifier</string>
+    <string name="dtype_null">Null</string>
 </resources>

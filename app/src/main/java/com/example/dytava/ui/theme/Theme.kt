@@ -9,35 +9,74 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = PrecisionBlue,
     onPrimary = Color.White,
+    primaryContainer = PrimaryContainerLight,
+    onPrimaryContainer = OnPrimaryContainerLight,
+    secondary = MidnightNavy,
     onSecondary = Color.White,
+    secondaryContainer = PrimaryContainerLight,
+    onSecondaryContainer = OnPrimaryContainerLight,
+    tertiary = DTypeString,
     onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    background = CanvasLight,
+    onBackground = OnSurfaceLight,
+    surface = SurfaceLight,
+    onSurface = OnSurfaceLight,
+    surfaceVariant = SubtleLight,
+    onSurfaceVariant = MutedLight,
+    outline = OutlineLight,
+    outlineVariant = SubtleLight
 )
+
+private val DarkColorScheme = darkColorScheme(
+    primary = PrimaryDark,
+    onPrimary = MidnightNavy,
+    primaryContainer = PrimaryContainerDark,
+    onPrimaryContainer = OnPrimaryContainerDark,
+    secondary = Color(0xFFEFF4FF),
+    onSecondary = MidnightNavy,
+    secondaryContainer = PrimaryContainerDark,
+    onSecondaryContainer = OnPrimaryContainerDark,
+    tertiary = DTypeString,
+    onTertiary = Color.White,
+    background = CanvasDark,
+    onBackground = OnSurfaceDark,
+    surface = SurfaceDark,
+    onSurface = OnSurfaceDark,
+    surfaceVariant = SubtleDark,
+    onSurfaceVariant = MutedDark,
+    outline = OutlineDark,
+    outlineVariant = SubtleDark
+)
+
+val LocalDytavaSemanticColors = staticCompositionLocalOf {
+    DytavaSemanticColors()
+}
+
+object DytavaThemeTokens {
+    val semantic: DytavaSemanticColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalDytavaSemanticColors.current
+}
 
 @Composable
 fun DytavaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Default to false so Dytava's signature brand palette is consistently rendered
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -45,14 +84,43 @@ fun DytavaTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    val semanticColors = if (darkTheme) {
+        DytavaSemanticColors(
+            subtle = SubtleDark,
+            muted = MutedDark
+        )
+    } else {
+        DytavaSemanticColors(
+            subtle = SubtleLight,
+            muted = MutedLight
+        )
+    }
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window
+            if (window != null) {
+                window.statusBarColor = colorScheme.background.toArgb()
+                window.navigationBarColor = colorScheme.background.toArgb()
+                val insetsController = WindowCompat.getInsetsController(window, view)
+                insetsController.isAppearanceLightStatusBars = !darkTheme
+                insetsController.isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
+    }
+
+    CompositionLocalProvider(
+        LocalDytavaSemanticColors provides semanticColors
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }
