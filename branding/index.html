@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dytava — Nhận diện thương hiệu chính thức (Brand Identity & Design System)</title>
+  <meta name="description" content="Tài liệu nhận diện thương hiệu và hệ thống thiết kế chính thức của Dytava v2.0 (Flutter/Material UI Asset Pack)">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Brand Color Palette */
+      --primary: #2563EB;
+      --secondary: #3B82F6;
+      --purple: #8B5CF6;
+      --cyan: #06B6D4;
+      --green: #10B981;
+      --amber: #F59E0B;
+      --red: #EF4444;
+      --bg-neutral: #F3F4F6;
+      --border-gray: #E5E7EB;
+      --border-subtle: #E2E8F0;
+      --white: #FFFFFF;
+      --dark-navy: #0F172A;
+      --text-primary: #1E293B;
+      --text-secondary: #64748B;
+      --text-muted: #94A3B8;
+
+      /* Soft Surfaces */
+      --soft-blue: #EFF6FF;
+      --soft-green: #ECFDF5;
+      --soft-red: #FEF2F2;
+      --soft-amber: #FFFBEB;
+      --soft-purple: #F5F3FF;
+      --soft-cyan: #ECFEFF;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --radius-pill: 9999px;
+
+      --canvas-bg: #EDF3FA;
+      --card-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--canvas-bg);
+      color: var(--text-primary);
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Sticky Appbar */
+    .top-appbar {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-gray);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 12px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-logo-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+    .brand-logo-link img {
+      height: 32px;
+    }
+    .appbar-badge {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      background: var(--soft-blue);
+      color: var(--primary);
+      border: 1px solid #BFDBFE;
+      letter-spacing: 0.3px;
+    }
+    .appbar-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .appbar-btn {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .appbar-btn-outline {
+      border: 1px solid var(--border-gray);
+      background: var(--white);
+      color: var(--text-primary);
+    }
+    .appbar-btn-outline:hover {
+      background: var(--bg-neutral);
+    }
+    .appbar-btn-primary {
+      background: var(--primary);
+      color: var(--white);
+      border: 1px solid var(--primary);
+    }
+    .appbar-btn-primary:hover {
+      background: #1D4ED8;
+    }
+
+    /* Main Container */
+    .design-board {
+      max-width: 1360px;
+      margin: 24px auto 60px;
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Base Card Container */
+    .board-card {
+      background: var(--white);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 22px 24px;
+      box-shadow: var(--card-shadow);
+    }
+
+    /* Card Section Header */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .card-header-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .header-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark-navy);
+      letter-spacing: -0.2px;
+    }
+    .card-subtext {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-neutral);
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+    }
+
+    /* ROW 1: Logo & Brand Identity (3 Columns) */
+    .row-brand {
+      display: grid;
+      grid-template-columns: 2fr 1.6fr 1.8fr;
+      gap: 20px;
+    }
+    @media (max-width: 1024px) {
+      .row-brand { grid-template-columns: 1fr; }
+    }
+
+    .brand-hero-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 110px;
+      padding: 10px;
+    }
+    .brand-hero-display img {
+      max-height: 84px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    /* Logo Variants */
+    .variants-row {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: center;
+      min-height: 110px;
+    }
+    .variant-card {
+      border: 1px solid var(--border-gray);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--white);
+      min-height: 72px;
+    }
+    .variant-card img {
+      max-height: 48px;
+      max-width: 100%;
+    }
+
+    /* App Icons */
+    .app-icons-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      min-height: 110px;
+    }
+    .app-icon-box {
+      text-align: center;
+    }
+    .app-icon-img {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.16);
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    .app-icon-img:hover {
+      transform: scale(1.05);
+    }
+    .app-icon-img.circle {
+      border-radius: 50%;
+    }
+
+    /* ROW 2: Palette & Typography */
+    .row-palette-type {
+      display: grid;
+      grid-template-columns: 2.8fr 1.2fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .row-palette-type { grid-template-columns: 1fr; }
+    }
+
+    /* Color Palette Swatches */
+    .palette-swatches {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 768px) {
+      .palette-swatches { grid-template-columns: repeat(5, 1fr); }
+    }
+    .swatch-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+    .swatch-color {
+      width: 100%;
+      aspect-ratio: 1.4;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .swatch-item:hover .swatch-color {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    }
+    .swatch-hex {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 6px;
+      text-transform: uppercase;
+    }
+
+    /* Typography Box */
+    .type-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 6px 0;
+    }
+    .type-aa-mark {
+      font-size: 38px;
+      font-weight: 900;
+      color: var(--dark-navy);
+      line-height: 1;
+    }
+    .type-content h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .type-content p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ROW 3: Core Features (11 Tiles) */
+    .features-row {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 1100px) {
+      .features-row { grid-template-columns: repeat(6, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .features-row { grid-template-columns: repeat(3, 1fr); }
+    }
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--border-gray);
+      border-radius: var(--radius-lg);
+      padding: 14px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .feature-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+    }
+    .feature-icon-container {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .feature-icon-container img, .feature-icon-container svg {
+      width: 26px;
+      height: 26px;
+    }
+    .feature-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.25;
+      min-height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ROW 4 & 5: 3 Columns UI Components Layout */
+    .ui-components-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 1080px) {
+      .ui-components-grid { grid-template-columns: 1fr; }
+    }
+
+    .column-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* BUTTONS SECTION */
+    .buttons-container {
+      display: grid;
+      grid-template-columns: 1.4fr 1.2fr;
+      gap: 10px;
+    }
+    .btn-cell-row3 {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 8px;
+    }
+    .ui-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 12px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .ui-btn svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+    .ui-btn-primary {
+      background: var(--primary);
+      color: var(--white);
+    }
+    .ui-btn-primary:hover { background: #1D4ED8; }
+    .ui-btn-success {
+      background: var(--green);
+      color: var(--white);
+    }
+    .ui-btn-purple {
+      background: var(--purple);
+      color: var(--white);
+    }
+    .ui-btn-light-blue {
+      background: var(--soft-blue);
+      border-color: #BFDBFE;
+      color: var(--primary);
+    }
+    .ui-btn-outline {
+      background: var(--white);
+      border-color: var(--border-gray);
+      color: var(--text-primary);
+    }
+    .ui-btn-danger-outline {
+      background: #FFF5F5;
+      border-color: #FECACA;
+      color: var(--red);
+    }
+
+    /* BOTTOM NAVIGATION */
+    .bottom-nav-box {
+      background: var(--white);
+      border: 1px solid var(--border-gray);
+      border-radius: var(--radius-lg);
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px 10px;
+      border-radius: var(--radius-md);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .nav-tab svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-secondary);
+    }
+    .nav-tab.active {
+      background: var(--soft-blue);
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .nav-tab.active svg {
+      color: var(--primary);
+    }
+
+    /* TABS / FILTERS */
+    .filter-tabs-row {
+      display: flex;
+      gap: 8px;
+      background: var(--bg-neutral);
+      padding: 4px;
+      border-radius: var(--radius-pill);
+    }
+    .filter-tab {
+      flex: 1;
+      text-align: center;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-tab.active {
+      background: var(--white);
+      color: var(--primary);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    /* RESULT CARD */
+    .result-sheet-card {
+      background: var(--white);
+      border: 1px solid var(--border-gray);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+    }
+    .result-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .result-files-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .file-badge-x {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: #E8F8F0;
+      color: #059669;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .result-titles h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--dark-navy);
+    }
+    .result-titles span {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .badge-completed {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 700;
+      background: #E6FAF1;
+      color: #059669;
+      border: 1px solid #A7F3D0;
+    }
+    .badge-completed svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .result-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .metric-card {
+      padding: 8px 4px;
+      border-radius: var(--radius-md);
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .metric-label-text {
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .metric-card.blue { background: #EBF2FF; color: var(--primary); }
+    .metric-card.green { background: #E6FAF1; color: #059669; }
+    .metric-card.red { background: #FEEAEA; color: #DC2626; }
+    .metric-card.gray { background: var(--bg-neutral); color: #64748B; }
+
+    /* POLICY CARD & HISTORY CARD */
+    .meta-row-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: var(--white);
+      border: 1px solid var(--border-gray);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .meta-row-card:hover { border-color: var(--primary); }
+    .meta-card-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .meta-icon-sq {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .meta-icon-sq svg {
+      width: 18px;
+      height: 18px;
+    }
+    .meta-texts h5 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--dark-navy);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .meta-texts p {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+    .chevron-icon {
+      color: var(--text-muted);
+      width: 16px;
+      height: 16px;
+    }
+
+    /* FORM & CONTROLS */
+    .controls-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .input-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .input-group {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-prefix-icon {
+      position: absolute;
+      left: 10px;
+      width: 15px;
+      height: 15px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .dytava-field {
+      width: 100%;
+      padding: 8px 10px 8px 32px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-gray);
+      background: var(--white);
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--text-primary);
+      outline: none;
+    }
+    .dytava-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+    }
+    .dytava-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 14px;
+      padding-right: 28px;
+    }
+
+    .toggles-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 4px 0;
+    }
+    .custom-control {
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .checkbox-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1.5px solid var(--primary);
+      background: var(--primary);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .checkbox-box.unchecked {
+      background: var(--white);
+      border-color: var(--border-gray);
+    }
+    .checkbox-box svg {
+      width: 11px;
+      height: 11px;
+    }
+    .radio-circle {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1.5px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .radio-circle.selected::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+    .radio-circle.unselected {
+      border-color: var(--border-gray);
+    }
+    .switch-pill {
+      width: 34px;
+      height: 18px;
+      border-radius: var(--radius-pill);
+      background: var(--primary);
+      position: relative;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+    }
+    .switch-pill::after {
+      content: '';
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--white);
+      position: absolute;
+      right: 2px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .switch-pill.off {
+      background: #CBD5E1;
+    }
+    .switch-pill.off::after {
+      right: auto;
+      left: 2px;
+    }
+
+    /* Comparison Status Badges */
+    .status-badges-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .status-chip {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+    }
+    .status-chip.exact { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+    .status-chip.equiv { background: #EFF6FF; color: var(--primary); border: 1px solid #BFDBFE; }
+    .status-chip.diff { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+    .status-chip.unres { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
+
+    /* Progress & FAB */
+    .progress-fab-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .progress-bar-track {
+      flex: 1;
+      height: 10px;
+      background: var(--bg-neutral);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-bar-fill {
+      width: 70%;
+      height: 100%;
+      background: linear-gradient(90deg, #3B82F6, #2563EB);
+      border-radius: var(--radius-pill);
+    }
+    .progress-text {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--dark-navy);
+      width: 32px;
+    }
+    .fab-button {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+      border: none;
+      cursor: pointer;
+    }
+    .fab-button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* FILE CARDS */
+    .file-card-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--white);
+      border: 1px solid var(--border-gray);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+    }
+    .file-card-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .format-sq-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .format-sq-badge.xlsx { background: #ECFDF5; color: #059669; }
+    .format-sq-badge.csv { background: #F5F3FF; color: var(--purple); }
+    .file-name-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .file-size-text {
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+    .check-circle-green {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ECFDF5;
+      color: #059669;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #A7F3D0;
+    }
+    .check-circle-green svg {
+      width: 11px;
+      height: 11px;
+    }
+
+    /* STATUS & EMPTY STATE */
+    .status-empty-container {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+    .status-icons-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      border-right: 1px solid var(--border-gray);
+      padding-right: 12px;
+    }
+    .status-icon-item {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .status-icon-item.spinner { color: var(--primary); animation: spin 2s linear infinite; }
+    .status-icon-item.wave { color: var(--primary); }
+    .status-icon-item.success { color: var(--green); }
+    .status-icon-item.info { color: var(--primary); }
+    .status-icon-item.warning { color: var(--amber); }
+    .status-icon-item.error { color: var(--red); }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .empty-state-art {
+      text-align: center;
+      padding: 10px 0;
+    }
+    .empty-art-svg {
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 8px;
+      color: var(--primary);
+    }
+    .empty-state-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark-navy);
+      margin-bottom: 3px;
+    }
+    .empty-state-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.35;
+      max-width: 200px;
+      margin: 0 auto;
+    }
+
+    /* BOTTOM OVERVIEW BANNER */
+    .bottom-overview-banner {
+      background: var(--white);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--card-shadow);
+      margin-top: 4px;
+    }
+    .banner-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .banner-symbol {
+      width: 28px;
+      height: 28px;
+    }
+    .banner-title-text {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--dark-navy);
+    }
+    .banner-meta-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .banner-pill-btn {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      background: var(--soft-blue);
+      color: var(--primary);
+      border: 1px solid #BFDBFE;
+      text-decoration: none;
+    }
+
+    /* Modal for Master Image */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      max-width: 1100px;
+      width: 100%;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-gray);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dark-navy);
+    }
+    .modal-close-btn {
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      border-radius: 6px;
+    }
+    .modal-close-btn:hover { background: var(--bg-neutral); }
+    .modal-body {
+      padding: 16px;
+      overflow-y: auto;
+      text-align: center;
+      background: #F1F5F9;
+    }
+    .modal-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: var(--radius-md);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    /* Toast */
+    .toast-box {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--dark-navy);
+      color: var(--white);
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+    }
+    .toast-box.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Bar -->
+  <header class="top-appbar">
+    <a href="#" class="brand-logo-link">
+      <img src="mobile/assets/dytava/brand/svg/dytava-horizontal.svg" alt="Dytava Logo">
+      <span class="appbar-badge">Design System v2.0</span>
+    </a>
+    <div class="appbar-actions">
+      <button class="appbar-btn appbar-btn-outline" onclick="openReferenceModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        Bản thiết kế gốc
+      </button>
+      <a href="catalog/index.html" class="appbar-btn appbar-btn-primary">
+        Tra cứu 116+ Icons
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Design Board matching system-branding.png layout -->
+  <main class="design-board">
+
+    <!-- ROW 1: Logo & Brand Identity -->
+    <div class="row-brand">
+      
+      <!-- Logo & Nhận diện thương hiệu -->
+      <section class="board-card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <span class="header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"></rect><path d="m9 12 2 2 4-4"></path></svg>
+            </span>
+            <h2 class="card-title">Logo & Nhận diện thương hiệu</h2>
+          </div>
+        </div>
+        <div class="brand-hero-display">
+          <img src="mobile/assets/dytava/brand/svg/dytava-horizontal.svg" alt="Dytava Horizontal Logo">
+        </div>
+      </section>
+
+      <!-- Biến thể logo -->
+      <section class="board-card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <span class="header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18"></path></svg>
+            </span>
+            <h2 class="card-title">Biến thể logo</h2>
+          </div>
+        </div>
+        <div class="variants-row">
+          <div class="variant-card" title="Compact Horizontal on White">
+            <img src="mobile/assets/dytava/brand/svg/dytava-horizontal-compact.svg" alt="Compact Logo">
+          </div>
+          <div class="variant-card" style="background:#2563EB;border-color:#1D4ED8;" title="Pill Badge Blue">
+            <img src="mobile/assets/dytava/brand/svg/dytava-pill-blue.svg" alt="Pill Logo Blue">
+          </div>
+        </div>
+      </section>
+
+      <!-- Biểu tượng ứng dụng (App Icon) -->
+      <section class="board-card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <span class="header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+            </span>
+            <h2 class="card-title">Biểu tượng ứng dụng (App Icon)</h2>
+          </div>
+        </div>
+        <div class="app-icons-row">
+          <div class="app-icon-box" title="Squircle Blue Gradient">
+            <img src="mobile/assets/dytava/brand/svg/dytava-app.svg" class="app-icon-img" alt="App Icon Blue">
+          </div>
+          <div class="app-icon-box" title="Squircle Purple Accent">
+            <img src="mobile/assets/dytava/brand/svg/dytava-app-purple.svg" class="app-icon-img" alt="App Icon Purple">
+          </div>
+          <div class="app-icon-box" title="Circle Royal Blue">
+            <img src="mobile/assets/dytava/brand/svg/dytava-app-circle.svg" class="app-icon-img circle" alt="App Icon Circle">
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ROW 2: Bảng màu & Typography -->
+    <div class="row-palette-type">
+      
+      <!-- Bảng màu (Color Palette) -->
+      <section class="board-card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <span class="header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2Z"></path></svg>
+            </span>
+            <h2 class="card-title">Bảng màu (Color Palette)</h2>
+          </div>
+          <span class="card-subtext">Nhấp để sao chép HEX</span>
+        </div>
+        <div class="palette-swatches">
+          <!-- 1. #2563EB -->
+          <div class="swatch-item" onclick="copyHex('#2563EB')">
+            <div class="swatch-color" style="background:#2563EB;"></div>
+            <span class="swatch-hex">#2563EB</span>
+          </div>
+          <!-- 2. #3B82F6 -->
+          <div class="swatch-item" onclick="copyHex('#3B82F6')">
+            <div class="swatch-color" style="background:#3B82F6;"></div>
+            <span class="swatch-hex">#3B82F6</span>
+          </div>
+          <!-- 3. #8B5CF6 -->
+          <div class="swatch-item" onclick="copyHex('#8B5CF6')">
+            <div class="swatch-color" style="background:#8B5CF6;"></div>
+            <span class="swatch-hex">#8B5CF6</span>
+          </div>
+          <!-- 4. #06B6D4 -->
+          <div class="swatch-item" onclick="copyHex('#06B6D4')">
+            <div class="swatch-color" style="background:#06B6D4;"></div>
+            <span class="swatch-hex">#06B6D4</span>
+          </div>
+          <!-- 5. #10B981 -->
+          <div class="swatch-item" onclick="copyHex('#10B981')">
+            <div class="swatch-color" style="background:#10B981;"></div>
+            <span class="swatch-hex">#10B981</span>
+          </div>
+          <!-- 6. #F59E0B -->
+          <div class="swatch-item" onclick="copyHex('#F59E0B')">
+            <div class="swatch-color" style="background:#F59E0B;"></div>
+            <span class="swatch-hex">#F59E0B</span>
+          </div>
+          <!-- 7. #EF4444 -->
+          <div class="swatch-item" onclick="copyHex('#EF4444')">
+            <div class="swatch-color" style="background:#EF4444;"></div>
+            <span class="swatch-hex">#EF4444</span>
+          </div>
+          <!-- 8. #F3F4F6 -->
+          <div class="swatch-item" onclick="copyHex('#F3F4F6')">
+            <div class="swatch-color" style="background:#F3F4F6;border-color:#D1D5DB;"></div>
+            <span class="swatch-hex">#F3F4F6</span>
+          </div>
+          <!-- 9. #E5E7EB -->
+          <div class="swatch-item" onclick="copyHex('#E5E7EB')">
+            <div class="swatch-color" style="background:#E5E7EB;"></div>
+            <span class="swatch-hex">#E5E7EB</span>
+          </div>
+          <!-- 10. #FFFFFF -->
+          <div class="swatch-item" onclick="copyHex('#FFFFFF')">
+            <div class="swatch-color" style="background:#FFFFFF;border-color:#D1D5DB;"></div>
+            <span class="swatch-hex">#FFFFFF</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Aa Kiểu chữ (Typography) -->
+      <section class="board-card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <span class="header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+            </span>
+            <h2 class="card-title">Kiểu chữ (Typography)</h2>
+          </div>
+        </div>
+        <div class="type-box">
+          <div class="type-aa-mark">Aa</div>
+          <div class="type-content">
+            <h3>Inter / Roboto</h3>
+            <p>(Flutter Material)</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ROW 3: Nhóm tính năng / Chức năng chính (11 Tiles) -->
+    <section class="board-card">
+      <div class="card-header">
+        <div class="card-header-left">
+          <span class="header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          </span>
+          <h2 class="card-title">Nhóm tính năng / Chức năng chính</h2>
+        </div>
+      </div>
+      <div class="features-row">
+        <!-- 1. So sánh Excel -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#ECFDF5;">
+            <img src="mobile/assets/dytava/icons/svg/color/compare.svg" alt="So sánh Excel">
+          </div>
+          <span class="feature-label">So sánh<br>Excel</span>
+        </div>
+        <!-- 2. OCR (Ảnh -> Bảng) -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#F5F3FF;">
+            <img src="mobile/assets/dytava/icons/svg/color/ocr.svg" alt="OCR">
+          </div>
+          <span class="feature-label">OCR<br>(Ảnh → Bảng)</span>
+        </div>
+        <!-- 3. Nhập dữ liệu -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#EFF6FF;">
+            <img src="mobile/assets/dytava/icons/svg/color/import.svg" alt="Nhập dữ liệu">
+          </div>
+          <span class="feature-label">Nhập<br>dữ liệu</span>
+        </div>
+        <!-- 4. Ánh xạ cột -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#F5F3FF;">
+            <img src="mobile/assets/dytava/icons/svg/color/mapping.svg" alt="Ánh xạ cột">
+          </div>
+          <span class="feature-label">Ánh xạ<br>cột</span>
+        </div>
+        <!-- 5. Quy tắc chuẩn hóa -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#EFF6FF;">
+            <img src="mobile/assets/dytava/icons/svg/color/normalize.svg" alt="Quy tắc chuẩn hóa">
+          </div>
+          <span class="feature-label">Quy tắc<br>chuẩn hóa</span>
+        </div>
+        <!-- 6. Báo cáo -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#EFF6FF;">
+            <img src="mobile/assets/dytava/icons/svg/color/report.svg" alt="Báo cáo">
+          </div>
+          <span class="feature-label">Báo cáo</span>
+        </div>
+        <!-- 7. Lịch sử -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#EFF6FF;">
+            <img src="mobile/assets/dytava/icons/svg/color/history.svg" alt="Lịch sử">
+          </div>
+          <span class="feature-label">Lịch sử</span>
+        </div>
+        <!-- 8. Mẫu quy tắc -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#F5F3FF;">
+            <img src="mobile/assets/dytava/icons/svg/color/save-rule.svg" alt="Mẫu quy tắc">
+          </div>
+          <span class="feature-label">Mẫu<br>quy tắc</span>
+        </div>
+        <!-- 9. Học tập -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#F5F3FF;">
+            <img src="mobile/assets/dytava/icons/svg/color/learn.svg" alt="Học tập">
+          </div>
+          <span class="feature-label">Học tập</span>
+        </div>
+        <!-- 10. Giới thiệu -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#EFF6FF;">
+            <img src="mobile/assets/dytava/icons/svg/color/info.svg" alt="Giới thiệu">
+          </div>
+          <span class="feature-label">Giới thiệu</span>
+        </div>
+        <!-- 11. Cài đặt -->
+        <div class="feature-card">
+          <div class="feature-icon-container" style="background:#F5F3FF;">
+            <img src="mobile/assets/dytava/icons/svg/color/settings.svg" alt="Cài đặt">
+          </div>
+          <span class="feature-label">Cài đặt</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 4 & 5: UI Components Layout (3 Columns) -->
+    <div class="ui-components-grid">
+
+      <!-- COLUMN 1: Buttons, Bottom Navigation, Tabs/Filters -->
+      <div class="column-stack">
+        
+        <!-- Nút (Buttons) -->
+        <section class="board-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+              </span>
+              <h2 class="card-title">Nút (Buttons)</h2>
+            </div>
+          </div>
+          <div class="buttons-container">
+            <!-- Row 1 -->
+            <button class="ui-btn ui-btn-primary">
+              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              So sánh ngay
+            </button>
+            <button class="ui-btn ui-btn-light-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Tạo mới
+            </button>
+            <!-- Row 2 -->
+            <button class="ui-btn ui-btn-success">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+              Nhập tệp
+            </button>
+            <button class="ui-btn ui-btn-outline">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              Quét ảnh (OCR)
+            </button>
+            <!-- Row 3 -->
+            <button class="ui-btn ui-btn-purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
+              Xuất báo cáo
+            </button>
+            <button class="ui-btn ui-btn-outline">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+              Lưu quy tắc
+            </button>
+            <!-- Row 4 -->
+            <div class="btn-cell-row3">
+              <button class="ui-btn ui-btn-danger-outline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Xóa
+              </button>
+              <button class="ui-btn ui-btn-outline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                Hủy
+              </button>
+              <button class="ui-btn ui-btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Thanh điều hướng (Bottom Navigation) -->
+        <section class="board-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"></rect><path d="M12 18h.01"></path></svg>
+              </span>
+              <h2 class="card-title">Thanh điều hướng (Bottom Navigation)</h2>
+            </div>
+          </div>
+          <div class="bottom-nav-box">
+            <div class="nav-tab active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              <span>Trang chủ</span>
+            </div>
+            <div class="nav-tab">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+              <span>So sánh</span>
+            </div>
+            <div class="nav-tab">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>Lịch sử</span>
+            </div>
+            <div class="nav-tab">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+              <span>Học tập</span>
+            </div>
+            <div class="nav-tab">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <span>Cài đặt</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab / Bộ lọc danh mục (Tabs / Filters) -->
+        <section class="board-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              </span>
+              <h2 class="card-title">Tab / Bộ lọc danh mục (Tabs / Filters)</h2>
+            </div>
+          </div>
+          <div class="filter-tabs-row">
+            <div class="filter-tab active">Tổng quan</div>
+            <div class="filter-tab">Chi tiết</div>
+            <div class="filter-tab">Khác biệt</div>
+            <div class="filter-tab">Báo cáo</div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- COLUMN 2: Result Card, Policy Card, Form & Controls -->
+      <div class="column-stack">
+        
+        <!-- Thẻ kết quả so sánh (Result Card) -->
+        <section class="board-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              </span>
+              <h2 class="card-title">Thẻ kết quả so sánh (Result Card)</h2>
+            </div>
+          </div>
+          <div class="result-sheet-card">
+            <div class="result-header-row">
+              <div class="result-files-group">
+                <div class="file-badge-x">X</div>
+                <div class="file-badge-x">X</div>
+                <div class="result-titles">
+                  <h4>Kết quả so sánh</h4>
+                  <span>class-A.xlsx ↔ class-B.csv</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="badge-completed">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  Hoàn thành
+                </span>
+                <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
+            </div>
+            <div class="result-metrics-grid">
+              <div class="metric-card blue">
+                <div class="metric-value">2</div>
+                <div class="metric-label-text">Cặp ô</div>
+              </div>
+              <div class="metric-card green">
+                <div class="metric-value">1</div>
+                <div class="metric-label-text">Tương đương</div>
+              </div>
+              <div class="metric-card red">
+                <div class="metric-value">1</div>
+                <div class="metric-label-text">Khác biệt</div>
+              </div>
+              <div class="metric-card gray">
+                <div class="metric-value">0</div>
+                <div class="metric-label-text">Chưa xác định</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Thẻ quy tắc (Policy Card) -->
+        <section class="board-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+              </span>
+              <h2 class="card-title">Thẻ quy tắc (Policy Card)</h2>
+            </div>
+          </div>
+          <div class="meta-row-card">
+            <div class="meta-card-left">
+              <div class="meta-icon-sq">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+              </div>
+              <div class="meta-texts">
+                <h5>academic-records-v1</h5>
+                <p>v1.0.0 • 2 trường • Khóa: student_id</p>
+              </div>
+            </div>
+            <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+        </section>
+
+        <!-- Trường nhập & Điều khiển (Form & Controls) -->
+        <section class="board-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              </span>
+              <h2 class="card-title">Trường nhập & Điều khiển (Form & Controls)</h2>
+            </div>
+          </div>
+          <div class="controls-grid">
+            <!-- Row 1: Search & Dropdown -->
+            <div class="input-row-2">
+              <div class="input-group">
+                <svg class="input-prefix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" class="dytava-field" placeholder="Tìm kiếm...">
+              </div>
+              <div class="input-group">
+                <select class="dytava-field dytava-select" style="padding-left:12px;">
+                  <option>Chọn sheet...</option>
+                  <option>Sheet1</option>
+                  <option>Bảng dữ liệu A</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 2: Pen Edit & Date -->
+            <div class="input-row-2">
+              <div class="input-group">
+                <svg class="input-prefix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                <input type="text" class="dytava-field" placeholder="Tên quy tắc" value="Tên quy tắc">
+              </div>
+              <div class="input-group">
+                <svg class="input-prefix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <input type="text" class="dytava-field" placeholder="dd/mm/yyyy" value="dd/mm/yyyy">
+              </div>
+            </div>
+
+            <!-- Row 3: Checkbox, Radio, Switch -->
+            <div class="toggles-row">
+              <div class="custom-control">
+                <div class="checkbox-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+              </div>
+              <div class="custom-control">
+                <div class="checkbox-box unchecked"></div>
+              </div>
+              <div class="custom-control" style="margin-left:6px;">
+                <div class="radio-circle selected"></div>
+              </div>
+              <div class="custom-control">
+                <div class="radio-circle unselected"></div>
+              </div>
+              <div class="custom-control" style="margin-left:6px;">
+                <div class="switch-pill"></div>
+              </div>
+              <div class="custom-control">
+                <div class="switch-pill off"></div>
+              </div>
+            </div>
+
+            <!-- Row 4: Status Badges -->
+            <div class="status-badges-row">
+              <span class="status-chip exact">EXACT</span>
+              <span class="status-chip equiv">EQUIVALENT</span>
+              <span class="status-chip diff">DIFFERENT</span>
+              <span class="status-chip unres">UNRESOLVED</span>
+            </div>
+
+            <!-- Row 5: Progress Bar & FAB -->
+            <div class="progress-fab-row">
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill"></div>
+              </div>
+              <span class="progress-text">70%</span>
+              <button class="fab-button" title="Thêm mới">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- COLUMN 3: File Cards, History Card, Status & Empty State -->
+      <div class="column-stack">
+        
+        <!-- Thẻ tệp (File Cards) -->
+        <section class="board-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              </span>
+              <h2 class="card-title">Thẻ tệp (File Cards)</h2>
+            </div>
+          </div>
+          <div>
+            <div class="file-card-box">
+              <div class="file-card-left">
+                <div class="format-sq-badge xlsx">X</div>
+                <div>
+                  <div class="file-name-text">class-A.xlsx</div>
+                  <div class="file-size-text">XLSX • 128 KB</div>
+                </div>
+              </div>
+              <div class="check-circle-green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+            </div>
+            <div class="file-card-box">
+              <div class="file-card-left">
+                <div class="format-sq-badge csv">CSV</div>
+                <div>
+                  <div class="file-name-text">class-B.csv</div>
+                  <div class="file-size-text">CSV • 62 KB</div>
+                </div>
+              </div>
+              <div class="check-circle-green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Thẻ lịch sử (History Card) -->
+        <section class="board-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </span>
+              <h2 class="card-title">Thẻ lịch sử (History Card)</h2>
+            </div>
+          </div>
+          <div class="meta-row-card">
+            <div class="meta-card-left">
+              <div class="meta-icon-sq">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <div class="meta-texts">
+                <h5 style="font-family:inherit;">Lịch sử so sánh</h5>
+                <p>5 phiên gần nhất</p>
+              </div>
+            </div>
+            <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+        </section>
+
+        <!-- Trạng thái & Trạng thái rỗng -->
+        <section class="board-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+              </span>
+              <h2 class="card-title">Trạng thái & Trạng thái rỗng</h2>
+            </div>
+          </div>
+          <div class="status-empty-container">
+            <!-- Cột icon trạng thái -->
+            <div class="status-icons-col">
+              <!-- Loading spinner -->
+              <div class="status-icon-item spinner" title="Đang tải">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+              </div>
+              <!-- Audio wave / processing -->
+              <div class="status-icon-item wave" title="Đang xử lý">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="6" y1="8" x2="6" y2="16"></line><line x1="12" y1="4" x2="12" y2="20"></line><line x1="18" y1="8" x2="18" y2="16"></line></svg>
+              </div>
+              <!-- Success check -->
+              <div class="status-icon-item success" title="Thành công">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><polyline points="16 9 10 15 8 13"></polyline></svg>
+              </div>
+              <!-- Info -->
+              <div class="status-icon-item info" title="Thông tin">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              </div>
+              <!-- Warning -->
+              <div class="status-icon-item warning" title="Cảnh báo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </div>
+              <!-- Error -->
+              <div class="status-icon-item error" title="Lỗi">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              </div>
+            </div>
+
+            <!-- Trạng thái rỗng -->
+            <div class="empty-state-art">
+              <img src="mobile/assets/dytava/illustrations/svg/square/empty-comparisons.svg" alt="Chưa có dữ liệu" style="width:76px;height:76px;margin:0 auto 6px;display:block;object-fit:contain;">
+              <h4 class="empty-state-title">Chưa có dữ liệu</h4>
+              <p class="empty-state-sub">Hãy nhập hai tệp hoặc quét ảnh để bắt đầu so sánh.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+    </div>
+
+    <!-- BOTTOM BANNER -->
+    <footer class="bottom-overview-banner">
+      <div class="banner-left">
+        <img src="mobile/assets/dytava/brand/svg/dytava-symbol.svg" class="banner-symbol" alt="Dytava Symbol">
+        <div>
+          <span class="banner-title-text">Dytava – Asset Overview</span>
+          <span class="banner-meta-text"> | Bộ tài nguyên thiết kế (Design System & UI Assets) • Flutter / Material • Cập nhật theo nhận diện thương hiệu Dytava</span>
+        </div>
+      </div>
+      <a href="catalog/index.html" class="banner-pill-btn">UI Asset Pack (Mobile/Flutter)</a>
+    </footer>
+
+  </main>
+
+  <!-- Reference Modal -->
+  <div class="modal-overlay" id="refModal" onclick="closeReferenceModal()">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ảnh thiết kế gốc được phê duyệt (Official Reference Master)</h3>
+        <button class="modal-close-btn" onclick="closeReferenceModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <img src="documentation/system-branding.png" alt="Official Master Reference">
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-box" id="toast">Đã sao chép vào clipboard</div>
+
+  <script>
+    function copyHex(hex) {
+      navigator.clipboard.writeText(hex).then(() => {
+        const toast = document.getElementById('toast');
+        toast.textContent = `Đã sao chép ${hex} vào clipboard`;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      });
+    }
+
+    function openReferenceModal() {
+      document.getElementById('refModal').classList.add('active');
+    }
+
+    function closeReferenceModal() {
+      document.getElementById('refModal').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeReferenceModal();
+    });
+  </script>
+</body>
+</html>

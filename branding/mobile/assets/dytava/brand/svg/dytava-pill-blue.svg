@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="240" viewBox="0 0 820 240">
+  <defs>
+    <linearGradient id="pillBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="pillCyan" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <linearGradient id="pillPurple" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#C084FC"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="pillCheck" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded button container -->
+  <rect width="820" height="240" rx="52" fill="url(#pillBg)"/>
+  
+  <!-- Symbol on left -->
+  <g transform="translate(48, 22) scale(0.38)">
+    <!-- Back card (cyan) -->
+    <g transform="rotate(-8 228 217)">
+      <rect x="91" y="87" width="254" height="318" rx="38" fill="url(#pillCyan)"/>
+      <path d="M114 148v-20q0-19 19-19h167" stroke="#BAE6FD" stroke-width="9" opacity=".8" fill="none" stroke-linecap="round"/>
+    </g>
+    <!-- Front card (purple) with 3 white bars -->
+    <g transform="rotate(-7 282 249)">
+      <rect x="163" y="134" width="239" height="287" rx="36" fill="url(#pillPurple)"/>
+      <path d="M185 207v-29a19 19 0 0 1 19-19h154" fill="none" stroke="white" stroke-opacity=".72" stroke-width="10" stroke-linecap="round"/>
+      <rect x="215" y="286" width="31" height="80" rx="7" fill="white"/>
+      <rect x="262" y="245" width="31" height="121" rx="7" fill="white"/>
+      <rect x="309" y="209" width="31" height="157" rx="7" fill="white"/>
+    </g>
+    <!-- Checkmark badge -->
+    <circle cx="388" cy="388" r="72" fill="white"/>
+    <circle cx="388" cy="388" r="61" fill="url(#pillCheck)"/>
+    <path d="m360 389 18 18 41-43" fill="none" stroke="white" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <!-- Wordmark -->
+  <text x="260" y="162" font-size="124" font-weight="800" font-family="Inter, Roboto, sans-serif" letter-spacing="-4" fill="#FFFFFF">dytava</text>
+</svg>

@@ -1,7 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><title>Dytava data type matrix symbol</title><rect x="0" y="0" width="512" height="512" rx="118" fill="#2663EB"/>
-    <rect x="92" y="88" width="328" height="336" rx="44" fill="none" stroke="#FFFFFF" stroke-width="24"/>
-    <path d="M92 197H420 M92 308H420 M203 88V424 M312 88V424" stroke="#FFFFFF" stroke-opacity=".8" stroke-width="15"/>
-    <rect x="214" y="210" width="88" height="88" rx="13" fill="#FFFFFF"/>
-    <rect x="324" y="210" width="82" height="88" rx="12" fill="#FFFFFF"/>
-    <rect x="214" y="322" width="88" height="88" rx="12" fill="#FFFFFF"/>
-    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><defs>
+ <linearGradient id="brandBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3B82F6"/><stop offset="1" stop-color="#1850EB"/></linearGradient>
+ <linearGradient id="cyanLayer" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#34DBF2"/><stop offset="1" stop-color="#029BDB"/></linearGradient>
+ <linearGradient id="purpleLayer" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#A18AFF"/><stop offset="1" stop-color="#6E46ED"/></linearGradient>
+ <linearGradient id="appBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#428DFF"/><stop offset=".55" stop-color="#2563EB"/><stop offset="1" stop-color="#153EC5"/></linearGradient>
+ <linearGradient id="tileBg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#F3F6FD"/></linearGradient>
+ <linearGradient id="lightBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5CA6FF"/><stop offset="1" stop-color="#2563EB"/></linearGradient>
+ </defs><g>
+ <!-- Two offset cards are the brand's cyan + violet data layers. -->
+ <g transform="rotate(-8 228 217)"><rect x="91" y="87" width="254" height="318" rx="38" fill="#2563EB"/><path d="M114 148v-20q0-19 19-19h167" stroke="#99F0FF" stroke-width="9" opacity=".8" fill="none" stroke-linecap="round"/></g>
+ <g transform="rotate(-7 282 249)"><rect x="163" y="134" width="239" height="287" rx="36" fill="#2563EB"/>
+ <path d="M185 207v-29a19 19 0 0 1 19-19h154" fill="none" stroke="#FFFFFF" stroke-opacity=".72" stroke-width="10" stroke-linecap="round"/>
+ <rect x="215" y="286" width="31" height="80" rx="7" fill="white"/>
+ <rect x="262" y="245" width="31" height="121" rx="7" fill="white"/>
+ <rect x="309" y="209" width="31" height="157" rx="7" fill="white"/>
+ </g>
+ <!-- Blue verification seal, with independent white check. -->
+ <circle cx="388" cy="388" r="72" fill="white"/>
+ <circle cx="388" cy="388" r="61" fill="#2563EB"/>
+ <path d="m360 389 18 18 41-43" fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+ </g></svg>
