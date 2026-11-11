@@ -1,5 +1,8 @@
+import { syncBranding } from './sync-branding.js';
 import { build } from 'esbuild';
 import { cp, mkdir, rm } from 'node:fs/promises';
+
+await syncBranding(['web']);
 
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });

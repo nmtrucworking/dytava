@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Dytava (ExcelCompare) — Nền tảng so sánh bảng tính thông minh, phân tích sai khác ngữ nghĩa với Semantic Diff Engine và trang quản trị sản phẩm tập trung.">
   <title>Dytava (ExcelCompare) — So Sánh Bảng Tính Thông Minh & Quản Trị Sản Phẩm</title>
-  <link rel="icon" type="image/svg+xml" href="assets/dytava-symbol.svg">
+  <link rel="icon" type="image/svg+xml" href="assets/dytava/brand/svg/dytava-symbol.svg">
   <link rel="preload" href="assets/fonts/BeVietnamPro-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/brand-tokens.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,44 +19,21 @@
   <header class="site-header">
     <div class="header-container">
       <a class="brand-wrapper" href="#/" aria-label="Dytava — Trang chủ">
-        <svg class="brand-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-          <defs>
-            <linearGradient id="topNavBrandBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3B82F6"/><stop offset="1" stop-color="#1850EB"/></linearGradient>
-            <linearGradient id="topNavCyanLayer" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#34DBF2"/><stop offset="1" stop-color="#029BDB"/></linearGradient>
-            <linearGradient id="topNavPurpleLayer" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#A18AFF"/><stop offset="1" stop-color="#6E46ED"/></linearGradient>
-          </defs>
-          <g transform="rotate(-8 228 217)">
-            <rect x="91" y="87" width="254" height="318" rx="38" fill="url(#topNavCyanLayer)"/>
-            <path d="M114 148v-20q0-19 19-19h167" stroke="#99F0FF" stroke-width="9" opacity=".8" fill="none" stroke-linecap="round"/>
-          </g>
-          <g transform="rotate(-7 282 249)">
-            <rect x="163" y="134" width="239" height="287" rx="36" fill="url(#topNavPurpleLayer)"/>
-            <path d="M185 207v-29a19 19 0 0 1 19-19h154" fill="none" stroke="white" stroke-opacity=".72" stroke-width="10" stroke-linecap="round"/>
-            <rect x="215" y="286" width="31" height="80" rx="7" fill="white"/>
-            <rect x="262" y="245" width="31" height="121" rx="7" fill="white"/>
-            <rect x="309" y="209" width="31" height="157" rx="7" fill="white"/>
-          </g>
-          <circle cx="388" cy="388" r="72" fill="white"/>
-          <circle cx="388" cy="388" r="61" fill="url(#topNavBrandBlue)"/>
-          <path d="m360 389 18 18 41-43" fill="none" stroke="white" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <div class="brand-titles">
-          <span class="brand-name">dytava</span>
-          <span class="brand-sub">ExcelCompare • Design System v2.0</span>
-        </div>
+        <img class="brand-logo brand-logo-light" src="assets/dytava/brand/svg/dytava-horizontal.svg" width="154" height="44" alt="Dytava">
+        <img class="brand-logo brand-logo-dark" src="assets/dytava/brand/svg/dytava-horizontal-white.svg" width="154" height="44" alt="Dytava">
       </a>
 
       <!-- Center Portal Switcher -->
       <div class="portal-switcher">
-        <button id="nav-view-showcase" class="portal-btn active">🌐 So sánh bảng tính</button>
-        <button id="nav-view-admin" class="portal-btn">⚙️ Quản Trị Sản Phẩm</button>
+        <button id="nav-view-showcase" class="portal-btn active"><img class="brand-icon" src="assets/dytava/icons/svg/color/compare.svg" width="22" height="22" alt="" aria-hidden="true"> So sánh bảng tính</button>
+        <button id="nav-view-admin" class="portal-btn"><img class="brand-icon" src="assets/dytava/icons/svg/color/settings.svg" width="22" height="22" alt="" aria-hidden="true"> Quản Trị Sản Phẩm</button>
       </div>
 
       <!-- Actions -->
       <div class="header-actions">
-        <button id="btn-theme-toggle" class="btn btn-ghost btn-sm" title="Chuyển chế độ sáng/tối">🌙</button>
+        <button aria-label="Chuyển chế độ sáng/tối" id="btn-theme-toggle" class="btn btn-ghost btn-sm" title="Chuyển chế độ sáng/tối"><img class="brand-icon" src="assets/dytava/icons/svg/color/variants.svg" width="22" height="22" alt="" aria-hidden="true"></button>
         <a href="#live-compare-section" id="btn-cta-compare" class="btn btn-primary btn-sm">Thử So Sánh</a>
-        <a href="#/history" class="btn btn-ghost btn-sm">Lịch sử</a>
+        <a href="#/history" class="btn btn-ghost btn-sm"><img class="brand-icon" src="assets/dytava/icons/svg/color/history.svg" width="22" height="22" alt="" aria-hidden="true">Lịch sử</a>
         <button id="btn-account" class="btn btn-outline btn-sm">Đăng nhập</button>
         <button id="btn-logout" class="btn btn-ghost btn-sm" hidden>Đăng xuất</button>
       </div>
@@ -70,8 +48,9 @@
 
     <!-- Hero Section -->
     <section class="hero-section">
+      <div class="hero-layout"><div class="hero-copy">
       <div class="hero-pill">
-        <span class="badge badge-primary">✦ Phiên bản 1.0 • Xử lý nội dung bảng tính tại trình duyệt</span>
+        <span class="badge badge-primary"><img class="brand-icon" src="assets/dytava/icons/svg/color/shield.svg" width="22" height="22" alt="" aria-hidden="true"> Phiên bản 1.0 • Xử lý nội dung bảng tính tại trình duyệt</span>
       </div>
       <h1 class="hero-title">
         So Sánh Bảng Tính Thông Minh.<br>
@@ -88,11 +67,12 @@
         <a href="#downloads" class="btn btn-ghost btn-lg">Bản phát hành</a>
       </div>
 
+      </div><div class="hero-art"><img fetchpriority="high" class="hero-illustration" src="assets/dytava/illustrations/svg/wide/hero-get-started.svg" width="640" height="360" alt="" aria-hidden="true"></div></div>
       <div class="hero-highlights">
-        <div class="highlight-item"><span class="highlight-icon">✓</span> Tự động căn chỉnh theo Khóa chính (Key Alignment)</div>
-        <div class="highlight-item"><span class="highlight-icon">✓</span> Chuẩn hóa DType (Decimal, Date, Boolean, ID)</div>
-        <div class="highlight-item"><span class="highlight-icon">✓</span> Đồng bộ cuộn trực quan 2 bảng (Side-by-Side Dual Grid)</div>
-        <div class="highlight-item"><span class="highlight-icon">✓</span> Xuất biên bản kiểm toán JSON/CSV truy vết</div>
+        <div class="highlight-item"><img class="brand-icon" src="assets/dytava/icons/svg/color/check.svg" width="22" height="22" alt="" aria-hidden="true"> Tự động căn chỉnh theo Khóa chính (Key Alignment)</div>
+        <div class="highlight-item"><img class="brand-icon" src="assets/dytava/icons/svg/color/check.svg" width="22" height="22" alt="" aria-hidden="true"> Chuẩn hóa DType (Decimal, Date, Boolean, ID)</div>
+        <div class="highlight-item"><img class="brand-icon" src="assets/dytava/icons/svg/color/check.svg" width="22" height="22" alt="" aria-hidden="true"> Đồng bộ cuộn trực quan 2 bảng (Side-by-Side Dual Grid)</div>
+        <div class="highlight-item"><img class="brand-icon" src="assets/dytava/icons/svg/color/check.svg" width="22" height="22" alt="" aria-hidden="true"> Xuất biên bản kiểm toán JSON/CSV truy vết</div>
       </div>
     </section>
 
@@ -103,7 +83,7 @@
         <!-- Topbar: Sample Dataset Switcher -->
         <div class="compare-topbar">
           <div class="dataset-select-group">
-            <label for="sample-dataset-select">📂 Chọn tập dữ liệu mẫu:</label>
+            <label for="sample-dataset-select"><img class="brand-icon" src="assets/dytava/icons/svg/color/files.svg" width="22" height="22" alt="" aria-hidden="true"> Chọn tập dữ liệu mẫu:</label>
             <select id="sample-dataset-select" class="form-select">
               <option value="academic" selected>Bảng điểm & Hồ sơ học tập (Academic Records)</option>
               <option value="finance">Báo cáo Doanh thu & Đối soát tài chính (Finance & P&L)</option>
@@ -113,8 +93,8 @@
 
           <div style="display:flex; align-items:center; gap:0.5rem">
             <button id="btn-save-session" class="btn btn-outline btn-sm" disabled>Lưu thống kê phiên</button>
-            <button id="btn-export-csv" class="btn btn-outline btn-sm">📥 Xuất CSV Khác Biệt</button>
-            <button id="btn-export-json" class="btn btn-primary btn-sm">📜 Xuất Báo Cáo Audit JSON</button>
+            <button id="btn-export-csv" class="btn btn-report-outline btn-sm"><img class="brand-icon" src="assets/dytava/icons/svg/color/export.svg" width="22" height="22" alt="" aria-hidden="true"> Xuất CSV Khác Biệt</button>
+            <button id="btn-export-json" class="btn btn-report btn-sm"><img class="brand-icon" src="assets/dytava/icons/svg/color/report.svg" width="22" height="22" alt="" aria-hidden="true"> Xuất Báo Cáo Audit JSON</button>
           </div>
         </div>
 
@@ -153,28 +133,29 @@
 
           <label class="custom-checkbox"><input type="checkbox" id="opt-identifier-case" checked><span>Phân biệt hoa/thường của mã</span></label>
           <label class="custom-checkbox"><input type="checkbox" id="opt-null-zero" checked><span>Phân biệt ô trống và số 0</span></label>
-          <button id="btn-run-compare" class="btn btn-primary">⚡ Chạy So Sánh Lại</button>
+          <button id="btn-run-compare" class="btn btn-primary"><img class="brand-icon" src="assets/dytava/icons/svg/color/compare.svg" width="22" height="22" alt="" aria-hidden="true"> Chạy So Sánh Lại</button>
         </div>
 
         <!-- File Upload Zones (File A vs File B) -->
         <div class="upload-grid">
           <div class="upload-box" id="dropzone-a">
             <input type="file" id="file-input-a" accept=".csv,.tsv,.txt,.json,.xlsx" style="display:none">
-            <div class="upload-title">📄 Nguồn dữ liệu A (File gốc)</div>
+            <div class="upload-title"><img class="brand-icon" src="assets/dytava/icons/svg/color/import.svg" width="22" height="22" alt="" aria-hidden="true"> Nguồn dữ liệu A (File gốc)</div>
             <div class="upload-sub">Kéo thả tệp CSV / XLSX hoặc bấm để chọn tệp</div>
             <div class="file-badge-loaded" id="file-badge-a">BangDiem_PhongDaoTao_A.xlsx (7 hàng)</div>
           </div>
 
           <div class="upload-box" id="dropzone-b">
             <input type="file" id="file-input-b" accept=".csv,.tsv,.txt,.json,.xlsx" style="display:none">
-            <div class="upload-title">📑 Nguồn dữ liệu B (File đối chiếu)</div>
+            <div class="upload-title"><img class="brand-icon" src="assets/dytava/icons/svg/color/compare-files.svg" width="22" height="22" alt="" aria-hidden="true"> Nguồn dữ liệu B (File đối chiếu)</div>
             <div class="upload-sub">Kéo thả tệp CSV / XLSX hoặc bấm để chọn tệp</div>
             <div class="file-badge-loaded" id="file-badge-b">BangDiem_HeThong_B.csv (7 hàng)</div>
           </div>
         </div>
 
         <div class="sheet-selectors"><label>Sheet nguồn A <select id="sheet-a" class="form-select" hidden aria-label="Sheet nguồn A"></select></label><label>Sheet nguồn B <select id="sheet-b" class="form-select" hidden aria-label="Sheet nguồn B"></select></label></div>
-        <p id="compare-status" class="privacy-note compare-note" role="status"></p>
+        <div id="compare-processing" class="processing-state" hidden><img class="state-illustration" src="assets/dytava/illustrations/svg/square/processing-compare.svg" width="160" height="160" alt="" aria-hidden="true" loading="lazy"><p id="compare-status" class="privacy-note" role="status"></p></div>
+        <img id="comparison-error-art" class="state-illustration" src="assets/dytava/illustrations/svg/square/status-warning.svg" width="120" height="120" alt="" hidden>
         <p id="comparison-error" class="form-message error compare-note" role="alert"></p>
         <!-- Status Summary Counters Bar -->
         <div class="summary-bar">
@@ -184,19 +165,19 @@
           </div>
           <div class="stat-cell" data-filter="EXACT" title="Ô giống tuyệt đối">
             <div class="stat-num stat-exact" id="cnt-exact">35</div>
-            <div class="stat-label">Khớp tuyệt đối (Exact)</div>
+            <div class="stat-label"><img class="brand-icon" src="assets/dytava/icons/svg/color/exact.svg" width="22" height="22" alt="" aria-hidden="true">Khớp tuyệt đối (Exact)</div>
           </div>
           <div class="stat-cell" data-filter="EQUIVALENT" title="Ô khác định dạng nhưng tương đương ngữ nghĩa">
             <div class="stat-num stat-equiv" id="cnt-equiv">2</div>
-            <div class="stat-label">Tương đương (Equivalent)</div>
+            <div class="stat-label"><img class="brand-icon" src="assets/dytava/icons/svg/color/equivalent.svg" width="22" height="22" alt="" aria-hidden="true">Tương đương (Equivalent)</div>
           </div>
           <div class="stat-cell" data-filter="DIFFERENT" title="Ô khác biệt nghiệp vụ thực tế">
             <div class="stat-num stat-diff" id="cnt-diff">2</div>
-            <div class="stat-label">Khác biệt (Different)</div>
+            <div class="stat-label"><img class="brand-icon" src="assets/dytava/icons/svg/color/different.svg" width="22" height="22" alt="" aria-hidden="true">Khác biệt (Different)</div>
           </div>
           <div class="stat-cell" data-filter="UNRESOLVED" title="Ô mơ hồ cần người dùng xác minh">
             <div class="stat-num stat-unres" id="cnt-unres">1</div>
-            <div class="stat-label">Chờ duyệt (Unresolved)</div>
+            <div class="stat-label"><img class="brand-icon" src="assets/dytava/icons/svg/color/unresolved.svg" width="22" height="22" alt="" aria-hidden="true">Chờ duyệt (Unresolved)</div>
           </div>
           <div class="stat-cell" data-filter="ROWS" title="Dòng thêm mới và dòng bị xóa">
             <div class="stat-num" id="cnt-added-removed" style="color:var(--text)">+1 / -1</div>
@@ -230,7 +211,7 @@
         </div>
 
         <div style="padding:0.75rem 1.5rem; background:var(--surface-alt); border-top:1px solid var(--outline-light); font-size:0.8rem; color:var(--muted); display:flex; justify-content:space-between; align-items:center">
-          <span>💡 <strong>Gợi ý:</strong> Bấm vào bất kỳ ô nào có màu để mở chi tiết giải trình quy tắc chuẩn hóa (Cell Breakdown).</span>
+          <span><img class="brand-icon" src="assets/dytava/icons/svg/color/help.svg" width="22" height="22" alt="" aria-hidden="true"> <strong>Gợi ý:</strong> Bấm vào bất kỳ ô nào có màu để mở chi tiết giải trình quy tắc chuẩn hóa (Cell Breakdown).</span>
           <span>Hai bảng tính tự động đồng bộ cuộn (Synchronized scrolling).</span>
         </div>
 
@@ -250,37 +231,37 @@
 
       <div class="feature-cards-grid">
         <div class="feature-card">
-          <div class="feature-icon-wrapper">🧬</div>
+          <div class="feature-icon-wrapper"><img class="brand-icon" src="assets/dytava/icons/svg/color/normalize.svg" width="48" height="48" alt="" aria-hidden="true"></div>
           <h3 class="feature-title">Semantic Diff Engine</h3>
           <p class="feature-text">Phân biệt và chuẩn hóa theo kiểu dữ liệu thực tế (Text, Decimal, Datetime, Boolean, Identifier). Nhận biết <code>8.5</code> và <code>8,5</code> là tương đương.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon-wrapper">🔒</div>
+          <div class="feature-icon-wrapper"><img class="brand-icon" src="assets/dytava/icons/svg/color/privacy.svg" width="48" height="48" alt="" aria-hidden="true"></div>
           <h3 class="feature-title">Nội dung tệp xử lý cục bộ</h3>
           <p class="feature-text">Toàn bộ quá trình tính toán và so sánh diễn ra cục bộ trong bộ nhớ trình duyệt. Dữ liệu bảng lương, tài chính không bao giờ rời khỏi máy tính.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon-wrapper">🔑</div>
+          <div class="feature-icon-wrapper"><img class="brand-icon" src="assets/dytava/icons/svg/color/key.svg" width="48" height="48" alt="" aria-hidden="true"></div>
           <h3 class="feature-title">Căn chỉnh Khóa thông minh</h3>
           <p class="feature-text">Không phụ thuộc vào thứ tự hàng. Tự động liên kết các bản ghi bằng một cột khóa duy nhất (ID, Mã SV, Mã đơn hàng), ngăn ngừa hiện tượng lệch toàn bộ bảng.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon-wrapper">📜</div>
+          <div class="feature-icon-wrapper"><img class="brand-icon" src="assets/dytava/icons/svg/color/report.svg" width="48" height="48" alt="" aria-hidden="true"></div>
           <h3 class="feature-title">Biên bản Kiểm toán Truy vết</h3>
           <p class="feature-text">Mỗi ô khác biệt đều đi kèm khóa dòng, tên cột, giá trị thô, giá trị chuẩn hóa, mã quy tắc (Rule ID) và lý do chi tiết, sẵn sàng xuất báo cáo JSON/CSV.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon-wrapper">📱</div>
+          <div class="feature-icon-wrapper"><img class="brand-icon" src="assets/dytava/icons/svg/color/history.svg" width="48" height="48" alt="" aria-hidden="true"></div>
           <h3 class="feature-title">Tài khoản & lịch sử riêng tư</h3>
           <p class="feature-text">Lưu thống kê theo tài khoản khi bạn chủ động chọn. Xem, xuất hoặc xóa lịch sử của riêng mình.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon-wrapper">📷</div>
+          <div class="feature-icon-wrapper"><img class="brand-icon" src="assets/dytava/icons/svg/color/workbook.svg" width="48" height="48" alt="" aria-hidden="true"></div>
           <h3 class="feature-title">XLSX nhiều sheet</h3>
           <p class="feature-text">Chọn sheet cần đối chiếu từ workbook Excel. Đọc dữ liệu tại trình duyệt, không thực thi công thức hay macro.</p>
         </div>
@@ -341,32 +322,32 @@
         </div>
 
         <div class="admin-nav-item active" data-tab="overview">
-          <span class="admin-nav-icon">📊</span>
+          <span class="admin-nav-icon"><img class="brand-icon" src="assets/dytava/icons/svg/color/dashboard.svg" width="22" height="22" alt="" aria-hidden="true"></span>
           <span>Tổng Quan & KPIs</span>
         </div>
 
         <div class="admin-nav-item" data-tab="releases">
-          <span class="admin-nav-icon">🚀</span>
+          <span class="admin-nav-icon"><img class="brand-icon" src="assets/dytava/icons/svg/color/upload.svg" width="22" height="22" alt="" aria-hidden="true"></span>
           <span>Bản Phát Hành (Releases)</span>
         </div>
 
         <div class="admin-nav-item" data-tab="policies">
-          <span class="admin-nav-icon">⚙️</span>
+          <span class="admin-nav-icon"><img class="brand-icon" src="assets/dytava/icons/svg/color/settings.svg" width="22" height="22" alt="" aria-hidden="true"></span>
           <span>Quy Tắc & Policies</span>
         </div>
 
         <div class="admin-nav-item" data-tab="acceptance">
-          <span class="admin-nav-icon">🧪</span>
+          <span class="admin-nav-icon"><img class="brand-icon" src="assets/dytava/icons/svg/color/policy.svg" width="22" height="22" alt="" aria-hidden="true"></span>
           <span>Acceptance Test Suite</span>
         </div>
 
         <div class="admin-nav-item" data-tab="audit">
-          <span class="admin-nav-icon">📜</span>
+          <span class="admin-nav-icon"><img class="brand-icon" src="assets/dytava/icons/svg/color/report.svg" width="22" height="22" alt="" aria-hidden="true"></span>
           <span>Nhật Ký Kiểm Toán</span>
         </div>
 
         <div class="admin-nav-item" data-tab="flags">
-          <span class="admin-nav-icon">🚩</span>
+          <span class="admin-nav-icon"><img class="brand-icon" src="assets/dytava/icons/svg/color/variants.svg" width="22" height="22" alt="" aria-hidden="true"></span>
           <span>Cờ Tính Năng (Roadmap)</span>
         </div>
 
@@ -374,7 +355,7 @@
           <div style="font-weight:700; color:var(--text); margin-bottom:0.25rem">Dytava Web v1.0.0</div>
           <div>Nội dung tệp xử lý cục bộ</div>
           <div style="margin-top:0.5rem">
-            <a class="btn btn-outline btn-sm" style="width:100%" href="#/">⬅ Về công cụ so sánh</a>
+            <a class="btn btn-outline btn-sm" style="width:100%" href="#/"><img class="brand-icon" src="assets/dytava/icons/svg/color/back.svg" width="22" height="22" alt="" aria-hidden="true"> Về công cụ so sánh</a>
           </div>
         </div>
       </aside>
@@ -427,7 +408,7 @@
 
           <!-- Live Policy Tester -->
           <div class="metric-card" style="margin-bottom:2rem; background:var(--surface)">
-            <h3 style="font-size:1.15rem; margin-bottom:0.5rem">🧪 Trình Thẩm Định Quy Tắc Trực Tiếp (Policy Tester)</h3>
+            <h3 style="font-size:1.15rem; margin-bottom:0.5rem"><img class="brand-icon" src="assets/dytava/icons/svg/color/policy.svg" width="22" height="22" alt="" aria-hidden="true"> Trình Thẩm Định Quy Tắc Trực Tiếp (Policy Tester)</h3>
             <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1.25rem">
               Nhập 2 giá trị ô bất kỳ để kiểm tra ngay phân loại của Semantic Diff Engine.
             </p>
@@ -522,15 +503,15 @@
   </div>
 
   <main id="view-history" class="section" style="display:none"><div class="section-header"><h1 class="section-title">Lịch sử so sánh</h1><p class="section-desc">Thống kê phiên được lưu riêng theo tài khoản.</p></div><div id="history-content"></div></main>
-  <main id="view-access" class="section" style="display:none"><div class="empty-state metric-card"><h1 id="access-title">Đăng nhập để quản trị</h1><p id="access-description"></p><button id="access-login" class="btn btn-primary">Đăng nhập</button><a class="btn btn-outline" href="#/">Về công cụ so sánh</a></div></main>
-  <div id="modal-auth" class="modal-overlay" aria-labelledby="auth-title"><div class="modal-card"><form id="form-auth"><div class="modal-header"><h2 id="auth-title">Đăng nhập Dytava</h2><button type="button" class="btn btn-ghost btn-close-modal" aria-label="Đóng">✕</button></div><div class="modal-body form-stack">
+  <main id="view-access" class="section" style="display:none"><div class="empty-state metric-card"><img class="state-illustration" src="assets/dytava/illustrations/svg/square/status-no-permission.svg" width="160" height="160" alt="" aria-hidden="true" loading="lazy"><h1 id="access-title">Đăng nhập để quản trị</h1><p id="access-description"></p><button id="access-login" class="btn btn-primary">Đăng nhập</button><a class="btn btn-outline" href="#/">Về công cụ so sánh</a></div></main>
+  <div id="modal-auth" class="modal-overlay" aria-labelledby="auth-title"><div class="modal-card"><form id="form-auth"><div class="modal-header"><h2 id="auth-title">Đăng nhập Dytava</h2><button type="button" class="btn btn-ghost btn-close-modal" aria-label="Đóng"><img class="brand-icon" src="assets/dytava/icons/svg/color/close.svg" width="22" height="22" alt="" aria-hidden="true"></button></div><div class="modal-body form-stack">
     <div id="auth-name-group" hidden><label for="auth-name">Họ tên</label><input id="auth-name" class="form-input" autocomplete="name" minlength="2" maxlength="80"></div>
     <div><label for="auth-email">Email</label><input id="auth-email" type="email" class="form-input" autocomplete="email" required maxlength="254"></div>
     <div><label for="auth-password">Mật khẩu</label><input id="auth-password" type="password" class="form-input" autocomplete="current-password" minlength="12" maxlength="128" required><p class="privacy-note">Ít nhất 12 ký tự.</p></div>
     <p id="auth-message" class="form-message" role="alert"></p><p class="privacy-note">Tài khoản lưu email, tên và mật khẩu đã băm. <a href="privacy.html" target="_blank" rel="noopener">Chính sách quyền riêng tư</a>.</p>
     </div><div class="modal-footer"><button type="button" id="auth-mode-toggle" class="btn btn-ghost">Chưa có tài khoản? Đăng ký</button><button type="submit" id="auth-submit" class="btn btn-primary">Đăng nhập</button></div></form></div></div>
-  <div id="modal-password" class="modal-overlay" aria-labelledby="password-title"><div class="modal-card"><form id="form-password"><div class="modal-header"><h2 id="password-title">Đổi mật khẩu</h2><button type="button" class="btn btn-ghost btn-close-modal" aria-label="Đóng">✕</button></div><div class="modal-body form-stack"><label>Mật khẩu hiện tại<input type="password" name="currentPassword" autocomplete="current-password" class="form-input" required maxlength="128"></label><label>Mật khẩu mới<input type="password" name="newPassword" autocomplete="new-password" class="form-input" required minlength="12" maxlength="128"></label><p id="password-message" class="form-message" role="alert"></p></div><div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu mật khẩu mới</button></div></form></div></div>
-  <div id="modal-policy" class="modal-overlay" aria-labelledby="policy-title"><div class="modal-card"><form id="form-policy"><div class="modal-header"><h2 id="policy-title">Cấu hình policy</h2><button type="button" class="btn btn-ghost btn-close-modal" aria-label="Đóng">✕</button></div><div class="modal-body form-stack">
+  <div id="modal-password" class="modal-overlay" aria-labelledby="password-title"><div class="modal-card"><form id="form-password"><div class="modal-header"><h2 id="password-title">Đổi mật khẩu</h2><button type="button" class="btn btn-ghost btn-close-modal" aria-label="Đóng"><img class="brand-icon" src="assets/dytava/icons/svg/color/close.svg" width="22" height="22" alt="" aria-hidden="true"></button></div><div class="modal-body form-stack"><label>Mật khẩu hiện tại<input type="password" name="currentPassword" autocomplete="current-password" class="form-input" required maxlength="128"></label><label>Mật khẩu mới<input type="password" name="newPassword" autocomplete="new-password" class="form-input" required minlength="12" maxlength="128"></label><p id="password-message" class="form-message" role="alert"></p></div><div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu mật khẩu mới</button></div></form></div></div>
+  <div id="modal-policy" class="modal-overlay" aria-labelledby="policy-title"><div class="modal-card"><form id="form-policy"><div class="modal-header"><h2 id="policy-title">Cấu hình policy</h2><button type="button" class="btn btn-ghost btn-close-modal" aria-label="Đóng"><img class="brand-icon" src="assets/dytava/icons/svg/color/close.svg" width="22" height="22" alt="" aria-hidden="true"></button></div><div class="modal-body form-stack">
     <label>Mã policy<input name="policyId" class="form-input" pattern="[a-z0-9][a-z0-9\-]{2,79}" required placeholder="my-policy-v1"></label><label>Tên policy<input name="policyName" class="form-input" minlength="2" maxlength="100" required></label><label>Mô tả<textarea name="description" class="form-input" maxlength="500"></textarea></label><label>Dung sai tuyệt đối<input name="tolerance_abs" type="number" min="0" max="1000000000" step="any" value="0" class="form-input" required></label>
 <label class="custom-checkbox"><input type="checkbox" name="preserve_leading_zeros"><span>Giữ số 0 đầu mã</span></label>
 <label class="custom-checkbox"><input type="checkbox" name="case_sensitive_identifier"><span>Phân biệt hoa/thường ở mã</span></label>
@@ -548,7 +529,7 @@
           <h3 id="insp-field-name" style="font-size:1.2rem; font-weight:800">Tên Cột</h3>
           <div id="insp-row-key" style="font-size:0.8rem; color:var(--muted)">Khóa: SV001</div>
         </div>
-        <button class="btn btn-ghost btn-close-modal">✕</button>
+        <button aria-label="Đóng" class="btn btn-ghost btn-close-modal" aria-label="Đóng"><img class="brand-icon" src="assets/dytava/icons/svg/color/close.svg" width="22" height="22" alt="" aria-hidden="true"></button>
       </div>
 
       <div class="modal-body">
@@ -596,7 +577,7 @@
       <form id="form-add-release">
         <div class="modal-header">
           <h3 id="release-modal-title" style="font-size:1.2rem; font-weight:800">Tạo bản phát hành</h3>
-          <button type="button" class="btn btn-ghost btn-close-modal">✕</button>
+          <button type="button" class="btn btn-ghost btn-close-modal" aria-label="Đóng"><img class="brand-icon" src="assets/dytava/icons/svg/color/close.svg" width="22" height="22" alt="" aria-hidden="true"></button>
         </div>
 
         <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem">
@@ -657,28 +638,7 @@
     <div class="footer-container">
       <div class="footer-col">
         <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem">
-          <svg class="brand-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width:28px; height:28px">
-            <defs>
-              <linearGradient id="footerNavBrandBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3B82F6"/><stop offset="1" stop-color="#1850EB"/></linearGradient>
-              <linearGradient id="footerNavCyanLayer" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#34DBF2"/><stop offset="1" stop-color="#029BDB"/></linearGradient>
-              <linearGradient id="footerNavPurpleLayer" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#A18AFF"/><stop offset="1" stop-color="#6E46ED"/></linearGradient>
-            </defs>
-            <g transform="rotate(-8 228 217)">
-              <rect x="91" y="87" width="254" height="318" rx="38" fill="url(#footerNavCyanLayer)"/>
-              <path d="M114 148v-20q0-19 19-19h167" stroke="#99F0FF" stroke-width="9" opacity=".8" fill="none" stroke-linecap="round"/>
-            </g>
-            <g transform="rotate(-7 282 249)">
-              <rect x="163" y="134" width="239" height="287" rx="36" fill="url(#footerNavPurpleLayer)"/>
-              <path d="M185 207v-29a19 19 0 0 1 19-19h154" fill="none" stroke="white" stroke-opacity=".72" stroke-width="10" stroke-linecap="round"/>
-              <rect x="215" y="286" width="31" height="80" rx="7" fill="white"/>
-              <rect x="262" y="245" width="31" height="121" rx="7" fill="white"/>
-              <rect x="309" y="209" width="31" height="157" rx="7" fill="white"/>
-            </g>
-            <circle cx="388" cy="388" r="72" fill="white"/>
-            <circle cx="388" cy="388" r="61" fill="url(#footerNavBrandBlue)"/>
-            <path d="m360 389 18 18 41-43" fill="none" stroke="white" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span style="font-size:1.2rem; font-weight:850; color:#fff">dytava</span>
+          <img src="assets/dytava/brand/svg/dytava-horizontal-white.svg" width="154" height="44" alt="Dytava">
         </div>
         <p style="font-size:0.85rem; color:#A0B2C6; max-width:320px; line-height:1.6">
           Dytava (ExcelCompare) — Giải pháp so sánh bảng tính thế hệ mới với công nghệ nhận diện kiểu dữ liệu ngữ nghĩa và nội dung bảng tính được xử lý cục bộ tại trình duyệt.

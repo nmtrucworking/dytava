@@ -92,3 +92,29 @@ test('desktop and mobile layout remain usable', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.screenshot({ path: 'test-results/screenshots/mobile.png', fullPage: true });
 });
+
+test('approved branding assets load in light/dark themes and narrow layouts', async ({ page }) => {
+  const assets = await page.locator('img[src*="assets/dytava/"]').evaluateAll(images => [...new Set(images.map(image => image.getAttribute('src')))]);
+  for (const asset of assets) {
+    const response = await page.request.get(`/${asset}`);
+    expect(response.ok(), asset).toBe(true);
+    expect(response.headers()['content-type'], asset).toContain('image/svg+xml');
+  }
+  await expect(page.locator('.hero-illustration')).toBeVisible();
+  await expect(page.locator('#btn-run-compare img')).toHaveAttribute('src', /\/compare\.svg$/);
+  await expect(page.locator('#btn-export-json')).toHaveCSS('background-color', 'rgb(139, 92, 246)');
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `viewport ${width}`).toBe(true);
+  }
+  await page.locator('#btn-theme-toggle').click();
+  await expect(page.locator('.brand-logo-dark')).toBeVisible();
+  await expect(page.locator('.brand-logo-light')).toBeHidden();
+  await expect(page.locator('#btn-theme-toggle')).toHaveAttribute('aria-pressed', 'true');
+  await page.reload();
+  await expect(page.locator('.brand-logo-dark')).toBeVisible();
+  await page.goto('/#/history');
+  await expect(page.locator('#history-content img')).toHaveAttribute('src', /\/empty-history\.svg$/);
+  await page.goto('/#/admin/overview');
+  await expect(page.locator('#view-access img')).toHaveAttribute('src', /\/status-no-permission\.svg$/);
+});

@@ -1,17 +1,23 @@
-# dytava
+# Dytava Mobile
 
-A new Flutter project.
+Ứng dụng Flutter thử nghiệm so sánh hai giá trị bằng `excelcompare_core`.
+Hiện chưa nhập Excel/CSV hoặc xuất báo cáo.
 
-## Getting Started
+## Chạy và kiểm tra
 
-This project is a starting point for a Flutter application.
+```sh
+flutter pub get
+flutter run
+flutter analyze
+flutter test
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Branding
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Theme và typography nằm trong `lib/design_system/`. `DytavaAsset` dùng
+`flutter_svg` để hiển thị logo, functional icons và Illustration Library từ
+`assets/dytava/`, đã khai báo trong `pubspec.yaml`. Bốn trạng thái kết quả
+có badge, màu và illustration riêng theo branding chính thức.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Từ gốc monorepo, chạy `npm run branding:sync` khi kho `branding/` thay đổi.
+Chỉ dùng SVG trong runtime, không giải mã các ảnh PNG 4K của thư viện.

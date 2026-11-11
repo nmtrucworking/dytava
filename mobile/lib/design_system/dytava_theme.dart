@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'dytava_colors.dart';
 import 'dytava_typography.dart';
 
@@ -35,6 +36,24 @@ class DytavaTheme {
         ),
         margin: EdgeInsets.zero,
       ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: DytavaColors.white,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: DytavaColors.textPrimary,
+        centerTitle: false,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: DytavaColors.primary,
+          foregroundColor: DytavaColors.white,
+          minimumSize: const Size(48, 52),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: DytavaTypography.labelLarge,
+        ),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: DytavaColors.primary,
@@ -61,7 +80,10 @@ class DytavaTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: DytavaColors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: DytavaColors.border, width: 1),
@@ -74,10 +96,7 @@ class DytavaTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: DytavaColors.primary, width: 2),
         ),
-        hintStyle: const TextStyle(
-          color: DytavaColors.textMuted,
-          fontSize: 14,
-        ),
+        hintStyle: const TextStyle(color: DytavaColors.textMuted, fontSize: 14),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: DytavaColors.white,

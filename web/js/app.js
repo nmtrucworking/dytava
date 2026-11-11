@@ -1,3 +1,4 @@
+import { brandIcon, emptyState } from './branding.js';
 import Papa from 'papaparse';
 import { SAMPLE_DATASETS } from './sample-data.js';
 import { AdminPortal } from './admin-portal.js';
@@ -40,7 +41,7 @@ class App {
     try { theme = localStorage.getItem('dytava_theme'); } catch { /* Storage may be disabled. */ }
     document.body.classList.toggle('dark', theme === 'dark');
     const btn = document.getElementById('btn-theme-toggle');
-    const update = () => { btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙'; };
+    const update = () => { const dark = document.body.classList.contains('dark'); btn.innerHTML = brandIcon('variants'); btn.setAttribute('aria-pressed', String(dark)); btn.setAttribute('aria-label', dark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'); };
     update(); btn.onclick = () => {
       document.body.classList.toggle('dark'); update();
       try { localStorage.setItem('dytava_theme', document.body.classList.contains('dark') ? 'dark' : 'light'); } catch { /* Theme still works. */ }
@@ -188,7 +189,8 @@ class App {
   }
   setBusy(delta) {
     this.busy = Math.max(0, this.busy + delta);
-    const button = document.getElementById('btn-run-compare'); button.disabled = Boolean(this.busy); button.textContent = this.busy ? 'Đang xử lý…' : '⚡ Chạy so sánh';
+    const button = document.getElementById('btn-run-compare'); button.disabled = Boolean(this.busy); button.innerHTML = brandIcon(this.busy ? 'loading' : 'compare') + (this.busy ? 'Đang xử lý…' : 'Chạy so sánh');
+    document.getElementById('compare-processing').hidden = !this.busy;
     document.getElementById('compare-status').textContent = this.busy ? 'Đang xử lý cục bộ trong trình duyệt…' : '';
     this.updateSaveButton();
   }
@@ -219,10 +221,12 @@ class App {
       result.metadata = { clientId: crypto.randomUUID(), formatA: fileA.format, formatB: fileB.format, rowsA: fileA.rows.length, rowsB: fileB.rows.length, durationMs: Math.round((performance.now() - start) * 100) / 100, policyId, policyConfig, summary: result.summary };
       this.currentComparisonResult = result; this.gridPage = 0; this.updateSummaryCounters(); this.renderDualGrid();
       document.getElementById('comparison-error').textContent = '';
+      document.getElementById('comparison-error-art').hidden = true;
     } catch (error) {
       if (revision === this.runRevision) {
         this.currentComparisonResult = null;
         document.getElementById('comparison-error').textContent = error.message;
+        document.getElementById('comparison-error-art').hidden = false;
         for (const side of ['a', 'b']) document.getElementById(`table-container-${side}`).textContent = 'Không thể so sánh với cấu hình hiện tại.';
         for (const id of ['cnt-total', 'cnt-exact', 'cnt-equiv', 'cnt-diff', 'cnt-unres', 'cnt-added-removed']) document.getElementById(id).textContent = '—';
         this.showToast(error.message, 'error');
@@ -247,7 +251,7 @@ class App {
         const status = row.cellComparisons[h]?.status;
         const classes = { EXACT: 'cell-exact', EQUIVALENT: 'cell-equiv', DIFFERENT: 'cell-diff', UNRESOLVED: 'cell-unres' };
         return `<td class="${classes[status] || ''}" tabindex="0" data-row="${i}" data-field="${field}">${value === '' ? '<i class="empty-cell">—</i>' : e(value)}</td>`;
-      }).join('')}</tr>`).join('') || `<tr><td colspan="${headers.length + 1}" class="empty-state">Không có dòng phù hợp.</td></tr>`}</tbody></table>`;
+      }).join('')}</tr>`).join('') || `<tr><td colspan="${headers.length + 1}" class="empty-state">${emptyState('empty-filter', 'Không có dòng phù hợp.')}</td></tr>`}</tbody></table>`;
       pane.querySelectorAll('[data-row]').forEach(td => {
         const inspect = () => { const row = rows[Number(td.dataset.row)]; const field = headers[Number(td.dataset.field)]; if (row.cellComparisons[field]) this.openInspectorModal(field, row.key, row.cellComparisons[field]); };
         td.onclick = inspect; td.onkeydown = event => { if (event.key === 'Enter') inspect(); };
@@ -264,6 +268,7 @@ class App {
   openInspectorModal(field, key, comparison) {
     const values = { 'insp-field-name': field, 'insp-row-key': `Khóa: ${key}`, 'insp-status-badge': comparison.status, 'insp-raw-a': comparison.rawA, 'insp-raw-b': comparison.rawB, 'insp-norm-a': comparison.normA, 'insp-norm-b': comparison.normB, 'insp-type': comparison.type, 'insp-rule-id': comparison.ruleId, 'insp-reason': comparison.reason };
     for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value ?? '(Trống)';
+    document.getElementById('insp-status-badge').dataset.status = comparison.status;
     this.openModal('cell-inspector-modal');
   }
   exportJsonReport() {
@@ -281,7 +286,7 @@ class App {
     const container = document.getElementById('public-releases');
     try {
       const { items } = await api('/releases');
-      container.innerHTML = items.map(row => `<article class="metric-card"><h3>${e(row.product)} <small>v${e(row.version)}</small></h3><p>${e(row.platform)} · ${e(row.stage)} · ${e(row.size)}</p><p class="release-changelog">${e(row.changelog)}</p><a class="btn btn-outline btn-sm" href="${e(row.downloadUrl)}" target="_blank" rel="noopener noreferrer">Tải bản phát hành</a><details><summary>SHA256</summary><code class="checksum">${e(row.sha256)}</code></details></article>`).join('') || '<p class="empty-state">Chưa có bản phát hành được công bố. Bạn có thể dùng công cụ so sánh web ngay phía trên.</p>';
+      container.innerHTML = items.map(row => `<article class="metric-card"><h3>${e(row.product)} <small>v${e(row.version)}</small></h3><p>${e(row.platform)} · ${e(row.stage)} · ${e(row.size)}</p><p class="release-changelog">${e(row.changelog)}</p><a class="btn btn-outline btn-sm" href="${e(row.downloadUrl)}" target="_blank" rel="noopener noreferrer">Tải bản phát hành</a><details><summary>SHA256</summary><code class="checksum">${e(row.sha256)}</code></details></article>`).join('') || emptyState('empty-files', 'Chưa có bản phát hành được công bố. Bạn có thể dùng công cụ so sánh web ngay phía trên.');
     } catch { container.textContent = 'Chưa tải được danh sách phát hành. Vui lòng thử lại sau.'; }
   }
   showToast(text, type = 'info') {

@@ -1,0 +1,185 @@
+{
+  "collection_id": "dytava-real-datasets-4-levels-v1",
+  "created_at": "2026-11-12",
+  "real_data_only": true,
+  "contains_source_data": false,
+  "source_data_retrieved_and_validated": false,
+  "description": "12 official/origin snapshots curated for Dytava. Download from source. No data values edited or invented; actual labels not yet verified.",
+  "groups": [
+    {
+      "id": "G1",
+      "difficulty": "Basic",
+      "title": "Country Codes, repository snapshots",
+      "format": "CSV",
+      "source_page": "https://github.com/datasets/country-codes",
+      "primary_key_suggestion": [
+        "ISO3166-1-Alpha-2"
+      ],
+      "license_note": "PDDL claimed by maintainer, third-party ISO and other upstream rights may apply; review before redistribution",
+      "cases": [
+        "EXACT",
+        "DIFFERENT",
+        "row_added_removed",
+        "nulls",
+        "key_matching",
+        "schema_drift"
+      ],
+      "files": [
+        {
+          "role": "A",
+          "filename": "country_codes_2025-06-01.csv",
+          "release_date": "2025-06-01",
+          "revision": "52552b8f600b0210bd7589eda03abe6a3e833dc1",
+          "url": "https://raw.githubusercontent.com/datasets/country-codes/52552b8f600b0210bd7589eda03abe6a3e833dc1/data/country-codes.csv"
+        },
+        {
+          "role": "B",
+          "filename": "country_codes_2026-05-15.csv",
+          "release_date": "2026-05-15",
+          "revision": "39cee02f839e0e385eb8a743914ce9fb793889c0",
+          "url": "https://raw.githubusercontent.com/datasets/country-codes/39cee02f839e0e385eb8a743914ce9fb793889c0/data/country-codes.csv"
+        },
+        {
+          "role": "C",
+          "filename": "country_codes_2026-10-15.csv",
+          "release_date": "2026-10-15",
+          "revision": "a6129fd4a004685c51432ddc04e3543ff750bef7",
+          "url": "https://raw.githubusercontent.com/datasets/country-codes/a6129fd4a004685c51432ddc04e3543ff750bef7/data/country-codes.csv"
+        }
+      ]
+    },
+    {
+      "id": "G2",
+      "difficulty": "Intermediate",
+      "title": "ONS England and Wales Mid-Year Population Estimates",
+      "format": "XLSX",
+      "source_page": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/estimatesofthepopulationforenglandandwales",
+      "license_note": "Open Government Licence v3.0 except where otherwise stated",
+      "cases": [
+        "multiple_worksheets",
+        "table_regions",
+        "column_header_variation",
+        "sheet_mapping",
+        "schema_drift",
+        "time_series_revision",
+        "data_missing"
+      ],
+      "files": [
+        {
+          "role": "A",
+          "filename": "ONS_MYE_2023.xlsx",
+          "release_date": "2023-edition",
+          "url": "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Festimatesofthepopulationforenglandandwales%2Fmid20232023localauthorityboundarieseditionofthisdataset%2Fmye23tablesew.xlsx",
+          "size_hint_mb": 0.8
+        },
+        {
+          "role": "B",
+          "filename": "ONS_MYE_2024.xlsx",
+          "release_date": "2024-edition",
+          "url": "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Festimatesofthepopulationforenglandandwales%2Fmid20242023localauthorityboundaries%2Fmye24tablesew.xlsx",
+          "size_hint_mb": 19.4
+        },
+        {
+          "role": "C",
+          "filename": "ONS_MYE_2025.xlsx",
+          "release_date": "2025-edition",
+          "url": "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Festimatesofthepopulationforenglandandwales%2Fmid20252023localauthorityboundaries%2Fmye25tablesew.xlsx",
+          "size_hint_mb": 0.95
+        }
+      ]
+    },
+    {
+      "id": "G3",
+      "difficulty": "Advanced",
+      "title": "Our World in Data CO2 and greenhouse gas emissions",
+      "format": "CSV",
+      "source_page": "https://github.com/owid/co2-data",
+      "primary_key_suggestion": [
+        "iso_code",
+        "year"
+      ],
+      "license_note": "OWID CC BY for original contributions; third-party data requires own attribution/terms",
+      "cases": [
+        "numeric_precision",
+        "long_time_series",
+        "wide_schema",
+        "cross_version_revisions",
+        "unit_changes",
+        "nulls",
+        "missing_fields"
+      ],
+      "files": [
+        {
+          "role": "A",
+          "filename": "OWID_CO2_2024-11-22.csv",
+          "release_date": "2024-11-22",
+          "revision": "c67340b1f482f61b3c342a191ff4c6ecfc065266",
+          "url": "https://raw.githubusercontent.com/owid/co2-data/c67340b1f482f61b3c342a191ff4c6ecfc065266/owid-co2-data.csv"
+        },
+        {
+          "role": "B",
+          "filename": "OWID_CO2_2026-06-02.csv",
+          "release_date": "2026-06-02",
+          "revision": "382ee6c662b0ece26e111f263b44c029afad7787",
+          "url": "https://raw.githubusercontent.com/owid/co2-data/382ee6c662b0ece26e111f263b44c029afad7787/owid-co2-data.csv"
+        },
+        {
+          "role": "C",
+          "filename": "OWID_CO2_2026-11-10.csv",
+          "release_date": "2026-11-10",
+          "revision": "e830f0992c29d9d587330ac6c076a149315bc5a1",
+          "url": "https://raw.githubusercontent.com/owid/co2-data/e830f0992c29d9d587330ac6c076a149315bc5a1/owid-co2-data.csv"
+        }
+      ]
+    },
+    {
+      "id": "G4",
+      "difficulty": "Extreme",
+      "title": "World Bank World Development Indicators archived editions",
+      "format": "ZIP containing Excel files",
+      "source_page": "https://datatopics.worldbank.org/world-development-indicators/wdi-archives.html",
+      "license_note": "World Bank WDI CC BY 4.0; additional upstream terms may apply",
+      "cases": [
+        "massive_workbook",
+        "multiple_workbooks",
+        "many_indicators",
+        "key_mapping",
+        "large_file_memory",
+        "cancellation",
+        "cross_revision_comparison",
+        "schema_drift"
+      ],
+      "files": [
+        {
+          "role": "A",
+          "filename": "WDI_excel_2025_10_08.zip",
+          "release_date": "2025-10-08",
+          "url": "https://databank.worldbank.org/data/download/Archive/WDI_excel_2025_10_08.zip",
+          "fallback_url": "https://databankfiles.worldbank.org/public/ddpext_download/Archive/WDI_excel_2025_10_08.zip"
+        },
+        {
+          "role": "B",
+          "filename": "WDI_excel_2025_12_19.zip",
+          "release_date": "2025-12-19",
+          "url": "https://databank.worldbank.org/data/download/Archive/WDI_excel_2025_12_19.zip",
+          "fallback_url": "https://databankfiles.worldbank.org/public/ddpext_download/Archive/WDI_excel_2025_12_19.zip"
+        },
+        {
+          "role": "C",
+          "filename": "WDI_excel_2026_01_29.zip",
+          "release_date": "2026-01-29",
+          "url": "https://databank.worldbank.org/data/download/Archive/WDI_excel_2026_01_29.zip",
+          "fallback_url": "https://databankfiles.worldbank.org/public/ddpext_download/Archive/WDI_excel_2026_01_29.zip"
+        }
+      ]
+    }
+  ],
+  "important_notes": [
+    "Files are published real-world data, not Dytava synthetic fixtures.",
+    "Comparing different annual periods without column and key alignment can produce misleading all-row-added/removed differences.",
+    "Ground truth at cell-level does not exist automatically; independently label matching entities and genuine changes before reporting Precision/Recall.",
+    "ONS XLSX workbook sheet counts, formulas, and headers must be validated after download, not assumed.",
+    "OWID methodology/units changed in June 2026; do not treat numeric differences alone as errors.",
+    "G4 World Bank archives are large; download separately or pass --include-large."
+  ]
+}

@@ -1,3 +1,4 @@
+import { illustration } from './branding.js';
 import { api, escapeHtml as e, dateTime, download, message } from './api.js';
 
 export class AccountUI {
@@ -70,7 +71,7 @@ export class AccountUI {
   async renderHistory() {
     const container = document.getElementById('history-content');
     if (!this.app.user) {
-      container.innerHTML = '<div class="empty-state"><h3>Đăng nhập để xem lịch sử</h3><p>Thống kê được lưu riêng theo tài khoản.</p><button class="btn btn-primary" id="history-login">Đăng nhập</button></div>';
+      container.innerHTML = `<div class="empty-state">${illustration('empty-history')}<h3>Đăng nhập để xem lịch sử</h3><p>Thống kê được lưu riêng theo tài khoản.</p><button class="btn btn-primary" id="history-login">Đăng nhập</button></div>`;
       document.getElementById('history-login').onclick = () => this.openAuth(); return;
     }
     container.textContent = 'Đang tải lịch sử…';
@@ -78,7 +79,7 @@ export class AccountUI {
       const data = await api(`/comparisons?limit=20&offset=${this.offset}`);
       container.innerHTML = `<div class="section-toolbar"><p>${data.total} phiên đã lưu · Tự xóa sau ${this.app.retentionDays} ngày</p><button id="history-delete-all" class="btn btn-outline btn-sm" ${!data.total ? 'disabled' : ''}>Xóa toàn bộ lịch sử</button></div>
       <p class="privacy-note">Chỉ lưu định dạng, số dòng, cấu hình và thống kê. Để xem lại nội dung chi tiết, chọn lại hai tệp gốc.</p>
-      <div class="admin-table-container"><table class="admin-table"><thead><tr><th>Thời gian</th><th>Định dạng</th><th>Số dòng A / B</th><th>Exact / Equiv / Diff / Chờ duyệt</th><th>Thao tác</th></tr></thead><tbody>${data.items.map(row => `<tr><td>${e(dateTime(row.createdAt))}</td><td>${e(row.formatA.toUpperCase())} ↔ ${e(row.formatB.toUpperCase())}</td><td>${row.rowsA} / ${row.rowsB}</td><td>${row.summary.exact} / ${row.summary.equivalent} / ${row.summary.different} / ${row.summary.unresolved}</td><td><button class="btn btn-outline btn-sm" data-export="${row.id}">JSON thống kê</button> <button class="btn btn-ghost btn-sm" data-delete="${row.id}">Xóa</button></td></tr>`).join('') || '<tr><td colspan="5" class="empty-state">Chưa lưu phiên nào. Bấm “Lưu thống kê phiên” sau khi so sánh.</td></tr>'}</tbody></table></div>
+      <div class="admin-table-container"><table class="admin-table"><thead><tr><th>Thời gian</th><th>Định dạng</th><th>Số dòng A / B</th><th>Exact / Equiv / Diff / Chờ duyệt</th><th>Thao tác</th></tr></thead><tbody>${data.items.map(row => `<tr><td>${e(dateTime(row.createdAt))}</td><td>${e(row.formatA.toUpperCase())} ↔ ${e(row.formatB.toUpperCase())}</td><td>${row.rowsA} / ${row.rowsB}</td><td>${row.summary.exact} / ${row.summary.equivalent} / ${row.summary.different} / ${row.summary.unresolved}</td><td><button class="btn btn-outline btn-sm" data-export="${row.id}">JSON thống kê</button> <button class="btn btn-ghost btn-sm" data-delete="${row.id}">Xóa</button></td></tr>`).join('') || `<tr><td colspan="5" class="empty-state">${illustration('empty-history')}<p>Chưa lưu phiên nào. Bấm “Lưu thống kê phiên” sau khi so sánh.</p></td></tr>`}</tbody></table></div>
       <div class="pagination"><button id="history-prev" class="btn btn-outline btn-sm" ${!this.offset ? 'disabled' : ''}>Trang trước</button><span>${data.total ? this.offset + 1 : 0}–${Math.min(this.offset + 20, data.total)} / ${data.total}</span><button id="history-next" class="btn btn-outline btn-sm" ${this.offset + 20 >= data.total ? 'disabled' : ''}>Trang sau</button></div>`;
       container.querySelectorAll('[data-export]').forEach(btn => btn.onclick = () => download(data.items.find(row => row.id === btn.dataset.export), `statistics-${btn.dataset.export}.json`));
       container.querySelectorAll('[data-delete]').forEach(btn => btn.onclick = async () => {

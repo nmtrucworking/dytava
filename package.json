@@ -14,7 +14,8 @@
     "check": "npm run build && npm test",
     "admin:create": "node scripts/create-admin.js",
     "db:backup": "node scripts/backup.js",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "branding:sync": "node scripts/sync-branding.js"
   },
   "dependencies": {
     "dotenv": "^18.0.9",

@@ -19,10 +19,10 @@ Hệ thống website giới thiệu sản phẩm và trang quản trị sản ph
   - **Lưới Đối Chiếu Song Song Đồng Bộ (Side-by-Side Dual Grid):**
     - Tự động đồng bộ cuộn trang (Synchronized scrolling) giữa 2 bảng.
     - Tô màu trực quan 4 trạng thái theo chuẩn PRD:
-      - 🟢 **EXACT** (`#137A64`): Giống tuyệt đối.
-      - 🔵 **EQUIVALENT** (`#235CD7`): Khác format/scale nhưng tương đương ngữ nghĩa.
-      - 🔴 **DIFFERENT** (`#B42333`): Khác biệt nghiệp vụ thực tế.
-      - 🟡 **UNRESOLVED** (`#925B0E`): Mơ hồ, cần người dùng thẩm định.
+      - 🟢 **EXACT** (`#10B981`): Giống tuyệt đối.
+      - 🔵 **EQUIVALENT** (`#2563EB`): Khác format/scale nhưng tương đương ngữ nghĩa.
+      - 🔴 **DIFFERENT** (`#EF4444`): Khác biệt nghiệp vụ thực tế.
+      - 🟡 **UNRESOLVED** (`#F59E0B`): Mơ hồ, cần người dùng thẩm định.
   - **Cửa sổ Thẩm Tra Ô (Cell Inspector Modal):** Bấm vào ô bất kỳ để xem giá trị thô, giá trị chuẩn hóa, mã quy tắc (Rule ID) và lý do chi tiết.
   - **Xuất Báo Cáo:** Xuất tệp CSV khác biệt và biên bản kiểm toán JSON chuẩn theo hồ sơ thiết kế EXC.
 
@@ -85,3 +85,15 @@ web/
 │   └── sample-data.js    # 3 bộ dữ liệu mẫu thực tế (Academic, Finance, Inventory)
 └── assets/               # Brand assets gốc: SVG logos, app icons, design tokens
 ```
+
+## Đồng bộ branding
+
+Kho chính thức: `branding/mobile/assets/dytava/` và
+`branding/DYTAVA_Illustration_Library_v1/mobile/assets/dytava/illustrations/`.
+Chạy `npm run branding:sync` tại gốc dự án để đồng bộ SVG cho web và mobile.
+`npm run build` tự đồng bộ tài nguyên web và sinh `css/brand-tokens.css` từ palette đã duyệt.
+Không chỉnh các bản SVG đã sao chép trong `web/assets/dytava/`; sửa nguồn trong `branding/` rồi đồng bộ lại.
+
+Web dùng logo sáng/tối, functional icons, illustration cho hero, xử lý, lỗi,
+lịch sử trống, bộ lọc trống và trang hướng dẫn/quyền riêng tư. Chỉ đóng gói SVG,
+không tải PNG 4K vào giao diện. Màu chính xanh dương, nhập tệp xanh lá, xuất báo cáo tím.

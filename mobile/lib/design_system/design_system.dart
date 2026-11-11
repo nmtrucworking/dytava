@@ -6,3 +6,4 @@ export 'dytava_icons.dart';
 export 'dytava_illustrations.dart';
 export 'dytava_theme.dart';
 export 'dytava_components.dart';
+export 'dytava_asset.dart';
