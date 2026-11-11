@@ -6,6 +6,8 @@ app_name: Dytava
 ---
 # Dytava / ExcelCompare — mô tả đề tài
 
+> **Phạm vi kỹ thuật được chốt:** [ADR register 11/11/2026](../decisions/ADR_REGISTER_P0_2026-11-11.md). OCR một ảnh/bảng có review được đưa vào Android P0; iOS P1. Chưa có bằng chứng runtime, APK hoặc giảng viên phê duyệt mức OCR tối thiểu.
+
 Đề bài gốc: **So sánh 02 file Excel**, bao gồm phát hiện điểm giống/khác, thống kê, chỉ rõ vị trí khác nhau và **đọc từ file hình ảnh chụp**. Yêu cầu bổ sung: đóng gói thành file cài đặt. Ghi chú học phần hiện có: báo cáo giữa kỳ bằng slide, chấm trực tiếp buổi thứ 10; lịch ngày cụ thể cần xác nhận riêng.
 
 ## Bối cảnh và mục tiêu
@@ -19,16 +21,16 @@ Baseline kỹ thuật hiện hành là Flutter UI + application use cases + Pure
 | Yêu cầu | Phạm vi thiết kế / điều kiện nghiệm thu |
 | --- | --- |
 | Chọn hai nguồn A/B và preview | Input Contract, raw types/provenance và validation của đúng snapshot |
-| Đọc bảng | Kế hoạch P0 XLSX/CSV/TSV/JSON; mỗi adapter phải qua PoC/corpus, không tuyên bố đã hỗ trợ chỉ từ danh sách |
+| Đọc bảng | Kế hoạch P0 XLSX/CSV/TSV, một nguồn ảnh PNG/JPEG; JSON chuyển P1; mỗi adapter phải qua PoC/corpus, không tuyên bố đã hỗ trợ chỉ từ danh sách |
 | So sánh/thống kê/chỉ vị trí khác | Core semantic policy + mapping/key/direction đã xác nhận; báo cáo có evidence |
-| Đọc ảnh chụp | Bắt buộc theo đề bài gốc; baseline Flutter xếp OCR ở P2. INP-ADR-002 phải chốt với người phụ trách trước xác lập phạm vi nghiệm thu, chưa được bỏ yêu cầu |
+| Đọc ảnh chụp | Bắt buộc theo đề bài gốc; baseline cập nhật đưa OCR reviewed offline vào P0 theo INP-ADR-002. Mức OCR tối thiểu cần giảng viên xác nhận cho nghiệm thu |
 | File cài đặt | Android signed APK/AAB theo kênh giao; iOS P1 có signing/device gates riêng. Chưa có evidence build/release trong đợt tài liệu |
 
 ## Functional requirements
 
 Input nhận artifact read-only, kiểm tra format/limits, chọn scope/header, giữ raw/null/formula/provenance và chỉ mở mapping khi A/B hợp lệ. Comparison tách mapping và policy khỏi ImportConfig, không tự đoán key/locale. EXACT/EQUIVALENT/DIFFERENT/UNRESOLVED là kết quả comparison, không là datatype.
 
-A là baseline/B là bản mới hay cho đảo chiều, số sheet, header defaults, device limits, parser lựa chọn, xác nhận dtype/key và retention vẫn là quyết định mở trong [Input decision register](../specs/input/README.md#decision-register). Không coi giá trị fixture là phê duyệt sản phẩm.
+Các lựa chọn A/B, sheet/scope, header, resource limits, parser, xác nhận dtype/key và retention đã được chốt trong [ADR register](../decisions/ADR_REGISTER_P0_2026-11-11.md) theo engineering baseline; PoC, schema migration và benchmark vẫn cần hoàn thành. Không coi giá trị fixture là phê duyệt sản phẩm.
 
 ## Non-functional requirements
 
