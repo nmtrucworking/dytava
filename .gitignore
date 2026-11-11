@@ -26,14 +26,12 @@ mobile/.dart_tool/
 mobile/android/app/debug/
 mobile/android/app/profile/
 mobile/android/app/release/
+mobile/android/.gradle/
+mobile/android/local.properties
 
-# Android (legacy-android)
+# Gradle & Build Cache
 .gradle/
 build/
-legacy-android/.gradle/
-legacy-android/build/
-legacy-android/app/build/
-legacy-android/local.properties
 local.properties
 
 # IDE & Editor

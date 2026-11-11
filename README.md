@@ -78,9 +78,6 @@ excelcompare/
 │   ├── diagrams/            # Sơ đồ kiến trúc (DOT & PNG)
 │   └── dytava_brand/        # Bộ nhận diện thương hiệu Dytava Brand Identity v1.0
 │
-├── legacy-android/          # 📦 Bản Android Native cũ (Kotlin + Jetpack Compose) lưu tham khảo
-│   └── app/                 # Lưu trữ UI components & design system Kotlin
-│
 ├── tests/                   # 🧪 Bộ kiểm thử tự động (26 acceptance test cases)
 ├── .github/workflows/ci.yml # 🤖 GitHub Actions CI tự động kiểm tra Web & Flutter
 └── package.json             # Quản lý scripts Node.js & dependencies
