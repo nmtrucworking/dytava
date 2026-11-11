@@ -1,0 +1,16 @@
+name: excelcompare_mobile
+description: Flutter cross-platform starter for ExcelCompare (Android P0, iOS P1).
+publish_to: none
+version: 0.1.0+1
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  excelcompare_core:
+    path: ../../packages/excelcompare_core
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+flutter:
+  uses-material-design: true

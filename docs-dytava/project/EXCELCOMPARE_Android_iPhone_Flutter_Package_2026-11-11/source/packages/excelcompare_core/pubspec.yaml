@@ -1,0 +1,10 @@
+name: excelcompare_core
+version: 0.1.0
+publish_to: none
+description: Pure Dart policy-engine proof of concept for ExcelCompare (selected semantic types only)
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+dependencies:
+  decimal: ^3.2.6
+dev_dependencies:
+  test: ^1.26.3

@@ -1,0 +1,53 @@
+{
+  "schema_version": 2,
+  "policy_id": "academic-records",
+  "policy_version": "2.1.0",
+  "canonical_serializer_version": "1",
+  "unresolved_handling": "REVIEW_REQUIRED",
+  "auto_cast_all_fields": false,
+  "defaults": {
+    "unicode_normalization": "NFC",
+    "null_policy": "DISTINCT",
+    "unknown_rule": "REJECT",
+    "fail_on_ambiguity": true
+  },
+  "alignment": {
+    "mode": "KEY",
+    "mapping": [
+      {"left": "Mã SV", "right": "ID", "logical_name": "student_id"},
+      {"left": "Điểm", "right": "Score", "logical_name": "score"},
+      {"left": "Đạt", "right": "Passed", "logical_name": "passed"}
+    ],
+    "keys": ["student_id"],
+    "on_duplicate": "UNRESOLVED",
+    "fuzzy_keys": false
+  },
+  "source_profiles": {
+    "A": {"locale": "vi-VN", "time_zone": "Asia/Ho_Chi_Minh"},
+    "B": {"locale": "vi-VN", "time_zone": "Asia/Ho_Chi_Minh"}
+  },
+  "fields": {
+    "student_id": {
+      "semantic_type": "IDENTIFIER",
+      "trim": true,
+      "preserve_leading_zeros": true,
+      "case_sensitive": true,
+      "allow_numeric_cast": false,
+      "null_policy": "DISTINCT"
+    },
+    "score": {
+      "semantic_type": "DECIMAL",
+      "comparison": {"ignore_scale": true, "tolerance_abs": "0"},
+      "source_overrides": {
+        "A": {"decimal_separator": ".", "grouping_separator": ",", "allow_grouping": false},
+        "B": {"decimal_separator": ",", "grouping_separator": ".", "allow_grouping": false}
+      },
+      "null_policy": "DISTINCT"
+    },
+    "passed": {
+      "semantic_type": "BOOLEAN",
+      "aliases": {"Không": false, "Có": true, "false": false, "true": true},
+      "null_policy": "DISTINCT"
+    }
+  }
+}

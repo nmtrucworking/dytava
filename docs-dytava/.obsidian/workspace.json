@@ -1,0 +1,227 @@
+{
+  "main": {
+    "id": "9b9fb01b92003118",
+    "type": "split",
+    "children": [
+      {
+        "id": "2dac3c20c8280032",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "466309aff7eee6e4",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "Tab mới"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "63cb37b559e10a26",
+    "type": "split",
+    "children": [
+      {
+        "id": "0cffa709ca1e4aa0",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "43965cded4c76d2d",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Trình duyệt tệp"
+            }
+          },
+          {
+            "id": "7c5cb61a478371a4",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Tìm kiếm"
+            }
+          },
+          {
+            "id": "0a7470b71769aef9",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Đánh dấu"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 390.5625
+  },
+  "right": {
+    "id": "a962ed24de38192c",
+    "type": "split",
+    "children": [
+      {
+        "id": "c7fe6011dd082cb9",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "942778126db82f05",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "project/Project Description.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Liên kết đến"
+            }
+          },
+          {
+            "id": "e7c669572c220078",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "project/Project Description.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Liên kết đi ra"
+            }
+          },
+          {
+            "id": "d57e976c34b2e837",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Thẻ"
+            }
+          },
+          {
+            "id": "48a514af68880253",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Tất cả thuộc tính"
+            }
+          },
+          {
+            "id": "8d4ffe5299d08138",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "project/Project Description.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Đề cương"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Mở bộ chuyển đổi nhanh": false,
+      "graph:Mở xem biểu đồ": false,
+      "canvas:Tạo bảng mới": false,
+      "daily-notes:Mở ghi chú hôm nay": false,
+      "templates:Chèn mẫu": false,
+      "command-palette:Mở khay lệnh": false,
+      "bases:Tạo cơ sở mới": false
+    }
+  },
+  "active": "466309aff7eee6e4",
+  "lastOpenFiles": [
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/ANDROID_IOS_BUILD_RELEASE_GUIDE.md",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/EXCELCOMPARE_MASTER_ANDROID_IOS.md",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/EXCELCOMPARE_MASTER_ANDROID_IOS.pdf",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/flutter_architecture.png",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/README_START_HERE.md",
+    "project/Khởi tạo dự án.md",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/lib/src/semantic_poc.dart",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/test/semantic_poc_test.dart",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/lib/src",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/lib/excelcompare_core.dart",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/apps/mobile/test/widget_test.dart",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/apps/mobile/lib/main.dart",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/test",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/pubspec.yaml",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/lib",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/README.md",
+    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/README.md",
+    "project/Project Description.md",
+    "project/Project Description - Mobile - Hoan thien.md",
+    "project/Optical Character Recognition (OCR).md",
+    "project/dytava-stacked-4k.png",
+    "project/dytava-primary-4k.png",
+    "project/DATATYPE_POLICY_ENGINE_SPEC.md",
+    "attachments/Pasted image 20261030005624.png",
+    "attachments/Pasted image 20261030005921.png",
+    "attachments/Pasted image 20261030010129.png",
+    "attachments/Pasted image 20261030011313.png",
+    "Practices/BTH4/BTH4 Hương dẫn.md",
+    "Practices/BTH4/LapTrinhDiDong/app/build/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxhdpi-v4/ic_launcher_round.webp",
+    "Practices/BTH4/LapTrinhDiDong/app/build/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxhdpi-v4/ic_launcher.webp",
+    "Practices/BTH4/LapTrinhDiDong/app/build/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxxhdpi-v4/ic_launcher_round.webp",
+    "Lectures/MainActivity.kt.md",
+    "Lectures/first-project.md",
+    "Lectures/Chưa đặt tên.md",
+    "Chưa đặt tên.md",
+    "project/PD.md"
+  ]
+}
