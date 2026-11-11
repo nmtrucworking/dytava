@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "2dac3c20c8280032",
+        "id": "15c1302e81ff335e",
         "type": "tabs",
         "children": [
           {
-            "id": "466309aff7eee6e4",
+            "id": "643f1785fe43aee3",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -79,7 +79,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 390.5625
+    "width": 234.8046875
   },
   "right": {
     "id": "a962ed24de38192c",
@@ -184,13 +184,24 @@
       "bases:Tạo cơ sở mới": false
     }
   },
-  "active": "466309aff7eee6e4",
+  "active": "43965cded4c76d2d",
   "lastOpenFiles": [
+    "branding.md",
+    "attachments/system-branding.png",
+    "attachments",
+    "README.md",
+    "dytava_brand/assets/dytava-reversed-horizontal.svg",
+    "dytava_brand/assets/dytava-primary-4k.png",
+    "dytava_brand/assets/dytava-icon-1024.png",
+    "dytava_brand/assets/dytava-icon-192.png",
+    "dytava_brand/assets/dytava-app-icon-4096.png",
+    "diagrams/flutter_architecture.png",
+    "diagrams/architecture.png",
+    "EXCELCOMPARE_MASTER.pdf",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/ANDROID_IOS_BUILD_RELEASE_GUIDE.md",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/EXCELCOMPARE_MASTER_ANDROID_IOS.md",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/EXCELCOMPARE_MASTER_ANDROID_IOS.pdf",
-    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/flutter_architecture.png",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/README_START_HERE.md",
     "project/Khởi tạo dự án.md",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/lib/src/semantic_poc.dart",
@@ -200,8 +211,6 @@
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/apps/mobile/test/widget_test.dart",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/apps/mobile/lib/main.dart",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/test",
-    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/pubspec.yaml",
-    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/lib",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/README.md",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/README.md",
     "project/Project Description.md",
@@ -210,18 +219,10 @@
     "project/dytava-stacked-4k.png",
     "project/dytava-primary-4k.png",
     "project/DATATYPE_POLICY_ENGINE_SPEC.md",
-    "attachments/Pasted image 20261030005624.png",
-    "attachments/Pasted image 20261030005921.png",
-    "attachments/Pasted image 20261030010129.png",
-    "attachments/Pasted image 20261030011313.png",
     "Practices/BTH4/BTH4 Hương dẫn.md",
-    "Practices/BTH4/LapTrinhDiDong/app/build/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxhdpi-v4/ic_launcher_round.webp",
-    "Practices/BTH4/LapTrinhDiDong/app/build/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxhdpi-v4/ic_launcher.webp",
-    "Practices/BTH4/LapTrinhDiDong/app/build/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxxhdpi-v4/ic_launcher_round.webp",
     "Lectures/MainActivity.kt.md",
     "Lectures/first-project.md",
     "Lectures/Chưa đặt tên.md",
-    "Chưa đặt tên.md",
     "project/PD.md"
   ]
 }
