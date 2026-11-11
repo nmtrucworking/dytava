@@ -1,5 +1,7 @@
 # Nguồn artifact, metadata và vòng đời
 
+> **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
+
 Document ID: INP-002\
 Version: 0.1.0\
 Status: DRAFT\
@@ -218,7 +220,7 @@ Sử dụng Files / Document Picker thông qua plugin hoặc platform adapter ph
 
 Không ghi trực tiếp URI nhạy cảm hoặc đường dẫn đầy đủ vào telemetry, crash logs và báo cáo công khai.
 
-Retention và scratch policy còn mở INP-ADR-009. Bản sao tạm nếu cần chỉ là derivative private; cleanup khi cancel/lỗi/kết thúc theo policy đã quyết định. Chưa cam kết giữ 24 giờ hoặc cache nội dung mặc định. Không giả định provider seekable; phải đóng handles cả khi provider ngắt kết nối.
+Retention và scratch policy đã chốt theo INP-ADR-009: private sandbox scratch chỉ trong attempt/session, cleanup khi success/fail/cancel/close, sweep sau process death; không lưu raw mặc định. Bản sao tạm nếu cần chỉ là derivative private; cleanup khi cancel/lỗi/kết thúc theo policy đã quyết định. Không cache raw thường trực và không có TTL 24 giờ; metadata/history chỉ tối thiểu và không chứa raw. Không giả định provider seekable; phải đóng handles cả khi provider ngắt kết nối.
 
 ## 9. Acceptance Criteria
 

@@ -1,5 +1,7 @@
 # Kiểm tra đầu vào và registry lỗi
 
+> **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
+
 Document ID: INP-007\
 Version: 0.1.0\
 Status: DRAFT\
@@ -35,7 +37,7 @@ ValidationResult = {issues[], eof_validated, snapshot_id?, complete}
 - **INP-RULE-031:** Kiểm tra limits trước và trong khi đọc, không chỉ tin metadata size. Profile bắt buộc quy định bytes, decompressed bytes, ZIP entries/ratio, rows/cells, text length, JSON depth và thời gian/cancel budget.
 - **INP-RULE-032:** Không thay invalid bytes, truncate records, bỏ file parts hoặc sửa nguồn để vượt validation. Expected format mismatch có thể review; cấu trúc không an toàn luôn ERROR.
 
-Resource profile fixture-only-small-v1 chỉ phục vụ validation fixtures nhỏ, không là benchmark Android. Không có hạn mức sản phẩm được phê duyệt; adapter không resolve được resource profile phải fail closed (INP-ERR-011).
+Resource profile fixture-only-small-v1 chỉ phục vụ validation fixtures nhỏ, không là benchmark Android. INP-ADR-004 đã chọn bootstrap profile android-p0-conservative-v1 (10MiB/source; 64MiB uncompressed XLSX; 2.000 ZIP entries; 100:1 ratio; 20.000 rows; 100 columns; 500.000 cells; 12MP image; watchdog 60s), nhưng các giới hạn chưa được benchmark, không phải throughput được bảo đảm. Adapter không resolve được profile phải fail closed (INP-ERR-011).
 
 ## 5. Input / Output Contract
 
@@ -82,7 +84,7 @@ INP-TC-001–016 giữ tiêu chí access/format ban đầu; INP-TC-031 kiểm tr
 
 ## 10. Open Questions
 
-INP-ADR-004 chờ benchmark limits; cần message catalog bản địa hóa và platform-specific exception mapping trước release. Schema JSON hiện tại không serialize toàn bộ ValidationIssue; contract ứng dụng ở trên phải có integration tests khi triển khai.
+INP-ADR-004 đã chốt profile bootstrap; cần benchmark máy thật và hạ trần nếu chưa đạt. Message catalog bản địa hóa và platform-specific exception mapping vẫn là implementation tasks trước release. Schema JSON hiện tại không serialize toàn bộ ValidationIssue; contract ứng dụng ở trên phải có integration tests khi triển khai.
 
 ## 11. References
 

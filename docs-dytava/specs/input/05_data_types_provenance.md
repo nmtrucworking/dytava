@@ -1,5 +1,7 @@
 # Kiểu dữ liệu nguồn và provenance
 
+> **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
+
 Document ID: INP-005\
 Version: 0.1.0\
 Status: DRAFT\
@@ -81,7 +83,7 @@ INP-TC-021 numeric 123/style 00000; INP-TC-022 null taxonomy; INP-TC-023 JSON nu
 
 ## 10. Open Questions
 
-INP-ADR-006: policy giải thích numeric identifiers bị mất biểu diễn. INP-ADR-007: parser PoC bảo toàn raw token/display/cache. Cần quyết định serializer logical preview và extension metadata trước khi mở rộng schema.
+INP-ADR-006 đã chốt: numeric identifier thiếu lexical evidence → UNRESOLVED, không khôi phục leading zeros. INP-ADR-007 đã chốt chiến lược XlsxFormatAdapter; parser PoC và fidelity evidence vẫn phải thực hiện. Cần quyết định serializer logical preview và extension metadata trước khi mở rộng schema.
 
 ## 11. References
 

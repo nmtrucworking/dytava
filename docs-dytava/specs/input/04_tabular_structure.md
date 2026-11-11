@@ -1,5 +1,7 @@
 # Cấu trúc bảng và phạm vi dữ liệu
 
+> **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
+
 Document ID: INP-004\
 Version: 0.1.0\
 Status: DRAFT\
@@ -9,7 +11,7 @@ Updated: 11/11/2026
 
 ## 1. Mục đích và phạm vi
 
-Định nghĩa SourceTable, Field, Row và preview mà adapter cung cấp trước normalization. Mô hình chứa được nhiều bảng; số bảng/sheet được phép trong sản phẩm còn chờ INP-ADR-003. Không suy ra hỗ trợ nhiều sheet từ khả năng biểu diễn của schema.
+Định nghĩa SourceTable, Field, Row và preview mà adapter cung cấp trước normalization. Mô hình chứa được nhiều bảng; Android P0 chỉ chọn **một table/scope trên mỗi nguồn** theo INP-ADR-003. Nhiều sheet trong workbook được hiển thị để người dùng chọn một, không phải multi-sheet comparison. Không suy ra hỗ trợ nhiều sheet từ khả năng biểu diễn của schema.
 
 ## 2. Thuật ngữ và định nghĩa
 
@@ -69,7 +71,7 @@ INP-TC-017: header trùng không làm mất cột. INP-TC-018: merged/hidden kh�
 
 ## 10. Open Questions
 
-INP-ADR-003 (số sheet/bảng); INP-ADR-005 (header mặc định). Cần extension schema riêng nếu sẽ serialize merges/visibility thay vì giữ inspect metadata trong adapter; phiên bản hiện tại không tuyên bố bao phủ toàn bộ workbook style model.
+INP-ADR-003 và INP-ADR-005 đã chốt trong ADR register: một scope/table mỗi nguồn; first-row header chỉ gợi ý và bắt buộc confirm. Cần extension schema riêng nếu sẽ serialize merges/visibility thay vì giữ inspect metadata trong adapter; phiên bản hiện tại không tuyên bố bao phủ toàn bộ workbook style model.
 
 ## 11. References
 

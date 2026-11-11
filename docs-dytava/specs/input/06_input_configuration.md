@@ -1,5 +1,7 @@
 # Cấu hình nhập và ranh giới comparison policy
 
+> **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
+
 Document ID: INP-006\
 Version: 0.1.0\
 Status: DRAFT\
@@ -9,7 +11,7 @@ Updated: 11/11/2026
 
 ## 1. Mục đích và phạm vi
 
-Tách cấu hình đọc cấu trúc nguồn khỏi mapping/key và semantic policy. Draft schema 0.1.0 chỉ mô tả ImportConfig P0; không phải bản thay thế policy schema v2 và không chứng minh adapters đã triển khai.
+Tách cấu hình đọc cấu trúc nguồn khỏi mapping/key và semantic policy. Draft schema 0.1.0 mô tả InputConfig bảng tabular nhưng chưa encode image OCR vừa đưa lên Android P0; cần schema migration/version mới và receipt/extraction contracts. Không thay thế policy schema v2 và không chứng minh adapters đã triển khai.
 
 ## 2. Thuật ngữ và định nghĩa
 
@@ -27,7 +29,7 @@ ImportConfig quyết định cách đọc bytes thành bảng. ComparisonConfig 
 | hidden_content, merged_cells | Quy tắc preview include/exclude/review và anchor_only/review |
 | validation_behavior | on_ambiguity=review; ragged_records=reject; invalid_encoding=reject |
 
-Schema: [import_config](schemas/import_config.schema.json). JSON flat records dùng header mode none; field names lấy từ keys. JSON records_pointer="" chọn root array. CSV scopes dùng logical record number, gồm header nếu có.
+Schema: [import_config](schemas/import_config.schema.json). JSON flat records (P1) dùng header mode none; field names lấy từ keys. JSON records_pointer="" chọn root array. CSV scopes dùng logical record number, gồm header nếu có.
 
 ## 4. Quy tắc và ràng buộc
 
@@ -36,7 +38,7 @@ Schema: [import_config](schemas/import_config.schema.json). JSON flat records d�
 - **INP-RULE-028:** Inference chỉ là gợi ý. detect chưa có confirmed_row, hidden/merged=review chưa giải quyết hoặc dialect mơ hồ đều chặn PREVIEW_READY.
 - **INP-RULE-029:** ImportConfig không nhúng mapping, key, tolerance, currency hoặc toàn bộ policy. Thuộc tính lạ bị schema từ chối.
 
-Không đặt mặc định sản phẩm cho header, chiều A/B, số sheet, retention hay resource limits khi ADR chưa chốt. Fixture dùng explicit values để kiểm tra ví dụ; chúng không trở thành defaults. Với cấu hình điều khiển kiểu đọc, nguồn A và B được phép khác encoding/delimiter/profile. Locale diễn giải decimal/date nằm trong `source_profiles`/`source_overrides` của policy v2, tránh hai nơi cùng định nghĩa semantic parse.
+9 ADR đã chốt engineering baseline: suggested header đầu scope cần confirm; default hiển thị A_TO_B cần user confirm trước job; một selected table mỗi nguồn; scratch private ngắn hạn; resource profile android-p0-conservative-v1 chứa các trần tạm chưa benchmark. Không tự lấy defaults từ fixture. Fixture dùng explicit values để kiểm tra ví dụ; chúng không trở thành defaults. Với cấu hình điều khiển kiểu đọc, nguồn A và B được phép khác encoding/delimiter/profile. Locale diễn giải decimal/date nằm trong `source_profiles`/`source_overrides` của policy v2, tránh hai nơi cùng định nghĩa semantic parse.
 
 ## 5. Input / Output Contract
 
@@ -51,7 +53,7 @@ ComparisonConfig(snapshot_id, direction, table_pairs, field_mapping,
                  key_fields[], policy_ref(id, version, digest), review_receipts)
 ```
 
-`direction` phải explicit trước báo cáo added/removed (A_TO_B hoặc B_TO_A); chưa chọn default. Một key là mảng một field; composite key là mảng có thứ tự, không nối text bằng delimiter dễ collision. Mapping dùng field IDs và table IDs thuộc snapshot; nhãn header chỉ hỗ trợ hiển thị. Policy v2 hiện có alignment.mapping/keys: ComparisonConfig là binding ứng dụng tới policy đã compile, không tạo bản semantics cạnh tranh. Mapping trong policy ví dụ dùng nhãn phải resolve sang ID duy nhất hoặc review.
+`direction` phải explicit trước báo cáo added/removed (A_TO_B hoặc B_TO_A); A_TO_B là suggested default nhưng chỉ trở thành effective khi user confirm. Một key là mảng một field; composite key là mảng có thứ tự, không nối text bằng delimiter dễ collision. Mapping dùng field IDs và table IDs thuộc snapshot; nhãn header chỉ hỗ trợ hiển thị. Policy v2 hiện có alignment.mapping/keys: ComparisonConfig là binding ứng dụng tới policy đã compile, không tạo bản semantics cạnh tranh. Mapping trong policy ví dụ dùng nhãn phải resolve sang ID duy nhất hoặc review.
 
 Schema không kiểm tra cross-file binding. Runtime phải xác nhận source_a/B trỏ đúng artifact side, format/scopes khớp manifest/tables, resource profile tồn tại, adapter hỗ trợ profile, key/mapping không tham chiếu cột cũ.
 

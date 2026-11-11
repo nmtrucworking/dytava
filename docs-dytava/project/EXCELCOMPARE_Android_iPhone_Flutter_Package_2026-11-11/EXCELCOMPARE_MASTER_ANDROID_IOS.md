@@ -1,5 +1,7 @@
 <!-- ExcelCompare Flutter/Dart master; content updated for Android P0 + iOS P1 -->
 
+> **Scope override 11/11/2026:** [ADR REGISTER P0](../../decisions/ADR_REGISTER_P0_2026-11-11.md) đã chốt 9 quyết định: OCR ảnh một nguồn + manual review lên Android P0; P0 XLSX/CSV/TSV, JSON chuyển P1. Các dòng OCR P2/ADR OPEN trong Master 2.2 là lịch sử, không còn là phạm vi phát hành hiện hành. Contract và Flutter tests chưa đạt gate.
+
 > Cập nhật tách Input ngày 11/11/2026: bản Markdown này giữ kiến trúc/Core và liên kết sang Input DRAFT; Markdown là nguồn tài liệu hiện hành. Policy v2 chuẩn để biên soạn tiếp: [project/comparison_policy.v2.example.json](../comparison_policy.v2.example.json). Các defaults Input chưa chốt được quản lý ở decision register; đề xuất cũ trong Master không tự phê duyệt chúng.
 
 <!-- 2.2-FLUTTER-ANDROID-IOS-DESIGN; not a production-qualified implementation -->

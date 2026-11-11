@@ -1,5 +1,7 @@
 # Phạm vi và hợp đồng Input
 
+> **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
+
 Document ID: INP-001\
 Version: 0.1.0\
 Status: DRAFT\
@@ -25,7 +27,7 @@ EXACT/EQUIVALENT/DIFFERENT/UNRESOLVED là comparison decisions. IMPORTING/FAILED
 
 ## 3. Các thành phần dữ liệu
 
-Một phiên so sánh có đúng hai nguồn A và B. Mỗi nguồn gắn một artifact đang được chọn; hai artifact có thể cùng tên hoặc cùng hash và vẫn có identity/side riêng. Artifact có thể chứa nhiều sheet/table; schema biểu diễn nhiều scopes nhưng số bảng cho phép trong một comparison còn mở (INP-ADR-003). Người dùng cung cấp file, chọn scope/header/profile; hệ thống giữ bytes/types/locations; inference chỉ đề xuất; policy xác nhận semantic rules.
+Một phiên so sánh có đúng hai nguồn A và B. Mỗi nguồn gắn một artifact đang được chọn; hai artifact có thể cùng tên hoặc cùng hash và vẫn có identity/side riêng. Artifact có thể chứa nhiều sheet/table; schema biểu diễn nhiều scopes nhưng P0 chỉ cho phép đúng một selected table/scope trên mỗi nguồn theo INP-ADR-003. Người dùng cung cấp file, chọn scope/header/profile; hệ thống giữ bytes/types/locations; inference chỉ đề xuất; policy xác nhận semantic rules.
 
 | Thành phần | Nguồn định nghĩa |
 | --- | --- |
@@ -45,7 +47,7 @@ Một phiên so sánh có đúng hai nguồn A và B. Mỗi nguồn gắn một 
 
 Nguồn hợp lệ khi đọc được đúng snapshot bytes, format/profile có capability đáp ứng chế độ yêu cầu, scope/header resolved, full parse đạt limits/schema/invariants, raw types/provenance được bảo toàn hoặc loss được xử lý, không còn ERROR/REVIEW blocker. Một nguồn hợp lệ chưa đủ cho toàn phiên.
 
-Phạm vi kế hoạch theo Flutter 2.2: Android P0 XLSX/CSV/TSV/JSON flat records; iOS P1; formats P1 JSONL/NDJSON, XLS/XLSM/ODS; P2 PDF/image OCR, XML/HTML table/XLSB. Đây là kế hoạch adapter. Parser Dart/package thật phải có PoC/corpus; icon format không phải bằng chứng support. Đề bài đọc ảnh và lịch P2 còn mâu thuẫn, ghi INP-ADR-002.
+Phạm vi quyết định theo 9 ADR (11/11/2026): Android P0 XLSX/CSV/TSV và tối đa một nguồn ảnh PNG/JPEG có OCR + manual review; JSON/JSONL, XLS/XLSM/ODS và iOS P1; PDF/multi-page/cloud OCR, XML/HTML table/XLSB sau P0. Đây là kế hoạch adapter. Parser Dart/package thật phải có PoC/corpus; icon format không phải bằng chứng support. Đề bài đọc ảnh và lịch P2 còn mâu thuẫn, ghi INP-ADR-002.
 
 ## 5. Input / Output Contract
 
@@ -73,7 +75,7 @@ INP-TC-001–016 cho source/format, 017–025 cho structure/types, 026–030 con
 
 ## 10. Open Questions
 
-Tất cả quyết định mở nằm trong [decision register](README.md#decision-register). Không dùng giá trị fixture làm mặc định được phê duyệt. Trước APPROVED cần chốt A/B direction, OCR học phần, sheet cardinality, limits, header, numeric identifier policy, parser PoC, confirmation và retention.
+Tất cả quyết định mở nằm trong [decision register](README.md#decision-register). Không dùng giá trị fixture làm mặc định được phê duyệt. 9 ADR đã được chốt theo engineering baseline; trước khi phê duyệt contract vẫn cần giảng viên xác nhận mức OCR, migration schema cho ảnh P0, parser/OCR PoC, benchmark, review và test evidence.
 
 ## 11. References
 
