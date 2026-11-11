@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/nmtrucworking/dytava/actions"><img src="https://img.shields.io/badge/CI-Passing-22c55e?style=for-the-badge&logo=github-actions&logoColor=white" alt="CI Status"></a>
+  <a href="https://github.com/nmtrucworking/dytava/actions"><img src="https://github.com/nmtrucworking/dytava/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-24%2B-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"></a>
   <a href="#privacy-first-architecture"><img src="https://img.shields.io/badge/Privacy-100%25%20Client--Side-blueviolet?style=for-the-badge" alt="Privacy First"></a>
@@ -22,6 +22,8 @@
 ---
 
 ## Tài liệu thiết kế hiện hành
+
+**Quyết định phạm vi kỹ thuật 11/11/2026:** [9 ADR Android P0](docs-dytava/decisions/ADR_REGISTER_P0_2026-11-11.md) đã chốt OCR ảnh PNG/JPEG có review vào P0; XLSX/CSV/TSV là nguồn bảng tính P0; JSON và iOS chuyển P1. Đây là mục tiêu triển khai; Flutter app hiện là PoC, chưa đạt release/device gates.
 
 Bắt đầu tại [Input Specification 0.1.0 — DRAFT](docs-dytava/specs/input/README.md): nguồn A/B, định dạng, raw types/provenance, cấu hình, validation, state machine, schemas và fixtures. Baseline thiết kế mobile là Flutter/Dart — Android P0, iOS P1; danh sách định dạng dự kiến không là bằng chứng adapter đã hỗ trợ.
 
