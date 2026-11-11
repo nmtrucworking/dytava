@@ -1,4 +1,4 @@
-# Input ảnh và OCR — phạm vi P2
+# Input ảnh và OCR — phạm vi Android P0 tối thiểu
 
 Document ID: INP-010\
 Version: 0.1.0\
@@ -9,7 +9,7 @@ Updated: 11/11/2026
 
 ## 1. Mục đích và phạm vi
 
-OCR/PDF-image là P2 theo baseline Flutter 2.2, chưa là tính năng đã triển khai. Yêu cầu học phần “đọc từ file hình ảnh chụp” vẫn bắt buộc trong đề bài; mâu thuẫn ưu tiên với P0 phải giải quyết tại INP-ADR-002, không âm thầm bỏ yêu cầu.
+Theo [INP-ADR-002 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md), Android P0 nhận tối đa một nguồn ảnh PNG/JPEG trong hai nguồn A/B (một ảnh, một bảng), dùng model nhận dạng chữ bundled on-device, và yêu cầu manual table/text review trước handoff. PDF, multi-page, cloud OCR, ảnh-ảnh và bố cục bảng phức tạp không thuộc P0. Quyết định chưa chứng minh đã có adapter/SDK chạy; mức OCR tối thiểu còn cần giảng viên xác nhận.
 
 ## 2. Thuật ngữ và định nghĩa
 
@@ -31,11 +31,11 @@ Nếu không nhận diện được lưới bảng, chuyển NEEDS_REVIEW hoặc
 
 ## 5. Input / Output Contract
 
-image/camera → decode/limits → orientation/crop/deskew có transform → text blocks + polygons → table reconstruction → SourceTable + ocrText cells PENDING → manual review + receipts → validated extraction snapshot. Adapter capability OCR_REVIEW_REQUIRED vẫn giữ nguyên sau review; trạng thái cells thay thành CONFIRMED. Schema 0.1.0 có source_ref/cell cho thiết kế P2; ImportConfig P0 không nhận image, nên schema support không đồng nghĩa ingestion enabled.
+image/camera → decode/limits → orientation/crop/deskew có transform → text blocks + polygons → table reconstruction → SourceTable + ocrText cells PENDING → manual review + receipts → validated extraction snapshot. Adapter capability OCR_REVIEW_REQUIRED vẫn giữ nguyên sau review; trạng thái cells thay thành CONFIRMED. Schema Input 0.1.0 có source_ref/cell OCR nhưng ImportConfig **chưa nhận image**. Trước khi bật Android P0 OCR phải có schema migration/version mới, extraction manifest, review receipt contract và integration tests; không dùng schema OCR đã mô tả làm chứng cứ tính năng đang chạy.
 
 ## 6. Luồng xử lý
 
-File picker/camera explicit consent → local recognition nếu capability đã kiểm thử → preview overlay ảnh và cells → sửa layout/text → xác nhận từng cell hoặc batch được liệt kê rõ → freeze extraction revision → kiểm tra toàn bộ selected scope → gate READY. Cloud OCR chỉ sau opt-in riêng với service/backend contract; không tự fallback khi offline recognition thất bại.
+File picker/camera explicit consent → local recognition nếu capability đã kiểm thử → preview overlay ảnh và cells → sửa layout/text → xác nhận từng cell hoặc batch được liệt kê rõ → freeze extraction revision → kiểm tra toàn bộ selected scope → gate READY. Cloud OCR nằm ngoài P0, chỉ nghiên cứu ở giai đoạn sau với opt-in/service contract riêng; không tự fallback khi offline recognition thất bại.
 
 ## 7. Edge Cases và Error Handling
 
@@ -51,7 +51,7 @@ INP-TC-039: confidence cao/thấp/null đều cần review, giữ recognized/cor
 
 ## 10. Open Questions
 
-INP-ADR-002 về lịch giao học phần; INP-ADR-004 về pixel/page limits; model/plugin PoC, layout accuracy corpus và review UX còn chờ. Cần extraction manifest/receipt schema riêng khi bật P2.
+INP-ADR-002 đã chốt OCR vào Android P0; INP-ADR-004 đặt bootstrap ceiling một ảnh tối đa 12MP, một bảng/page, chưa benchmark. Model/plugin PoC, corpus layout accuracy, review UX, schema migration và xác nhận giảng viên còn là implementation/acceptance gates, không phải ADR OPEN. Cần extraction manifest/receipt schema riêng khi bật P2.
 
 ## 11. References
 
