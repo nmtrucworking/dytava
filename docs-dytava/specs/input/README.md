@@ -57,23 +57,25 @@ Các ID dưới đây có đúng một định nghĩa. Test registry tham chiế
 | INP-REQ-011 | Read-only, giới hạn truy cập, offline và không lộ raw/URI qua logs | INP-002/007/010 | INP-TC-004,033,040 |
 | INP-REQ-012 | Contract và fixtures kiểm chứng được, evidence không trộn với kế hoạch | INP-009 | INP-TC-005,020,026 |
 
-## Decision register
+## Decision register — accepted engineering baseline (11/11/2026)
 
-Không có quyết định nào dưới đây được coi là đã chốt chỉ vì fixture cần giá trị cụ thể. Owner và approver hiện TBD. Các ADR IDs là hồ sơ quyết định còn mở, không phải accepted ADRs.
+**Nguồn quyết định có hiệu lực:** [9 ADR Android P0](../../decisions/ADR_REGISTER_P0_2026-11-11.md). Các quyết định dưới đây là **ACCEPTED** bởi nhóm theo baseline kỹ thuật; **không** phải chứng cứ triển khai, benchmark hoặc chấp thuận chính thức của giảng viên. Contract Input 0.1.0 vẫn DRAFT; owner/reviewer chưa được phân công.
 
-| ID | Cần quyết định | Trạng thái / ảnh hưởng |
+| ID | Quyết định kỹ thuật đã chốt | Tình trạng triển khai |
 | --- | --- | --- |
-| INP-ADR-001 | A baseline/B mới mặc định hay UI chọn hướng? | OPEN; direction phải explicit trước báo cáo thêm/xóa |
-| INP-ADR-002 | OCR bắt buộc học phần có cần kéo lên P0? | OPEN; đề bài cần ảnh, roadmap hiện P2; chưa được bỏ yêu cầu |
-| INP-ADR-003 | Một hay nhiều sheet/table mỗi source và table pairing? | OPEN; schema chứa nhiều scope, chưa là support sản phẩm |
-| INP-ADR-004 | Limits bytes/cells/ZIP/image/time theo thiết bị? | PENDING BENCHMARK; không chọn số tùy ý cho Android |
-| INP-ADR-005 | Header explicit hay detect mặc định; encoding mặc định? | OPEN; fixture explicit không quyết định defaults |
-| INP-ADR-006 | Numeric identifier bị mất biểu diễn xử lý bằng policy nào? | OPEN; bảo toàn raw/display, không tự tái tạo zeros |
-| INP-ADR-007 | Parser XLSX giữ token/cache/provenance và streaming? | PENDING PoC; dependency/capability chưa được chứng minh |
-| INP-ADR-008 | Mức xác nhận datatype/key suy luận? | OPEN; baseline nghiêng về confirm; draft gate yêu cầu confirmation |
-| INP-ADR-009 | Scratch copy, retention, permission persistence và restore? | OPEN; draft restart/revalidate, không hứa resume hay TTL |
+| INP-ADR-001 | A baseline/B candidate, A_TO_B là default hiển thị; user phải confirm direction | ACCEPTED / NOT_IMPLEMENTED |
+| INP-ADR-002 | OCR Android P0 tối thiểu: một nguồn ảnh PNG/JPEG, bundled offline ML Kit, manual review | ACCEPTED / ACADEMIC_SIGNOFF_PENDING |
+| INP-ADR-003 | Một selected table/scope trên mỗi nguồn, một worksheet/range với XLSX | ACCEPTED / NOT_IMPLEMENTED |
+| INP-ADR-004 | Profile android-p0-conservative-v1, các trần từ chối tạm trước benchmark | ACCEPTED / BENCHMARK_PENDING |
+| INP-ADR-005 | Header first-row chỉ là suggestion; UTF-8 strict, CSV comma/TSV tab, xác nhận explicit | ACCEPTED / NOT_IMPLEMENTED |
+| INP-ADR-006 | Không phục hồi leading zeros ở numeric identifier; ambiguity → UNRESOLVED | ACCEPTED / NOT_IMPLEMENTED |
+| INP-ADR-007 | XlsxFormatAdapter; Dart excel v4 là ứng viên PoC, loss/capability phải minh bạch | ACCEPTED / PARSER_POC_PENDING |
+| INP-ADR-008 | Confirm matching mode/key/dtype/policy/mapping/direction trước run | ACCEPTED / NOT_IMPLEMENTED |
+| INP-ADR-009 | App-private temporary scratch, read-only, no raw retention, restore revalidate | ACCEPTED / NOT_IMPLEMENTED |
 
-Điều kiện APPROVED: owner/reviewer được chỉ định; ADR chốt theo phạm vi release; Markdown/schema/fixtures nhất quán; parser PoC + device/acceptance evidence; privacy/lifecycle thống nhất; yêu cầu học phần ảnh được quyết định rõ. Việc hoàn thành viết tài liệu không đạt các gate này tự động.
+**P0 Android:** .xlsx/.csv/.tsv + một nguồn ảnh .png/.jpg/.jpeg (không image-image), mỗi nguồn một bảng; comparison + CSV/JSON export và APK. JSON chuyển P1, iOS P1; PDF, multi-page OCR, cloud OCR sau P0. Master 2.2 và các chữ OPEN/P2 trong đặc tả con chỉ còn ý nghĩa lịch sử khi mâu thuẫn với 9 ADR này.
+
+**Bắt buộc trước release:** migration schema InputConfig 0.1.0 để biểu diễn image P0, OCR extraction/review receipt contracts, Flutter adapter/parser PoC và corpus, benchmark Android thật, tests và APK. Không tự đánh dấu các acceptance cases PLANNED là PASS.
 
 ## Glossary
 
