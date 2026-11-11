@@ -1,0 +1,4 @@
+digraph G {
+ graph [rankdir=TB, fontname="Noto Sans", bgcolor="white", nodesep=0.22, ranksep=0.33]; node [fontname="Noto Sans", style="rounded,filled", shape=box, fillcolor="#EEF2F6", color="#71849B", fontcolor="#1B2D42", fontsize=12, margin="0.22,0.12"]; edge [color="#72849C", arrowsize=0.65];
+ "Compose / ViewModel" -> "Domain Use Cases"; "Domain Use Cases" -> "Canonical Table Model"; "Canonical Table Model" -> "Semantic Policy Engine"; "Semantic Policy Engine" -> "Difference Engine"; "Difference Engine" -> "Report Export"; "SAF File Picker" -> "Format Adapters"; "OCR (optional)" -> "Format Adapters"; "Format Adapters" -> "Canonical Table Model"; "Domain Use Cases" -> "Room + Local Cache"; {rank=same; "SAF File Picker"; "OCR (optional)";} {rank=same; "Report Export"; "Room + Local Cache";}
+}

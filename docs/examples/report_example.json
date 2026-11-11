@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "report_id": "demo-report-001",
+  "engine_version": "1.0.0-design",
+  "inputs": {
+    "A": {
+      "name": "class-A.xlsx",
+      "sha256": "<sha256-of-file-A>",
+      "format": "xlsx"
+    },
+    "B": {
+      "name": "class-B.csv",
+      "sha256": "<sha256-of-file-B>",
+      "format": "csv"
+    }
+  },
+  "policy_id": "academic-records-v1",
+  "policy_digest": "<sha256-of-canonical-policy>",
+  "summary": {
+    "matched_cell_pairs": 2,
+    "exact": 0,
+    "equivalent": 1,
+    "different": 1,
+    "unresolved": 0,
+    "added_rows": 0,
+    "removed_rows": 0
+  },
+  "differences": [
+    {
+      "kind": "CELL",
+      "status": "EQUIVALENT",
+      "field": "score",
+      "key": [
+        "SV001"
+      ],
+      "left": {
+        "reference": {
+          "type": "excel",
+          "sheet": "Sheet1",
+          "address": "B2"
+        },
+        "storage_type": "NUMBER",
+        "raw": "8.5",
+        "normalized": "8.5"
+      },
+      "right": {
+        "reference": {
+          "type": "csv",
+          "line": 2,
+          "field": "Score"
+        },
+        "storage_type": "STRING",
+        "raw": "8,5",
+        "normalized": "8.5"
+      },
+      "rule_id": "decimal/vi-VN/v1",
+      "reason": "Numeric value matches after configured locale normalization"
+    },
+    {
+      "kind": "CELL",
+      "status": "DIFFERENT",
+      "field": "score",
+      "key": [
+        "SV002"
+      ],
+      "left": {
+        "reference": {
+          "type": "excel",
+          "sheet": "Sheet1",
+          "address": "B3"
+        },
+        "raw": "9.0",
+        "normalized": "9"
+      },
+      "right": {
+        "reference": {
+          "type": "csv",
+          "line": 3,
+          "field": "Score"
+        },
+        "raw": "9.5",
+        "normalized": "9.5"
+      },
+      "rule_id": "decimal/vi-VN/v1",
+      "reason": "Canonical decimals differ"
+    }
+  ],
+  "warnings": [
+    "DEMO ONLY - illustrative values; no actual files processed"
+  ],
+  "generated_at": "<UTC-timestamp>"
+}

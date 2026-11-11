@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="520" viewBox="0 0 1900 520"><title>Dytava primary horizontal logo</title>
+<g transform="translate(12 10) scale(.94)"><title>Dytava data type matrix symbol</title><rect x="0" y="0" width="512" height="512" rx="118" fill="#2663EB"/>
+    <rect x="92" y="88" width="328" height="336" rx="44" fill="none" stroke="#FFFFFF" stroke-width="24"/>
+    <path d="M92 197H420 M92 308H420 M203 88V424 M312 88V424" stroke="#FFFFFF" stroke-opacity=".8" stroke-width="15"/>
+    <rect x="214" y="210" width="88" height="88" rx="13" fill="#A48BFA"/>
+    <rect x="324" y="210" width="82" height="88" rx="12" fill="#16A585"/>
+    <rect x="214" y="322" width="88" height="88" rx="12" fill="#F2A642"/>
+    </g>
+<text x="550" y="327" font-family="DejaVu Sans, sans-serif" font-size="248" font-weight="bold" letter-spacing="-12" fill="#FFFFFF">dytava</text>
+<text x="561" y="406" font-family="DejaVu Sans, sans-serif" font-size="46" fill="#B9D0F5">Understand every difference.</text></svg>

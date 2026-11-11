@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dytava (ExcelCompare) — Nền tảng so sánh bảng tính thông minh, phân tích sai khác ngữ nghĩa với Chromatic DType Engine và trang quản trị sản phẩm tập trung.">
+  <title>Dytava (ExcelCompare) — So Sánh Bảng Tính Thông Minh & Quản Trị Sản Phẩm</title>
+  <link rel="icon" type="image/svg+xml" href="assets/dytava-symbol.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========================================================================
+       Top Navigation Bar
+       ======================================================================== -->
+  <header class="site-header">
+    <div class="header-container">
+      <a class="brand-wrapper" href="#/" aria-label="Dytava — Trang chủ">
+        <svg class="brand-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+          <rect width="512" height="512" rx="118" fill="#2663EB"/>
+          <rect x="92" y="88" width="328" height="336" rx="44" fill="none" stroke="#FFFFFF" stroke-width="24"/>
+          <path d="M92 197H420 M92 308H420 M203 88V424 M312 88V424" stroke="#FFFFFF" stroke-opacity=".8" stroke-width="15"/>
+          <rect x="214" y="210" width="88" height="88" rx="13" fill="#A48BFA"/>
+          <rect x="324" y="210" width="82" height="88" rx="12" fill="#16A585"/>
+          <rect x="214" y="322" width="88" height="88" rx="12" fill="#F2A642"/>
+        </svg>
+        <div class="brand-titles">
+          <span class="brand-name">dytava</span>
+          <span class="brand-sub">ExcelCompare • Chromatic DType</span>
+        </div>
+      </a>
+
+      <!-- Center Portal Switcher -->
+      <div class="portal-switcher">
+        <button id="nav-view-showcase" class="portal-btn active">🌐 So sánh bảng tính</button>
+        <button id="nav-view-admin" class="portal-btn">⚙️ Quản Trị Sản Phẩm</button>
+      </div>
+
+      <!-- Actions -->
+      <div class="header-actions">
+        <button id="btn-theme-toggle" class="btn btn-ghost btn-sm" title="Chuyển chế độ sáng/tối">🌙</button>
+        <a href="#live-compare-section" id="btn-cta-compare" class="btn btn-primary btn-sm">Thử So Sánh</a>
+        <a href="#/history" class="btn btn-ghost btn-sm">Lịch sử</a>
+        <button id="btn-account" class="btn btn-outline btn-sm">Đăng nhập</button>
+        <button id="btn-logout" class="btn btn-ghost btn-sm" hidden>Đăng xuất</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       VIEW 1: Website Giới Thiệu Sản Phẩm & Live Compare Tool
+       ======================================================================== -->
+  <div id="connection-status" class="connection-banner" role="status" hidden>Chưa kết nối được máy chủ. Công cụ cục bộ vẫn hoạt động; đăng nhập và lưu thống kê cần kết nối. <button id="btn-retry-connection" class="btn btn-outline btn-sm">Kết nối lại</button></div>
+  <main id="view-showcase">
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-pill">
+        <span class="badge badge-primary">✦ Phiên bản 1.0 • Xử lý nội dung bảng tính tại trình duyệt</span>
+      </div>
+      <h1 class="hero-title">
+        So Sánh Bảng Tính Thông Minh.<br>
+        <span class="gradient-text">Hiểu rõ từng sai khác ngữ nghĩa.</span>
+      </h1>
+      <p class="hero-desc">
+        Chấm dứt nỗi ám ảnh báo sai khác giả do định dạng ngày tháng, số thập phân hay hoán đổi vị trí dòng.
+        Dytava tự động ánh xạ schema, căn chỉnh theo khóa chính và giải trình minh bạch mọi biến động với các quy tắc chuẩn hóa minh bạch.
+      </p>
+
+      <div class="hero-cta">
+        <a href="#live-compare-section" class="btn btn-primary btn-lg">Trải Nghiệm So Sánh Trực Tuyến</a>
+        <a href="#/admin/overview" class="btn btn-outline btn-lg">Khám Phá Trang Quản Trị</a>
+        <a href="#downloads" class="btn btn-ghost btn-lg">Bản phát hành</a>
+      </div>
+
+      <div class="hero-highlights">
+        <div class="highlight-item"><span class="highlight-icon">✓</span> Tự động căn chỉnh theo Khóa chính (Key Alignment)</div>
+        <div class="highlight-item"><span class="highlight-icon">✓</span> Chuẩn hóa DType (Decimal, Date, Boolean, ID)</div>
+        <div class="highlight-item"><span class="highlight-icon">✓</span> Đồng bộ cuộn trực quan 2 bảng (Side-by-Side Dual Grid)</div>
+        <div class="highlight-item"><span class="highlight-icon">✓</span> Xuất biên bản kiểm toán JSON/CSV truy vết</div>
+      </div>
+    </section>
+
+    <!-- Interactive Live Comparison Playground (Tham chiếu ExcelCompare.org) -->
+    <section id="live-compare-section" class="compare-container">
+      <div class="compare-card">
+
+        <!-- Topbar: Sample Dataset Switcher -->
+        <div class="compare-topbar">
+          <div class="dataset-select-group">
+            <label for="sample-dataset-select">📂 Chọn tập dữ liệu mẫu:</label>
+            <select id="sample-dataset-select" class="form-select">
+              <option value="academic" selected>Bảng điểm & Hồ sơ học tập (Academic Records)</option>
+              <option value="finance">Báo cáo Doanh thu & Đối soát tài chính (Finance & P&L)</option>
+              <option value="inventory">Kiểm kê Kho vận & SKU Vật tư (Supply Chain)</option>
+            </select>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:0.5rem">
+            <button id="btn-save-session" class="btn btn-outline btn-sm" disabled>Lưu thống kê phiên</button>
+            <button id="btn-export-csv" class="btn btn-outline btn-sm">📥 Xuất CSV Khác Biệt</button>
+            <button id="btn-export-json" class="btn btn-primary btn-sm">📜 Xuất Báo Cáo Audit JSON</button>
+          </div>
+        </div>
+
+        <div class="privacy-note compare-note">Tệp tối đa 10 MB · 20.000 dòng · 200 cột · 200.000 ô. File và tên file không được gửi lên máy chủ. “Lưu thống kê phiên” chỉ lưu định dạng, số dòng, cấu hình và số liệu tổng hợp theo tài khoản.</div>
+        <div class="policy-select"><label for="opt-policy">Bộ quy tắc:</label><select id="opt-policy" class="form-select"><option value="">Cấu hình tùy chỉnh</option></select></div>
+        <!-- Options Configuration Bar -->
+        <div class="compare-options-bar">
+          <div class="options-left">
+            <div style="display:flex; align-items:center; gap:0.5rem">
+              <label for="opt-key-column" style="font-weight:700">Khóa căn chỉnh:</label>
+              <select id="opt-key-column" class="form-select">
+                <option value="Mã SV">Cột khóa: Mã SV</option>
+              </select>
+            </div>
+
+            <label class="custom-checkbox">
+              <input type="checkbox" id="opt-leading-zeros" checked>
+              <span>Bảo toàn số 0 đứng trước (00123 ≠ 123)</span>
+            </label>
+
+            <label class="custom-checkbox">
+              <input type="checkbox" id="opt-trim" checked>
+              <span>Loại bỏ khoảng trắng thừa (Trim)</span>
+            </label>
+
+            <label class="custom-checkbox">
+              <input type="checkbox" id="opt-case-sensitive">
+              <span>Phân biệt Hoa/Thường</span>
+            </label>
+
+            <div style="display:flex; align-items:center; gap:0.4rem">
+              <label for="opt-tolerance" style="font-weight:700">Dung sai số (Tolerance):</label>
+              <input type="number" id="opt-tolerance" class="form-input" value="0" min="0" max="1000000000" step="0.01" style="width:70px">
+            </div>
+          </div>
+
+          <label class="custom-checkbox"><input type="checkbox" id="opt-identifier-case" checked><span>Phân biệt hoa/thường của mã</span></label>
+          <label class="custom-checkbox"><input type="checkbox" id="opt-null-zero" checked><span>Phân biệt ô trống và số 0</span></label>
+          <button id="btn-run-compare" class="btn btn-primary">⚡ Chạy So Sánh Lại</button>
+        </div>
+
+        <!-- File Upload Zones (File A vs File B) -->
+        <div class="upload-grid">
+          <div class="upload-box" id="dropzone-a">
+            <input type="file" id="file-input-a" accept=".csv,.tsv,.txt,.json,.xlsx" style="display:none">
+            <div class="upload-title">📄 Nguồn dữ liệu A (File gốc)</div>
+            <div class="upload-sub">Kéo thả tệp CSV / XLSX hoặc bấm để chọn tệp</div>
+            <div class="file-badge-loaded" id="file-badge-a">BangDiem_PhongDaoTao_A.xlsx (7 hàng)</div>
+          </div>
+
+          <div class="upload-box" id="dropzone-b">
+            <input type="file" id="file-input-b" accept=".csv,.tsv,.txt,.json,.xlsx" style="display:none">
+            <div class="upload-title">📑 Nguồn dữ liệu B (File đối chiếu)</div>
+            <div class="upload-sub">Kéo thả tệp CSV / XLSX hoặc bấm để chọn tệp</div>
+            <div class="file-badge-loaded" id="file-badge-b">BangDiem_HeThong_B.csv (7 hàng)</div>
+          </div>
+        </div>
+
+        <div class="sheet-selectors"><label>Sheet nguồn A <select id="sheet-a" class="form-select" hidden aria-label="Sheet nguồn A"></select></label><label>Sheet nguồn B <select id="sheet-b" class="form-select" hidden aria-label="Sheet nguồn B"></select></label></div>
+        <p id="compare-status" class="privacy-note compare-note" role="status"></p>
+        <p id="comparison-error" class="form-message error compare-note" role="alert"></p>
+        <!-- Status Summary Counters Bar -->
+        <div class="summary-bar">
+          <div class="stat-cell active-filter" data-filter="ALL" title="Hiển thị toàn bộ bản ghi">
+            <div class="stat-num" id="cnt-total">42</div>
+            <div class="stat-label">Tổng số ô</div>
+          </div>
+          <div class="stat-cell" data-filter="EXACT" title="Ô giống tuyệt đối">
+            <div class="stat-num stat-exact" id="cnt-exact">35</div>
+            <div class="stat-label">Khớp tuyệt đối (Exact)</div>
+          </div>
+          <div class="stat-cell" data-filter="EQUIVALENT" title="Ô khác định dạng nhưng tương đương ngữ nghĩa">
+            <div class="stat-num stat-equiv" id="cnt-equiv">2</div>
+            <div class="stat-label">Tương đương (Equivalent)</div>
+          </div>
+          <div class="stat-cell" data-filter="DIFFERENT" title="Ô khác biệt nghiệp vụ thực tế">
+            <div class="stat-num stat-diff" id="cnt-diff">2</div>
+            <div class="stat-label">Khác biệt (Different)</div>
+          </div>
+          <div class="stat-cell" data-filter="UNRESOLVED" title="Ô mơ hồ cần người dùng xác minh">
+            <div class="stat-num stat-unres" id="cnt-unres">1</div>
+            <div class="stat-label">Chờ duyệt (Unresolved)</div>
+          </div>
+          <div class="stat-cell" data-filter="ROWS" title="Dòng thêm mới và dòng bị xóa">
+            <div class="stat-num" id="cnt-added-removed" style="color:var(--text)">+1 / -1</div>
+            <div class="stat-label">Dòng Thêm / Xóa</div>
+          </div>
+        </div>
+
+        <!-- Synchronized Dual-Grid Spreadsheet Viewer -->
+        <div class="dual-grid-wrapper">
+          <!-- Left Grid (Source A) -->
+          <div class="grid-pane" id="pane-left">
+            <div class="pane-header-title">
+              <span>BẢNG NGUỒN A</span>
+              <span id="label-table-a" style="font-size:0.75rem; opacity:0.85">Phòng Đào Tạo</span>
+            </div>
+            <div id="table-container-a">
+              <!-- Dynamically rendered table A -->
+            </div>
+          </div>
+
+          <!-- Right Grid (Source B) -->
+          <div class="grid-pane" id="pane-right">
+            <div class="pane-header-title">
+              <span>BẢNG ĐỐI CHIẾU B</span>
+              <span id="label-table-b" style="font-size:0.75rem; opacity:0.85">Hệ Thống Trực Tuyến</span>
+            </div>
+            <div id="table-container-b">
+              <!-- Dynamically rendered table B -->
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:0.75rem 1.5rem; background:var(--surface-alt); border-top:1px solid var(--outline-light); font-size:0.8rem; color:var(--muted); display:flex; justify-content:space-between; align-items:center">
+          <span>💡 <strong>Gợi ý:</strong> Bấm vào bất kỳ ô nào có màu để mở chi tiết giải trình quy tắc chuẩn hóa (Cell Breakdown).</span>
+          <span>Hai bảng tính tự động đồng bộ cuộn (Synchronized scrolling).</span>
+        </div>
+
+        <div class="pagination"><button id="grid-prev" class="btn btn-outline btn-sm">Trang trước</button><span id="grid-page-label"></span><button id="grid-next" class="btn btn-outline btn-sm">Trang sau</button></div>
+      </div>
+    </section>
+
+
+
+    <!-- Core Features Section -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-subtitle">Tại sao chọn Dytava?</div>
+        <h2 class="section-title">Vượt xa các công cụ Diff văn bản thông thường</h2>
+        <p class="section-desc">Được xây dựng cho các chuyên gia dữ liệu, kiểm toán viên và kỹ sư phần mềm đòi hỏi kết quả đối chiếu có giải trình.</p>
+      </div>
+
+      <div class="feature-cards-grid">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🧬</div>
+          <h3 class="feature-title">Chromatic DType Engine</h3>
+          <p class="feature-text">Phân biệt và chuẩn hóa theo kiểu dữ liệu thực tế (Text, Decimal, Datetime, Boolean, Identifier). Nhận biết <code>8.5</code> và <code>8,5</code> là tương đương.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🔒</div>
+          <h3 class="feature-title">Nội dung tệp xử lý cục bộ</h3>
+          <p class="feature-text">Toàn bộ quá trình tính toán và so sánh diễn ra cục bộ trong bộ nhớ trình duyệt. Dữ liệu bảng lương, tài chính không bao giờ rời khỏi máy tính.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🔑</div>
+          <h3 class="feature-title">Căn chỉnh Khóa thông minh</h3>
+          <p class="feature-text">Không phụ thuộc vào thứ tự hàng. Tự động liên kết các bản ghi bằng một cột khóa duy nhất (ID, Mã SV, Mã đơn hàng), ngăn ngừa hiện tượng lệch toàn bộ bảng.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">📜</div>
+          <h3 class="feature-title">Biên bản Kiểm toán Truy vết</h3>
+          <p class="feature-text">Mỗi ô khác biệt đều đi kèm khóa dòng, tên cột, giá trị thô, giá trị chuẩn hóa, mã quy tắc (Rule ID) và lý do chi tiết, sẵn sàng xuất báo cáo JSON/CSV.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">📱</div>
+          <h3 class="feature-title">Tài khoản & lịch sử riêng tư</h3>
+          <p class="feature-text">Lưu thống kê theo tài khoản khi bạn chủ động chọn. Xem, xuất hoặc xóa lịch sử của riêng mình.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">📷</div>
+          <h3 class="feature-title">XLSX nhiều sheet</h3>
+          <p class="feature-text">Chọn sheet cần đối chiếu từ workbook Excel. Đọc dữ liệu tại trình duyệt, không thực thi công thức hay macro.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chromatic DType Showcase -->
+    <section class="section" style="padding-top:0">
+      <div class="section-header">
+        <div class="section-subtitle">Hệ thống phân loại ngữ nghĩa</div>
+        <h2 class="section-title">Chromatic DType Semantics</h2>
+        <p class="section-desc">Mỗi kiểu dữ liệu có một quy tắc chuẩn hóa riêng biệt, bảo vệ bạn khỏi các sai sót tiềm ẩn.</p>
+      </div>
+
+      <div class="dtype-pills-grid">
+        <div class="dtype-pill-card dt-string">
+          <h4 style="color:var(--dtype-string)">String (Chuỗi ký tự)</h4>
+          <p style="font-size:0.85rem; color:var(--muted); margin-top:0.35rem">Bảo toàn dấu tiếng Việt, hỗ trợ tùy chọn Case-fold và cắt khoảng trắng thừa.</p>
+        </div>
+        <div class="dtype-pill-card dt-number">
+          <h4 style="color:var(--dtype-number)">Decimal / Money (Số học)</h4>
+          <p style="font-size:0.85rem; color:var(--muted); margin-top:0.35rem">Xử lý dấu phẩy/chấm thập phân quốc tế, dung sai sai số (Tolerance) và bỏ qua số 0 vô nghĩa ở đuôi.</p>
+        </div>
+        <div class="dtype-pill-card dt-datetime">
+          <h4 style="color:var(--dtype-datetime)">Datetime (Thời gian)</h4>
+          <p style="font-size:0.85rem; color:var(--muted); margin-top:0.35rem">Chuẩn hóa về ISO-8601. Báo trạng thái <code>UNRESOLVED</code> khi gặp định dạng ngày 2 chữ số năm mơ hồ.</p>
+        </div>
+        <div class="dtype-pill-card dt-boolean">
+          <h4 style="color:var(--dtype-boolean)">Boolean (Logic)</h4>
+          <p style="font-size:0.85rem; color:var(--muted); margin-top:0.35rem">Khớp các bí danh logic: <code>true ≡ 1 ≡ Có ≡ Đúng</code> và <code>false ≡ 0 ≡ Không ≡ Sai</code>.</p>
+        </div>
+        <div class="dtype-pill-card dt-id">
+          <h4 style="color:var(--dtype-id)">Identifier (Định danh)</h4>
+          <p style="font-size:0.85rem; color:var(--muted); margin-top:0.35rem">Bảo vệ nghiêm ngặt số 0 đứng trước (<code>00123 ≠ 123</code>) và phân biệt ký tự mã SKU/CCCD.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing / Editions Section -->
+    <section class="section" id="downloads" style="padding-top:0">
+      <div class="section-header"><div class="section-subtitle">Bản phát hành chính thức</div><h2 class="section-title">Tải xuống & ghi chú phiên bản</h2><p class="section-desc">Các bản phát hành do quản trị viên công bố, kèm đường dẫn tải và checksum để bạn kiểm tra.</p></div>
+      <div id="public-releases" class="policy-grid"><p>Đang tải danh sách phát hành…</p></div>
+    </section>
+
+  </main>
+
+
+  <!-- ========================================================================
+       VIEW 2: Trang Quản Trị Sản Phẩm (Product Admin Portal)
+       ======================================================================== -->
+  <div id="view-admin" style="display:none">
+    <div class="admin-shell">
+
+      <!-- Admin Sidebar Navigation -->
+      <aside class="admin-sidebar">
+        <div style="font-size:0.75rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:1rem; padding:0 0.5rem">
+          Quản Trị Hệ Thống
+        </div>
+
+        <div class="admin-nav-item active" data-tab="overview">
+          <span class="admin-nav-icon">📊</span>
+          <span>Tổng Quan & KPIs</span>
+        </div>
+
+        <div class="admin-nav-item" data-tab="releases">
+          <span class="admin-nav-icon">🚀</span>
+          <span>Bản Phát Hành (Releases)</span>
+        </div>
+
+        <div class="admin-nav-item" data-tab="policies">
+          <span class="admin-nav-icon">⚙️</span>
+          <span>Quy Tắc & Policies</span>
+        </div>
+
+        <div class="admin-nav-item" data-tab="acceptance">
+          <span class="admin-nav-icon">🧪</span>
+          <span>Acceptance Test Suite</span>
+        </div>
+
+        <div class="admin-nav-item" data-tab="audit">
+          <span class="admin-nav-icon">📜</span>
+          <span>Nhật Ký Kiểm Toán</span>
+        </div>
+
+        <div class="admin-nav-item" data-tab="flags">
+          <span class="admin-nav-icon">🚩</span>
+          <span>Cờ Tính Năng (Roadmap)</span>
+        </div>
+
+        <div style="margin-top:2.5rem; padding:1rem 0.5rem; border-top:1px solid var(--outline); font-size:0.8rem; color:var(--muted)">
+          <div style="font-weight:700; color:var(--text); margin-bottom:0.25rem">Dytava Web v1.0.0</div>
+          <div>Nội dung tệp xử lý cục bộ</div>
+          <div style="margin-top:0.5rem">
+            <a class="btn btn-outline btn-sm" style="width:100%" href="#/">⬅ Về công cụ so sánh</a>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Admin Main Content Area -->
+      <section class="admin-content"><p id="admin-error" class="form-message error" role="alert"></p>
+
+        <!-- TAB 1: OVERVIEW & KPIS -->
+        <div id="tab-panel-overview" class="admin-tab-panel"></div>
+
+        <!-- TAB 2: RELEASES & BUILDS -->
+        <div id="tab-panel-releases" class="admin-tab-panel" style="display:none">
+          <div class="admin-title-row">
+            <div>
+              <h2 style="font-size:1.6rem; font-weight:850">Quản Lý Bản Phát Hành (Releases & Builds)</h2>
+              <p style="color:var(--muted); font-size:0.9rem">Quản lý metadata bản phát hành với URL tải xuống và checksum thực tế.</p>
+            </div>
+            <button id="btn-open-add-release" class="btn btn-primary btn-sm">+ Tạo Bản Phát Hành Mới</button>
+          </div>
+
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Sản phẩm</th>
+                  <th>Nền tảng</th>
+                  <th>Phiên bản</th>
+                  <th>Trạng thái</th>
+                  <th>Dung lượng</th>
+                  <th>SHA256 Checksum</th>
+                  <th>Ngày phát hành</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-releases">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 3: COMPARISON POLICIES -->
+        <div id="tab-panel-policies" class="admin-tab-panel" style="display:none">
+          <div class="admin-title-row">
+            <div>
+              <h2 style="font-size:1.6rem; font-weight:850">Bộ Quy Tắc So Sánh (Comparison Policies)</h2>
+              <p style="color:var(--muted); font-size:0.9rem">Cấu hình semantic type, dung sai sai số và từ điển bí danh (Aliases).</p>
+            </div>
+          </div>
+
+          <!-- Live Policy Tester -->
+          <div class="metric-card" style="margin-bottom:2rem; background:var(--surface)">
+            <h3 style="font-size:1.15rem; margin-bottom:0.5rem">🧪 Trình Thẩm Định Quy Tắc Trực Tiếp (Policy Tester)</h3>
+            <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1.25rem">
+              Nhập 2 giá trị ô bất kỳ để kiểm tra ngay phân loại của Chromatic DType Engine.
+            </p>
+
+            <div style="display:grid; grid-template-columns: 2fr 2fr 1.5fr auto; gap:1rem; align-items:flex-end">
+              <div>
+                <label style="font-size:0.8rem; font-weight:700" for="test-val-a">Giá trị Nguồn A:</label>
+                <input type="text" id="test-val-a" class="form-input" style="width:100%" value="8.5">
+              </div>
+              <div>
+                <label style="font-size:0.8rem; font-weight:700" for="test-val-b">Giá trị Nguồn B:</label>
+                <input type="text" id="test-val-b" class="form-input" style="width:100%" value="8,5">
+              </div>
+              <div>
+                <label style="font-size:0.8rem; font-weight:700" for="test-val-type">Kiểu Dữ Liệu (DType):</label>
+                <select id="test-val-type" class="form-select" style="width:100%">
+                  <option value="decimal">Decimal (Số thập phân)</option>
+                  <option value="identifier">Identifier (Mã định danh)</option>
+                  <option value="boolean">Boolean (Logic)</option>
+                  <option value="datetime">Datetime (Ngày tháng)</option>
+                  <option value="percentage">Percentage (Phần trăm)</option>
+                  <option value="string">String (Chuỗi ký tự)</option>
+                </select>
+              </div>
+              <button id="btn-test-policy-single" class="btn btn-primary" style="height:38px">Thẩm Định</button>
+            </div>
+
+            <div id="policy-test-result" style="display:none; margin-top:1.25rem; padding:1rem; border:1px solid var(--outline); border-radius:var(--radius-sm); background:var(--surface-alt)">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <div id="policies-list"></div>
+        </div>
+
+        <!-- TAB 4: ACCEPTANCE TEST SUITE -->
+        <div id="tab-panel-acceptance" class="admin-tab-panel" style="display:none">
+          <div class="admin-title-row">
+            <div>
+              <h2 style="font-size:1.6rem; font-weight:850">Bộ Kiểm Thử Chấp Nhận (Acceptance Golden Cases)</h2>
+              <p style="color:var(--muted); font-size:0.9rem">10 bài kiểm thử chuẩn hóa golden fixture từ tài liệu kỹ thuật EXC.</p>
+            </div>
+            <button id="btn-run-acceptance-tests" class="btn btn-primary btn-sm">▶ Chạy Toàn Bộ 10 Test Cases</button>
+          </div>
+
+          <div style="background:var(--subtle); border-radius:var(--radius-sm); height:28px; margin-bottom:1.5rem; overflow:hidden; display:flex; align-items:center">
+            <div id="acceptance-progress" style="width:0%; height:100%; transition:width 0.4s ease; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.82rem; font-weight:750"></div>
+          </div>
+
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Mã TC</th>
+                  <th>Kiểu DType</th>
+                  <th>Nguồn Trái (Left)</th>
+                  <th>Nguồn Phải (Right)</th>
+                  <th>Chính sách (Policy)</th>
+                  <th>Kỳ vọng (Expected)</th>
+                  <th>Thực tế (Actual)</th>
+                  <th>Kết quả</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-acceptance">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 5: AUDIT LOGS -->
+        <div id="tab-panel-audit" class="admin-tab-panel" style="display:none"><div class="admin-title-row"><h2>Nhật ký kiểm toán</h2></div><div id="admin-audit-content"></div></div>
+
+        <!-- TAB 6: FEATURE FLAGS -->
+        <div id="tab-panel-flags" class="admin-tab-panel" style="display:none">
+          <div class="admin-title-row">
+            <div>
+              <h2 style="font-size:1.6rem; font-weight:850">Cờ tính năng website</h2>
+              <p style="color:var(--muted); font-size:0.9rem">Bật/tắt nhập tệp, căn chỉnh khóa, xuất báo cáo và lưu thống kê. Trình duyệt khác nhận cấu hình khi tải lại trang.</p>
+            </div>
+          </div>
+
+          <div class="admin-table-container">
+            <div id="feature-flags-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+  <main id="view-history" class="section" style="display:none"><div class="section-header"><h1 class="section-title">Lịch sử so sánh</h1><p class="section-desc">Thống kê phiên được lưu riêng theo tài khoản.</p></div><div id="history-content"></div></main>
+  <main id="view-access" class="section" style="display:none"><div class="empty-state metric-card"><h1 id="access-title">Đăng nhập để quản trị</h1><p id="access-description"></p><button id="access-login" class="btn btn-primary">Đăng nhập</button><a class="btn btn-outline" href="#/">Về công cụ so sánh</a></div></main>
+  <div id="modal-auth" class="modal-overlay" aria-labelledby="auth-title"><div class="modal-card"><form id="form-auth"><div class="modal-header"><h2 id="auth-title">Đăng nhập Dytava</h2><button type="button" class="btn btn-ghost btn-close-modal" aria-label="Đóng">✕</button></div><div class="modal-body form-stack">
+    <div id="auth-name-group" hidden><label for="auth-name">Họ tên</label><input id="auth-name" class="form-input" autocomplete="name" minlength="2" maxlength="80"></div>
+    <div><label for="auth-email">Email</label><input id="auth-email" type="email" class="form-input" autocomplete="email" required maxlength="254"></div>
+    <div><label for="auth-password">Mật khẩu</label><input id="auth-password" type="password" class="form-input" autocomplete="current-password" minlength="12" maxlength="128" required><p class="privacy-note">Ít nhất 12 ký tự.</p></div>
+    <p id="auth-message" class="form-message" role="alert"></p><p class="privacy-note">Tài khoản lưu email, tên và mật khẩu đã băm. <a href="privacy.html" target="_blank" rel="noopener">Chính sách quyền riêng tư</a>.</p>
+    </div><div class="modal-footer"><button type="button" id="auth-mode-toggle" class="btn btn-ghost">Chưa có tài khoản? Đăng ký</button><button type="submit" id="auth-submit" class="btn btn-primary">Đăng nhập</button></div></form></div></div>
+  <div id="modal-password" class="modal-overlay" aria-labelledby="password-title"><div class="modal-card"><form id="form-password"><div class="modal-header"><h2 id="password-title">Đổi mật khẩu</h2><button type="button" class="btn btn-ghost btn-close-modal" aria-label="Đóng">✕</button></div><div class="modal-body form-stack"><label>Mật khẩu hiện tại<input type="password" name="currentPassword" autocomplete="current-password" class="form-input" required maxlength="128"></label><label>Mật khẩu mới<input type="password" name="newPassword" autocomplete="new-password" class="form-input" required minlength="12" maxlength="128"></label><p id="password-message" class="form-message" role="alert"></p></div><div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu mật khẩu mới</button></div></form></div></div>
+  <div id="modal-policy" class="modal-overlay" aria-labelledby="policy-title"><div class="modal-card"><form id="form-policy"><div class="modal-header"><h2 id="policy-title">Cấu hình policy</h2><button type="button" class="btn btn-ghost btn-close-modal" aria-label="Đóng">✕</button></div><div class="modal-body form-stack">
+    <label>Mã policy<input name="policyId" class="form-input" pattern="[a-z0-9][a-z0-9\-]{2,79}" required placeholder="my-policy-v1"></label><label>Tên policy<input name="policyName" class="form-input" minlength="2" maxlength="100" required></label><label>Mô tả<textarea name="description" class="form-input" maxlength="500"></textarea></label><label>Dung sai tuyệt đối<input name="tolerance_abs" type="number" min="0" max="1000000000" step="any" value="0" class="form-input" required></label>
+<label class="custom-checkbox"><input type="checkbox" name="preserve_leading_zeros"><span>Giữ số 0 đầu mã</span></label>
+<label class="custom-checkbox"><input type="checkbox" name="case_sensitive_identifier"><span>Phân biệt hoa/thường ở mã</span></label>
+<label class="custom-checkbox"><input type="checkbox" name="case_sensitive_text"><span>Phân biệt hoa/thường ở văn bản</span></label>
+<label class="custom-checkbox"><input type="checkbox" name="trim_text"><span>Loại khoảng trắng thừa</span></label>
+<label class="custom-checkbox"><input type="checkbox" name="distinct_null_zero"><span>Phân biệt ô trống và số 0</span></label>
+<p id="policy-message" class="form-message" role="alert"></p></div><div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu policy</button></div></form></div></div>
+  <!-- ========================================================================
+       MODAL 1: Cell Breakdown / Inspector Modal
+       ======================================================================== -->
+  <div id="cell-inspector-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 id="insp-field-name" style="font-size:1.2rem; font-weight:800">Tên Cột</h3>
+          <div id="insp-row-key" style="font-size:0.8rem; color:var(--muted)">Khóa: SV001</div>
+        </div>
+        <button class="btn btn-ghost btn-close-modal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem">
+          <span style="font-size:0.85rem; font-weight:700">Trạng thái phân loại:</span>
+          <span id="insp-status-badge" class="badge">EQUIVALENT</span>
+        </div>
+
+        <div class="breakdown-grid">
+          <div class="breakdown-box">
+            <div class="breakdown-label">Nguồn A (Raw)</div>
+            <div id="insp-raw-a" class="breakdown-val">8.5</div>
+            <div style="font-size:0.75rem; color:var(--muted); margin-top:0.4rem">
+              Chuẩn hóa: <code id="insp-norm-a">8.5</code>
+            </div>
+          </div>
+
+          <div class="breakdown-box">
+            <div class="breakdown-label">Nguồn B (Raw)</div>
+            <div id="insp-raw-b" class="breakdown-val">8,5</div>
+            <div style="font-size:0.75rem; color:var(--muted); margin-top:0.4rem">
+              Chuẩn hóa: <code id="insp-norm-b">8.5</code>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:0.88rem; line-height:1.8">
+          <div><strong>Kiểu dữ liệu ngữ nghĩa:</strong> <span id="insp-type" class="badge" style="border:1px solid var(--outline)">decimal</span></div>
+          <div><strong>Mã quy tắc áp dụng:</strong> <code id="insp-rule-id">decimal/vi-VN_tolerance</code></div>
+          <div style="margin-top:0.5rem"><strong>Lý do giải trình:</strong> <span id="insp-reason" style="color:var(--muted)">Giá trị số tương đương sau khi chuẩn hóa phân cách</span></div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-close-modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 2: Add New Release Modal
+       ======================================================================== -->
+  <div id="modal-add-release" class="modal-overlay">
+    <div class="modal-card">
+      <form id="form-add-release">
+        <div class="modal-header">
+          <h3 id="release-modal-title" style="font-size:1.2rem; font-weight:800">Tạo bản phát hành</h3>
+          <button type="button" class="btn btn-ghost btn-close-modal">✕</button>
+        </div>
+
+        <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem">
+          <div>
+            <label style="font-size:0.82rem; font-weight:700" for="rel-product">Tên Sản Phẩm:</label>
+            <input type="text" id="rel-product" class="form-input" style="width:100%" required maxlength="100">
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+            <div>
+              <label style="font-size:0.82rem; font-weight:700" for="rel-platform">Nền tảng:</label>
+              <select id="rel-platform" class="form-select" style="width:100%">
+                <option value="Android APK/AAB">Android APK/AAB</option>
+                <option value="Web WASM/Client JS">Web WASM/Client JS</option>
+                <option value="macOS / Linux Binary">macOS / Linux Binary</option>
+                <option value="Python Package (PyPI)">Python Package (PyPI)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.82rem; font-weight:700" for="rel-version">Phiên bản (SemVer):</label>
+              <input type="text" id="rel-version" class="form-input" style="width:100%" required placeholder="1.0.0" maxlength="60">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+            <div>
+              <label style="font-size:0.82rem; font-weight:700" for="rel-stage">Giai đoạn (Stage):</label>
+              <select id="rel-stage" class="form-select" style="width:100%">
+                <option value="Stable">Stable (Chính thức)</option>
+                <option value="Beta">Beta (Thử nghiệm)</option>
+                <option value="Production">Production</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.82rem; font-weight:700" for="rel-size">Dung lượng tệp:</label>
+              <input type="text" id="rel-size" class="form-input" style="width:100%" required placeholder="18.9 MB" maxlength="40">
+            </div>
+          </div>
+          <div><label for="rel-downloadUrl">URL tải xuống (HTTPS)</label><input type="url" id="rel-downloadUrl" class="form-input" required placeholder="https://…" style="width:100%"></div>
+          <div><label for="rel-sha256">SHA256 của tệp phát hành</label><input id="rel-sha256" class="form-input" required pattern="[a-fA-F0-9]{64}" minlength="64" maxlength="64" style="width:100%"></div>
+          <p id="release-message" class="form-message" role="alert"></p>
+          <div>
+            <label style="font-size:0.82rem; font-weight:700" for="rel-changelog">Ghi chú phát hành (Changelog):</label>
+            <textarea id="rel-changelog" class="form-input" style="width:100%; height:75px" required maxlength="5000"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-close-modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu Bản Phát Hành</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       Site Footer
+       ======================================================================== -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem">
+          <svg class="brand-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width:28px; height:28px">
+            <rect width="512" height="512" rx="118" fill="#2663EB"/>
+            <rect x="92" y="88" width="328" height="336" rx="44" fill="none" stroke="#FFFFFF" stroke-width="24"/>
+            <path d="M92 197H420 M92 308H420 M203 88V424 M312 88V424" stroke="#FFFFFF" stroke-opacity=".8" stroke-width="15"/>
+            <rect x="214" y="210" width="88" height="88" rx="13" fill="#A48BFA"/>
+            <rect x="324" y="210" width="82" height="88" rx="12" fill="#16A585"/>
+            <rect x="214" y="322" width="88" height="88" rx="12" fill="#F2A642"/>
+          </svg>
+          <span style="font-size:1.2rem; font-weight:850; color:#fff">dytava</span>
+        </div>
+        <p style="font-size:0.85rem; color:#A0B2C6; max-width:320px; line-height:1.6">
+          Dytava (ExcelCompare) — Giải pháp so sánh bảng tính thế hệ mới với công nghệ nhận diện kiểu dữ liệu ngữ nghĩa và nội dung bảng tính được xử lý cục bộ tại trình duyệt.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Sản Phẩm</h4>
+        <ul>
+          <li><a href="#live-compare-section">Công Cụ So Sánh Web</a></li>
+          <li><a href="#downloads">Các bản phát hành</a></li>
+          <li><a href="#/admin/overview">Trang Quản Trị Admin</a></li>
+          <li><a href="#/admin/acceptance">Acceptance Test Cases</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Tài Liệu & Tiêu Chuẩn</h4>
+        <ul>
+          <li><a href="help.html">Hướng dẫn & Giới hạn</a></li>
+          <li><a href="help.html">Các bước so sánh</a></li>
+          <li><a href="help.html">Semantic DType Semantics</a></li>
+          <li><a href="help.html">Hỗ trợ định dạng</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Bảo Mật & Pháp Lý</h4>
+        <ul>
+          <li><a href="privacy.html">Cam Kết Quyền Riêng Tư</a></li>
+          <li><a href="privacy.html">Cách lưu thống kê</a></li>
+          <li><a href="help.html">Giới hạn & bảo mật</a></li>
+          <li><a href="help.html">Hướng dẫn sử dụng</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div>© 2026 Dytava / ExcelCompare. Mã dự án EXC. Bản quyền được bảo lưu.</div>
+      <div>Designed with Dytava Chromatic DType Design Tokens</div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

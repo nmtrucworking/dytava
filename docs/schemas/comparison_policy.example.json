@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "policy_id": "academic-records-v1",
+  "policy_version": "1.0.0",
+  "alignment": {
+    "mode": "KEY",
+    "mapping": [
+      {
+        "left": "Mã SV",
+        "right": "ID",
+        "logical_name": "student_id"
+      },
+      {
+        "left": "Điểm",
+        "right": "Score",
+        "logical_name": "score"
+      }
+    ],
+    "keys": [
+      "student_id"
+    ],
+    "on_duplicate": "UNRESOLVED"
+  },
+  "source_profiles": {
+    "A": {
+      "locale": "vi-VN",
+      "time_zone": "Asia/Ho_Chi_Minh"
+    },
+    "B": {
+      "locale": "vi-VN",
+      "time_zone": "Asia/Ho_Chi_Minh"
+    }
+  },
+  "fields": {
+    "student_id": {
+      "semantic_type": "identifier",
+      "trim": true,
+      "preserve_leading_zeros": true,
+      "case_sensitive": true,
+      "null_policy": "DISTINCT"
+    },
+    "score": {
+      "semantic_type": "decimal",
+      "decimal_separator": ",",
+      "allow_alternate_separator": true,
+      "tolerance_abs": "0",
+      "ignore_scale": true,
+      "null_policy": "DISTINCT"
+    }
+  },
+  "unresolved_handling": "REVIEW_REQUIRED",
+  "auto_cast_all_fields": false
+}

@@ -1,17 +1,43 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+# OS
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-.kotlin
+Thumbs.db
+*.swp
 
+# Node & Web
+node_modules/
+dist/
+data/
+backups/
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+*.sqlite*
+
+# Flutter / Dart (mobile)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+mobile/build/
+mobile/.dart_tool/
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+
+# Android (legacy-android)
+.gradle/
+build/
+legacy-android/.gradle/
+legacy-android/build/
+legacy-android/app/build/
+legacy-android/local.properties
+local.properties
+
+# IDE & Editor
+.idea/
+*.iml
+*.ipr
+*.iws

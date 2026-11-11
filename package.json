@@ -1,0 +1,38 @@
+{
+  "name": "dytava-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "node scripts/build.js && node --watch server/index.js",
+    "build": "node scripts/build.js",
+    "start": "node server/index.js",
+    "test": "node --test tests/*.test.js",
+    "check": "npm run build && npm test",
+    "admin:create": "node scripts/create-admin.js",
+    "db:backup": "node scripts/backup.js",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "exceljs": "^4.4.0",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "fflate": "^0.8.3",
+    "helmet": "^8.3.0",
+    "papaparse": "^5.7.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "esbuild": "^0.28.2"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
+  }
+}
