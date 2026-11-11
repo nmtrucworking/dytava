@@ -1,5 +1,7 @@
 # Định dạng file và hợp đồng adapter
 
+> **Quyết định scope ngày 11/11/2026:** [9 ADR](../../decisions/ADR_REGISTER_P0_2026-11-11.md) chốt P0 Android là XLSX/CSV/TSV + PNG/JPEG với manual OCR review (tối đa một nguồn ảnh); JSON chuyển P1. Các adapter vẫn CHƯA được chứng minh triển khai. Schema ImportConfig 0.1.0 chưa thể ingest ảnh P0, phải version-migrate trước khi bật.
+
 Document ID: INP-003\
 Version: 0.1.0\
 Status: DRAFT\
@@ -35,14 +37,15 @@ Capability phải được xác định theo adapter và phiên bản thực thi
 |Excel Workbook|`.xlsx`|OOXML spreadsheet|
 |Comma-Separated Values|`.csv`|Delimited text|
 |Tab-Separated Values|`.tsv`|Delimited text|
-|JavaScript Object Notation|`.json`|Structured records|
+|Raster Image OCR|`.png`, `.jpg`, `.jpeg`|Một ảnh/một bảng, manual review bắt buộc (INP-ADR-002)|
 
-Đây là phạm vi dự kiến theo baseline thiết kế Flutter 2.2. Chỉ được đánh dấu một adapter là implemented/supported sau khi đạt các bài kiểm thử tương ứng.
+Đây là phạm vi đã chốt ở mức engineering baseline qua INP-ADR-002; dữ liệu ảnh có contract riêng tại INP-010. Chỉ được đánh dấu một adapter là implemented/supported sau khi đạt các bài kiểm thử tương ứng.
 
 ### P1 — Mở rộng
 
 |Format|Extension|
 |---|---|
+|JSON flat records|`.json`|
 |JSON Lines|`.jsonl`, `.ndjson`|
 |Legacy Excel|`.xls`|
 |Macro-enabled Excel|`.xlsm`|
@@ -55,7 +58,7 @@ Các adapter P1 cần được kiểm chứng riêng trên thiết bị mục ti
 |Format|Extension|
 |---|---|
 |Portable Document Format|`.pdf`|
-|Image|`.png`, `.jpg`, `.jpeg`, `.webp`, `.heic`|
+|Extended image formats|`.webp`, `.heic`|
 |XML|`.xml`|
 |HTML Table|`.html`, `.htm`|
 |Excel Binary Workbook|`.xlsb`|
