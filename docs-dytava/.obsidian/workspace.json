@@ -4,19 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "7cd227cf62a741ce",
+        "id": "15c1302e81ff335e",
         "type": "tabs",
         "children": [
           {
-            "id": "5f843e0739b18f8c",
+            "id": "643f1785fe43aee3",
             "type": "leaf",
             "state": {
-              "type": "image",
-              "state": {
-                "file": "attachments/system-branding.png"
-              },
-              "icon": "lucide-image",
-              "title": "system-branding"
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "Tab mới"
             }
           }
         ]
@@ -186,7 +184,7 @@
       "bases:Tạo cơ sở mới": false
     }
   },
-  "active": "5f843e0739b18f8c",
+  "active": "43965cded4c76d2d",
   "lastOpenFiles": [
     "branding.md",
     "attachments/system-branding.png",

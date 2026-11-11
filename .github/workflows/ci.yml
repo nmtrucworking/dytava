@@ -22,6 +22,26 @@ jobs:
       - name: Run Tests
         run: npm test
 
+  test-dart-core:
+    name: Pure Dart Core Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Flutter and Dart
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.x'
+      - name: Install Core dependencies
+        working-directory: packages/excelcompare_core
+        run: dart pub get
+      - name: Analyze Core
+        working-directory: packages/excelcompare_core
+        run: dart analyze
+      - name: Test Core
+        working-directory: packages/excelcompare_core
+        run: dart test
+
   test-mobile:
     name: Flutter Mobile Tests
     runs-on: ubuntu-latest
@@ -36,6 +56,9 @@ jobs:
       - name: Install Dependencies
         working-directory: mobile
         run: flutter pub get
+      - name: Analyze Flutter
+        working-directory: mobile
+        run: flutter analyze
       - name: Run Flutter Tests
         working-directory: mobile
         run: flutter test

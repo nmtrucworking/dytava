@@ -1,0 +1,32 @@
+{
+  "name": "Dytava new branding (approved image)",
+  "version": "2.0.0",
+  "brand": {
+    "primary": "#2563EB",
+    "secondary": "#3B82F6",
+    "purple": "#8B5CF6",
+    "cyan": "#06B6D4",
+    "green": "#10B981",
+    "amber": "#F59E0B",
+    "red": "#EF4444",
+    "surface": "#FFFFFF",
+    "subtle": "#F3F4F6",
+    "border": "#E5E7EB",
+    "dark": "#142253",
+    "muted": "#53617C",
+    "deep": "#143BA7",
+    "soft_blue": "#EAF2FF",
+    "soft_purple": "#F0E9FF",
+    "soft_green": "#E6FAF1",
+    "soft_amber": "#FFF2DF",
+    "soft_red": "#FFEBEB",
+    "soft_cyan": "#E1F8FC"
+  },
+  "comparison": {
+    "EXACT": "#10B981",
+    "EQUIVALENT": "#2563EB",
+    "DIFFERENT": "#EF4444",
+    "UNRESOLVED": "#F59E0B"
+  },
+  "note": "Updated against user supplied branding image; this supersedes prior Chromatic DType mark."
+}

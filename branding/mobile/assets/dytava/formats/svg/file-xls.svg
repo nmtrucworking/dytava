@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+ <rect x="101" y="37" width="270" height="400" rx="32" fill="#159665"/>
+ <path d="M290 37v82q0 16 16 16h65" fill="#FFFFFF" opacity=".45"/>
+ <path d="M290 37 371 135h-64q-17 0-17-17Z" fill="#FFFFFF" opacity=".62"/>
+ <rect x="70" y="249" width="373" height="137" rx="30" fill="#159665" stroke="#FFFFFF" stroke-width="12"/>
+ <text x="256" y="337" fill="white" font-family="Inter,DejaVu Sans,sans-serif" font-weight="800" font-size="79" text-anchor="middle">XLS</text>
+ </svg>

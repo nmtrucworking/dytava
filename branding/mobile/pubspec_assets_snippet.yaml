@@ -1,0 +1,15 @@
+# Add inside existing flutter: section of mobile/pubspec.yaml (do NOT add a second flutter: key).
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/dytava/brand/png_4k/
+    - assets/dytava/brand/svg/
+    - assets/dytava/icons/svg/color/
+    - assets/dytava/icons/svg/glyph/
+    - assets/dytava/icons/svg/outline/
+    - assets/dytava/icons/png_512/
+    - assets/dytava/icons/png_128/
+    - assets/dytava/formats/svg/
+    # PNG 4K files are archival / exports: DON'T bundle them by default.
+    # - assets/dytava/icons/png_4k/
+    # - assets/dytava/formats/png_4k/
