@@ -23,8 +23,8 @@ release_baseline: Android P0
 | FR-005 | US-04 | INP-REQ-009, INP-ADR-008 | INP-TC-027/029; mapping invalidation E2E | P0 | PLANNED |
 | FR-006 | US-04 | Core key semantics, ADR-008 | Semantic key/duplicate oracle, E2E-03/04 | P0 | PLANNED |
 | FR-007 | US-05, US-07 | Core matching, ADR-001 | Added/removed/direction golden; E2E-03 | P0 | PLANNED |
-| FR-008 | US-05 | Core null/identifier, ADR-006 | Semantic TC-02/03 **recheck expectation against ADR-006**, E2E-05 | P0 | PLANNED |
-| FR-009 | US-05, US-06 | Core normalization/policy | Semantic TC-01/04/06/15; policy digest golden | P0 | PLANNED |
+| FR-008 | US-05 | Core null/identifier, ADR-006 | Semantic TC-02/03 (TC-02 so sánh hai chuỗi); E2E-05 mới dành cho identifier text và XLSX numeric mất lexical evidence | P0 | PLANNED |
+| FR-009 | US-05, US-06 | Core normalization/policy | Semantic TC-01/04/06; policy digest golden (TC-15 từ Master chưa đăng ký trong semantic registry) | P0 | PLANNED |
 | FR-010 | US-10 | Core formula design | Formula/cache corpus, must not execute expressions | P1+ | PLANNED |
 | FR-011 | US-10 | Metadata separate report | Style/meta fixtures | P1+ | PLANNED |
 | FR-012 | US-11 | INP-REQ-010/011, INP-ADR-002 | INP-TC-039/040, Android OCR E2E-06/07 | **P0** | PLANNED |
@@ -32,7 +32,7 @@ release_baseline: Android P0
 | FR-014 | US-05, US-08 | Core policy digest/versioning | Deterministic replay; policy-change golden | P0 | PLANNED |
 | FR-015 | US-09 | INP-REQ-008/011, ADR-009 | INP-TC-003/004/034..038, E2E-08 | P0 | PLANNED |
 
-**Các lưu ý cần xử lý trước test PASS**: Master TC-02 lịch sử kỳ vọng DIFFERENT với string `00123` vs numeric `123`, còn ADR-006 yêu cầu **UNRESOLVED** nếu numeric identity không còn lexical evidence. Phải sửa oracle semantic theo decision hoặc đặt mode testcase rõ ràng, **không tự thay dữ liệu gold**. Input config 0.1.0 chưa hỗ trợ image P0: cần migration trước khi INP-TC-039/040 có integration runner.
+**Các lưu ý trước test PASS:** Registry semantic [TC-02](../examples/acceptance_cases.json) dùng hai giá trị chuỗi `00123` và `123`, kỳ vọng DIFFERENT; trường hợp này **không mâu thuẫn** với ADR-006. Riêng nguồn XLSX lưu numeric `123` có thể đã mất thông tin lexical identifier, nên E2E-05 mới phải kiểm tra UNRESOLVED/review theo ADR-006. Không sửa oracle TC-02 để gộp hai trường hợp. InputConfig 0.1.0 chưa hỗ trợ image P0: cần migration trước khi INP-TC-039/040 có integration runner.
 
 ## 2. NFR → verification matrix
 
