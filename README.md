@@ -15,161 +15,186 @@
   <a href="https://github.com/nmtrucworking/dytava/actions"><img src="https://img.shields.io/badge/CI-Passing-22c55e?style=for-the-badge&logo=github-actions&logoColor=white" alt="CI Status"></a>
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-24%2B-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"></a>
-  <a href="#-privacy-first-architecture"><img src="https://img.shields.io/badge/Privacy-100%25%20Client--Side-blueviolet?style=for-the-badge&logo=shield" alt="Privacy First"></a>
+  <a href="#privacy-first-architecture"><img src="https://img.shields.io/badge/Privacy-100%25%20Client--Side-blueviolet?style=for-the-badge" alt="Privacy First"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"></a>
 </p>
 
 ---
 
-## 📌 Tổng Quan / Overview
+## Tong quan (Overview)
 
-**Dytava** (còn được biết đến qua bộ giải pháp **ExcelCompare**) là nền tảng so sánh bảng tính và dữ liệu phân tích sai khác ngữ nghĩa (semantic diff) đa nền tảng hiện đại. Dự án được thiết kế theo mô hình **Monorepo** bao gồm ứng dụng di động Flutter, ứng dụng Web bảo mật cao và API dịch vụ quản trị.
+**Dytava** (con duoc biet den qua bo giai phap **ExcelCompare**) la nen tang so sanh bang tinh va phan tich sai khac ngu nghia (semantic diff) da nen tang hien dai. Du an duoc thiet ke theo mo hinh **Monorepo** bao gom ung dung di dong Flutter, ung dung Web bao mat cao va API dich vu quan tri.
 
-Unlike traditional line-by-line diff tools, **Dytava** operates at the **cell and data-type level**:
-- Hiểu cấu trúc dòng/cột, bảng tính nhiều sheet (XLSX, XLS, CSV, TSV).
-- Phân biệt giá trị tính toán (*calculated value*) và công thức (*formula*).
-- Sai số số học (*numeric tolerance*), làm tròn ngày giờ, và chuẩn hóa văn bản.
-- **100% Client-Side Privacy**: Toàn bộ dữ liệu bảng tính được xử lý trực tiếp trên thiết bị/trình duyệt người dùng qua Web Workers và bộ nhớ cục bộ, **không tải nội dung bảng tính lên server**.
+Khac voi cac cong cu diff theo dong truyen thong, **Dytava** hoat dong o **cap o (cell) va kieu du lieu ngu nghia (data-type level)**:
+- Hieu cau truc dong/cot, bang tinh nhieu sheet (XLSX, XLS, CSV, TSV).
+- Phan biet gia tri tinh toan (*calculated value*) va cong thuc (*formula*).
+- Sai so so hoc (*numeric tolerance*), lam tron ngay gio va chuan hoa van ban.
+- **100% Client-Side Privacy**: Toan bo du lieu bang tinh duoc xu ly truc tiep tren thiet bi va trinh duyet nguoi dung qua Web Workers va bo nho cuc bo, **khong tai noi dung bang tinh len may chu**.
 
 ---
 
-## 📸 Giao Diện & Visual Concept
+## Giao dien & Visual Concept
 
 <p align="center">
-  <img src="web/assets/visual-concept.png" alt="Dytava Visual Concept" width="850">
+  <img src="web/assets/visual-concept.png" alt="Dytava Official Brand Overview" width="920">
 </p>
 
 ---
 
-## 🚀 Các Tính Năng Nổi Bật (Key Features)
+## Cac tinh nang noi bat (Key Features)
 
-| Tính Năng | Mô Tả Chi Tiết |
+| Tinh Nang | Mo Ta Chi Tiet |
 | :--- | :--- |
-| **🔒 100% Client-Side Privacy** | Không gửi file dữ liệu qua Internet. Tận dụng Web Worker & Engine nội bộ để phân tích hoàn toàn trên máy khách. |
-| **🔍 Semantic Diff Engine** | So sánh ngữ nghĩa: Phát hiện thêm/xóa dòng, sửa ô, đổi kiểu dữ liệu (String sang Number/Date), và chênh lệch công thức. |
-| **📐 Numeric & Precision Tolerance** | Thiết lập ngưỡng sai số cho phép ($10^{-2}$, $10^{-6}$, hoặc theo phần trăm %) để tránh cảnh báo sai do sai số dấu phẩy động. |
-| **📱 Flutter Mobile App** | Ứng dụng di động (`mobile/`) đa nền tảng (Android & iOS) gọn nhẹ, tra cứu và so sánh nhanh bảng tính ngoại tuyến. |
-| **🌐 Web App & Admin Portal** | Giao diện web hoàn chỉnh (`web/`), tích hợp công cụ so sánh trực quan, quản trị phát hành, KPI metrics và kiểm thử chấp nhận (Acceptance Tests). |
-| **📑 Đa Định Dạng & Xuất Báo Cáo** | Đọc ghi XLSX, XLS, CSV, TSV. Xuất báo cáo sai khác dạng bảng trực quan, CSV hoặc file Excel có highlight màu. |
+| **100% Client-Side Privacy** | Khong gui file du lieu qua Internet. Tan dung Web Worker va Engine noi bo de phan tich hoan toan tren may khach. |
+| **Semantic Diff Engine** | So sanh ngu nghia: Phat hien them/xoa dong, sua o, doi kieu du lieu (String sang Number/Date), va chenh lech cong thuc. |
+| **Numeric & Precision Tolerance** | Thiet lap nguong sai so cho phep ($10^{-2}$, $10^{-6}$, hoac theo phan tram %) de tranh canh bao sai do sai so dau phay dong. |
+| **Flutter Mobile App** | Ung dung di dong (`mobile/`) da nen tang (Android & iOS) gon nhe, tra cuu va so sanh nhanh bang tinh ngoai tuyen. |
+| **Web App & Admin Portal** | Giao dien web hoan chinh (`web/`), tich hop cong cu so sanh truc quan, quan tri phat hanh, KPI metrics va kiem thu chap nhan. |
+| **Da Dinh Dang & Xuat Bao Cao** | Doc ghi XLSX, XLS, CSV, TSV. Xuat bao cao sai khac dang bang truc quan, CSV hoac file Excel co danh dau mau. |
 
 ---
 
-## 📂 Cấu Trúc Monorepo (Workspace Architecture)
+## Cau truc Monorepo (Workspace Architecture)
 
 ```text
 excelcompare/
-├── mobile/                  # 📱 Ứng dụng di động đa nền tảng Flutter (Android & iOS)
-│   ├── lib/main.dart        # Entrypoint ứng dụng Flutter
-│   └── pubspec.yaml         # Cấu hình dependencies Flutter
+├── branding/                # Kho tai nguyen nhan dien thuong hieu chinh thuc v2.0
+│   ├── index.html           # Trang Brand Showcase & UI Design System tuong tac
+│   ├── README_VI.md         # Huong dan tich hop assets va phien ban branding
+│   ├── catalog/             # Thu vien tra cuu 116+ icons va 18 dinh dang file
+│   ├── documentation/       # Quy chuan Brand version va ngu nghia trang thai so sanh
+│   └── mobile/              # Flutter Design System Dart code & assets (brand, icons, formats)
 │
-├── web/                     # 🌐 Giao diện Web Client & Admin Portal
-│   ├── assets/              # Logo SVG, PNG, Design tokens & App icons
+├── mobile/                  # Ung dung di dong da nen tang Flutter (Android & iOS)
+│   ├── assets/dytava/       # Kho assets branding tich hop truc tiep trong Flutter
+│   ├── lib/design_system/   # Thu vien Dart Design System (colors, icons, theme, widgets)
+│   ├── lib/main.dart        # Entrypoint ung dung Flutter
+│   └── pubspec.yaml         # Khai bao dependencies va assets Flutter
+│
+├── web/                     # Giao dien Web Client & Admin Portal
+│   ├── assets/              # Logo SVG, PNG, Design tokens va App icons v2.0
 │   ├── css/                 # Modern Responsive UI stylesheet
-│   ├── js/                  # Compare Engine, File Parser & Web Worker
-│   └── index.html           # Trang chủ ứng dụng so sánh bảng tính
+│   ├── js/                  # Compare Engine, File Parser va Web Worker
+│   └── index.html           # Trang chu ung dung so sanh bang tinh
 │
-├── server/                  # ⚡ Backend Express & Quản trị dịch vụ
-│   ├── app.js               # Khởi tạo Express app & middleware bảo mật
+├── server/                  # Backend Express va Quan tri dich vu
+│   ├── app.js               # Khoi tao Express app va middleware bao mat
 │   ├── index.js             # Entrypoint server (Watch / Production)
 │   └── migrations/          # SQLite database migrations
 │
-├── docs/                    # 📚 Toàn bộ tài liệu kỹ thuật & Brand
-│   ├── document/            # PRD, SRS, Non-functional, Data Contracts
-│   ├── diagrams/            # Sơ đồ kiến trúc (DOT & PNG)
-│   └── dytava_brand/        # Bộ nhận diện thương hiệu Dytava Brand Identity v1.0
+├── docs-dytava/             # Toan bo tai lieu ky thuat va Branding Obsidian vault
+│   ├── branding.md          # Tai lieu nhan dien thuong hieu Dytava v2.0
+│   └── attachments/         # File dinh kem truc quan va so do
 │
-├── tests/                   # 🧪 Bộ kiểm thử tự động (26 acceptance test cases)
-├── .github/workflows/ci.yml # 🤖 GitHub Actions CI tự động kiểm tra Web & Flutter
-└── package.json             # Quản lý scripts Node.js & dependencies
+├── tests/                   # Bo kiem thu tu dong (26 acceptance test cases)
+├── .github/workflows/ci.yml # GitHub Actions CI tu dong kiem tra Web & Flutter
+└── package.json             # Quan ly scripts Node.js va dependencies
 ```
 
 ---
 
-## 🛠️ Hướng Dẫn Cài Đặt & Khởi Chạy (Getting Started)
+## Huong dan cai dat & khoi chay (Getting Started)
 
-### Yêu Cầu Môi Trường (Prerequisites)
-- **Node.js**: v20+ (Khuyên dùng v24+)
-- **Flutter SDK**: 3.x+ (cho phân hệ `mobile/`)
-- **Trình duyệt**: Chrome, Firefox, Safari hoặc Edge phiên bản mới
+### Yeu cau moi truong (Prerequisites)
+- **Node.js**: v20+ (Khuyen dung v24+)
+- **Flutter SDK**: 3.x+ (cho phan he `mobile/`)
+- **Trinh duyet**: Chrome, Firefox, Safari hoac Edge phien ban moi
 
 ---
 
-### 1. Phân Hệ Web & Server
+### 1. Phan He Web & Server
 
 ```bash
-# Cài đặt dependencies Node.js
+# Cai dat dependencies Node.js
 npm install
 
-# Khởi chạy server development (tự động build web assets và watch backend)
+# Khoi chay server development (tu dong build web assets va watch backend)
 npm run dev
 
-# Mở trình duyệt tại:
-# -> Web so sánh: http://localhost:3000
-# -> Admin Portal: http://localhost:3000/admin (nếu kích hoạt)
+# Mo trinh duyet tai:
+# -> Web so sanh: http://localhost:3000
+# -> Admin Portal: http://localhost:3000/admin (neu kich hoat)
 ```
 
-**Chạy kiểm thử tự động Web Engine:**
+**Chay kiem thu tu dong Web Engine:**
 ```bash
 npm test
-# Chạy 26 kịch bản kiểm thử ngữ nghĩa golden fixtures
+# Chay 26 kich ban kiem thu ngu nghia golden fixtures
 ```
 
 ---
 
-### 2. Phân Hệ Di Động Flutter (`mobile/`)
+### 2. Phan He Di Dong Flutter (`mobile/`)
 
 ```bash
-# Di chuyển vào thư mục mobile
+# Di chuyen vao thu muc mobile
 cd mobile
 
-# Cài đặt các gói phụ thuộc Flutter
+# Cai dat cac goi phu thuoc Flutter
 flutter pub get
 
-# Kiểm tra code & chạy smoke tests
+# Kiem tra code & chay smoke tests
 flutter test
 
-# Khởi chạy trên thiết bị giả lập hoặc máy thật kết nối
+# Khoi chay tren thiet bi gia lap hoac may that ket noi
 flutter run
 ```
 
 ---
 
-## 🧩 Kiến Trúc So Sánh Ngữ Nghĩa (Diff Engine)
+## Kien truc so sanh ngu nghia (Diff Engine)
 
 ```mermaid
 flowchart LR
-    A["File Bảng Tính A\n(XLSX, CSV)"] --> C["Bộ Phân Tích Cục Bộ\n(File Parser / Worker)"]
-    B["File Bảng Tính B\n(XLSX, CSV)"] --> C
+    A["File Bang Tinh A\n(XLSX, CSV)"] --> C["Bo Phan Tich Cuc Bo\n(File Parser / Worker)"]
+    B["File Bang Tinh B\n(XLSX, CSV)"] --> C
     
     C --> D{"Semantic Diff Engine"}
     
-    subgraph Engine ["Quy Tắc So Sánh (Policy Engine)"]
-        D1["Kiểm tra Cấu trúc\n(Sheet, Hàng, Cột)"]
-        D2["Đối soát Kiểu Dữ Liệu\n(Number, Text, Date)"]
-        D3["Áp dụng Sai Số\n(Tolerance Matrix)"]
+    subgraph Engine ["Quy Tac So Sanh (Policy Engine)"]
+        D1["Kiem tra Cau truc\n(Sheet, Hang, Cot)"]
+        D2["Doi soat Kieu Du Lieu\n(Number, Text, Date)"]
+        D3["Ap dung Sai So\n(Tolerance Matrix)"]
     end
     
     D --> Engine
-    Engine --> E["Báo Cáo Phân Tích Sai Khác\n(Interactive Visual Diff / Export)"]
+    Engine --> E["Bao Cao Phan Tich Sai Khac\n(Interactive Visual Diff / Export)"]
 ```
 
 ---
 
-## 🎨 Bộ Nhận Diện Thương Hiệu (Brand Identity)
+## Bo nhan dien thuong hieu chinh thuc (Official Brand Identity v2.0)
 
-Dự án áp dụng quy chuẩn **Dytava Brand Identity v1.0**:
-- **Primary Color**: `#2663EB` (Dytava Royal Blue)
-- **Accent Palette**: 
-  - Text/Diff Added: `#16A585` (Emerald Teal)
-  - Diff Changed: `#F2A642` (Amber Warmth)
-  - Data Type Shift: `#A48BFA` (Soft Purple)
-- Logo và design tokens đầy đủ tại: [`docs/dytava_brand/`](docs/dytava_brand/) hoặc [`web/assets/`](web/assets/).
+Du an ap dung quy chuan **Dytava Brand Identity v2.0 (Official Approved)**:
+
+### 1. Bang mau chuan (Official Color Palette)
+- **Primary Royal Blue**: `#2563EB` (Nut so sanh chinh, trang thai EQUIVALENT)
+- **Sky Blue**: `#3B82F6` (Diem sang gradient, icon dieu huong)
+- **Purple Accent**: `#8B5CF6` (Xuat bao cao, anh xa cot, hoc tap)
+- **Cyan Accent**: `#06B6D4` (Lop bang tinh goc, trich xuat OCR)
+- **Emerald Green**: `#10B981` (Nhap tep, Excel, trang thai EXACT)
+- **Amber Warning**: `#F59E0B` (Canh bao doi soat, trang thai UNRESOLVED)
+- **Crimson Danger**: `#EF4444` (Xoa du lieu, bao loi, trang thai DIFFERENT)
+- **Neutral Background**: `#F3F4F6` (Mau nen ung dung)
+- **Border / Divider**: `#E5E7EB` (Duong vien the, phan cach bang)
+- **Pure White**: `#FFFFFF` (Nen the be mat)
+
+### 2. Quy chuan 4 trang thai so sanh (Comparison Semantics)
+- **EXACT (`#10B981`)**: Hai o trung khop chinh xac 100%.
+- **EQUIVALENT (`#2563EB`)**: Hai o khac bieu dien chu nhung tuong duong gia tri theo quy tac chuan hoa.
+- **DIFFERENT (`#EF4444`)**: Hai o khac biet ro ret ve du lieu.
+- **UNRESOLVED (`#F59E0B`)**: Chua du co so ket luan (can kiem tra thu cong).
+
+### 3. Tai nguyen truc quan & Design System
+- **Brand Showcase truc quan:** [`branding/index.html`](branding/index.html)
+- **Thu vien Icon Vault 4K (116+ icons):** [`branding/catalog/index.html`](branding/catalog/index.html)
+- **Flutter Design System Package:** [`branding/mobile/lib/design_system/`](branding/mobile/lib/design_system/)
 
 ---
 
-## 📄 Bản Quyền & Tác Giả (License & Author)
+## Ban quyen & Tac gia (License & Author)
 
-Dự án được phân phối dưới giấy phép **[MIT License](LICENSE)**.
+Du an duoc phan phoi duoi giay phep **[MIT License](LICENSE)**.
 
-Được phát triển và duy trì bởi **[nmtrucworking](https://github.com/nmtrucworking)**.
-Mọi đóng góp (Pull Request, Issue) đều được hoan nghênh!
+Duoc phat trien va duy tri boi **[nmtrucworking](https://github.com/nmtrucworking)**.
+Moi dong gop (Pull Request, Issue) deu duoc hoan nghenh!

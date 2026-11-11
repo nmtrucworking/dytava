@@ -1,0 +1,84 @@
+{
+  "name": "Dytava Official Branding Design System",
+  "version": "2.0.0",
+  "status": "official_approved",
+  "updated_at": "2026-11-11",
+  "palette": {
+    "primary": { "hex": "#2563EB", "name": "Primary Royal Blue", "role": "Nút chính, liên kết, trạng thái tương đương, brand key" },
+    "secondary": { "hex": "#3B82F6", "name": "Sky Blue", "role": "Huy hiệu, trạng thái phụ, gradient accent" },
+    "purple": { "hex": "#8B5CF6", "name": "Purple Accent", "role": "Lớp dữ liệu trực quan, nút xuất báo cáo, module học tập/cài đặt" },
+    "cyan": { "hex": "#06B6D4", "name": "Cyan Accent", "role": "Lớp bảng tính nền, module trích xuất OCR, thông tin" },
+    "green": { "hex": "#10B981", "name": "Emerald Green", "role": "So sánh Excel, trạng thái hoàn thành, kết quả EXACT, nút nhập tệp" },
+    "amber": { "hex": "#F59E0B", "name": "Amber Warning", "role": "Cảnh báo, trạng thái UNRESOLVED, cần người dùng đối soát" },
+    "red": { "hex": "#EF4444", "name": "Crimson Danger", "role": "Xóa dữ liệu, cảnh báo lỗi, trạng thái DIFFERENT" },
+    "bg_subtle": { "hex": "#F3F4F6", "name": "Neutral Background", "role": "Màu nền ứng dụng, container thẻ, vùng nhập liệu rỗng" },
+    "border": { "hex": "#E5E7EB", "name": "Divider / Border", "role": "Đường viền thẻ, phân cách bảng, ranh giới điều khiển" },
+    "white": { "hex": "#FFFFFF", "name": "Pure White", "role": "Nền thẻ, nút nhấn, văn bản nổi trên nền màu" }
+  },
+  "typography": {
+    "primary": "Inter",
+    "fallback": "Roboto",
+    "framework": "Flutter Material 3",
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700,
+      "extrabold": 800
+    }
+  },
+  "comparison_states": {
+    "EXACT": {
+      "code": "EXACT",
+      "hex": "#10B981",
+      "soft_bg": "#ECFDF5",
+      "border": "#A7F3D0",
+      "label_vi": "Giống hoàn toàn",
+      "badge_vi": "EXACT"
+    },
+    "EQUIVALENT": {
+      "code": "EQUIVALENT",
+      "hex": "#2563EB",
+      "soft_bg": "#EFF6FF",
+      "border": "#BFDBFE",
+      "label_vi": "Tương đương theo quy tắc",
+      "badge_vi": "EQUIVALENT"
+    },
+    "DIFFERENT": {
+      "code": "DIFFERENT",
+      "hex": "#EF4444",
+      "soft_bg": "#FEF2F2",
+      "border": "#FECACA",
+      "label_vi": "Khác biệt",
+      "badge_vi": "DIFFERENT"
+    },
+    "UNRESOLVED": {
+      "code": "UNRESOLVED",
+      "hex": "#F59E0B",
+      "soft_bg": "#FFFBEB",
+      "border": "#FDE68A",
+      "label_vi": "Chưa đủ cơ sở kết luận",
+      "badge_vi": "UNRESOLVED"
+    }
+  },
+  "features": [
+    { "id": "excel_compare", "title_vi": "So sánh Excel", "color": "#10B981", "icon": "compare" },
+    { "id": "ocr", "title_vi": "OCR (Ảnh → Bảng)", "color": "#8B5CF6", "icon": "ocr" },
+    { "id": "import", "title_vi": "Nhập dữ liệu", "color": "#2563EB", "icon": "import" },
+    { "id": "mapping", "title_vi": "Ánh xạ cột", "color": "#8B5CF6", "icon": "mapping" },
+    { "id": "normalize", "title_vi": "Quy tắc chuẩn hóa", "color": "#2563EB", "icon": "normalize" },
+    { "id": "report", "title_vi": "Báo cáo", "color": "#2563EB", "icon": "report" },
+    { "id": "history", "title_vi": "Lịch sử", "color": "#2563EB", "icon": "history" },
+    { "id": "templates", "title_vi": "Mẫu quy tắc", "color": "#8B5CF6", "icon": "save-rule" },
+    { "id": "learn", "title_vi": "Học tập", "color": "#8B5CF6", "icon": "learn" },
+    { "id": "about", "title_vi": "Giới thiệu", "color": "#2563EB", "icon": "info" },
+    { "id": "settings", "title_vi": "Cài đặt", "color": "#8B5CF6", "icon": "settings" }
+  ],
+  "navigation": [
+    { "id": "home", "label": "Trang chủ", "icon": "home" },
+    { "id": "compare", "label": "So sánh", "icon": "compare" },
+    { "id": "history", "label": "Lịch sử", "icon": "history" },
+    { "id": "learn", "label": "Học tập", "icon": "learn" },
+    { "id": "settings", "label": "Cài đặt", "icon": "settings" }
+  ]
+}

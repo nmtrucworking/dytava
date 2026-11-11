@@ -1,0 +1,1651 @@
+{
+  "version": "2.0.0",
+  "rendering": "SVG native → PNG 4096px, no resampling",
+  "count": 116,
+  "icons": [
+    {
+      "name": "home",
+      "label_vi": "Trang chủ",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/home.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/home.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/home-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/home.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "files",
+      "label_vi": "Tệp",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/files.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/files.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/files-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/files.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "history",
+      "label_vi": "Lịch sử",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/history.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/history.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/history-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/history.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "learn",
+      "label_vi": "Học tập",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/learn.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/learn.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/learn-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/learn.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "settings",
+      "label_vi": "Cài đặt",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/settings.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/settings.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/settings-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/settings.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "info",
+      "label_vi": "Info",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/info.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/info.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/info-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/info.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "help",
+      "label_vi": "Help",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/help.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/help.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/help-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/help.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "profile",
+      "label_vi": "Profile",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/profile.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/profile.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/profile-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/profile.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "notifications",
+      "label_vi": "Notifications",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/notifications.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/notifications.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/notifications-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/notifications.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "search",
+      "label_vi": "Search",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/search.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/search.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/search-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/search.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "filter",
+      "label_vi": "Filter",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/filter.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/filter.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/filter-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/filter.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "favorites",
+      "label_vi": "Favorites",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/favorites.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/favorites.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/favorites-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/favorites.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "more",
+      "label_vi": "More",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/more.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/more.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/more-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/more.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "menu",
+      "label_vi": "Menu",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/menu.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/menu.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/menu-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/menu.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "activity",
+      "label_vi": "Activity",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/activity.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/activity.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/activity-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/activity.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dashboard",
+      "label_vi": "Dashboard",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/dashboard.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dashboard.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dashboard-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dashboard.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "language",
+      "label_vi": "Language",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/language.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/language.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/language-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/language.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "calendar",
+      "label_vi": "Calendar",
+      "category": "navigation",
+      "svg": "mobile/assets/dytava/icons/svg/color/calendar.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/calendar.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/calendar-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/calendar.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "compare",
+      "label_vi": "So sánh",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/compare.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/compare.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/compare-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/compare.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "compare-files",
+      "label_vi": "Compare files",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/compare-files.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/compare-files.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/compare-files-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/compare-files.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "import",
+      "label_vi": "Import",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/import.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/import.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/import-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/import.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "export",
+      "label_vi": "Export",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/export.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/export.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/export-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/export.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "mapping",
+      "label_vi": "Ánh xạ cột",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/mapping.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/mapping.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/mapping-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/mapping.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "policy",
+      "label_vi": "Quy tắc",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/policy.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/policy.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/policy-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/policy.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "normalize",
+      "label_vi": "Chuẩn hóa",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/normalize.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/normalize.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/normalize-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/normalize.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "key",
+      "label_vi": "Key",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/key.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/key.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/key-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/key.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "columns",
+      "label_vi": "Columns",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/columns.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/columns.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/columns-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/columns.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "rows",
+      "label_vi": "Rows",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/rows.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/rows.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/rows-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/rows.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "cells",
+      "label_vi": "Cells",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/cells.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/cells.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/cells-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/cells.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "preview",
+      "label_vi": "Preview",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/preview.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/preview.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/preview-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/preview.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "ocr",
+      "label_vi": "Quét OCR",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/ocr.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/ocr.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/ocr-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/ocr.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "crop",
+      "label_vi": "Crop",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/crop.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/crop.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/crop-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/crop.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "rotate",
+      "label_vi": "Rotate",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/rotate.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/rotate.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/rotate-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/rotate.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "align",
+      "label_vi": "Align",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/align.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/align.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/align-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/align.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "formula",
+      "label_vi": "Formula",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/formula.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/formula.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/formula-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/formula.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "compare-table",
+      "label_vi": "Compare table",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/compare-table.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/compare-table.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/compare-table-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/compare-table.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "differences",
+      "label_vi": "Differences",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/differences.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/differences.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/differences-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/differences.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "variants",
+      "label_vi": "Variants",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/variants.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/variants.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/variants-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/variants.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "compare-progress",
+      "label_vi": "Compare progress",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/compare-progress.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/compare-progress.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/compare-progress-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/compare-progress.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "save-rule",
+      "label_vi": "Save rule",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/save-rule.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/save-rule.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/save-rule-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/save-rule.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "workbook",
+      "label_vi": "Workbook",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/workbook.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/workbook.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/workbook-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/workbook.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "change-log",
+      "label_vi": "Change log",
+      "category": "comparison",
+      "svg": "mobile/assets/dytava/icons/svg/color/change-log.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/change-log.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/change-log-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/change-log.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-string",
+      "label_vi": "Dtype string",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-string.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-string.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-string-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-string.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-integer",
+      "label_vi": "Dtype integer",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-integer.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-integer.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-integer-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-integer.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-decimal",
+      "label_vi": "Dtype decimal",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-decimal.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-decimal.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-decimal-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-decimal.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-date",
+      "label_vi": "Dtype date",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-date.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-date.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-date-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-date.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-datetime",
+      "label_vi": "Dtype datetime",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-datetime.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-datetime.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-datetime-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-datetime.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-boolean",
+      "label_vi": "Dtype boolean",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-boolean.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-boolean.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-boolean-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-boolean.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-identifier",
+      "label_vi": "Dtype identifier",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-identifier.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-identifier.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-identifier-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-identifier.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-percentage",
+      "label_vi": "Dtype percentage",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-percentage.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-percentage.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-percentage-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-percentage.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-currency",
+      "label_vi": "Dtype currency",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-currency.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-currency.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-currency-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-currency.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-null",
+      "label_vi": "Null / rỗng",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-null.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-null.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-null-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-null.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-phone",
+      "label_vi": "Dtype phone",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-phone.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-phone.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-phone-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-phone.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-email",
+      "label_vi": "Dtype email",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-email.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-email.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-email-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-email.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-enum",
+      "label_vi": "Dtype enum",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-enum.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-enum.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-enum-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-enum.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "dtype-timezone",
+      "label_vi": "Dtype timezone",
+      "category": "datatype",
+      "svg": "mobile/assets/dytava/icons/svg/color/dtype-timezone.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/dtype-timezone.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/dtype-timezone-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/dtype-timezone.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "exact",
+      "label_vi": "Giống hoàn toàn",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/exact.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/exact.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/exact-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/exact.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "equivalent",
+      "label_vi": "Tương đương",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/equivalent.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/equivalent.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/equivalent-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/equivalent.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "different",
+      "label_vi": "Khác biệt",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/different.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/different.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/different-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/different.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "unresolved",
+      "label_vi": "Chưa xác định",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/unresolved.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/unresolved.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/unresolved-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/unresolved.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "warning",
+      "label_vi": "Warning",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/warning.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/warning.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/warning-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/warning.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "success",
+      "label_vi": "Success",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/success.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/success.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/success-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/success.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "error",
+      "label_vi": "Error",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/error.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/error.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/error-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/error.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "loading",
+      "label_vi": "Loading",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/loading.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/loading.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/loading-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/loading.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "empty",
+      "label_vi": "Empty",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/empty.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/empty.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/empty-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/empty.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "pending",
+      "label_vi": "Pending",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/pending.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/pending.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/pending-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/pending.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "no-access",
+      "label_vi": "No access",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/no-access.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/no-access.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/no-access-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/no-access.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "partial",
+      "label_vi": "Partial",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/partial.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/partial.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/partial-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/partial.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "added",
+      "label_vi": "Added",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/added.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/added.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/added-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/added.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "removed",
+      "label_vi": "Removed",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/removed.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/removed.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/removed-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/removed.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "duplicate",
+      "label_vi": "Duplicate",
+      "category": "status",
+      "svg": "mobile/assets/dytava/icons/svg/color/duplicate.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/duplicate.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/duplicate-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/duplicate.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "plus",
+      "label_vi": "Plus",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/plus.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/plus.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/plus-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/plus.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "minus",
+      "label_vi": "Minus",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/minus.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/minus.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/minus-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/minus.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "close",
+      "label_vi": "Close",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/close.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/close.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/close-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/close.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "check",
+      "label_vi": "Check",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/check.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/check.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/check-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/check.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "back",
+      "label_vi": "Back",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/back.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/back.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/back-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/back.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "forward",
+      "label_vi": "Forward",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/forward.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/forward.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/forward-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/forward.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "chevron-down",
+      "label_vi": "Chevron down",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/chevron-down.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/chevron-down.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/chevron-down-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/chevron-down.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "chevron-up",
+      "label_vi": "Chevron up",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/chevron-up.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/chevron-up.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/chevron-up-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/chevron-up.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "edit",
+      "label_vi": "Edit",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/edit.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/edit.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/edit-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/edit.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "delete",
+      "label_vi": "Delete",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/delete.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/delete.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/delete-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/delete.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "copy",
+      "label_vi": "Copy",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/copy.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/copy.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/copy-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/copy.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "share",
+      "label_vi": "Share",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/share.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/share.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/share-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/share.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "refresh",
+      "label_vi": "Refresh",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/refresh.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/refresh.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/refresh-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/refresh.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "upload",
+      "label_vi": "Tải lên",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/upload.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/upload.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/upload-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/upload.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "download",
+      "label_vi": "Tải về",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/download.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/download.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/download-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/download.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "camera",
+      "label_vi": "Camera",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/camera.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/camera.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/camera-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/camera.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "sort",
+      "label_vi": "Sort",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/sort.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/sort.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/sort-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/sort.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "sort-ascending",
+      "label_vi": "Sort ascending",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/sort-ascending.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/sort-ascending.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/sort-ascending-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/sort-ascending.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "sort-descending",
+      "label_vi": "Sort descending",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/sort-descending.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/sort-descending.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/sort-descending-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/sort-descending.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "zoom-in",
+      "label_vi": "Zoom in",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/zoom-in.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/zoom-in.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/zoom-in-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/zoom-in.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "zoom-out",
+      "label_vi": "Zoom out",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/zoom-out.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/zoom-out.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/zoom-out-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/zoom-out.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "expand",
+      "label_vi": "Expand",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/expand.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/expand.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/expand-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/expand.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "collapse",
+      "label_vi": "Collapse",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/collapse.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/collapse.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/collapse-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/collapse.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "print",
+      "label_vi": "Print",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/print.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/print.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/print-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/print.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "link",
+      "label_vi": "Link",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/link.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/link.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/link-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/link.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "open-external",
+      "label_vi": "Open external",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/open-external.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/open-external.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/open-external-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/open-external.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "cancel",
+      "label_vi": "Cancel",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/cancel.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/cancel.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/cancel-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/cancel.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "select",
+      "label_vi": "Select",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/select.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/select.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/select-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/select.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "pause",
+      "label_vi": "Pause",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/pause.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/pause.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/pause-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/pause.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "play",
+      "label_vi": "Play",
+      "category": "actions",
+      "svg": "mobile/assets/dytava/icons/svg/color/play.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/play.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/play-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/play.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "privacy",
+      "label_vi": "Quyền riêng tư",
+      "category": "security",
+      "svg": "mobile/assets/dytava/icons/svg/color/privacy.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/privacy.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/privacy-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/privacy.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "shield",
+      "label_vi": "Shield",
+      "category": "security",
+      "svg": "mobile/assets/dytava/icons/svg/color/shield.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/shield.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/shield-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/shield.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "offline",
+      "label_vi": "Offline",
+      "category": "security",
+      "svg": "mobile/assets/dytava/icons/svg/color/offline.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/offline.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/offline-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/offline.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "cloud",
+      "label_vi": "Cloud",
+      "category": "security",
+      "svg": "mobile/assets/dytava/icons/svg/color/cloud.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/cloud.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/cloud-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/cloud.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "sync",
+      "label_vi": "Sync",
+      "category": "security",
+      "svg": "mobile/assets/dytava/icons/svg/color/sync.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/sync.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/sync-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/sync.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "fingerprint",
+      "label_vi": "Fingerprint",
+      "category": "security",
+      "svg": "mobile/assets/dytava/icons/svg/color/fingerprint.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/fingerprint.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/fingerprint-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/fingerprint.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "encrypted",
+      "label_vi": "Encrypted",
+      "category": "security",
+      "svg": "mobile/assets/dytava/icons/svg/color/encrypted.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/encrypted.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/encrypted-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/encrypted.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "report",
+      "label_vi": "Báo cáo",
+      "category": "analytics",
+      "svg": "mobile/assets/dytava/icons/svg/color/report.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/report.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/report-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/report.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "chart-bar",
+      "label_vi": "Chart bar",
+      "category": "analytics",
+      "svg": "mobile/assets/dytava/icons/svg/color/chart-bar.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/chart-bar.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/chart-bar-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/chart-bar.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "chart-pie",
+      "label_vi": "Chart pie",
+      "category": "analytics",
+      "svg": "mobile/assets/dytava/icons/svg/color/chart-pie.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/chart-pie.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/chart-pie-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/chart-pie.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "chart-line",
+      "label_vi": "Chart line",
+      "category": "analytics",
+      "svg": "mobile/assets/dytava/icons/svg/color/chart-line.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/chart-line.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/chart-line-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/chart-line.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "clipboard",
+      "label_vi": "Clipboard",
+      "category": "analytics",
+      "svg": "mobile/assets/dytava/icons/svg/color/clipboard.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/clipboard.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/clipboard-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/clipboard.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "database",
+      "label_vi": "Cơ sở dữ liệu",
+      "category": "analytics",
+      "svg": "mobile/assets/dytava/icons/svg/color/database.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/database.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/database-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/database.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "analytics",
+      "label_vi": "Analytics",
+      "category": "analytics",
+      "svg": "mobile/assets/dytava/icons/svg/color/analytics.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/analytics.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/analytics-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/analytics.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "chart-area",
+      "label_vi": "Chart area",
+      "category": "analytics",
+      "svg": "mobile/assets/dytava/icons/svg/color/chart-area.svg",
+      "glyph_svg": "mobile/assets/dytava/icons/svg/glyph/chart-area.svg",
+      "png_4k": "mobile/assets/dytava/icons/png_4k/chart-area-4k.png",
+      "png_512": "mobile/assets/dytava/icons/png_512/chart-area.png",
+      "alpha": true,
+      "resolution": [
+        4096,
+        4096
+      ]
+    }
+  ],
+  "formats": [
+    "xlsx",
+    "xls",
+    "csv",
+    "tsv",
+    "json",
+    "jsonl",
+    "ods",
+    "pdf",
+    "xml",
+    "html",
+    "txt",
+    "png",
+    "jpg",
+    "webp",
+    "heic",
+    "xlsm",
+    "xlsb",
+    "md"
+  ]
+}

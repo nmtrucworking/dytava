@@ -1,0 +1,9 @@
+# Merge into the EXISTING flutter: section. Do not duplicate the flutter key.
+# Add `flutter_svg` as a dependency with SDK-compatible version via: flutter pub add flutter_svg
+flutter:
+  assets:
+    - assets/dytava/illustrations/svg/square/
+    - assets/dytava/illustrations/svg/wide/
+    - assets/dytava/illustrations/preview_768/square/
+    - assets/dytava/illustrations/preview_768/wide/
+# Do NOT include png_4k/ in the production application unless specifically needed.

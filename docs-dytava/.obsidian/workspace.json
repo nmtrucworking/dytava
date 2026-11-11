@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "15c1302e81ff335e",
+        "id": "e37f8171ef0887c7",
         "type": "tabs",
         "children": [
           {
-            "id": "643f1785fe43aee3",
+            "id": "448d0801a4d44e67",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -79,7 +79,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 234.8046875
+    "width": 234.8046875,
+    "collapsed": true
   },
   "right": {
     "id": "a962ed24de38192c",
@@ -95,7 +96,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "project/Project Description.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -184,19 +184,25 @@
       "bases:Tạo cơ sở mới": false
     }
   },
-  "active": "43965cded4c76d2d",
+  "active": "448d0801a4d44e67",
   "lastOpenFiles": [
-    "branding.md",
+    "specs/input/01_input_scope.md",
+    "project/dytava_brand/assets/dytava-symbol-4k.png",
+    "project/dytava_brand/assets/dytava-pill-blue.svg",
+    "project/dytava_brand/assets/dytava-horizontal.svg",
+    "project/dytava_brand/assets/dytava-horizontal-white.svg",
+    "project/dytava_brand/assets/dytava-app.svg",
+    "project/dytava_brand/assets/dytava-app-purple.svg",
+    "project/dytava_brand/assets/dytava-app-circle.svg",
+    "specs/input/README.md",
     "attachments/system-branding.png",
+    "specs/input",
+    "specs",
+    "branding.md",
     "attachments",
     "README.md",
     "dytava_brand/assets/dytava-reversed-horizontal.svg",
     "dytava_brand/assets/dytava-primary-4k.png",
-    "dytava_brand/assets/dytava-icon-1024.png",
-    "dytava_brand/assets/dytava-icon-192.png",
-    "dytava_brand/assets/dytava-app-icon-4096.png",
-    "diagrams/flutter_architecture.png",
-    "diagrams/architecture.png",
     "EXCELCOMPARE_MASTER.pdf",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/ANDROID_IOS_BUILD_RELEASE_GUIDE.md",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md",
@@ -209,15 +215,11 @@
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/lib/src",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/lib/excelcompare_core.dart",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/apps/mobile/test/widget_test.dart",
-    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/apps/mobile/lib/main.dart",
-    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/test",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/packages/excelcompare_core/README.md",
     "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/source/README.md",
     "project/Project Description.md",
     "project/Project Description - Mobile - Hoan thien.md",
     "project/Optical Character Recognition (OCR).md",
-    "project/dytava-stacked-4k.png",
-    "project/dytava-primary-4k.png",
     "project/DATATYPE_POLICY_ENGINE_SPEC.md",
     "Practices/BTH4/BTH4 Hương dẫn.md",
     "Lectures/MainActivity.kt.md",

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="470" viewBox="0 0 1500 470"><defs>
+ <linearGradient id="brandBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3B82F6"/><stop offset="1" stop-color="#1850EB"/></linearGradient>
+ <linearGradient id="cyanLayer" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#34DBF2"/><stop offset="1" stop-color="#029BDB"/></linearGradient>
+ <linearGradient id="purpleLayer" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#A18AFF"/><stop offset="1" stop-color="#6E46ED"/></linearGradient>
+ <linearGradient id="appBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#428DFF"/><stop offset=".55" stop-color="#2563EB"/><stop offset="1" stop-color="#153EC5"/></linearGradient>
+ <linearGradient id="tileBg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#F3F6FD"/></linearGradient>
+ <linearGradient id="lightBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5CA6FF"/><stop offset="1" stop-color="#2563EB"/></linearGradient>
+ </defs>
+ <g transform="translate(5 2) scale(.82)"><g>
+ <!-- Two offset cards are the brand's cyan + violet data layers. -->
+ <g transform="rotate(-8 228 217)"><rect x="91" y="87" width="254" height="318" rx="38" fill="url(#cyanLayer)"/><path d="M114 148v-20q0-19 19-19h167" stroke="#99F0FF" stroke-width="9" opacity=".8" fill="none" stroke-linecap="round"/></g>
+ <g transform="rotate(-7 282 249)"><rect x="163" y="134" width="239" height="287" rx="36" fill="url(#purpleLayer)"/>
+ <path d="M185 207v-29a19 19 0 0 1 19-19h154" fill="none" stroke="white" stroke-opacity=".72" stroke-width="10" stroke-linecap="round"/>
+ <rect x="215" y="286" width="31" height="80" rx="7" fill="white"/>
+ <rect x="262" y="245" width="31" height="121" rx="7" fill="white"/>
+ <rect x="309" y="209" width="31" height="157" rx="7" fill="white"/>
+ </g>
+ <!-- Blue verification seal, with independent white check. -->
+ <circle cx="388" cy="388" r="72" fill="white"/>
+ <circle cx="388" cy="388" r="61" fill="url(#brandBlue)"/>
+ <path d="m360 389 18 18 41-43" fill="none" stroke="white" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+ </g></g>
+ <text x="480" y="312" font-size="230" font-weight="800" font-family="Inter,DejaVu Sans,sans-serif" letter-spacing="-7" fill="#142253">dytava</text></svg>
