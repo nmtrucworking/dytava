@@ -1,4 +1,23 @@
-digraph G {
- graph [rankdir=TB, fontname="Noto Sans", bgcolor="white", nodesep=0.22, ranksep=0.33]; node [fontname="Noto Sans", style="rounded,filled", shape=box, fillcolor="#EEF2F6", color="#71849B", fontcolor="#1B2D42", fontsize=12, margin="0.22,0.12"]; edge [color="#72849C", arrowsize=0.65];
- "Compose / ViewModel" -> "Domain Use Cases"; "Domain Use Cases" -> "Canonical Table Model"; "Canonical Table Model" -> "Semantic Policy Engine"; "Semantic Policy Engine" -> "Difference Engine"; "Difference Engine" -> "Report Export"; "SAF File Picker" -> "Format Adapters"; "OCR (optional)" -> "Format Adapters"; "Format Adapters" -> "Canonical Table Model"; "Domain Use Cases" -> "Room + Local Cache"; {rank=same; "SAF File Picker"; "OCR (optional)";} {rank=same; "Report Export"; "Room + Local Cache";}
+digraph Dytava {
+  graph [rankdir=TB, fontname="Arial", bgcolor="white", pad=0.3, nodesep=0.3];
+  node [fontname="Arial", shape=box, style="rounded,filled", fillcolor="#EEF2FF", color="#2563EB"];
+  edge [color="#64748B", arrowsize=0.7];
+  ui [label="Flutter UI / ViewModels\nAndroid P0 / iOS P1"];
+  app [label="Application UseCases\nA/B import states + snapshot gates"];
+  files [label="FileAccess\nAndroid SAF / iOS Files (read-only)"];
+  preflight [label="Preflight\nFormat / access / resource guards"];
+  adapter [label="FormatAdapter\nRaw types + source refs + losses"];
+  tables [label="SourceTable\nImmutable validated InputSnapshot"];
+  review [label="Mapping / key / policy review\nExplicit comparison direction"];
+  core [label="Pure Dart Core\nCanonicalization / alignment / comparison", fillcolor="#DCFCE7", color="#16A34A"];
+  report [label="Difference report / export"];
+  storage [label="Drift / private metadata\nRetention decision pending", fillcolor="#FEF3C7", color="#D97706"];
+  ocr [label="Image OCR P2\nGeometry + manual review", style="rounded,filled,dashed"];
+  ui -> app;
+  app -> files;
+  files -> preflight -> adapter -> tables -> review -> core -> report;
+  app -> storage;
+  ocr -> adapter [style=dashed];
+  app -> review [label="A + B ready"];
+  subgraph cluster_input { label="Input contract 0.1.0 DRAFT"; color="#93C5FD"; files; preflight; adapter; tables; }
 }

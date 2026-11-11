@@ -1,0 +1,52 @@
+{
+  "schema_version": "0.1.0",
+  "session_id": "fixture-session",
+  "artifacts": [
+    {
+      "schema_version": "0.1.0",
+      "artifact_id": "fixture-a",
+      "source_side": "A",
+      "file_name": "sample_a.csv",
+      "name_origin": "provider",
+      "format": "csv",
+      "size_bytes": 96,
+      "sha256": "236daec2db8a482f81a416bd3d680be2cff044a036b5cdbeab9a076e27d429b2",
+      "access_ref": {
+        "kind": "fixture",
+        "token": "sample_a.csv"
+      },
+      "selected_scope": [
+        {
+          "kind": "delimited",
+          "first_record": 1,
+          "last_record": null
+        }
+      ],
+      "declared_mime_type": "text/csv",
+      "file_extension": ".csv"
+    },
+    {
+      "schema_version": "0.1.0",
+      "artifact_id": "fixture-b",
+      "source_side": "B",
+      "file_name": "sample_b.csv",
+      "name_origin": "provider",
+      "format": "csv",
+      "size_bytes": 96,
+      "sha256": "5de85ed2bbd5794b8a1c70199aa748f96914affd0425328097339e1b624c073d",
+      "access_ref": {
+        "kind": "fixture",
+        "token": "sample_b.csv"
+      },
+      "selected_scope": [
+        {
+          "kind": "delimited",
+          "first_record": 1,
+          "last_record": null
+        }
+      ],
+      "declared_mime_type": "text/csv",
+      "file_extension": ".csv"
+    }
+  ]
+}

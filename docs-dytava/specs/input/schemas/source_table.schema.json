@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dytava.example/specs/input/0.1.0/source_table.schema.json",
+  "title": "source_table — DRAFT 0.1.0",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "table_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sheet_name": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "header_row": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_index": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "header_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "field_id",
+          "source_index",
+          "header_text"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "row_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_range": {
+      "$ref": "input_artifact.schema.json#/$defs/scope"
+    },
+    "capability": {
+      "enum": [
+        "FULL_SEMANTIC",
+        "TABULAR_VALUES_ONLY",
+        "OCR_REVIEW_REQUIRED",
+        "UNSUPPORTED"
+      ]
+    },
+    "adapter": {
+      "type": "object",
+      "properties": {
+        "adapter_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adapter_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "adapter_id",
+        "adapter_version"
+      ],
+      "additionalProperties": false
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "row_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_record": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "source_cell.schema.json"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "row_id",
+          "source_record",
+          "cells"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "table_id",
+    "artifact_id",
+    "sheet_name",
+    "header_row",
+    "fields",
+    "row_count",
+    "source_range",
+    "capability",
+    "adapter"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "source_range": {
+            "properties": {
+              "kind": {
+                "const": "excel"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "sheet_name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "sheet_name": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ]
+}

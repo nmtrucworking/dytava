@@ -7,7 +7,7 @@ Hệ thống website giới thiệu sản phẩm và trang quản trị sản ph
 ## 🌟 Tính Năng Nổi Bật
 
 ### 1. Website Giới Thiệu Sản Phẩm & Công Cụ So Sánh Trực Tuyến (`#/`)
-- **Giao diện hiện đại & Thân thiện:** Thiết kế theo quy chuẩn nhận diện thương hiệu Dytava Chromatic DType (Màu xanh Navy `#10243B`, Brand Blue `#2663EB`, Canvas `#F5F8FD` và Dark Mode).
+- **Giao diện hiện đại & Thân thiện:** Thiết kế theo quy chuẩn nhận diện thương hiệu Dytava v2.0 (Màu xanh Navy `#0F172A`, Brand Blue `#2563EB`, Canvas `#F3F4F6` và Dark Mode).
 - **100% Client-Side Privacy:** Toàn bộ quá trình tính toán, chuẩn hóa và so sánh dữ liệu diễn ra cục bộ trong trình duyệt người dùng. Không tải file hay dữ liệu nhạy cảm lên bất kỳ máy chủ nào.
 - **Công cụ So Sánh Bảng Tính Trực Tiếp (Spreadsheet Diff Tool):**
   - Hỗ trợ kéo thả hoặc chọn tệp `.xlsx`, `.csv`, `.tsv`, `.txt`, `.json`.
@@ -77,7 +77,7 @@ web/
 ├── index.html            # Giao diện chính kết hợp Website giới thiệu và Admin Portal
 ├── server.js             # Máy chủ HTTP Node.js gọn nhẹ, zero-dependency
 ├── css/
-│   └── style.css         # Hệ thống thiết kế Chromatic DType Tokens & Responsive Styles
+│   └── style.css         # Hệ thống thiết kế Dytava v2.0 Tokens & Responsive Styles
 ├── js/
 │   ├── app.js            # Controller chính, điều hướng routing và sự kiện
 │   ├── compare-engine.js # Core Semantic Comparison & Alignment Engine

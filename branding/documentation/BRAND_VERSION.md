@@ -1,7 +1,7 @@
 # Dytava Official Brand Identity — Version 2.0 (Official Release)
 
 ## Nguồn gốc & Hiện trạng phê duyệt
-Bản nhận diện thương hiệu này là **bản nhận diện thương hiệu chính thức** của sản phẩm **Dytava** (thuộc dự án `excelcompare`), thay thế hoàn toàn phiên bản v1.0 (Chromatic DType grid).
+Bản nhận diện thương hiệu này là **bản nhận diện thương hiệu chính thức** của sản phẩm **Dytava** (thuộc dự án `excelcompare`) theo hệ thống thiết kế v2.0.
 
 - **Trạng thái:** Chính thức (Official Approved)
 - **Phiên bản:** v2.0.0

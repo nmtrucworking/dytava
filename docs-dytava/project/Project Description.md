@@ -1,39 +1,41 @@
 ---
-Nền tảng: Android native - Kotlin
-Phiên bản: v1.0 - 22/10/2026
-app name: Dytava
+platform: Flutter/Dart — Android P0 / iOS P1
+version: 0.1.0-DRAFT
+updated: 2026-11-11
+app_name: Dytava
 ---
-Lý thuyết t7: báo cáo giữa kỳ (slide thuyết trình về đề tài). Chấm trực tiếp buổi thứ 10
+# Dytava / ExcelCompare — mô tả đề tài
 
->[!Project] So sánh 02 file excel
->Thực tế có rất nhiều file kết quả xuất ra dưới dạng Excel nhưng lại đặt trùng tên, vậy phần mềm chúng ta nền cần những gì để hỗ trợ giải quyết vấn đề này: 
->- So sánh những điểm giống nhau và khác nhau qua file excel
->- Thống kê điểm giống và khác
->- chỉ rõ chổ khác nhau 
->- Đọc từ file hình ảnh chụp
+Đề bài gốc: **So sánh 02 file Excel**, bao gồm phát hiện điểm giống/khác, thống kê, chỉ rõ vị trí khác nhau và **đọc từ file hình ảnh chụp**. Yêu cầu bổ sung: đóng gói thành file cài đặt. Ghi chú học phần hiện có: báo cáo giữa kỳ bằng slide, chấm trực tiếp buổi thứ 10; lịch ngày cụ thể cần xác nhận riêng.
 
-**Yêu cầu bổ sung**: Đóng gòi thành file cài đặt
+## Bối cảnh và mục tiêu
 
-![[logo-dytava.png| Logo App]]
+Hai tệp có thể trùng tên nhưng khác nội dung. Ứng dụng giúp chọn hai nguồn, đọc dữ liệu với provenance, xác nhận mapping/policy và trình bày sai khác có thể truy vết. Tên tệp không phải identity, raw text không tự thành số và số Excel đã mất biểu diễn không được suy đoán phục hồi.
 
-![[branding-dytava.png| Dytava — Brand Identity Guidelines]]
-# 1. Tổng quan đề tài
-## 1.1. Bối cảnh và vấn đề
+## Baseline và phạm vi giao
 
+Baseline kỹ thuật hiện hành là Flutter UI + application use cases + Pure Dart domain; adapters/file access/Drift là infrastructure. Android P0 trước, iOS P1 sau. Mã Web/server trong monorepo là implementation riêng, không thay bằng chứng device Flutter.
 
-# 2. Phạm vi sản phẩm và ưu tiên
-## 2.1. Chức năng bắt buộc (P0)
+| Yêu cầu | Phạm vi thiết kế / điều kiện nghiệm thu |
+| --- | --- |
+| Chọn hai nguồn A/B và preview | Input Contract, raw types/provenance và validation của đúng snapshot |
+| Đọc bảng | Kế hoạch P0 XLSX/CSV/TSV/JSON; mỗi adapter phải qua PoC/corpus, không tuyên bố đã hỗ trợ chỉ từ danh sách |
+| So sánh/thống kê/chỉ vị trí khác | Core semantic policy + mapping/key/direction đã xác nhận; báo cáo có evidence |
+| Đọc ảnh chụp | Bắt buộc theo đề bài gốc; baseline Flutter xếp OCR ở P2. INP-ADR-002 phải chốt với người phụ trách trước xác lập phạm vi nghiệm thu, chưa được bỏ yêu cầu |
+| File cài đặt | Android signed APK/AAB theo kênh giao; iOS P1 có signing/device gates riêng. Chưa có evidence build/release trong đợt tài liệu |
 
+## Functional requirements
 
-## 2.2. Chức năng mở rộng (P1/P2)
+Input nhận artifact read-only, kiểm tra format/limits, chọn scope/header, giữ raw/null/formula/provenance và chỉ mở mapping khi A/B hợp lệ. Comparison tách mapping và policy khỏi ImportConfig, không tự đoán key/locale. EXACT/EQUIVALENT/DIFFERENT/UNRESOLVED là kết quả comparison, không là datatype.
 
-# 3. Functional Requirements
+A là baseline/B là bản mới hay cho đảo chiều, số sheet, header defaults, device limits, parser lựa chọn, xác nhận dtype/key và retention vẫn là quyết định mở trong [Input decision register](../specs/input/README.md#decision-register). Không coi giá trị fixture là phê duyệt sản phẩm.
 
-# 4. Non-Functional Requirements
+## Non-functional requirements
 
+Offline-first và read-only; không tự upload, execute macro hay truy cập linked resources. Validation fail closed, có cancellation/cleanup và recheck khi process chết hoặc mất quyền. Hiệu năng/ZIP/image limits cần benchmark thiết bị thật; không dùng con số chưa đo như cam kết.
 
+## UI/UX và tài liệu thực thi
 
-# 5. UI/UX
+Luồng dự kiến: chọn A/B → cấu hình/preview/review → mapping/key/policy/direction → comparison → chi tiết sai khác/thống kê → export. OCR cần ảnh/geometry và manual review; trạng thái mỗi nguồn hiển thị độc lập. Input PREVIEW_READY của A không có nghĩa phiên đã sẵn sàng.
 
-## 5.1. Danh sách màn hình
-
+Nguồn đặc tả: [Input](../specs/input/README.md), [Flutter Master](EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/EXCELCOMPARE_MASTER_ANDROID_IOS.md), [Core](EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md), [build/release](EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/ANDROID_IOS_BUILD_RELEASE_GUIDE.md). Đây là mô tả thiết kế DRAFT; completion của tài liệu không chứng minh các yêu cầu ứng dụng đã triển khai.

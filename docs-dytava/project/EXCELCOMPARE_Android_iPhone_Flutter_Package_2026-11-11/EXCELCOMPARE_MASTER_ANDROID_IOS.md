@@ -1,4 +1,7 @@
 <!-- ExcelCompare Flutter/Dart master; content updated for Android P0 + iOS P1 -->
+
+> Cập nhật tách Input ngày 11/11/2026: bản Markdown này giữ kiến trúc/Core và liên kết sang Input DRAFT; Markdown là nguồn tài liệu hiện hành. Policy v2 chuẩn để biên soạn tiếp: [project/comparison_policy.v2.example.json](../comparison_policy.v2.example.json). Các defaults Input chưa chốt được quản lý ở decision register; đề xuất cũ trong Master không tự phê duyệt chúng.
+
 <!-- 2.2-FLUTTER-ANDROID-IOS-DESIGN; not a production-qualified implementation -->
 
 # EXCELCOMPARE — BỘ TÀI LIỆU SẢN PHẨM & KỸ THUẬT
@@ -223,38 +226,13 @@ Mỗi difference có 2 provenance paths, hoặc null có lý do rõ (row/file mi
 
 Không so sánh numeric mã định danh chỉ vì trông giống số.
 
-# 04. Định dạng tệp, MIME, phạm vi adapter và giới hạn
+# 04. Input reference và output formats
 
-## 4.1. Ma trận đầu vào (tính năng thiết kế, không phải hỗ trợ đã triển khai)
+## 4.1. Input Contract đã tách riêng
 
-| Format | Pha | Parser/adapter đề xuất | Hạn chế/gate |
-| --- | --- | --- | --- |
-| .xlsx OOXML | P0 | Flutter/Dart OOXML XLSX adapter sau PoC; native bridge nếu cần | Gate: signature/zip-bomb/shared strings/formula cache, Android P0 & iOS P1 device benchmarks |
-| .csv | P0 | Dart streaming CSV decoder chuẩn RFC4180 (package sau PoC) | charset/locale/delimiter/quotes/BOM phải xác nhận |
-| .tsv | P0 | text delimited adapter | escaping/quotes/encoding, row length |
-| .json | P0 | dart:convert JsonDecoder hoặc chunked parser Dart, giữ lexical number nếu cần | records path selector, nested arrays not flattened silently |
-| .jsonl / .ndjson | P1 | line streaming JSON decoder | lỗi 1 dòng không được nuốt, schema drift |
-| .xls | P1 | Dart XLS legacy adapter hoặc native bridge sau device PoC | Không cam kết tương thích legacy/xls trước PoC |
-| .xlsm | P1 | XLSX-compatible read only, không execute VBA | không ghi đè/không bảo toàn macro khi export |
-| .ods | P1 | Dart ODF adapter hoặc native bridge, thử corpus | kiểm tra implementation Android, merged cells, formula semantics |
-| .xml | P2 | Secure XML decoder (Dart); không external entities / DTD | entity expansion/XXE protection; không suy luận bảng tùy ý |
-| .html table | P2 | HTML table parser Dart + sanitizer, whitelist table nodes | row/col spans, nested tables, script ignored |
-| .xlsb | P2 | Native backend adapter có PoC (P2), không POI Dart giả định | chỉ bật khi PoC có corpus và benchmark |
-| .pdf | P2 | parser + table layout/OCR pipeline | metadata/công thức Excel không thể khôi phục |
-| .png/.jpg/.webp/.heic | P2 | Flutter image decode + ML Kit plugin + table reconstruction | hình ảnh ≠ workbook; confidence, manual review |
-| .parquet/.arrow | Out by default | optional desktop/server adapter | native/platform-specific; không ép vào Flutter Android P0 |
-| .zip nhiều file | Out by default | explicit archive import future | nested bomb/path traversal risk |
-| Google Sheets URL | Out by default | user export to XLSX/CSV, OAuth integration future | không scraping màn hình, không bắt buộc network |
+Chi tiết phạm vi/nguồn/định dạng/capability/configuration/validation/state và tests nằm tại [Input Specification 0.1.0 DRAFT](../../specs/input/README.md). Android P0 dự kiến XLSX/CSV/TSV/JSON, iOS P1; format mở rộng và OCR theo registry Input. Đây là kế hoạch, không phải bằng chứng adapter đã chạy.
 
-## 4.2. MIME và magic bytes
-
-Kiểm tra signature + structural integrity + MIME provider + extension; mọi bất đồng phải hiển thị. OOXML có ZIP signature nhưng vẫn phải xác nhận [Content_Types].xml và workbook relationships. Legacy XLS có OLE Compound File signature. CSV/TSV/JSON text không có magic cố định: xác định BOM/charset, sampling, parser validation, UTF-8 default có user override.
-
-Không đọc ‘file .xlsx’ bằng cách tin phần mở rộng duy nhất. Không thực thi macro, công thức bên ngoài, embedded scripts hoặc external links. Không tự download linked resources.
-
-## 4.3. Nguồn có kiểu dữ liệu khác nhau
-
-CSV/TSV: giá trị ban đầu được coi là TEXT và kiểu mục tiêu do schema inference + policy, không xem trường 00123 thành integer nếu chưa được chấp thuận. JSON: bảo tồn JSON number/string/boolean/null và lexical representation số khi có thể. XLSX: bảo tồn raw stored type, displayed value và format code. OCR: TEXT + geometric positions + confidence (nếu available), chỉ nâng lên canonical typed sau xác nhận.
+Input bảo toàn raw types/provenance, không canonicalize semantic trong adapter. Nguồn chỉ sẵn sàng khi full validation của snapshot hiện hành hoàn tất; A sẵn sàng chưa đủ nếu B chưa hợp lệ. Các ADR về direction, sheet count, header, limits, parser, OCR học phần và retention còn mở tại [decision register](../../specs/input/README.md#decision-register).
 
 ## 4.4. Output formats
 
@@ -266,9 +244,9 @@ report.xlsx: summary sheet / differences sheet / unresolved sheet / manifest she
 
 report.pdf: human readable tùy chọn khi đã có output template và kiểm thử layout.
 
-## 4.5. Định nghĩa hỗ trợ theo mức
+## 4.5. Capability reference
 
-FULL_SEMANTIC: parser có raw type, sheet, formula và coordinate đủ cho chế độ đó; TABULAR_VALUES_ONLY: chỉ giá trị bảng; OCR_REVIEW_REQUIRED: phải xác nhận; UNSUPPORTED: từ chối an toàn. Một format không đồng nghĩa hỗ trợ tất cả cấp so sánh.
+Capability được adapter/version/mode khai báo theo [INP-003](../../specs/input/03_file_formats.md); không dùng icon/extension làm bằng chứng support.
 
 # 05. DataType, chuẩn hóa ngữ nghĩa và policy engine (Flutter/Dart)
 
@@ -284,12 +262,12 @@ Mỗi EQUIVALENT phải có rule_id, rule_version, canonical(left/right), trace,
 
 | Tầng | Các loại | Bảo toàn / ràng buộc |
 | --- | --- | --- |
-| Physical | XLSX NUMBER/STRING/BOOLEAN/ERROR/FORMULA/BLANK; CSV TEXT; JSON STRING/NUMBER/BOOL/NULL; OCR TEXT | Giữ raw lexical, storage dtype, display, number format, date system, origin, OCR review state; không tự coi style là dtype. |
+| Physical | Xem [INP-005](../../specs/input/05_data_types_provenance.md) và SourceCell schema | Input sở hữu raw type, lexeme, null và provenance; Core chỉ nhận evidence đã validate. |
 | Logical | TEXT, INTEGER, DECIMAL, BOOLEAN, DATE, LOCAL_DATETIME, OFFSET_DATETIME, INSTANT, ARRAY, OBJECT; NULL-like tagged union | INTEGER dùng BigInt (Dart); DECIMAL Decimal (Dart); không dùng Double để so tiền/decimal; array/object phải có comparator explicit. |
 | Semantic | IDENTIFIER, FREE_TEXT, PERSON_NAME, POSTAL_CODE, PHONE, EMAIL, ENUM, MONEY, PERCENTAGE, UNIT_QUANTITY, DATE, DATETIME, BOOLEAN | Chính sách field-specific quyết định semantic_type, parse rule, canonical type và equality. |
 | Normalization | unicode, trim, whitespace, case, locale, date patterns, time zone, aliases, currency, units, null mapping, tolerance | Tất cả có version và audit trail; default bảo toàn thông tin, không tự bỏ dấu/leading zero. |
 
-SourceCell = {raw_kind, raw_lexeme?, display_text?, format_code?, formula?, formula_cache_status?, excel_date_system?, provenance, review_state}. raw_lexeme là chuỗi biểu diễn gốc được adapter lưu nếu khả dụng; không trộn cached formula value với biểu thức. Missing cell là trạng thái riêng, không phải JSON null. Dart 3 sealed classes / records có thể dùng để bảo toàn tagged union; Dart DateTime không đủ để biểu diễn date-only hoặc IANA zone ID một cách tự động.
+SourceCell wire contract do [INP-005](../../specs/input/05_data_types_provenance.md) sở hữu. Core models cần mapping rõ sang schema đó; không duy trì bản SourceCell rút gọn thứ hai tại Master. Dart DateTime không thay thế date-only hoặc IANA zone ID tự động.
 
 CanonicalValue là tagged union: Text(value), Integer(value), Decimal(value), Boolean(value), Date(ISO), Instant(UTC), LocalDateTime(value, zone_context), Money(amount,currency), Percentage(ratio), Quantity(amount,unit,dimension), Enum(code), NullKind(tag), Complex(canonical_structure). Chỉ so hai canonical values cùng type và cùng dimension/units sau chuyển đổi được phê duyệt.
 
@@ -320,7 +298,7 @@ NormalizedResult = Success(value, steps, effective_rule_ids) | Unresolved(reason
 
 ## 5.5. Policy schema, inheritance và precedence
 
-Policy schema_version=2, policy_id, policy_version, defaults, source_profiles, alignment, fields, unresolved_handling. Merge theo thứ tự: engine conservative defaults < policy.defaults < field rule < source-specific field overrides. Overrides chỉ tác động tới parse input; semantic comparison rule của field phải chung và rõ ràng. Không hỗ trợ arbitrary code/scripts hoặc rule tùy ý thực thi trong JSON. Chuyển Kotlin sang Dart không tự làm thay đổi schema_version; chỉ thay đổi policy_version nếu semantics hoặc capability thay đổi.
+Policy schema_version=2, policy_id, policy_version, defaults, source_profiles, alignment, fields, unresolved_handling. Merge theo thứ tự: engine conservative defaults < policy.defaults < field rule < source-specific field overrides. Overrides chỉ tác động tới parse input; semantic comparison rule của field phải chung và rõ ràng. Không hỗ trợ arbitrary code/scripts hoặc rule tùy ý thực thi trong JSON. Thay đổi framework không tự làm thay đổi schema_version; chỉ thay đổi policy_version nếu semantics hoặc capability thay đổi.
 
 Mandatory validation: schema/version supported; unique logical names; mapping 1:1; keys mapped and of IDENTIFIER-compatible type; no key tolerance/fuzzy matching; source locale/pattern explicit for potentially ambiguous text; tolerance_abs >= 0; alias dictionaries non-conflicting; units/currencies compatible; null mapping legal; unknown fields and unknown operations rejected (fail-closed); no circular aliases; engine capabilities satisfied.
 
@@ -385,13 +363,13 @@ Lưu ý: Flutter không tự mang lại đọc Excel chính xác, streaming ho�
 | Entity | Các trường trọng yếu | Ý nghĩa / constraint |
 | --- | --- | --- |
 | ComparisonSession | id, created_at, engine_version, status, policy_digest | lineage và trạng thái |
-| InputArtifact | id, uri_hint, file_name, detected_format, sha256, size, selected_scope | không lưu URI public vô thời hạn |
-| SourceTable | id, artifact_id, sheet_name, row_count, column_count, header_row | phạm vi xử lý |
-| SourceCell | table_id, row, col, raw_type, raw_value, display, formula | không ghi log/telemetry |
+| InputArtifact | Xem [Input schemas](../../specs/input/README.md#contracts-fixtures-và-kiểm-tra) | Contract chi tiết do Input sở hữu, không phải bảng rút gọn ở Master |
+| SourceTable | Xem [Input schemas](../../specs/input/README.md#contracts-fixtures-và-kiểm-tra) | Contract chi tiết do Input sở hữu, không phải bảng rút gọn ở Master |
+| SourceCell | Xem [Input schemas](../../specs/input/README.md#contracts-fixtures-và-kiểm-tra) | Contract chi tiết do Input sở hữu, không phải bảng rút gọn ở Master |
 | FieldMapping | source_field_a/b, semantic_type, normalization_policy | 1-to-1 mặc định |
 | RecordPair | key, row_ref_a, row_ref_b, match_mode, status | unique/reference |
 | Difference | id, category, severity, field, refs, raw/normalized, rule_id, reason | audit trail |
-| OCRToken | text, polygon, source_image, confidence_optional | geometry và review |
+| OCRToken | Xem [Input schemas](../../specs/input/README.md#contracts-fixtures-và-kiểm-tra) | Contract chi tiết do Input sở hữu, không phải bảng rút gọn ở Master |
 | ReportManifest | schema_version, source_hashes, policy_digest, engine, counts | reproducibility |
 
 ## 6.2. Versioning
@@ -412,7 +390,7 @@ ComparisonReport có source_a, source_b, mapping, policy, summary, schema_differ
 
 ## 6.4. Referential integrity
 
-Difference tham chiếu tới RecordPair khi có match; source_ref dạng discriminated union {type:excel, sheet, address} / {type:csv, line, field} / {type:json, pointer} / {type:ocr, page, polygon}. Không giả lập Sheet1!A1 cho dữ liệu vốn là JSON/PDF.
+Difference tham chiếu tới RecordPair khi có match; source_ref tuân theo [INP-005/source_ref schema](../../specs/input/schemas/source_ref.schema.json). Không giả lập Sheet1!A1 cho dữ liệu vốn là JSON/PDF.
 
 ## 6.5. Các trường tuyệt đối không ghi telemetry
 
@@ -424,7 +402,7 @@ Nội dung cell raw/canonical, tên cá nhân, danh sách định danh, full pat
 
 Flutter mobile cross-platform, offline-first; triển khai Android P0 trước, iPhone/iOS P1 sau. Một codebase Flutter và Pure Dart domain; native Android/iOS integration và phát hành kiểm thử độc lập. UI (Flutter Material 3 Views + ViewModels) → Application UseCases → Pure Dart Domain (types, policy, normalizer, comparator) ← Infrastructure (format adapters, file picker, Drift/SQLite). Không đặt business rules vào Widget/ViewModel. Engine thuần Dart có thể unit test độc lập, nhưng adapter/plugin cần xác minh riêng trên từng platform.
 
-![Sơ đồ kiến trúc Flutter/Dart](flutter_architecture.png)
+![Sơ đồ kiến trúc Flutter/Dart](../../diagrams/flutter_architecture.png)
 Sơ đồ kiến trúc
 
 ## 7.2. Module/repository layout

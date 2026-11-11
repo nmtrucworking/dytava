@@ -24,7 +24,7 @@ class DytavaTheme {
         onSurface: DytavaColors.textPrimary,
         onError: DytavaColors.white,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: DytavaColors.white,
         elevation: 0,
         shape: RoundedRectangleBorder(

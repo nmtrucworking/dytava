@@ -1,4 +1,4 @@
-library dytava_design_system;
+library;
 
 export 'dytava_colors.dart';
 export 'dytava_typography.dart';

@@ -1,0 +1,573 @@
+[
+  {
+    "id": "INP-TC-001",
+    "requirements": [
+      "INP-REQ-002",
+      "INP-REQ-001"
+    ],
+    "rules": [
+      "INP-RULE-001"
+    ],
+    "owner_document": "INP-002",
+    "scenario": "Hai file cùng tên, bytes khác",
+    "procedure": "Select A/B hai artifact tên trùng",
+    "expected": "artifact_id khác, sides A/B không bị ghi đè",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-002",
+    "requirements": [
+      "INP-REQ-007"
+    ],
+    "rules": [
+      "INP-RULE-009"
+    ],
+    "owner_document": "INP-007",
+    "scenario": "File hỏng/không đọc được",
+    "procedure": "Preflight nguồn không hợp lệ",
+    "expected": "FAILED với code đúng nguyên nhân, không snapshot",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-003",
+    "requirements": [
+      "INP-REQ-002"
+    ],
+    "rules": [
+      "INP-RULE-005"
+    ],
+    "owner_document": "INP-002",
+    "scenario": "Quyền đọc thu hồi",
+    "procedure": "Revoke trong parse rồi retry",
+    "expected": "006, cleanup; phải recheck quyền trước parse lại",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-004",
+    "requirements": [
+      "INP-REQ-002",
+      "INP-REQ-011"
+    ],
+    "rules": [
+      "INP-RULE-004"
+    ],
+    "owner_document": "INP-002",
+    "scenario": "Bytes nguồn bất biến",
+    "procedure": "Hash trước/sau import và cancel",
+    "expected": "Hash/bytes nguồn không đổi",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-005",
+    "requirements": [
+      "INP-REQ-002",
+      "INP-REQ-012"
+    ],
+    "rules": [
+      "INP-RULE-007"
+    ],
+    "owner_document": "INP-002",
+    "scenario": "Hash cùng bytes",
+    "procedure": "Đọc lại cùng chuỗi bytes",
+    "expected": "SHA-256 xác định, không suy ra ý nghĩa nghiệp vụ",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-006",
+    "requirements": [
+      "INP-REQ-003"
+    ],
+    "rules": [
+      "INP-RULE-003"
+    ],
+    "owner_document": "INP-003",
+    "scenario": "Metadata thiếu/sai",
+    "procedure": "Provider không size/tên/MIME đáng tin",
+    "expected": "Không dùng metadata để đoán; đếm bytes, sniff cấu trúc",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-007",
+    "requirements": [
+      "INP-REQ-007"
+    ],
+    "rules": [
+      "INP-RULE-006"
+    ],
+    "owner_document": "INP-007",
+    "scenario": "File lớn",
+    "procedure": "Giới hạn bytes nhỏ hơn stream",
+    "expected": "004, cleanup, không READY",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-008",
+    "requirements": [
+      "INP-REQ-003"
+    ],
+    "rules": [
+      "INP-RULE-009"
+    ],
+    "owner_document": "INP-003",
+    "scenario": "OOXML hợp lệ",
+    "procedure": "Sniff ZIP chứa package/workbook/worksheet hợp lệ",
+    "expected": "Chỉ nhận XLSX sau structural validation",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-009",
+    "requirements": [
+      "INP-REQ-003"
+    ],
+    "rules": [
+      "INP-RULE-014"
+    ],
+    "owner_document": "INP-003",
+    "scenario": "ZIP đổi tên .xlsx",
+    "procedure": "Không có workbook parts",
+    "expected": "009, không nhận XLSX từ signature đơn lẻ",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-010",
+    "requirements": [
+      "INP-REQ-005"
+    ],
+    "rules": [
+      "INP-RULE-011"
+    ],
+    "owner_document": "INP-005",
+    "scenario": "CSV leading zeros",
+    "procedure": "sample_a.csv, record 2 field 1",
+    "expected": "csvText raw_lexeme=00123, không cast số",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-011",
+    "requirements": [
+      "INP-REQ-003"
+    ],
+    "rules": [
+      "INP-RULE-011"
+    ],
+    "owner_document": "INP-003",
+    "scenario": "CSV quote/multiline",
+    "procedure": "sample_a.csv, record 2 note và record 4 note",
+    "expected": "Một cell chứa LF, một cell x,y; refs record≠line",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-012",
+    "requirements": [
+      "INP-REQ-005"
+    ],
+    "rules": [
+      "INP-RULE-012"
+    ],
+    "owner_document": "INP-005",
+    "scenario": "JSON native/null/missing",
+    "procedure": "[{\"s\":\"123\",\"n\":123,\"b\":false,\"z\":null},{}] với fields từ record đầu",
+    "expected": "Giữ string/number/bool/null; record hai missing refs exists=false",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-013",
+    "requirements": [
+      "INP-REQ-007"
+    ],
+    "rules": [
+      "INP-RULE-014"
+    ],
+    "owner_document": "INP-007",
+    "scenario": "Parser exception/corrupt",
+    "procedure": "Truncated XML/JSON/CSV quote không đóng",
+    "expected": "009 có cấu trúc, không fallback silent",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-014",
+    "requirements": [
+      "INP-REQ-007"
+    ],
+    "rules": [
+      "INP-RULE-006"
+    ],
+    "owner_document": "INP-007",
+    "scenario": "ZIP expansion/depth limit",
+    "procedure": "Payload vượt decompressed/depth limit",
+    "expected": "004 hoặc 017 theo guard, cleanup",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-015",
+    "requirements": [
+      "INP-REQ-005"
+    ],
+    "rules": [
+      "INP-RULE-015"
+    ],
+    "owner_document": "INP-005",
+    "scenario": "XLSX formula/cache/location",
+    "procedure": "Ô có formula và cached number",
+    "expected": "Biểu thức/cache riêng, cache PRESENT_UNVERIFIED, ref excel",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-016",
+    "requirements": [
+      "INP-REQ-003"
+    ],
+    "rules": [
+      "INP-RULE-016"
+    ],
+    "owner_document": "INP-003",
+    "scenario": "Format chưa triển khai",
+    "procedure": "Registry adapter thiếu xlsb",
+    "expected": "008; icon không bật capability",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-017",
+    "requirements": [
+      "INP-REQ-004"
+    ],
+    "rules": [
+      "INP-RULE-017"
+    ],
+    "owner_document": "INP-004",
+    "scenario": "Header trùng",
+    "procedure": "a,a và data 1,2",
+    "expected": "Hai field_id khác nhau, nhãn giữ nguyên; review mapping mơ hồ",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-018",
+    "requirements": [
+      "INP-REQ-004"
+    ],
+    "rules": [
+      "INP-RULE-019"
+    ],
+    "owner_document": "INP-004",
+    "scenario": "Merge/hidden",
+    "procedure": "Workbook có merge A1:B1 và hidden row",
+    "expected": "Inspect lưu metadata; không fill merge hoặc tự bỏ hidden",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-019",
+    "requirements": [
+      "INP-REQ-004"
+    ],
+    "rules": [
+      "INP-RULE-020"
+    ],
+    "owner_document": "INP-004",
+    "scenario": "Scope/header sai",
+    "procedure": "Sheet không tồn tại hoặc header ngoài range",
+    "expected": "011, không đọc scope tùy ý",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-020",
+    "requirements": [
+      "INP-REQ-004",
+      "INP-REQ-012"
+    ],
+    "rules": [
+      "INP-RULE-018"
+    ],
+    "owner_document": "INP-004",
+    "scenario": "Stream/table invariants",
+    "procedure": "source_tables.expected.json và stream descriptor tương đương",
+    "expected": "Count=3, cells=4, IDs/source positions khớp; reject mismatch",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-021",
+    "requirements": [
+      "INP-REQ-005"
+    ],
+    "rules": [
+      "INP-RULE-021"
+    ],
+    "owner_document": "INP-005",
+    "scenario": "Numeric identifier mất biểu diễn",
+    "procedure": "XLSX raw 123, format 00000, display 00123",
+    "expected": "Giữ raw/display/format; không tái tạo identifier như raw text",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-022",
+    "requirements": [
+      "INP-REQ-005"
+    ],
+    "rules": [
+      "INP-RULE-023"
+    ],
+    "owner_document": "INP-005",
+    "scenario": "Null taxonomy",
+    "procedure": "missing, blank, CSV empty, JSON null, error, 0, false",
+    "expected": "Bảy trạng thái không bị gộp; lỗi Excel không thành null",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-023",
+    "requirements": [
+      "INP-REQ-005"
+    ],
+    "rules": [
+      "INP-RULE-024"
+    ],
+    "owner_document": "INP-005",
+    "scenario": "JSON precision/pointer",
+    "procedure": "[{\"a/b~\":9007199254740993}]",
+    "expected": "Token số chính xác; pointer /0/a~1b~0; adapter mất token khai báo loss",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-024",
+    "requirements": [
+      "INP-REQ-005"
+    ],
+    "rules": [
+      "INP-RULE-025"
+    ],
+    "owner_document": "INP-005",
+    "scenario": "Formula cache thiếu/stale",
+    "procedure": "Formula không v hoặc cache biết stale",
+    "expected": "MISSING không cached_value; KNOWN_STALE giữ cache+issue, không 0",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-025",
+    "requirements": [
+      "INP-REQ-005"
+    ],
+    "rules": [
+      "INP-RULE-024"
+    ],
+    "owner_document": "INP-005",
+    "scenario": "Ref đúng nguồn",
+    "procedure": "CSV ref excel giả; JSON pointer escape sai",
+    "expected": "Schema/runtime reject 014; không Sheet1 giả",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-026",
+    "requirements": [
+      "INP-REQ-006",
+      "INP-REQ-012"
+    ],
+    "rules": [
+      "INP-RULE-029"
+    ],
+    "owner_document": "INP-006",
+    "scenario": "Tách config/policy",
+    "procedure": "Thêm alignment/tolerance vào import_config fixture",
+    "expected": "Schema reject additionalProperties; policy v2 ở file riêng",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-027",
+    "requirements": [
+      "INP-REQ-006"
+    ],
+    "rules": [
+      "INP-RULE-027"
+    ],
+    "owner_document": "INP-006",
+    "scenario": "Revision invalidation",
+    "procedure": "Đổi delimiter/header sau READY",
+    "expected": "Revision++, old snapshot/mapping invalid; phải parse lại",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-028",
+    "requirements": [
+      "INP-REQ-006"
+    ],
+    "rules": [
+      "INP-RULE-026"
+    ],
+    "owner_document": "INP-006",
+    "scenario": "Binding A/B",
+    "procedure": "source_a trỏ artifact B hoặc format khác manifest",
+    "expected": "Runtime 011; shape hợp schema không đủ",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-029",
+    "requirements": [
+      "INP-REQ-006",
+      "INP-REQ-009"
+    ],
+    "rules": [
+      "INP-RULE-029"
+    ],
+    "owner_document": "INP-006",
+    "scenario": "Mapping/key snapshot",
+    "procedure": "Composite key dùng field đã bị thay",
+    "expected": "Chặn comparison; không ghép key bằng nối text tùy ý",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-030",
+    "requirements": [
+      "INP-REQ-006",
+      "INP-REQ-009"
+    ],
+    "rules": [
+      "INP-RULE-028"
+    ],
+    "owner_document": "INP-006",
+    "scenario": "Inference chưa xác nhận",
+    "procedure": "header detect chưa confirmed; key chỉ suggested",
+    "expected": "Header: NEEDS_REVIEW; key: chặn Comparison Job tới khi xác nhận",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-031",
+    "requirements": [
+      "INP-REQ-007"
+    ],
+    "rules": [
+      "INP-RULE-030"
+    ],
+    "owner_document": "INP-007",
+    "scenario": "Severity gate",
+    "procedure": "Issue WARNING, REVIEW, ERROR cùng stage",
+    "expected": "WARNING có điều kiện; REVIEW chặn; ERROR→FAILED",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-032",
+    "requirements": [
+      "INP-REQ-007"
+    ],
+    "rules": [
+      "INP-RULE-031"
+    ],
+    "owner_document": "INP-007",
+    "scenario": "Size unknown/runtime limits",
+    "procedure": "Provider size=null, stream vượt profile",
+    "expected": "Không size=0 giả; dừng 004 theo bytes thực",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-033",
+    "requirements": [
+      "INP-REQ-007",
+      "INP-REQ-011"
+    ],
+    "rules": [
+      "INP-RULE-032"
+    ],
+    "owner_document": "INP-007",
+    "scenario": "Unsafe input/logging",
+    "procedure": "External XML/ZIP traversal/formula text/URI nhạy cảm",
+    "expected": "Không execute/fetch; 017 khi unsafe; logs không raw/full URI",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-034",
+    "requirements": [
+      "INP-REQ-008"
+    ],
+    "rules": [
+      "INP-RULE-034"
+    ],
+    "owner_document": "INP-008",
+    "scenario": "Happy path và guard",
+    "procedure": "Select→Validate→PreflightValid→ParsedAndValidated",
+    "expected": "UNSELECTED→SELECTED→PREFLIGHTING→PARSING→PREVIEW_READY; sample chưa EOF không READY",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-035",
+    "requirements": [
+      "INP-REQ-008"
+    ],
+    "rules": [
+      "INP-RULE-033"
+    ],
+    "owner_document": "INP-008",
+    "scenario": "Race cancel/replace",
+    "procedure": "Cancel/replace lúc PARSING rồi nhận Parsed callback cũ",
+    "expected": "Callback cũ bị bỏ; tài nguyên đóng; không hồi sinh READY",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-036",
+    "requirements": [
+      "INP-REQ-008",
+      "INP-REQ-001",
+      "INP-REQ-009"
+    ],
+    "rules": [
+      "INP-RULE-035"
+    ],
+    "owner_document": "INP-008",
+    "scenario": "Gate A/B",
+    "procedure": "A READY, B FAILED hoặc NEEDS_REVIEW",
+    "expected": "Mapping disabled; retry B không sửa A hợp lệ",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-037",
+    "requirements": [
+      "INP-REQ-008"
+    ],
+    "rules": [
+      "INP-RULE-034"
+    ],
+    "owner_document": "INP-008",
+    "scenario": "Revoke/change sau READY",
+    "procedure": "Revoke permission hoặc hash khác snapshot",
+    "expected": "FAILED 006/015; invalidate snapshot/mapping/job phụ thuộc",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-038",
+    "requirements": [
+      "INP-REQ-008"
+    ],
+    "rules": [
+      "INP-RULE-036"
+    ],
+    "owner_document": "INP-008",
+    "scenario": "Process death",
+    "procedure": "Kill khi PARSING/READY rồi restore journal",
+    "expected": "SELECTED + 018 nếu còn ref; recheck/parse/hash; không restore READY trực tiếp",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-039",
+    "requirements": [
+      "INP-REQ-010"
+    ],
+    "rules": [
+      "INP-RULE-037"
+    ],
+    "owner_document": "INP-010",
+    "scenario": "OCR review/provenance",
+    "procedure": "ocrText confidence 0.99/0.2/null; sửa crop",
+    "expected": "Đều PENDING trước confirm; raw giữ nguyên/correction riêng; crop invalidate receipts",
+    "status": "PLANNED"
+  },
+  {
+    "id": "INP-TC-040",
+    "requirements": [
+      "INP-REQ-010",
+      "INP-REQ-011"
+    ],
+    "rules": [
+      "INP-RULE-039"
+    ],
+    "owner_document": "INP-010",
+    "scenario": "OCR privacy/capability",
+    "procedure": "Ảnh lớn, cloud chưa opt-in, ô nhìn giống formula",
+    "expected": "Giới hạn decode; không cloud; không khôi phục formula/style gốc",
+    "status": "PLANNED"
+  }
+]

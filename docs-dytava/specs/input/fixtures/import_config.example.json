@@ -1,0 +1,62 @@
+{
+  "schema_version": "0.1.0",
+  "config_id": "fixture-import",
+  "config_revision": 1,
+  "resource_profile_ref": "fixture-only-small-v1",
+  "source_a": {
+    "artifact_id": "fixture-a",
+    "format": "csv",
+    "scopes": [
+      {
+        "kind": "delimited",
+        "first_record": 1,
+        "last_record": null
+      }
+    ],
+    "header": {
+      "mode": "explicit",
+      "row": 1
+    },
+    "encoding": "UTF-8",
+    "delimiter": ",",
+    "parser_profile": {
+      "profile_id": "rfc4180-double-quote",
+      "profile_version": "1"
+    },
+    "hidden_content": "include",
+    "merged_cells": "anchor_only",
+    "validation_behavior": {
+      "on_ambiguity": "review",
+      "ragged_records": "reject",
+      "invalid_encoding": "reject"
+    }
+  },
+  "source_b": {
+    "artifact_id": "fixture-b",
+    "format": "csv",
+    "scopes": [
+      {
+        "kind": "delimited",
+        "first_record": 1,
+        "last_record": null
+      }
+    ],
+    "header": {
+      "mode": "explicit",
+      "row": 1
+    },
+    "encoding": "UTF-8",
+    "delimiter": ",",
+    "parser_profile": {
+      "profile_id": "rfc4180-double-quote",
+      "profile_version": "1"
+    },
+    "hidden_content": "include",
+    "merged_cells": "anchor_only",
+    "validation_behavior": {
+      "on_ambiguity": "review",
+      "ragged_records": "reject",
+      "invalid_encoding": "reject"
+    }
+  }
+}

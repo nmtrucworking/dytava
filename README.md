@@ -21,6 +21,12 @@
 
 ---
 
+## Tài liệu thiết kế hiện hành
+
+Bắt đầu tại [Input Specification 0.1.0 — DRAFT](docs-dytava/specs/input/README.md): nguồn A/B, định dạng, raw types/provenance, cấu hình, validation, state machine, schemas và fixtures. Baseline thiết kế mobile là Flutter/Dart — Android P0, iOS P1; danh sách định dạng dự kiến không là bằng chứng adapter đã hỗ trợ.
+
+[Chỉ mục tài liệu](docs-dytava/README.md) phân định Input/Core và phiên bản tham chiếu; [Project Description](docs-dytava/project/Project%20Description.md) giữ rõ yêu cầu học phần đọc ảnh và quyết định ưu tiên còn mở.
+
 ## Tong quan (Overview)
 
 **Dytava** (con duoc biet den qua bo giai phap **ExcelCompare**) la nen tang so sanh bang tinh va phan tich sai khac ngu nghia (semantic diff) da nen tang hien dai. Du an duoc thiet ke theo mo hinh **Monorepo** bao gom ung dung di dong Flutter, ung dung Web bao mat cao va API dich vu quan tri.

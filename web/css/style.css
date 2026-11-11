@@ -1,38 +1,38 @@
 /* ==========================================================================
-   Dytava / ExcelCompare - Chromatic DType Design System & Stylesheet
+   Dytava / ExcelCompare - Dytava v2.0 Design System & Stylesheet
    ========================================================================== */
 
 :root {
-  --primary: #2663EB;
+  --primary: #2563EB;
   --primary-hover: #1D4ED8;
-  --primary-light: #EBF2FF;
-  --navy: #10243B;
-  --canvas: #F5F8FD;
+  --primary-light: #EFF6FF;
+  --navy: #0F172A;
+  --canvas: #F3F4F6;
   --surface: #FFFFFF;
   --surface-alt: #F8FAFD;
-  --text: #10243B;
+  --text: #0F172A;
   --muted: #5B6D86;
-  --outline: #CAD5E5;
-  --outline-light: #E4EAF3;
+  --outline: #E5E7EB;
+  --outline-light: #E2E8F0;
   --subtle: #EDF2F9;
 
-  /* Chromatic DTypes */
-  --dtype-string: #137A64;
-  --dtype-number: #235CD7;
-  --dtype-datetime: #A76B13;
-  --dtype-boolean: #764BBA;
-  --dtype-id: #50657D;
-  --dtype-null: #596573;
+  /* Data Types */
+  --dtype-string: #10B981;
+  --dtype-number: #2563EB;
+  --dtype-datetime: #F59E0B;
+  --dtype-boolean: #8B5CF6;
+  --dtype-id: #64748B;
+  --dtype-null: #6B7280;
 
   /* Comparison Statuses */
-  --status-exact: #137A64;
-  --status-exact-bg: #E8F7F3;
-  --status-equiv: #235CD7;
-  --status-equiv-bg: #EDF4FF;
-  --status-diff: #B42333;
-  --status-diff-bg: #FDEDEE;
-  --status-unres: #925B0E;
-  --status-unres-bg: #FEF7EB;
+  --status-exact: #10B981;
+  --status-exact-bg: #ECFDF5;
+  --status-equiv: #2563EB;
+  --status-equiv-bg: #EFF6FF;
+  --status-diff: #EF4444;
+  --status-diff-bg: #FEF2F2;
+  --status-unres: #F59E0B;
+  --status-unres-bg: #FFFBEB;
 
   --shadow-sm: 0 1px 2px 0 rgba(16, 36, 59, 0.05);
   --shadow-md: 0 4px 12px -2px rgba(16, 36, 59, 0.08), 0 2px 6px -1px rgba(16, 36, 59, 0.04);
@@ -56,10 +56,10 @@ body.dark {
   --subtle: #1C3048;
   --primary-light: #1D3557;
 
-  --status-exact-bg: rgba(19, 122, 100, 0.18);
-  --status-equiv-bg: rgba(35, 92, 215, 0.18);
-  --status-diff-bg: rgba(180, 35, 51, 0.18);
-  --status-unres-bg: rgba(146, 91, 14, 0.22);
+  --status-exact-bg: rgba(16, 185, 129, 0.18);
+  --status-equiv-bg: rgba(37, 99, 235, 0.18);
+  --status-diff-bg: rgba(239, 68, 68, 0.18);
+  --status-unres-bg: rgba(245, 158, 11, 0.22);
   color-scheme: dark;
 }
 
@@ -243,7 +243,7 @@ body.dark .site-header {
   color: var(--primary);
 }
 .badge-admin {
-  background: linear-gradient(135deg, #10243B 0%, #2663EB 100%);
+  background: linear-gradient(135deg, #0F172A 0%, #2563EB 100%);
   color: #FFFFFF;
   box-shadow: 0 2px 6px rgba(38, 99, 235, 0.35);
 }
@@ -294,7 +294,7 @@ body.dark .site-header {
   margin-bottom: 1.25rem;
 }
 .gradient-text {
-  background: linear-gradient(135deg, #2663EB 0%, #137A64 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #10B981 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -638,11 +638,11 @@ body.dark .site-header {
 }
 
 .diff-table tr.row-added td {
-  background-color: rgba(19, 122, 100, 0.08);
+  background-color: rgba(16, 185, 129, 0.08);
   color: var(--status-exact);
 }
 .diff-table tr.row-removed td {
-  background-color: rgba(180, 35, 51, 0.08);
+  background-color: rgba(239, 68, 68, 0.08);
   color: var(--status-diff);
   text-decoration: line-through;
 }
@@ -739,7 +739,7 @@ body.dark .site-header {
 }
 
 /* ==========================================================================
-   Product Features & Chromatic DTypes Section
+   Product Features & Data Types Section
    ========================================================================== */
 .section {
   padding: 5rem 1.5rem;
@@ -814,7 +814,7 @@ body.dark .site-header {
   line-height: 1.6;
 }
 
-/* Chromatic DType Showcase */
+/* Data Type Showcase */
 .dtype-pills-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

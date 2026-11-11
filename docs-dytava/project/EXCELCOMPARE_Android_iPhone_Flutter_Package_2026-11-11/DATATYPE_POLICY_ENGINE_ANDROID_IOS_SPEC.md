@@ -1,8 +1,10 @@
 # ExcelCompare — DataType, Semantic Normalization & Policy Engine (Flutter/Dart)
 
+> Ranh giới sau khi tách Input: physical types/provenance/raw lexical thuộc [Input 0.1.0 DRAFT](../../specs/input/README.md); tài liệu này giữ canonicalization, policy compiler, key matching và comparison. Ví dụ policy v2 chuẩn: [project policy](../comparison_policy.v2.example.json). Dart PoC hiện tại chưa triển khai đầy đủ wire contract này.
+
 **Trạng thái:** 2.2.0-FLUTTER-ANDROID-IOS-DESIGN | **Ngày cập nhật:** 11/11/2026 | **Nền tảng phát hành:** Flutter mobile — Android P0 (APK/AAB) rồi iPhone/iOS P1 (IPA); web/desktop ngoài phạm vi | **Policy JSON:** schema 2 (giữ tương thích)
 
-> Đây là tài liệu thiết kế chuyển đổi từ bản 2.0.0 Kotlin/JVM. Không phải bằng chứng ứng dụng Flutter hoặc bộ quy tắc đã đạt chuẩn production. Giai đoạn đầu ưu tiên học Flutter/Dart; các adapter và OCR triển khai theo gate ở giai đoạn tiếp theo.
+> Đây là tài liệu thiết kế Flutter/Dart. Không phải bằng chứng ứng dụng Flutter hoặc bộ quy tắc đã đạt chuẩn production. Giai đoạn đầu ưu tiên học Flutter/Dart; các adapter và OCR triển khai theo gate ở giai đoạn tiếp theo.
 
 ## 5.1. Mục tiêu và các invariant
 
@@ -12,12 +14,12 @@ Mọi `matched cell pair` trả đúng một trạng thái `EXACT`, `EQUIVALENT`
 
 | Tầng | Loại dữ liệu | Trách nhiệm |
 |---|---|---|
-| Physical | `xlsxNumber`, `xlsxSharedString`, `xlsxBoolean`, `formula`, `error`, `blank`, `missing`, `csvText`, `jsonNumber`, `jsonNull`, `ocrText` | Giữ `rawLexeme`, kiểu nguồn, formula/cache, display, formatCode, Excel date system, source location, OCR review. Không gộp blank/missing/null. |
+| Physical | [INP-005](../../specs/input/05_data_types_provenance.md) và [SourceCell schema](../../specs/input/schemas/source_cell.schema.json) | Contract source types, raw/null/formula/provenance thuộc Input; Core không định nghĩa lại wire shape. |
 | Logical | `String`, `BigInt`, `Decimal`, `bool`, date-only ISO string, instant/offset-typed datetime, array/object tagged structure | Dùng BigInt và Decimal; `DateTime` của Dart dùng cho instant có timezone đã giải quyết, không coi là thay thế cho `LocalDate` hoặc zone ID. |
 | Semantic | `IDENTIFIER`, `POSTAL_CODE`, `FREE_TEXT`, `PERSON_NAME`, `INTEGER`, `DECIMAL`, `MONEY`, `PERCENTAGE`, `BOOLEAN`, `DATE`, `DATETIME`, `PHONE`, `EMAIL`, `ENUM`, `UNIT_QUANTITY` | Field rule xác nhận nghĩa; dtype inference chỉ là gợi ý. |
 | Normalization | Unicode NFC; trim; case; alias; decimal/grouping separators; date patterns; timezone; unit/currency; null policy; tolerance | Versioned, strict, có trace. Dart core **không cung cấp API NFC phổ dụng**: chọn thư viện đã kiểm chứng hoặc adapter verified; không tự khẳng định đã chuẩn hóa NFC. |
 
-`SourceCell = {rawKind, rawLexeme?, displayText?, formatCode?, formula?, formulaCacheStatus?, excelDateSystem?, sourceRef, ocrReviewState}`. `CanonicalValue` dùng sealed classes (Dart 3): `TextValue`, `IntegerValue(BigInt)`, `DecimalValue(Decimal)`, `BoolValue`, `DateValue(yyyy-MM-dd)`, `InstantValue`, `ZonedLocalDateTimeValue`, `MoneyValue(Decimal, ISO4217)`, `PercentageValue(Decimal ratio)`, `QuantityValue(Decimal, unit, dimension)`, `EnumValue`, `NullValue(NullKind)`, `ComplexValue` (chỉ khi comparator khai báo).
+SourceCell wire contract được định nghĩa duy nhất tại [INP-005](../../specs/input/05_data_types_provenance.md). `CanonicalValue` vẫn thuộc Core: TextValue, IntegerValue(BigInt), DecimalValue(Decimal), BoolValue, DateValue, InstantValue, ZonedLocalDateTimeValue, MoneyValue, PercentageValue, QuantityValue, EnumValue, NullValue và ComplexValue theo capability. Core mapping phải bảo toàn source_ref và losses, không thay SourceCell bằng canonical value.
 
 **Precision:** Không dùng `double` để so sánh/parse tiền, phần trăm, số chính xác. Dùng `package:decimal` ở Dart, `BigInt` cho số nguyên; serialize canonical decimal thành chuỗi. Không dùng `num.parse` để biến đổi dữ liệu tài chính. Strict typed compare chỉ chạy sau validation.
 
@@ -46,7 +48,7 @@ Mọi `matched cell pair` trả đúng một trạng thái `EXACT`, `EQUIVALENT`
 Input source adapters (read-only)
     -> preview/profile + explicit field mapping
     -> compile/validate policy v2 (fail-closed)
-    -> classify physical kind + provenance
+    -> consume validated physical kind + provenance from Input
     -> resolve null kind / OCR review gate
     -> strict source-specific parse
     -> semantic transform
@@ -62,7 +64,7 @@ Input source adapters (read-only)
 
 Top-level fields: `schema_version`, `policy_id`, `policy_version`, `canonical_serializer_version`, `defaults`, `alignment`, `source_profiles`, `fields`, `unresolved_handling`, `auto_cast_all_fields`.
 
-Precedence: `engine conservative defaults < policy.defaults < field-level semantic/comparison rules < A/B source_overrides (parse only)`. Cấm arbitrary scripts/code trong JSON. `schema_version=2` vẫn dùng được khi chuyển Kotlin -> Dart, **không tự tăng schema version chỉ vì đổi framework**; các thay đổi quy tắc phải tăng `policy_version` và `engine_version`.
+Precedence: `engine conservative defaults < policy.defaults < field-level semantic/comparison rules < A/B source_overrides (parse only)`. Cấm arbitrary scripts/code trong JSON. `schema_version=2` mô tả cấu trúc policy, **không tự tăng schema version chỉ vì đổi framework**; các thay đổi quy tắc phải tăng `policy_version` và `engine_version`.
 
 Policy compiler trong Dart phải kiểm tra: unknown schema keys/unknown rule operations => reject; mapping 1:1 & logical names unique; keys exist, strict identifier, không tolerance/fuzzy; `tolerance_abs >= 0`; nguồn `decimal_separator` khác `grouping_separator`; grouping không được bật im lặng; aliases không trùng; locale/date/year pivot explicit; zone/FX/unit phù hợp; OCR critical cell bắt buộc confirmed; engine capabilities cho các dtype hiện dùng. Trong bản demo lõi Dart đi kèm chỉ có 5 semantic types đã triển khai: IDENTIFIER, FREE_TEXT, DECIMAL, BOOLEAN, PERCENTAGE; còn lại fail-closed, không tuyên bố hỗ trợ runtime.
 
