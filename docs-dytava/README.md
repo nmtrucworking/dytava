@@ -1,12 +1,15 @@
 # Dytava / ExcelCompare — chỉ mục tài liệu
 
-Baseline thiết kế hiện hành: **Flutter/Dart, Android P0 → iOS P1**, theo Master 2.2 ngày 11/11/2026. Repository có Web/server riêng và Pure Dart core PoC; phạm vi thiết kế không là danh sách tính năng đã đạt kiểm thử.
+> **Engineering scope baseline 11/11/2026:** [9 ADR được chốt](decisions/ADR_REGISTER_P0_2026-11-11.md) điều chỉnh Android P0 thành XLSX/CSV/TSV + OCR một nguồn ảnh PNG/JPEG có review. JSON/iOS chuyển P1. Đây là quyết định thiết kế, chưa phải evidence ứng dụng đã đạt P0.
+
+Baseline nền tảng là **Flutter/Dart, Android P0 → iOS P1**; ưu tiên tính năng P0 đã được cập nhật bằng ADR register ngày 11/11/2026, ghi đè những phần roadmap Master 2.2 không còn phù hợp. Repository có Web/server riêng và Pure Dart core PoC; phạm vi thiết kế không là danh sách tính năng đã đạt kiểm thử.
 
 Bắt đầu tại **[Input Specification 0.1.0 — DRAFT](specs/input/README.md)**: 10 tài liệu chuyên đề, 5 JSON Schema, fixtures và contract verifier. Input sở hữu nguồn/định dạng/cấu trúc/raw types/provenance/config/validation/import states; Core giữ normalization, policy compiler và comparison. Những quyết định sản phẩm còn mở được ghi tại decision register, chưa được mặc định là phê duyệt.
 
 | Tài liệu / tài nguyên | Vai trò hiện hành |
 | --- | --- |
 | [Project Description](project/Project%20Description.md) | Đề bài, phạm vi giao học phần và baseline nền tảng; giữ rõ yêu cầu đọc ảnh |
+| [ADR register P0](decisions/ADR_REGISTER_P0_2026-11-11.md) | 9 quyết định A/B, OCR, scope, budgets, header, identifier, XLSX, confirmation và retention |
 | [Input index](specs/input/README.md) | Nguồn biên soạn Input; hướng dẫn ưu tiên/versioning/glossary/ADR |
 | [Flutter Master 2.2](project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/EXCELCOMPARE_MASTER_ANDROID_IOS.md) | Kiến trúc/lộ trình/release; tóm tắt và dẫn sang Input |
 | [Core semantic spec](project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) | Canonicalization, policy và thuật toán; physical source types dẫn sang Input |
