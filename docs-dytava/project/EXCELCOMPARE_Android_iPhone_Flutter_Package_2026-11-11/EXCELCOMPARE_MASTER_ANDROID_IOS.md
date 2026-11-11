@@ -2,7 +2,7 @@
 
 > **Scope override 11/11/2026:** [ADR REGISTER P0](../../decisions/ADR_REGISTER_P0_2026-11-11.md) đã chốt 9 quyết định: OCR ảnh một nguồn + manual review lên Android P0; P0 XLSX/CSV/TSV, JSON chuyển P1. Các dòng OCR P2/ADR OPEN trong Master 2.2 là lịch sử, không còn là phạm vi phát hành hiện hành. Contract và Flutter tests chưa đạt gate.
 
-> Cập nhật tách Input ngày 11/11/2026: bản Markdown này giữ kiến trúc/Core và liên kết sang Input DRAFT; Markdown là nguồn tài liệu hiện hành. Policy v2 chuẩn để biên soạn tiếp: [project/comparison_policy.v2.example.json](../comparison_policy.v2.example.json). Các defaults Input chưa chốt được quản lý ở decision register; đề xuất cũ trong Master không tự phê duyệt chúng.
+> **Document split 12/11/2026:** Sections **01–02** → [PRD](../../product/PRD.md), **03 (FR)** → [SRS](../../requirements/SRS.md), **09–10 (quality/security)** → [NFR](../../requirements/NFR.md), **06–08 (structure/flows)** → [Architecture](../../architecture/ARCHITECTURE.md). Những đoạn trùng trong Master 2.2 **chỉ giữ để đối chiếu lịch sử, không sửa song song và không là current source of truth**. [Document Control](../../governance/DOCUMENT_CONTROL.md) quy định ownership; [traceability](../../requirements/TRACEABILITY_MATRIX.md) liên kết test IDs. [Input Contract](../../specs/input/README.md) giữ raw/wire, [Core semantic spec](DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) giữ policy/algorithms, [ADR register](../../decisions/ADR_REGISTER_P0_2026-11-11.md) giữ quyết định 9 ADR. Giới hạn kỹ thuật/roadmap trong Master nếu mâu thuẫn là lịch sử. Policy v2 canonical example: [comparison_policy.v2.example.json](../comparison_policy.v2.example.json).
 
 <!-- 2.2-FLUTTER-ANDROID-IOS-DESIGN; not a production-qualified implementation -->
 
