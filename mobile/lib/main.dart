@@ -1,5 +1,7 @@
 import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:flutter/material.dart';
+import 'design_system/dytava_theme.dart';
+import 'design_system/dytava_typography.dart';
 
 void main() => runApp(const ExcelCompareApp());
 
@@ -10,7 +12,7 @@ class ExcelCompareApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ExcelCompare • PoC',
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
+      theme: DytavaTheme.lightTheme,
       home: const CompareDemoPage(),
     );
   }
@@ -82,9 +84,9 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
           if (decision != null) ...[
             Text('Trạng thái: ${decision!.status.name.toUpperCase()}',
               style: Theme.of(context).textTheme.titleLarge),
-            Text('Rule: ${decision!.ruleId}'),
-            Text('A canonical: ${decision!.left?.label ?? '—'}'),
-            Text('B canonical: ${decision!.right?.label ?? '—'}'),
+            Text('Rule: ${decision!.ruleId}', style: DytavaTypography.dataMedium),
+            Text('A canonical: ${decision!.left?.label ?? '—'}', style: DytavaTypography.dataMedium),
+            Text('B canonical: ${decision!.right?.label ?? '—'}', style: DytavaTypography.dataMedium),
             if (decision!.reason != null) Text('Reason: ${decision!.reason!.name}'),
           ],
           if (error != null) Text('Cấu hình không hợp lệ: $error'),

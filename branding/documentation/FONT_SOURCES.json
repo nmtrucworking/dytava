@@ -1,0 +1,128 @@
+{
+  "pairing": "Precision Core",
+  "google_fonts_revision": "c30b221beb0c1da59d563feb91ec8656a1fa972a",
+  "source": "https://github.com/google/fonts/tree/c30b221beb0c1da59d563feb91ec8656a1fa972a/ofl",
+  "generated_with": "fontTools 4.68.0; Plus Jakarta Sans static instances from variable wght; WOFF2 uses full upstream character coverage",
+  "files": {
+    "mobile/assets/fonts/BeVietnamPro-Bold.ttf": {
+      "sha256": "7f738fe5c43c8872807b20e2d30d42163618de8a4daf7f48a939adac32c16847",
+      "bytes": 140300
+    },
+    "mobile/assets/fonts/BeVietnamPro-ExtraBold.ttf": {
+      "sha256": "44dbfa01553d227bec76ba6446c5618870a76a4a3297f41630dde859d0650d02",
+      "bytes": 139680
+    },
+    "mobile/assets/fonts/BeVietnamPro-Medium.ttf": {
+      "sha256": "b60832bfa0fcd015158112c64d7e3fdad3b0c6287d1823f85a3103636e845268",
+      "bytes": 135980
+    },
+    "mobile/assets/fonts/BeVietnamPro-OFL.txt": {
+      "sha256": "6b7f8f73609a25ea78c891e34cf37b06f8a676b7ea986e941e43b009110f2a85",
+      "bytes": 4397
+    },
+    "mobile/assets/fonts/BeVietnamPro-Regular.ttf": {
+      "sha256": "cd1ef6e9d7db28ad5cdb88a65ccbe693870e60d340b791f349d248342b4fe4c3",
+      "bytes": 132948
+    },
+    "mobile/assets/fonts/BeVietnamPro-SemiBold.ttf": {
+      "sha256": "bd8e27eb02720b9d91e59e4f10a90878643219f25ce6a8d9a4f06a8a88d3bb71",
+      "bytes": 136736
+    },
+    "mobile/assets/fonts/IBMPlexMono-Bold.ttf": {
+      "sha256": "ac27abd6450a64dd94467580a02fe6235156d5b92f2926ebbc8e7489df64e0be",
+      "bytes": 137784
+    },
+    "mobile/assets/fonts/IBMPlexMono-Medium.ttf": {
+      "sha256": "a9b4c49bb299e05b5f6c481e7fb5e78943d2793249a0c8874ab574a2d1ea6755",
+      "bytes": 136704
+    },
+    "mobile/assets/fonts/IBMPlexMono-OFL.txt": {
+      "sha256": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+      "bytes": 4456
+    },
+    "mobile/assets/fonts/IBMPlexMono-Regular.ttf": {
+      "sha256": "6a3412f058c7d8dfd9170c41e85ade48e5156ecb89356110ca57a0a27734af46",
+      "bytes": 135580
+    },
+    "mobile/assets/fonts/IBMPlexMono-SemiBold.ttf": {
+      "sha256": "d3c38e55c78f5b0f28009fddba4834ec503278936a5986032424c9bd2d23aa46",
+      "bytes": 140216
+    },
+    "mobile/assets/fonts/PlusJakartaSans-Bold.ttf": {
+      "sha256": "1e8da1b79e60b24e396114c3f1aa923b5a3afae6ec03c29689a7d7bcf685f0e6",
+      "bytes": 96500
+    },
+    "mobile/assets/fonts/PlusJakartaSans-ExtraBold.ttf": {
+      "sha256": "321f35af747a67b857ef6b740dfc9661bcff9a20b60cfc814324688e7c70f1b1",
+      "bytes": 96444
+    },
+    "mobile/assets/fonts/PlusJakartaSans-Medium.ttf": {
+      "sha256": "13790551c253d43694662ad9f7176d2a8bb1a39bdceb8f0d05b49fc277ffea16",
+      "bytes": 96584
+    },
+    "mobile/assets/fonts/PlusJakartaSans-OFL.txt": {
+      "sha256": "995c7199cab65954f545996326755daee7b63cc6b42b06c13da1f9502ab08a99",
+      "bytes": 4402
+    },
+    "mobile/assets/fonts/PlusJakartaSans-Regular.ttf": {
+      "sha256": "7c79018a08508f2f71acb07f556dc42c7ea4dee1254ad292f8a0206b3deb5e3d",
+      "bytes": 96572
+    },
+    "mobile/assets/fonts/PlusJakartaSans-SemiBold.ttf": {
+      "sha256": "a579673280e5af4deb3b9f9f7927dbfcbcf697813e4e2bf5efe04e9fe6262cb3",
+      "bytes": 96564
+    },
+    "web/assets/fonts/BeVietnamPro-Bold.woff2": {
+      "sha256": "ffe376289271e3dd42f321e433004a89b49ad74e0f1ea3026135c9173a797d55",
+      "bytes": 41256
+    },
+    "web/assets/fonts/BeVietnamPro-ExtraBold.woff2": {
+      "sha256": "907e564a7c29054f3d55b9020128e01c188cc2d73e4d580a7ec72c5f794f95c1",
+      "bytes": 41220
+    },
+    "web/assets/fonts/BeVietnamPro-Medium.woff2": {
+      "sha256": "5b1312df4f1b32e58cb7af012619a8a4d9e323aef91098e72b1bcce0cc5e4ce1",
+      "bytes": 40356
+    },
+    "web/assets/fonts/BeVietnamPro-OFL.txt": {
+      "sha256": "6b7f8f73609a25ea78c891e34cf37b06f8a676b7ea986e941e43b009110f2a85",
+      "bytes": 4397
+    },
+    "web/assets/fonts/BeVietnamPro-Regular.woff2": {
+      "sha256": "5246f25cc46ae4068d4276f74721122b4ca7000f155a485cda25d0c731067472",
+      "bytes": 38108
+    },
+    "web/assets/fonts/BeVietnamPro-SemiBold.woff2": {
+      "sha256": "e3e06c7d507ebad133c3037e5347bcecb7494e02ff966b6997bdc169369d2f62",
+      "bytes": 40388
+    },
+    "web/assets/fonts/IBMPlexMono-Bold.woff2": {
+      "sha256": "c32d8d59af30aeb5d1087d0e3bd20c37e2c6d198316d95204468254e415b55b0",
+      "bytes": 40476
+    },
+    "web/assets/fonts/IBMPlexMono-Medium.woff2": {
+      "sha256": "1930ef1ca6802d0e4e29b37b2a767e268231bcb5849021c184613f45d6266d58",
+      "bytes": 40088
+    },
+    "web/assets/fonts/IBMPlexMono-OFL.txt": {
+      "sha256": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+      "bytes": 4456
+    },
+    "web/assets/fonts/IBMPlexMono-Regular.woff2": {
+      "sha256": "67e5d5c9401e40670ed5eb125d2c1583bb871abed4af3d0d39e1507cd52c9e25",
+      "bytes": 39164
+    },
+    "web/assets/fonts/IBMPlexMono-SemiBold.woff2": {
+      "sha256": "b9a8ad9ccdbd5c7e767b07087f5917244ef57502e26306ffa7c4cff1e2a1cc6a",
+      "bytes": 41132
+    },
+    "web/assets/fonts/PlusJakartaSans-OFL.txt": {
+      "sha256": "995c7199cab65954f545996326755daee7b63cc6b42b06c13da1f9502ab08a99",
+      "bytes": 4402
+    },
+    "web/assets/fonts/PlusJakartaSans-Variable.woff2": {
+      "sha256": "f68fa6a46bb4c02c4fcd691c2a63a9a20fbae2a18efa8c851f8be781981f98e6",
+      "bytes": 60652
+    }
+  }
+}

@@ -15,7 +15,7 @@
 - **18 Biểu tượng định dạng tệp:** XLSX, XLS, CSV, TSV, JSON, JSONL, ODS, PDF, XML, HTML, TXT, PNG, JPG, WEBP, HEIC, XLSM, XLSB, MD.
 - **Hệ thống Flutter Dart Design System (`mobile/lib/design_system/`):**
   - `dytava_colors.dart`: Bảng màu chuẩn 10 màu và trạng thái so sánh.
-  - `dytava_typography.dart`: Chuẩn typography Inter / Roboto.
+  - `dytava_typography.dart`: Precision Core: Plus Jakarta Sans / Be Vietnam Pro / IBM Plex Mono, đóng gói cục bộ.
   - `dytava_icons.dart`: Hằng số định danh và ánh xạ icon toàn hệ thống.
   - `dytava_theme.dart`: ThemeData Material 3 chuẩn cho ứng dụng Flutter.
   - `dytava_components.dart`: Các widget UI mẫu (Result Card, Policy Card, Status Badge, Empty State...).

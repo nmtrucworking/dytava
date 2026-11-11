@@ -17,6 +17,16 @@ Logo Dytava kết hợp các thành phần cốt lõi:
 
 ---
 
+## Typography giao diện — Precision Core
+
+- **Plus Jakarta Sans:** tiêu đề và nội dung nổi bật.
+- **Be Vietnam Pro:** giao diện, biểu mẫu và nội dung tiếng Việt.
+- **IBM Plex Mono:** giá trị ô, số liệu, mã quy tắc và định danh.
+
+Font được đóng gói cục bộ cho Web và Flutter. Bộ font UI không thay đổi wordmark/logo đã duyệt. Xem [hướng dẫn tích hợp](../branding/documentation/TYPOGRAPHY.md).
+
+---
+
 ## 2. Bảng màu thương hiệu (Official Color Palette)
 
 | Mã HEX | Tên gọi | Vai trò trong hệ thống |

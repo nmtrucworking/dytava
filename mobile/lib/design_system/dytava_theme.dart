@@ -13,6 +13,8 @@ class DytavaTheme {
       primaryColor: DytavaColors.primary,
       scaffoldBackgroundColor: DytavaColors.background,
       fontFamily: DytavaTypography.primaryFont,
+      fontFamilyFallback: const [DytavaTypography.fallbackFont],
+      textTheme: DytavaTypography.textTheme,
       colorScheme: const ColorScheme.light(
         primary: DytavaColors.primary,
         secondary: DytavaColors.secondary,

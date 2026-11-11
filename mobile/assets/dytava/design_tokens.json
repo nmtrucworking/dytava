@@ -16,7 +16,7 @@
     "white": { "hex": "#FFFFFF", "name": "Pure White", "role": "Nền thẻ, nút nhấn, văn bản nổi trên nền màu" }
   },
   "typography": {
-    "primary": "Inter",
+    "primary": "Be Vietnam Pro",
     "fallback": "Roboto",
     "framework": "Flutter Material 3",
     "weights": {
@@ -25,7 +25,17 @@
       "semibold": 600,
       "bold": 700,
       "extrabold": 800
-    }
+    },
+    "pairing": "Precision Core",
+    "display": "Plus Jakarta Sans",
+    "data": "IBM Plex Mono",
+    "delivery": "bundled_local",
+    "data_weights": [
+      400,
+      500,
+      600,
+      700
+    ]
   },
   "comparison_states": {
     "EXACT": {

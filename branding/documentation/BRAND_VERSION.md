@@ -48,9 +48,12 @@ Logo Dytava kết hợp các giá trị cốt lõi:
 ---
 
 ## 4. Typography
-- **Font gia đình chính:** `Inter`
-- **Font dự phòng hệ thống:** `Roboto` (Flutter Material mặc định)
-- **Trọng số font sử dụng:** 400 (Regular), 600 (Semi-bold), 700 (Bold), 800 (Extra-bold).
+- **Bộ phối UI:** Precision Core, theo Typography Lab.
+- **Tiêu đề:** `Plus Jakarta Sans` (400–800).
+- **Giao diện và nội dung tiếng Việt:** `Be Vietnam Pro` (400, 500, 600, 700, 800).
+- **Số liệu, mã định danh và diff:** `IBM Plex Mono` (400, 500, 600, 700), số có độ rộng cố định.
+- **Phân phối:** font TTF trong Flutter và WOFF2 trên Web được đóng gói cục bộ, không gọi dịch vụ font khi chạy.
+- **Nguồn, bản quyền và tích hợp:** [Typography](TYPOGRAPHY.md), [manifest nguồn](FONT_SOURCES.json).
 
 ---
 
