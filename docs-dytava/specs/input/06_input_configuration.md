@@ -3,11 +3,11 @@
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
 Document ID: INP-006\
-Version: 0.1.0\
+Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 11/11/2026
+Updated: 12/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -38,7 +38,7 @@ Schema: [import_config](schemas/import_config.schema.json). JSON flat records (P
 - **INP-RULE-028:** Inference chỉ là gợi ý. detect chưa có confirmed_row, hidden/merged=review chưa giải quyết hoặc dialect mơ hồ đều chặn PREVIEW_READY.
 - **INP-RULE-029:** ImportConfig không nhúng mapping, key, tolerance, currency hoặc toàn bộ policy. Thuộc tính lạ bị schema từ chối.
 
-9 ADR đã chốt engineering baseline: suggested header đầu scope cần confirm; default hiển thị A_TO_B cần user confirm trước job; một selected table mỗi nguồn; scratch private ngắn hạn; resource profile android-p0-conservative-v1 chứa các trần tạm chưa benchmark. Không tự lấy defaults từ fixture. Fixture dùng explicit values để kiểm tra ví dụ; chúng không trở thành defaults. Với cấu hình điều khiển kiểu đọc, nguồn A và B được phép khác encoding/delimiter/profile. Locale diễn giải decimal/date nằm trong `source_profiles`/`source_overrides` của policy v2, tránh hai nơi cùng định nghĩa semantic parse.
+9 ADR đã chốt engineering baseline: suggested header đầu scope cần confirm; default hiển thị A_TO_B cần user confirm trước job; một selected table mỗi nguồn; scratch private ngắn hạn; resource profile conservative giữ lịch sử; profile large-input-v1 theo [NFR §3](../../requirements/NFR.md#3-resource-profiles-và-trần-input-1-gb) thay cap sản phẩm bằng 1 GB/source. Thay resource profile có thể đổi import behavior: phải bind ID/version, tăng config_revision và revalidate snapshot; không cho file tự nâng budgets. Không tự lấy defaults từ fixture. Fixture dùng explicit values để kiểm tra ví dụ; chúng không trở thành defaults. Với cấu hình điều khiển kiểu đọc, nguồn A và B được phép khác encoding/delimiter/profile. Locale diễn giải decimal/date nằm trong `source_profiles`/`source_overrides` của policy v2, tránh hai nơi cùng định nghĩa semantic parse.
 
 ## 5. Input / Output Contract
 
@@ -75,7 +75,7 @@ INP-TC-026: tách policy khỏi ImportConfig. INP-TC-027: revision đổi invali
 
 ## 10. Open Questions
 
-INP-ADR-001/003/005/008 còn mở. Serializer/digest của effective ImportConfig cần version trước khi triển khai cache; không tái dùng digest policy để đại diện config.
+INP-ADR-001/003/005/008 đã chốt baseline; EXP-ADR-001..003 bổ sung scope lớn/PDF. Registry/budgets large-input-v1 và hợp đồng report/export cần implementation/version riêng; không nhúng page/template/export config vào ImportConfig. Serializer/digest của effective ImportConfig cần version trước khi triển khai cache; không tái dùng digest policy để đại diện config.
 
 ## 11. References
 

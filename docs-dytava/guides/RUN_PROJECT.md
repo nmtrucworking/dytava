@@ -19,6 +19,15 @@
 
 **Quan trọng:** Flutter demo hiện dùng `mobile/lib/main.dart` để so sánh hai giá trị A/B. Mã nguồn ghi rõ **chưa đọc Excel/CSV hoặc xuất báo cáo trong mobile**. Web có pipeline độc lập; chạy Web không đồng nghĩa chạy mobile. Flutter demo không cần khởi động Express server.
 
+### Scope mới và capability đang chạy
+
+[Quyết định 12/11/2026](../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) bổ sung 1 GB/source,
+PDF diff hợp nhất và PDF report template Dytava. Các lệnh chạy hiện tại chưa enable
+toàn scope đó: Web vẫn áp 10 MiB/tệp (UI ghi “10 MB”), có CSV/JSON và template PDF preview/CLI; mobile chưa có file import/export. Xem [renderer](../specs/report/RENDERER.md) và chạy `npm run report:render` để tạo PDF mẫu.
+[Report spec](../specs/report/README.md), [NFR](../requirements/NFR.md) và
+[LARGE/REP acceptance](../testing/EXPANDED_SCOPE_ACCEPTANCE.md) định nghĩa phần cần triển khai.
+Không tăng hằng số giới hạn rồi coi như đã chạy được 1 GB.
+
 ## 2. Điều kiện tiên quyết
 
 ### 2.1. Dùng chung

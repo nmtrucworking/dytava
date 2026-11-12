@@ -3,11 +3,11 @@
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
 Document ID: INP-009\
-Version: 0.1.0\
+Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 11/11/2026
+Updated: 12/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -93,6 +93,8 @@ Fixtures là dữ liệu minh họa; không dùng file người thật. Test log
 ## 9. Acceptance Criteria
 
 Contract gate: đúng 5 schemas, positive/negative examples đạt, hashes/bytes/provenance khớp CSV, IDs registry duy nhất và traceability resolve đủ. Release gate riêng: adapter corpus, performance/security và lifecycle Android/iOS pass theo Master; chưa có evidence trong tác vụ tài liệu.
+
+Scope 1 GB/source có registry riêng tại [LARGE-TC-001..008](../../testing/EXPANDED_SCOPE_ACCEPTANCE.md); report có [REP-TC-001..012](../report/README.md). INP-TC-001..040 và fixture-only-small-v1 giữ nguyên, không giả 1 GB evidence từ contract verifier.
 
 ## 10. Open Questions
 

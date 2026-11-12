@@ -1,6 +1,6 @@
 ---
 document_id: DYT-DOC-CONTROL-001
-version: 0.1.0
+version: 0.2.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
@@ -15,13 +15,14 @@ Dự án trước đây tập trung nội dung sản phẩm, FR, NFR, kiến tr�
 
 | Nguồn chính thức | Sở hữu duy nhất | Không sở hữu |
 | --- | --- | --- |
-| [PRD — DYT-PRD-001](../product/PRD.md) | User problem, persona, outcome, US-01..US-12, phase/scope, UX journey, stakeholder acceptance | Detailed algorithms, typed schemas, metric benchmarks |
-| [SRS — DYT-SRS-001](../requirements/SRS.md) | Functional requirements FR-001..FR-015, cross-feature behavior, pre/postconditions, measurable system acceptance | Raw Input schema/format rules, Core normalization semantics, quality SLO |
+| [PRD — DYT-PRD-001](../product/PRD.md) | User problem, persona, outcome, US-01..US-15, phase/scope, UX journey, stakeholder acceptance | Detailed algorithms, typed schemas, metric benchmarks |
+| [SRS — DYT-SRS-001](../requirements/SRS.md) | Functional requirements FR-001..FR-018, cross-feature behavior, pre/postconditions, measurable system acceptance | Raw Input schema/format rules, Core normalization semantics, quality SLO |
 | [NFR — DYT-NFR-001](../requirements/NFR.md) | Quality requirements/metrics, resource guardrails, privacy/security/accessibility/reliability verification, evidence gates | Product scope, business comparison logic, module layout |
 | [Architecture — DYT-ARCH-001](../architecture/ARCHITECTURE.md) | Architecture drivers, logical components, dependency rules, tech candidates, ports/flows and actual-vs-target matrix | User priority, wire type semantics, evidence that features work |
 | [Input Contract — INP-000..010](../specs/input/README.md) | Source metadata, format/adapter capability, raw physical types/provenance, ImportConfig, validation, input state/error, INP-REQ/RULE/TC | Semantic equivalence or product phase selection |
 | [Core Semantic Spec](../project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) | Canonical values, datatype policies, comparison precedence, key matching semantics, reason codes | File bytes/permission, product release priority |
-| [ADR Register](../decisions/ADR_REGISTER_P0_2026-11-11.md) | Architectural decisions 001..009 (scope overrides, rationale, tradeoffs, review gates) | Implementation proof, test PASS, automatic academic approval |
+| [ADR Register](../decisions/ADR_REGISTER_P0_2026-11-11.md) + [Scope expansion](../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) | Quyết định baseline và EXP-ADR-001..003; precedence cho 1 GB/hai PDF | Implementation proof, test PASS, automatic academic approval |
+| [Report Export Spec — DYT-REP-001](../specs/report/README.md) | Export kinds, merged diff layout, template Dytava/version, manifest và REP-TC-* | Core equivalence, Input format support, device resource thresholds |
 | [Build/Release Guide](../project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/ANDROID_IOS_BUILD_RELEASE_GUIDE.md) | Signing, packaging, CI/device release procedures | Claims a signed APK/IPA already exists |
 | [Traceability Matrix](../requirements/TRACEABILITY_MATRIX.md) | Read-only cross-document references to IDs/tests/status/evidence | Redefinition of FR, INP-REQ or test expected values |
 
@@ -31,20 +32,20 @@ Dự án trước đây tập trung nội dung sản phẩm, FR, NFR, kiến tr�
 
 Không đặt một thứ tự ưu tiên toàn cục giữa PRD, SRS, NFR, Architecture, Input và Core vì chúng sở hữu lĩnh vực khác nhau. Tìm *domain owner* trong bảng trên và sửa ở owner trước; đồng bộ reference sau. Với trường hợp cross-domain, mở issue/review, không tự chọn văn bản thuận tiện nhất.
 
-1. **Product scope/P0 priority:** 9 ADR (11/11/2026) là override được chấp nhận, PRD là bảng phase quản lý hiện hành.
+1. **Product scope/P0 priority:** ADR 11/11/2026 + EXP-ADR-001..003 (12/11/2026) là quyết định scope hiện hành, PRD giữ phase assignment. EXP ghi đè trần input 10 MiB và loại trừ PDF output; PDF input không đổi.
 2. **Behavior FR:** SRS; Input rules/schemas sở hữu raw/wire; Core spec sở hữu semantic equivalence. Không override Input/Core bằng SRS mà không migration/review.
 3. **Quality metric:** NFR; con số trong Master cũ chỉ lịch sử và không thành benchmark bằng việc copy.
 4. **Design & dependency:** Architecture, bị ràng buộc bởi ADR và các contracts đã được chấp thuận.
 5. **Master 2.2:** giữ để audit nguồn lịch sử cho các mục 01–15; **không** sửa song song PRD/SRS/NFR/Architecture tại Master. Các phần release/runbook/roadmap chưa tách riêng chỉ là tham khảo trừ khi có owner chính thức.
 6. **Dữ liệu kiểm chứng:** test runner, fixture hashes, device/CI evidence; không lấy word `MUST` hoặc icon/brand asset làm proof.
 
-Đặc biệt: OCR một ảnh có review **Android P0**, input JSON **P1**, xuất P0 **CSV/JSON**, không auto-resume partial import; `INP-ADR-002` có **external academic sign-off pending**.
+Đặc biệt: OCR một ảnh có review **Android P0**, input JSON **P1**, P0 mở rộng **input 1 GB/source + CSV/JSON + merged diff PDF + Dytava report PDF**, không auto-resume partial import; `INP-ADR-002` có **external academic sign-off pending**.
 
 ## 3. Versioning, state và ownership
 
 Mỗi tài liệu có front matter tối thiểu: `document_id`, `version`, `status`, `owner`, `reviewer`, `updated`, `release_baseline` khi phù hợp.
 
-- `DRAFT`: đang chuẩn hóa, có thể phản biện, chưa có review sign-off. Bốn tài liệu mới **DRAFT 0.1.0**; owner/reviewer **TBD**.
+- `DRAFT`: đang chuẩn hóa, có thể phản biện, chưa có review sign-off. PRD/SRS/NFR/SAD/RTM cập nhật **DRAFT 0.2.0**, Report spec **DRAFT 0.2.0**, renderer template 1.0.0 (Web/CLI, chưa đủ target gates); owner/reviewer **TBD**.
 - `REVIEW`: nội dung đã đóng phạm vi và gửi review, nhưng chưa APPROVED.
 - `APPROVED`: owner + reviewer, quyết định scope/ADR quan trọng, schemas/fixtures và acceptance được liên kết; **không tự đồng nghĩa implementation PASS**.
 - `SUPERSEDED`: có link sang version mới, giữ lịch sử.
@@ -69,6 +70,9 @@ Thay cấu trúc/semantic/wire contract phải version và migration notes tươ
 | Academic OCR scope | Giảng viên xác nhận “một ảnh/một bảng, manual review” đủ yêu cầu | PENDING |
 | Input schema migration | OCR P0 ImportConfig/receipts/extraction contracts có version | NOT_DONE |
 | Adapter/Core capabilities | Parser/OCR/semantic integration và golden tests | NOT_VERIFIED |
+| Large-input / PDF contracts | Profile large-input-v1, report/export schema, template renderer và FULL/filtered count reconciliation | NOT_DONE |
 | Quality/release evidence | Device benchmark, privacy, APK build/sign + smoke | NOT_VERIFIED |
+
+**Yêu cầu mở rộng của chủ dự án đã được chấp nhận về scope**; các gate triển khai/kiểm thử không yêu cầu xin lại scope hoặc tự biến yêu cầu thành tùy chọn. Archive/bundle giữ lịch sử, không sửa wire schema/ví dụ cũ bằng thay thế số dung lượng.
 
 **Lưu ý:** Document Control tạo ra *quy tắc quản lý*, không tự phê duyệt các tài liệu hay chốt stakeholder bên ngoài.

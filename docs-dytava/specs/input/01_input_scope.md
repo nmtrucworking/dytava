@@ -3,11 +3,11 @@
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
 Document ID: INP-001\
-Version: 0.1.0\
+Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 11/11/2026
+Updated: 12/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -47,13 +47,13 @@ Một phiên so sánh có đúng hai nguồn A và B. Mỗi nguồn gắn một 
 
 Nguồn hợp lệ khi đọc được đúng snapshot bytes, format/profile có capability đáp ứng chế độ yêu cầu, scope/header resolved, full parse đạt limits/schema/invariants, raw types/provenance được bảo toàn hoặc loss được xử lý, không còn ERROR/REVIEW blocker. Một nguồn hợp lệ chưa đủ cho toàn phiên.
 
-Phạm vi quyết định theo 9 ADR (11/11/2026): Android P0 XLSX/CSV/TSV và tối đa một nguồn ảnh PNG/JPEG có OCR + manual review; JSON/JSONL, XLS/XLSM/ODS và iOS P1; PDF/multi-page/cloud OCR, XML/HTML table/XLSB sau P0. Đây là kế hoạch adapter. Parser Dart/package thật phải có PoC/corpus; icon format không phải bằng chứng support. Đề bài đọc ảnh và lịch P2 còn mâu thuẫn, ghi INP-ADR-002.
+Phạm vi quyết định theo 9 ADR (11/11/2026): Android P0 XLSX/CSV/TSV và tối đa một nguồn ảnh PNG/JPEG có OCR + manual review; JSON/JSONL, XLS/XLSM/ODS và iOS P1; **PDF input**/multi-page/cloud OCR, XML/HTML table/XLSB sau P0. **PDF output** đã vào scope mở rộng tại [Report spec](../report/README.md); không thuộc Input. Đây là kế hoạch adapter. Parser Dart/package thật phải có PoC/corpus; icon format không phải bằng chứng support. OCR reviewed đã vào P0 theo INP-ADR-002; academic sign-off pending.
 
 ## 5. Input / Output Contract
 
 Input Subsystem tiếp nhận file → access/preflight → adapter → validated SourceTable snapshot + issues/capabilities. Core nhận raw evidence cùng ComparisonConfig/Policy đã xác nhận để normalize, align và compare. Input không tính thêm/xóa hàng, tương đương, thống kê diff hay report.
 
-Điều kiện mở Mapping: A và B đều PREVIEW_READY với snapshot còn hiệu lực. Điều kiện bắt đầu Comparison: thêm table pairing, field mapping, key nếu dùng key alignment, policy compile/validation và direction explicit. A_TO_B nghĩa hàng chỉ ở B là thêm, chỉ ở A là xóa; B_TO_A đảo vai trò. Đây là ý nghĩa của lựa chọn explicit, chưa quyết định default hay UX đảo chiều.
+Điều kiện mở Mapping: A và B đều PREVIEW_READY với snapshot còn hiệu lực. Điều kiện bắt đầu Comparison: thêm table pairing, field mapping, key nếu dùng key alignment, policy compile/validation và direction explicit. A_TO_B nghĩa hàng chỉ ở B là thêm, chỉ ở A là xóa; B_TO_A đảo vai trò. Default hiển thị A_TO_B và thao tác đảo chiều theo INP-ADR-001; hướng effective phải được xác nhận.
 
 Contract máy đọc: [5 schemas](schemas/), [manifest](fixtures/input_manifest.example.json), [config](fixtures/import_config.example.json), [expected tables](fixtures/source_tables.expected.json). Envelope manifest có schema_version, session_id và artifacts đúng hai side; từng artifact validate bằng schema riêng, cross-artifact rules do runtime validator.
 
@@ -67,7 +67,7 @@ File cùng tên không được trộn identity. Hash bằng nhau không tự sk
 
 ## 8. Security & Privacy
 
-Read-only, offline-first; chỉ truy cập file được chọn. Không chạy macros/formulas/embedded links, không tự upload. Retention/copy strategy còn mở; giữ tối thiểu metadata và làm rõ lifecycle trước release. Chi tiết source lifecycle tại INP-002.
+Read-only, offline-first; chỉ truy cập file được chọn. Không chạy macros/formulas/embedded links, không tự upload. Retention theo ADR-009 và EXP-ADR-001/003: private source/parsed/index scratch trong session khi consumers còn cần, cleanup/startup sweep; không raw retention dài hạn hoặc upload mặc định. Chi tiết source lifecycle tại INP-002.
 
 ## 9. Acceptance Criteria
 

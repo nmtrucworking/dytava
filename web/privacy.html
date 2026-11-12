@@ -1,1 +1,48 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Quyền riêng tư — Dytava</title><link rel="stylesheet" href="css/fonts.css"><link rel="stylesheet" href="css/brand-tokens.css"><link rel="stylesheet" href="css/style.css"><link rel="icon" href="assets/dytava/brand/svg/dytava-symbol.svg"></head><body><main class="content-page"><a href="/">← Về Dytava</a><img class="document-illustration" src="assets/dytava/illustrations/svg/square/security-local.svg" width="160" height="160" alt="" aria-hidden="true" loading="lazy"><h1>Quyền riêng tư & lưu trữ dữ liệu</h1><p>Cập nhật ngày 25/10/2026. Trang này mô tả hành vi của phiên bản web hiện tại.</p><h2>Nội dung bảng tính</h2><p>Tệp gốc, tên tệp và nội dung ô được đọc, chuẩn hóa và so sánh tại trình duyệt. Website không có API tải lên bảng tính. Dữ liệu này chỉ tồn tại trong bộ nhớ của trang; tải lại hoặc đóng trang sẽ xóa. Tệp CSV/JSON bạn xuất được lưu tại thiết bị theo lựa chọn của bạn.</p><h2>Tài khoản</h2><p>Khi đăng ký, máy chủ lưu tên, email và mật khẩu đã băm bằng scrypt. Cookie phiên HttpOnly phục vụ đăng nhập, không được lưu trong localStorage. Đổi mật khẩu sẽ hủy các phiên đăng nhập khác. Theme sáng/tối được lưu trong localStorage trên thiết bị.</p><h2>Lưu thống kê là tùy chọn</h2><p>Chỉ khi bạn đăng nhập và bấm “Lưu thống kê phiên”, máy chủ mới nhận định dạng tệp, số dòng, thời gian xử lý, cấu hình policy và số lượng ô theo trạng thái. Không gửi tên tệp, tên cột, khóa dòng hoặc nội dung ô. Thống kê được liên kết với tài khoản của bạn và có thể được quản trị viên xem ở dạng tổng hợp và nhật ký vận hành.</p><p>Bạn có thể xuất hoặc xóa từng thống kê, hay xóa toàn bộ lịch sử từ trang Lịch sử. Mặc định thống kê và nhật ký thao tác được tự động xóa sau 30 ngày; thời hạn thực tế của máy chủ được hiển thị trên trang Lịch sử. Dữ liệu xóa có thể còn trong bản sao lưu do đơn vị vận hành quản lý cho đến khi bản sao đó hết hạn.</p><h2>Nhật ký và hạ tầng</h2><p>Nhật ký ứng dụng ghi mã lỗi và mã yêu cầu, không ghi mật khẩu hay nội dung request. Hệ thống sử dụng địa chỉ IP trong bộ nhớ để giới hạn tần suất yêu cầu; reverse proxy hoặc đơn vị hosting có thể có access log riêng. Đơn vị vận hành cần cấu hình thời hạn lưu và thông tin liên hệ tương ứng trước khi công bố dịch vụ.</p><h2>Giới hạn cam kết</h2><p>SHA256 trong lịch sử dùng kiểm tra tính nhất quán của metadata đã lưu, không chứng minh nội dung tệp hay tính chính xác độc lập của thống kê do trình duyệt gửi. Phiên bản này không tuyên bố chứng nhận ISO, SOC2 hay cam kết tuân thủ pháp lý đã được thẩm định.</p><a class="btn btn-outline" href="/#/history">Quản lý lịch sử của tôi</a></main></body></html>
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quyền riêng tư — Dytava</title>
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/brand-tokens.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="assets/dytava/brand/svg/dytava-symbol.svg">
+</head>
+
+<body>
+    <main class="content-page"><a href="/">← Về Dytava</a><img class="document-illustration"
+            src="assets/dytava/illustrations/svg/square/security-local.svg" width="160" height="160" alt=""
+            aria-hidden="true" loading="lazy">
+        <h1>Quyền riêng tư & lưu trữ dữ liệu</h1>
+        <p>Cập nhật ngày 25/10/2026. Trang này mô tả hành vi của phiên bản web hiện tại.</p>
+        <h2>Nội dung bảng tính</h2>
+        <p>Tệp gốc, tên tệp và nội dung ô được đọc, chuẩn hóa và so sánh tại trình duyệt. Website không có API tải lên
+            bảng tính. Dữ liệu này chỉ tồn tại trong bộ nhớ của trang; tải lại hoặc đóng trang sẽ xóa. Tệp CSV/JSON bạn
+            xuất được lưu tại thiết bị theo lựa chọn của bạn.</p>
+        <h2>Tài khoản</h2>
+        <p>Khi đăng ký, máy chủ lưu tên, email và mật khẩu đã băm bằng scrypt. Cookie phiên HttpOnly phục vụ đăng nhập,
+            không được lưu trong localStorage. Đổi mật khẩu sẽ hủy các phiên đăng nhập khác. Theme sáng/tối được lưu
+            trong localStorage trên thiết bị.</p>
+        <h2>Lưu thống kê là tùy chọn</h2>
+        <p>Chỉ khi bạn đăng nhập và bấm “Lưu thống kê phiên”, máy chủ mới nhận định dạng tệp, số dòng, thời gian xử lý,
+            cấu hình policy và số lượng ô theo trạng thái. Không gửi tên tệp, tên cột, khóa dòng hoặc nội dung ô. Thống
+            kê được liên kết với tài khoản của bạn và có thể được quản trị viên xem ở dạng tổng hợp và nhật ký vận hành.
+        </p>
+        <p>Bạn có thể xuất hoặc xóa từng thống kê, hay xóa toàn bộ lịch sử từ trang Lịch sử. Mặc định thống kê và nhật
+            ký thao tác được tự động xóa sau 30 ngày; thời hạn thực tế của máy chủ được hiển thị trên trang Lịch sử. Dữ
+            liệu xóa có thể còn trong bản sao lưu do đơn vị vận hành quản lý cho đến khi bản sao đó hết hạn.</p>
+        <h2>Nhật ký và hạ tầng</h2>
+        <p>Nhật ký ứng dụng ghi mã lỗi và mã yêu cầu, không ghi mật khẩu hay nội dung request. Hệ thống sử dụng địa chỉ
+            IP trong bộ nhớ để giới hạn tần suất yêu cầu; reverse proxy hoặc đơn vị hosting có thể có access log riêng.
+            Đơn vị vận hành cần cấu hình thời hạn lưu và thông tin liên hệ tương ứng trước khi công bố dịch vụ.</p>
+        <h2>Giới hạn cam kết</h2>
+        <p>SHA256 trong lịch sử dùng kiểm tra tính nhất quán của metadata đã lưu, không chứng minh nội dung tệp hay tính
+            chính xác độc lập của thống kê do trình duyệt gửi. Phiên bản này không tuyên bố chứng nhận ISO, SOC2 hay cam
+            kết tuân thủ pháp lý đã được thẩm định.</p><a class="btn btn-outline" href="/#/history">Quản lý lịch sử của
+            tôi</a>
+    </main>
+</body>
+
+</html>

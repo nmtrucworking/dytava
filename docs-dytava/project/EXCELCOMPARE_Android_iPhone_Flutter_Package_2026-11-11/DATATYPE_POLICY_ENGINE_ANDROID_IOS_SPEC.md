@@ -1,3 +1,5 @@
+> **Mở rộng scope 12/11/2026:** [EXP-ADR-001..003](../../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) chốt **1 GB/source**, **merged diff PDF** và **PDF template Dytava**. [Report spec](../../specs/report/README.md) và [NFR](../../requirements/NFR.md) sở hữu chi tiết hiện hành. Các trần nhỏ/loại trừ PDF output trong baseline dưới đây chỉ là lịch sử; PDF input giữ pha riêng. Không đổi Core semantic invariants, không chứng minh implementation đã đạt.
+
 # ExcelCompare — DataType, Semantic Normalization & Policy Engine (Flutter/Dart)
 
 > Ranh giới sau khi tách Input: physical types/provenance/raw lexical thuộc [Input 0.1.0 DRAFT](../../specs/input/README.md); tài liệu này giữ canonicalization, policy compiler, key matching và comparison. Ví dụ policy v2 chuẩn: [project policy](../comparison_policy.v2.example.json). Dart PoC hiện tại chưa triển khai đầy đủ wire contract này.

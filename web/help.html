@@ -1,1 +1,54 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Hướng dẫn — Dytava</title><link rel="stylesheet" href="css/fonts.css"><link rel="stylesheet" href="css/brand-tokens.css"><link rel="stylesheet" href="css/style.css"><link rel="icon" href="assets/dytava/brand/svg/dytava-symbol.svg"></head><body><main class="content-page"><a href="/">← Về Dytava</a><img class="document-illustration" src="assets/dytava/illustrations/svg/square/education-guide.svg" width="160" height="160" alt="" aria-hidden="true" loading="lazy"><h1>So sánh bảng tính bằng Dytava</h1><ol><li>Chọn hai tệp XLSX, CSV, TSV, TXT hoặc JSON. Với XLSX, chọn sheet cần so sánh nếu có nhiều sheet.</li><li>Chọn một cột khóa có giá trị duy nhất ở cả hai tệp để ghép dòng, hoặc chọn căn chỉnh theo thứ tự dòng. Nếu khóa trùng hoặc trống, công cụ yêu cầu bạn đổi cách căn chỉnh để tránh mất bản ghi.</li><li>Chọn policy được công bố hoặc tùy chỉnh dung sai, khoảng trắng, số 0 đầu mã và phân biệt hoa/thường.</li><li>Đọc số liệu và lọc trạng thái; bấm vào một ô để xem giá trị gốc, chuẩn hóa và quy tắc giải thích.</li><li>Xuất báo cáo chi tiết về thiết bị. Nếu muốn, đăng nhập và chủ động lưu thống kê tổng hợp vào lịch sử.</li></ol><h2>Định dạng & giới hạn</h2><p>Tối đa 10 MB mỗi tệp, 20.000 dòng, 200 cột và 200.000 ô mỗi sheet/bảng. Tiêu đề nằm ở dòng đầu, không trùng và không trống. CSV hỗ trợ dấu phẩy, chấm phẩy, tab, dấu ngoặc kép và ô nhiều dòng. JSON hỗ trợ mảng các object phẳng hoặc object chứa hai mảng headers và rows.</p><p>XLSX chỉ đọc các sheet hiển thị, giá trị và kết quả công thức đã lưu trong file; không tính lại công thức hoặc chạy macro. Không hỗ trợ XLS, XLSM, OCR, tệp mã hóa hoặc workbook quá lớn. Các mã định danh nên được lưu dưới dạng text để bảo toàn chính xác số 0 và số dài.</p><h2>Ý nghĩa kết quả</h2><ul><li>EXACT: chuỗi giá trị giống hệt nhau.</li><li>EQUIVALENT: khác biểu diễn nhưng tương đương theo policy.</li><li>DIFFERENT: khác giá trị hoặc cột chỉ có ở một nguồn.</li><li>UNRESOLVED: định dạng mơ hồ cần kiểm tra thủ công.</li></ul><p>Engine dùng quy tắc suy luận, không thay thế kiểm toán chuyên môn. Ngày/giờ phức tạp, tiền tệ nhiều locale và số có độ chính xác vượt Number của JavaScript cần được xác minh riêng. Báo cáo CSV trung hòa ký tự bắt đầu công thức để giảm rủi ro khi mở trong Excel.</p><h2>Lịch sử & quản trị</h2><p>Lịch sử chỉ lưu thống kê, không thể mở lại nội dung bảng tính từ máy chủ. Trang quản trị yêu cầu tài khoản admin do đơn vị vận hành tạo. Policy, feature flags và thông tin bản phát hành được lưu trong database; chỉ các bản được admin công bố mới xuất hiện ở mục tải xuống.</p><p><a href="privacy.html">Đọc chính sách quyền riêng tư</a></p></main></body></html>
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hướng dẫn — Dytava</title>
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/brand-tokens.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="assets/dytava/brand/svg/dytava-symbol.svg">
+</head>
+
+<body>
+    <main class="content-page"><a href="/">← Về Dytava</a><img class="document-illustration"
+            src="assets/dytava/illustrations/svg/square/education-guide.svg" width="160" height="160" alt=""
+            aria-hidden="true" loading="lazy">
+        <h1>So sánh bảng tính bằng Dytava</h1>
+        <ol>
+            <li>Chọn hai tệp XLSX, CSV, TSV, TXT hoặc JSON. Với XLSX, chọn sheet cần so sánh nếu có nhiều sheet.</li>
+            <li>Chọn một cột khóa có giá trị duy nhất ở cả hai tệp để ghép dòng, hoặc chọn căn chỉnh theo thứ tự dòng.
+                Nếu khóa trùng hoặc trống, công cụ yêu cầu bạn đổi cách căn chỉnh để tránh mất bản ghi.</li>
+            <li>Chọn policy được công bố hoặc tùy chỉnh dung sai, khoảng trắng, số 0 đầu mã và phân biệt hoa/thường.
+            </li>
+            <li>Đọc số liệu và lọc trạng thái; bấm vào một ô để xem giá trị gốc, chuẩn hóa và quy tắc giải thích.</li>
+            <li>Xuất báo cáo chi tiết về thiết bị. Nếu muốn, đăng nhập và chủ động lưu thống kê tổng hợp vào lịch sử.
+            </li>
+        </ol>
+        <h2>Định dạng & giới hạn</h2>
+        <p>Tối đa 10 MB mỗi tệp, 20.000 dòng, 200 cột và 200.000 ô mỗi sheet/bảng. Tiêu đề nằm ở dòng đầu, không trùng
+            và không trống. CSV hỗ trợ dấu phẩy, chấm phẩy, tab, dấu ngoặc kép và ô nhiều dòng. JSON hỗ trợ mảng các
+            object phẳng hoặc object chứa hai mảng headers và rows.</p>
+        <p>XLSX chỉ đọc các sheet hiển thị, giá trị và kết quả công thức đã lưu trong file; không tính lại công thức
+            hoặc chạy macro. Không hỗ trợ XLS, XLSM, OCR, tệp mã hóa hoặc workbook quá lớn. Các mã định danh nên được
+            lưu dưới dạng text để bảo toàn chính xác số 0 và số dài.</p>
+        <h2>Ý nghĩa kết quả</h2>
+        <ul>
+            <li>EXACT: chuỗi giá trị giống hệt nhau.</li>
+            <li>EQUIVALENT: khác biểu diễn nhưng tương đương theo policy.</li>
+            <li>DIFFERENT: khác giá trị hoặc cột chỉ có ở một nguồn.</li>
+            <li>UNRESOLVED: định dạng mơ hồ cần kiểm tra thủ công.</li>
+        </ul>
+        <p>Engine dùng quy tắc suy luận, không thay thế kiểm toán chuyên môn. Ngày/giờ phức tạp, tiền tệ nhiều locale và
+            số có độ chính xác vượt Number của JavaScript cần được xác minh riêng. Báo cáo CSV trung hòa ký tự bắt đầu
+            công thức để giảm rủi ro khi mở trong Excel.</p>
+        <h2>Lịch sử & quản trị</h2>
+        <p>Lịch sử chỉ lưu thống kê, không thể mở lại nội dung bảng tính từ máy chủ. Trang quản trị yêu cầu tài khoản
+            admin do đơn vị vận hành tạo. Policy, feature flags và thông tin bản phát hành được lưu trong database; chỉ
+            các bản được admin công bố mới xuất hiện ở mục tải xuống.</p>
+        <p><a href="privacy.html">Đọc chính sách quyền riêng tư</a></p>
+    </main>
+</body>
+
+</html>

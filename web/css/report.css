@@ -1,0 +1,108 @@
+:root { --report-ink:#142253; --report-muted:#64748B; --report-line:var(--brand-border,#E5E7EB); --report-blue:var(--brand-primary,#2563EB); --report-purple:var(--brand-purple,#8B5CF6); }
+* { box-sizing:border-box; }
+body { margin:0; color:var(--report-ink); background:#F3F4F6; font-family:'Be Vietnam Pro',sans-serif; font-size:10pt; line-height:1.65; }
+h1,h2,h3,h4 { font-family:'Plus Jakarta Sans','Be Vietnam Pro',sans-serif; margin:0; line-height:1.35; }
+p { margin:0 0 10px; }
+img { max-width:100%; }
+.dytava-report { background:white; max-width:210mm; margin:24px auto; padding:18mm 16mm; }
+.report-cover { min-height:247mm; display:flex; flex-direction:column; border-top:5px solid var(--report-blue); padding-top:22px; }
+.cover-top,.cover-bottom { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.report-logo { width:135px; height:44px; object-fit:contain; }
+.report-edition { font-size:8pt; letter-spacing:1.4px; color:var(--report-muted); }
+.cover-title { margin-top:55px; }
+.eyebrow { color:var(--report-blue); font-size:8pt; letter-spacing:1.5px; font-weight:700; margin:0 0 12px; }
+h1 { font-size:37pt; letter-spacing:-1.6px; font-weight:800; }
+h1 span { color:var(--report-purple); }
+.cover-description { margin-top:16px; font-size:12pt; color:var(--report-muted); }
+.cover-art { margin:20px 0; border-radius:20px; background:linear-gradient(130deg,#EFF6FF,#F5F3FF); height:200px; overflow:hidden; }
+.cover-art img { display:block; width:100%; height:100%; object-fit:contain; }
+.cover-sources { display:flex; align-items:center; gap:16px; padding:18px 0; border-top:1px solid var(--report-line); border-bottom:1px solid var(--report-line); }
+.cover-sources>div:not(.source-arrow) { flex:1; min-width:0; }
+.cover-sources span,.cover-sources strong,.cover-sources small { display:block; overflow-wrap:anywhere; }
+.cover-sources span { font-size:8pt; letter-spacing:1px; color:var(--report-muted); }
+.cover-sources strong { margin:6px 0; font-size:12pt; }
+.cover-sources small { color:var(--report-blue); }
+.source-arrow { font-family:'IBM Plex Mono',monospace; font-size:9pt; color:var(--report-purple); }
+.cover-bottom { margin-top:auto; padding-top:24px; align-items:flex-end; }
+.cover-bottom dl { margin:0; max-width:75%; }
+.cover-seal { color:var(--report-blue); background:#EFF6FF; border-radius:8px; padding:6px 10px; font-size:8pt; }
+.report-disclosure { font-size:8pt; color:var(--report-muted); margin-top:18px; }
+.report-section { margin-top:28px; }
+.report-section h2 { font-size:22pt; letter-spacing:-.5px; margin-bottom:18px; }
+.report-section h3 { font-size:11pt; margin-bottom:10px; }
+.source-cards { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.source-card { min-width:0; padding:16px; border:1px solid var(--report-line); border-radius:12px; }
+.source-card h3 small { float:right; color:var(--report-blue); font-family:'IBM Plex Mono',monospace; font-size:8pt; }
+dl { margin:0; }
+.report-field { margin:0 0 10px; min-width:0; }
+dt { font-size:8pt; color:var(--report-muted); }
+dd { margin:3px 0 0; overflow-wrap:anywhere; white-space:pre-wrap; }
+.mono { font-family:'IBM Plex Mono','Be Vietnam Pro',monospace; font-size:8pt; overflow-wrap:anywhere; }
+.scope-note,.section-description { color:var(--report-muted); font-size:9pt; margin:12px 0; }
+.report-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.metric { border:1px solid var(--report-line); border-radius:12px; padding:12px 9px; }
+.metric img { width:26px; height:26px; display:block; }
+.metric strong { display:block; font-family:'IBM Plex Mono',monospace; font-size:23pt; margin:8px 0; color:var(--report-ink); }
+.metric span { display:block; font-size:8pt; font-weight:700; }
+.metric small { display:block; color:var(--report-muted); font-size:7pt; }
+.status-exact { --accent:#10B981; background:#ECFDF5; color:#065F46; }
+.status-equivalent { --accent:#2563EB; background:#EFF6FF; color:#1D4ED8; }
+.status-different,.status-removed { --accent:#EF4444; background:#FEF2F2; color:#991B1B; }
+.status-unresolved { --accent:#F59E0B; background:#FFFBEB; color:#92400E; }
+.status-added { --accent:#10B981; background:#ECFDF5; color:#065F46; }
+.metric { border-top:3px solid var(--accent); }
+.report-rates { display:flex; justify-content:space-between; border-bottom:1px solid var(--report-line); padding:18px 0; gap:12px; }
+.report-rates span { display:block; font-size:8pt; color:var(--report-muted); }
+.report-rates strong { display:block; font-family:'IBM Plex Mono',monospace; font-size:14pt; }
+.structural-counts,.method-grid,.audit-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; }
+.policy-list { border-block:1px solid var(--report-line); margin:14px 0; }
+.policy-list>div { display:flex; justify-content:space-between; gap:15px; padding:8px 0; border-bottom:1px solid #F3F4F6; font-size:9pt; overflow-wrap:anywhere; }
+.mapping-list { padding-left:20px; columns:2; font-size:9pt; }
+.report-detail { border-block:1px solid var(--report-line); margin:16px 0; padding:14px 0; }
+.detail-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.report-badge { display:inline-flex; align-items:center; gap:6px; border-radius:6px; padding:4px 8px; font-size:8pt; font-weight:600; }
+.report-badge img { width:18px; height:18px; }
+.detail-kind { font-size:8pt; color:var(--report-muted); }
+.detail-key { font-family:'IBM Plex Mono',monospace; font-size:9pt; font-weight:400; overflow-wrap:anywhere; }
+.value-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.report-value { min-width:0; background:#F8FAFC; border-left:2px solid var(--report-line); padding:10px 12px; }
+.report-value h4 { font-size:8pt; color:var(--report-muted); margin-bottom:6px; }
+pre { margin:0; font-family:'IBM Plex Mono','Be Vietnam Pro',monospace; font-size:9pt; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.7; }
+.source-ref,.canonical,.detail-rule { margin:8px 0 0; color:var(--report-muted); font-size:8pt; overflow-wrap:anywhere; }
+.detail-reason { font-size:9pt; margin:8px 0 0; overflow-wrap:anywhere; }
+.warning-panel { background:#FFFBEB; border-left:3px solid #F59E0B; padding:16px 18px; }
+.warning-panel strong { color:#92400E; }
+.warning-panel ul { padding-left:18px; margin:10px 0 0; }
+.warning-panel li { margin-bottom:8px; overflow-wrap:anywhere; }
+.conclusion-text { font-size:12pt; }
+.report-legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
+.report-toolbar { position:sticky; top:0; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 24px; background:#142253; color:white; z-index:10; }
+.report-toolbar button { background:#8B5CF6; color:white; border:0; border-radius:8px; padding:10px 18px; font:inherit; cursor:pointer; }
+.report-toolbar button:disabled { opacity:.5; }
+.report-feedback { padding:20px; text-align:center; }
+.report-empty { border:1px dashed var(--report-line); padding:16px; }
+@page { size:A4 portrait; margin:16mm 15mm 19mm; }
+@media print {
+  body { background:white; }
+  .dytava-report { max-width:none; padding:0; margin:0; }
+  .report-toolbar,.report-feedback { display:none; }
+  .report-cover { break-after:page; min-height:251mm; }
+  .chapter { break-before:page; }
+  .report-section { margin-top:0; padding-top:10px; margin-bottom:24px; }
+  h2,h3,h4,.eyebrow,.detail-heading { break-after:avoid-page; }
+  .source-card,.report-metrics,.report-rates,.report-field,.cover-sources { break-inside:avoid-page; }
+  .report-detail { break-inside:avoid-page; }
+  .report-detail.long-detail { break-inside:auto; }
+  .detail-rule,.detail-reason { break-before:avoid-page; }
+  .long-detail .value-grid { display:block; }
+  .report-value { margin-bottom:8px; }
+  p,li { orphans:3; widows:3; }
+  * { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+}
+@media screen and (max-width:700px) {
+ .dytava-report { margin:0; padding:20px; }
+ h1 { font-size:30pt; }
+ .report-metrics { grid-template-columns:repeat(2,1fr); }
+ .source-cards,.value-grid,.method-grid,.audit-grid { grid-template-columns:1fr; }
+ .report-toolbar { padding:10px; font-size:9pt; }
+}

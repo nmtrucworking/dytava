@@ -1,5 +1,7 @@
 # Dytava / ExcelCompare — chỉ mục tài liệu
 
+> **Scope mở rộng 12/11/2026:** [EXP-ADR-001..003](decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) đưa **input tối đa 1 GB/source** và **hai PDF output** (diff hợp nhất A/B; báo cáo template Dytava) vào P0 mở rộng. Thay trần conservative 10 MiB và loại trừ PDF output trước đây; PDF input giữ pha riêng. Đây là yêu cầu thiết kế, chưa là capability runtime đã nghiệm thu.
+
 > **Engineering scope baseline 11/11/2026:** [9 ADR được chốt](decisions/ADR_REGISTER_P0_2026-11-11.md) điều chỉnh Android P0 thành XLSX/CSV/TSV + OCR một nguồn ảnh PNG/JPEG có review. JSON/iOS chuyển P1. Đây là quyết định thiết kế, chưa phải evidence ứng dụng đã đạt P0.
 
 Baseline nền tảng là **Flutter/Dart, Android P0 → iOS P1**; ưu tiên tính năng P0 đã được cập nhật bằng ADR register ngày 11/11/2026, ghi đè những phần roadmap Master 2.2 không còn phù hợp. Repository có Web/server riêng và Pure Dart core PoC; phạm vi thiết kế không là danh sách tính năng đã đạt kiểm thử.
@@ -9,11 +11,15 @@ Baseline nền tảng là **Flutter/Dart, Android P0 → iOS P1**; ưu tiên tí
 | Tài liệu / tài nguyên | Vai trò hiện hành |
 | --- | --- |
 | [Document Control](governance/DOCUMENT_CONTROL.md) | Nguồn sở hữu, trạng thái, thứ tự xử lý xung đột, change control |
-| [PRD](product/PRD.md) | Persona, outcome, phạm vi pha, US-01..12 và hành trình |
-| [SRS](requirements/SRS.md) | FR-001..015, preconditions, expected system behavior |
+| [PRD](product/PRD.md) | Persona, outcome, phạm vi pha, US-01..15 và hành trình |
+| [SRS](requirements/SRS.md) | FR-001..018, preconditions, expected system behavior |
 | [NFR](requirements/NFR.md) | Quality goals, bảo mật, giới hạn bootstrap, cách đo và release gates |
 | [Architecture](architecture/ARCHITECTURE.md) | Kiến trúc mục tiêu, module, ports và actual-vs-target gap |
 | [Requirement Traceability](requirements/TRACEABILITY_MATRIX.md) | Quan hệ US–FR–INP/Core–Test–Evidence (chưa verified) |
+| [Scope expansion 12/11](decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) | Precedence cho 1 GB/source và hai PDF; baseline implementation chưa đạt |
+| [Report Export Specification](specs/report/README.md) | Merged diff PDF, template Dytava 1.0.0, output manifest/lifecycle và REP-TC-* |
+| [Template renderer Web/CLI](specs/report/RENDERER.md) | Template Dytava 1.0.0, report schema, mẫu PDF và phạm vi implementation hiện tại |
+| [Expanded-scope acceptance](testing/EXPANDED_SCOPE_ACCEPTANCE.md) | LARGE-TC-*, corpus 1 GB, memory/disk/EOF và PDF evidence gates |
 | [Project Description](project/Project%20Description.md) | Đề bài, phạm vi giao học phần và baseline nền tảng; giữ rõ yêu cầu đọc ảnh |
 | [ADR register P0](decisions/ADR_REGISTER_P0_2026-11-11.md) | 9 quyết định A/B, OCR, scope, budgets, header, identifier, XLSX, confirmation và retention |
 | [Input index](specs/input/README.md) | Nguồn biên soạn Input; hướng dẫn ưu tiên/versioning/glossary/ADR |

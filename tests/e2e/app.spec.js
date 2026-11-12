@@ -118,3 +118,21 @@ test('approved branding assets load in light/dark themes and narrow layouts', as
   await page.goto('/#/admin/overview');
   await expect(page.locator('#view-access img')).toHaveAttribute('src', /\/status-no-permission\.svg$/);
 });
+
+test('Dytava report preview stays local, renders branding and discloses legacy metadata', async ({ page }) => {
+  const writes = [];
+  page.on('request', req => { if (req.method() === 'POST') writes.push(req.url()); });
+  const opened = page.waitForEvent('popup');
+  await page.locator('#btn-export-pdf').click();
+  const preview = await opened;
+  await expect(preview.locator('#report-print')).toBeEnabled();
+  await expect(preview.locator('.report-cover h1')).toContainText('đối chiếu dữ liệu');
+  await expect(preview.locator('.cover-seal')).toHaveText('Metadata chưa đầy đủ');
+  await expect(preview.locator('[data-section]')).toHaveCount(8);
+  expect(await preview.locator('img').evaluateAll(images => images.every(img => img.complete && img.naturalWidth > 0))).toBe(true);
+  expect(await preview.locator('script:not([src])').count()).toBe(0);
+  await preview.setViewportSize({ width: 390, height: 844 });
+  expect(await preview.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  expect(writes).toHaveLength(0);
+  await preview.close();
+});

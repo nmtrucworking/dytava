@@ -1,11 +1,11 @@
 ---
 document_id: DYT-ARCH-001
-version: 0.1.0
+version: 0.2.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
 updated: 2026-11-12
-release_baseline: Android P0
+release_baseline: P0 mở rộng (Android trước; web/iOS có gate riêng)
 source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 06-08 and 12 (historical)
 ---
 
@@ -15,9 +15,9 @@ source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 06-08 and 12 (historical)
 
 ## 1. Context, architecture drivers và release
 
-**Use case:** đọc hai nguồn A/B (XLSX/CSV/TSV hoặc tối đa một ảnh PNG/JPEG), bảo toàn bằng chứng, người dùng xác nhận schema/semantic, đối chiếu với Core Pure Dart rồi export CSV/JSON trên Android không cần Internet. External cloud/database không tham gia P0. iOS P1; Web/server trong monorepo là **implementation độc lập**, không phải evidence Flutter.
+**Use case:** đọc hai nguồn A/B (XLSX/CSV/TSV hoặc tối đa một ảnh PNG/JPEG), bảo toàn bằng chứng, người dùng xác nhận schema/semantic, đối chiếu với Core Pure Dart rồi export CSV/JSON, merged diff PDF và PDF template Dytava không cần Internet; input tới 1 GB/source theo [scope mở rộng](../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md). External cloud/database không tham gia P0. iOS P1; Web/server trong monorepo là **implementation độc lập**, không phải evidence Flutter.
 
-Architecture drivers: (a) source untrusted/read-only; (b) provenance + deterministic policy; (c) offline-first privacy; (d) memory-bounded Android; (e) OCR geometry + manual review; (f) platform-specific permission and lifecycle; (g) testability không phụ thuộc UI. NFR kiểm chứng tại [NFR](../requirements/NFR.md).
+Architecture drivers: (a) source untrusted/read-only; (b) provenance + deterministic policy; (c) offline-first privacy; (d) memory-bounded Android; (e) OCR geometry + manual review; (f) platform-specific permission and lifecycle; (g) testability không phụ thuộc UI; (h) streaming/private disk spill cho 1 GB; (i) exporter/template PDF tách khỏi Core. NFR kiểm chứng tại [NFR](../requirements/NFR.md).
 
 ## 2. Logical decomposition / dependency direction
 
@@ -33,7 +33,8 @@ flowchart TB
   T --> DP
   DP --> R["Comparison results / audit reasons"]
   R --> E
-  A --> X["Private scratch & settings (no raw persistence)"]
+  A --> X["Session-private scratch / disk indexes / bounded caches"]
+  E --> P["PDF page and band renderer / Dytava template registry"]
 ```
 
 **Dependency rule:** Presentation → Application → Domain abstractions; Infrastructure implements domain/application ports, domain **không import** `flutter`, `material.dart`, `dart:ui`, Android/iOS SDK, OCR SDK, database drivers, file pickers. Input/OCR **không được tự canonicalize semantic**; comparator không nắm Android URI. Policy digest/version thuộc Core; raw file metadata + SourceRef thuộc Input.
@@ -47,11 +48,12 @@ flowchart TB
 | Flutter Presentation | Architecture + PRD UX | User selections, review actions | UI state, **không** chứa business compare |
 | Application/job coordinator | SAD + SRS | Source slots, revisions, confirmation receipts | Side import jobs, comparison job, cancellation |
 | FileAccessPort | Input INP-002 | User-scoped SAF handles | Byte stream read-only, grants/access metadata |
-| Preflight/FormatAdapter | Input INP-003/007 | File bytes + ImportConfig | SourceTable immutable, losses/capabilities, structured errors |
+| Preflight/FormatAdapter | Input INP-003/007 | File bytes + ImportConfig | Immutable table descriptors + repeatable bounded row streams/private indexes, losses/capabilities, structured errors |
 | OCR Adapter + Review | Input INP-010/ADR-002 | Bounded image, OCR recognizer, corrections | Geometry-backed `ocrText` cells, review receipts |
 | Comparison Core | Core spec | Two validated snapshots + ComparisonConfig/policy | Canonical values, matched pairs, 4-state decisions, trace |
-| Report exporter | SRS FR-013/NFR-SEC-03 | Comparison results + manifest | CSV diff + JSON report, safe output, no source writes |
-| Private scratch/recovery | ADR-009/Input INP-008 | Non-seekable reads, attempt journal | Session-scoped temp only, reset/revalidate after restart |
+| Report exporter | SRS FR-013/NFR-SEC-03 | Comparison results + manifest | CSV/JSON + merged diff PDF + Dytava template PDF; safe output, no source writes |
+| PDF renderer / template registry | Report spec + FR-017/018 | Result streams, export scope, page setup, template version, local fonts/assets | One paginated PDF per kind, counts/refs preserved; no semantic recomputation |
+| Private scratch/recovery | ADR-009/Input INP-008 | Non-seekable reads, parsed chunks, key indexes, PDF temp, attempt journal | Private scoped spill; retain until consumers finish, cleanup/reset after restart |
 
 **Adapter capability** (`FULL_SEMANTIC`, `TABULAR_VALUES_ONLY`, `OCR_REVIEW_REQUIRED`, `UNSUPPORTED`) là claim *có version/fixture evidence*, không suy theo file icon. Khi không đủ raw metadata, adapter phải ghi losses và chặn semantic mode tương ứng; không fabricate Excel address cho OCR/CSV.
 
@@ -73,9 +75,10 @@ sequenceDiagram
     User->>UI: Confirm mapping, KEY/POSITIONAL, policy, direction
     UI->>Core: Compare snapshots with confirmed policy digest
     Core-->>UI: Diff statuses, reason traces, source refs
-    User->>UI: Export CSV or JSON
+    User->>UI: Export CSV / JSON / merged diff PDF / Dytava report PDF
     UI->>Exp: Build safe report with manifest
-    Exp-->>User: New exported artifact
+    Exp->>Exp: Stream pages/bands to private temp and verify output
+    Exp-->>User: Commit complete artifact to chosen destination
 ```
 
 **Guards**:
@@ -116,6 +119,7 @@ Do not upload image or EXIF implicitly. Text recognition does **not** restore so
 | `mobile/android/` | Android project skeleton | Signed Android release, SAF integration/device tests |
 | `mobile/ios/` | Chưa có trong snapshot được kiểm tra | iOS P1 scaffold & signing |
 | `web/`, `server/` | Separate web/backend implementation | Không dùng để chứng nhận Android |
+| `web/js/report/`, `scripts/render-report.js` | Template Dytava 1.0.0: Web local preview + CLI Chromium PDF, schema/guards, fixture nhỏ | Flutter renderer, merged diff PDF, streaming report/result lớn và device lifecycle gates |
 | `docs-dytava/specs/input/` | Schemas + fixtures + contract verifier, DRAFT | Image migration + adapters + runtime validation |
 
 **Target module layout (không phải danh sách thư mục đang tồn tại):**
@@ -126,6 +130,7 @@ mobile/lib/
   features/{import,ocr,mapping,policy,compare,results,export}/
   application/{use_cases,jobs}/  # cancellation, revisions, orchestration
   infrastructure/{file_access,adapters,ocr,export,scratch}/
+  infrastructure/export/{pdf_renderer,templates,font_assets}/
   design_system/                 # existing
 packages/excelcompare_core/lib/src/
   model/ policy/ normalization/ alignment/ compare/ report_contract/
@@ -135,17 +140,29 @@ packages/excelcompare_core/lib/src/
 
 ## 7. Resource, security, storage và deployment
 
-- Android resource ceilings theo [ADR-004](../decisions/ADR_REGISTER_P0_2026-11-11.md): 10MiB/source, 64MiB XLSX decompressed, 2k ZIP entries, 100:1 ratio, 20k rows, 100 cols, 500k cells, 12MP image, 60s attempt watchdog. **Bootstrap rejection guards, chưa benchmark/không là SLO**.
+- Input tới 1 GB/source theo [NFR §3](../requirements/NFR.md#3-resource-profiles-và-trần-input-1-gb), profile `large-input-v1`; các trần nhỏ ADR-004 giữ là lịch sử. Resource values chỉ định nghĩa ở NFR, không nhân bản tại SAD.
 - InputAdapter không chạy macro/formula, không fetch XML external entities/links; camera/gallery/SAF user action; no broad storage permission.
-- Scratch app-private chỉ trong session/attempt, delete success/fail/cancel/close và startup sweep; no default raw cache; no claim encrypted storage nếu chưa implement.
-- Output: JSON report và CSV diff mới; sanitized/typed strings chống formula injection; no source overwrite; user's explicit export action.
+- Scratch app-private gồm source copies khi cần, parsed chunks, external-sort runs/key indexes và PDF temp. Chỉ giữ khi active consumers cần; release/cleanup success/fail/cancel/close và startup sweep, không raw retention dài hạn. Không xóa result streams ngay sau compare khi UI/export còn dùng; không claim encrypted storage nếu chưa implement.
+- Output: CSV/JSON và hai PDF theo [Report spec](../specs/report/README.md); output mới, local fonts/assets, không active content/source overwrite; user export explicit, scope/counts/lineage đầy đủ.
 - Build/release: Flutter analyze/test + Dart core tests + contract verification + Android plugin/device/benchmark + signed APK smoke; CI build không thay thế device evidence. [Release guide](../project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/ANDROID_IOS_BUILD_RELEASE_GUIDE.md) sở hữu ký và phát hành.
+
+### 7.1. Large-input execution path
+
+`FileAccessPort` phải có bounded byte stream/hash/count và capability seek/reopen. Preflight dự toán resource/quota cho **hai nguồn + extraction + parsed indexes + output**; không lấy RAM thiết bị làm file-size cap. Parser giữ token/UTF-8/multiline và EOF correctness qua chunk boundaries. Non-streaming XLSX package phải qua memory PoC hoặc thay adapter strategy trước khi enable 1 GB; không materialize workbook/2 bảng/2 copies JSON vào heap.
+
+Validated snapshot dùng descriptor + deterministic row cursor/index store. KEY matching dùng disk-backed index/external sort có duplicate/null detection toàn scope; POSITIONAL zip hai row streams có ordinal/provenance ổn định. Result store giữ counts và diff chunks cho UI phân trang/export, backpressure giữa stages và cancellation tokens theo attempt. Web dùng Worker + platform storage/quota strategy được kiểm thử riêng; Android app-private scratch; iOS sandbox có gate riêng. Không tự chuyển cloud khi quota thấp.
+
+### 7.2. PDF rendering boundary
+
+Exporter nhận immutable result ID/cursor, scope/filter và template/layout version, sinh page/band liên tiếp. Template registry chứa Dytava report 1.0.0; merged diff renderer bố trí union table với raw A/B và status labels. Renderer không tính matching/normalization. Local typography/assets từ branding; fonts/cache và output buffers có bounds. PDF manifest/hash hoàn tất sau flush/close, atomic/pending publish tùy provider; lỗi không được publish artifact dở. **Không chọn thư viện PDF mới là dependency đã có** trước khi compatibility/memory/font PoC.
 
 ## 8. Risks, verification và change triggers
 
 | Risk / trade-off | Mitigation & gate |
 | --- | --- |
 | XLSX parser mất raw token hoặc load whole workbook OOM | Adapter capability/loss + fidelity corpus + device profiling |
+| 1 GB pipeline hoặc PDF tạo danh sách/toàn trang trong RAM | Stage budgets/backpressure, private spill/external matching, streaming PDF PoC + LARGE/REP tests |
+| Disk/quota cạn, provider không atomic, PDF quá nhiều trang | Preflight headroom + runtime checks, commit/cleanup protocol, explicit filtered retry |
 | OCR nhầm bảng/chữ/nhận layout không đúng | One-table scope, manual grid edits, review receipts, critical-field oracle |
 | Suy key sai hoặc numeric identifier mất zeros | User confirmation; UNRESOLVED; no fabricated evidence |
 | Stale snapshot sau revoke/crop/policy đổi | Attempt ID/revision/hash guards; invalidate dependent artifacts |

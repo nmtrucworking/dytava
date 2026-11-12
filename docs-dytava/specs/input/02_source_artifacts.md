@@ -3,11 +3,11 @@
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
 Document ID: INP-002\
-Version: 0.1.0\
+Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 11/11/2026
+Updated: 12/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -141,6 +141,8 @@ Nếu cần bản sao tạm để xử lý, hệ thống phải kiểm soát nơ
 ## 5. Input / Output Contract
 
 [Artifact schema](schemas/input_artifact.schema.json) là wire shape chuẩn. Manifest session có đúng hai artifact side A/B và artifact_id khác nhau; manifest envelope được kiểm tra bằng validator ứng dụng. `format` là định dạng đã phát hiện, không phải extension. selected_scope là danh sách scope có discriminator kind như INP-004; khả năng biểu diễn nhiều scope không chốt cardinality sản phẩm.
+
+Source size tối đa theo [NFR §3](../../requirements/NFR.md#3-resource-profiles-và-trần-input-1-gb): 1 GB/source; metadata size unknown không phải unlimited. Hash/count theo bounded stream đến EOF, source bytes và decompressed bytes là hai counters độc lập; hai nguồn có budgets tổng RAM/scratch riêng. Profile nhỏ fixture không là cap sản phẩm.
 
 InputSnapshot phải hash đúng bytes adapter đọc. Chỉ được reuse snapshot nếu artifact hash/config revision/parser version còn khớp; không hash một lượt rồi parse bytes đã thay ở lượt khác. Report public bỏ access_ref/token. SourceRef chỉ trỏ artifact_id và vị trí trong nguồn.
 

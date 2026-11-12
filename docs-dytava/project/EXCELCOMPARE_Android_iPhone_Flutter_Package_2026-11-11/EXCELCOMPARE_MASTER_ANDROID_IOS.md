@@ -1,3 +1,5 @@
+> **Mở rộng scope 12/11/2026:** [EXP-ADR-001..003](../../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) chốt **1 GB/source**, **merged diff PDF** và **PDF template Dytava**. [Report spec](../../specs/report/README.md) và [NFR](../../requirements/NFR.md) sở hữu chi tiết hiện hành. Các trần nhỏ/loại trừ PDF output trong baseline dưới đây chỉ là lịch sử; PDF input giữ pha riêng. Không đổi Core semantic invariants, không chứng minh implementation đã đạt.
+
 <!-- ExcelCompare Flutter/Dart master; content updated for Android P0 + iOS P1 -->
 
 > **Scope override 11/11/2026:** [ADR REGISTER P0](../../decisions/ADR_REGISTER_P0_2026-11-11.md) đã chốt 9 quyết định: OCR ảnh một nguồn + manual review lên Android P0; P0 XLSX/CSV/TSV, JSON chuyển P1. Các dòng OCR P2/ADR OPEN trong Master 2.2 là lịch sử, không còn là phạm vi phát hành hiện hành. Contract và Flutter tests chưa đạt gate.

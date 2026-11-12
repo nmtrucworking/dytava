@@ -3,11 +3,11 @@
 > **Quyết định scope ngày 11/11/2026:** [9 ADR](../../decisions/ADR_REGISTER_P0_2026-11-11.md) chốt P0 Android là XLSX/CSV/TSV + PNG/JPEG với manual OCR review (tối đa một nguồn ảnh); JSON chuyển P1. Các adapter vẫn CHƯA được chứng minh triển khai. Schema ImportConfig 0.1.0 chưa thể ingest ảnh P0, phải version-migrate trước khi bật.
 
 Document ID: INP-003\
-Version: 0.1.0\
+Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 11/11/2026
+Updated: 12/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -63,7 +63,7 @@ Các adapter P1 cần được kiểm chứng riêng trên thiết bị mục ti
 |HTML Table|`.html`, `.htm`|
 |Excel Binary Workbook|`.xlsb`|
 
-PDF và hình ảnh không cung cấp cùng mức thông tin cấu trúc như tệp bảng tính gốc.
+**PDF ở đây là input format**, chưa thuộc P0. [Scope mở rộng](../../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) đã cho phép **PDF output** (merged diff + Dytava report) tại [Report spec](../report/README.md), không đồng nghĩa adapter đọc PDF. PDF và hình ảnh không cung cấp cùng mức thông tin cấu trúc như tệp bảng tính gốc.
 
 ### Ngoài phạm vi mặc định
 
@@ -367,7 +367,7 @@ Lỗi phát ra dùng [INP-007](07_validation_errors.md): unsupported 008; corrup
 
 ## 8. Security & Privacy
 
-Không thực thi macro, formula, active content hoặc linked resources. ZIP/XML guards áp dụng trước và trong parse; limits không chỉ tính compressed file size. Không tự sửa workbook. Không load toàn workbook vào heap nếu chưa có benchmark chứng minh an toàn cho resource profile.
+Không thực thi macro, formula, active content hoặc linked resources. ZIP/XML guards áp dụng trước và trong parse; limits không chỉ tính compressed file size. Không tự sửa workbook. Với scope 1 GB/source, không load toàn workbook vào heap; adapter phải có streaming/private spill hoặc strategy được memory PoC chứng minh, budgets extraction/entries/ratio theo NFR. Không nới ZIP guards chỉ để nhận file dưới trần.
 
 ## 9. Acceptance Criteria
 

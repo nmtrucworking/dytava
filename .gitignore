@@ -39,3 +39,7 @@ local.properties
 *.iml
 *.ipr
 *.iws
+
+# Generated report previews and PDF QA
+/output/pdf/
+/tmp/pdfs/

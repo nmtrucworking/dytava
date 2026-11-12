@@ -1,17 +1,19 @@
 # Dytava — Input Specification
 
 Document ID: INP-000\
-Version: 0.1.0\
+Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 11/11/2026
+Updated: 12/11/2026
 
 ## Phạm vi và trạng thái
 
 Đây là điểm vào chuẩn cho việc biên soạn Input Contract: hệ thống tiếp nhận gì, diễn giải cấu trúc thế nào, giữ bằng chứng nào, từ chối trường hợp nào và khi nào được giao dữ liệu sang Core. Có 10 đặc tả chuyên đề, 5 JSON Schema và fixtures; bộ này chưa APPROVED. Các quy tắc MUST/không được trong tài liệu là yêu cầu thiết kế đề xuất, không phải chứng cứ đã triển khai.
 
 Baseline sản phẩm: Flutter/Dart, Android P0 và iOS P1 theo 9 ADR/PRD hiện hành. Package `packages/excelcompare_core/` hiện là semantic PoC, chưa có đầy đủ adapter/provenance. Web có implementation riêng; kết quả Web không tự chứng minh contract Flutter đã đạt. Icon/branding không chứng minh định dạng đã được hỗ trợ.
+
+> **Mở rộng 12/11/2026:** [EXP-ADR-001..003](../../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) thay trần source thành **1 GB/source**; [NFR §3](../../requirements/NFR.md#3-resource-profiles-và-trần-input-1-gb) sở hữu bytes/budgets/profile. Hai PDF thuộc [Report spec](../report/README.md), không phải PDF input. Wire schemas/fixtures Input vẫn 0.1.0 DRAFT; docs mở rộng không tự chứng minh adapter large-file support.
 
 ## Mục lục và quyền sở hữu
 
@@ -66,16 +68,16 @@ Các ID dưới đây có đúng một định nghĩa. Test registry tham chiế
 | INP-ADR-001 | A baseline/B candidate, A_TO_B là default hiển thị; user phải confirm direction | ACCEPTED / NOT_IMPLEMENTED |
 | INP-ADR-002 | OCR Android P0 tối thiểu: một nguồn ảnh PNG/JPEG, bundled offline ML Kit, manual review | ACCEPTED / ACADEMIC_SIGNOFF_PENDING |
 | INP-ADR-003 | Một selected table/scope trên mỗi nguồn, một worksheet/range với XLSX | ACCEPTED / NOT_IMPLEMENTED |
-| INP-ADR-004 | Profile android-p0-conservative-v1, các trần từ chối tạm trước benchmark | ACCEPTED / BENCHMARK_PENDING |
+| INP-ADR-004 | Profile android-p0-conservative-v1 giữ lịch sử; cap sản phẩm thay bằng EXP-ADR-001/NFR §3 | PARTIALLY_SUPERSEDED / BENCHMARK_PENDING |
 | INP-ADR-005 | Header first-row chỉ là suggestion; UTF-8 strict, CSV comma/TSV tab, xác nhận explicit | ACCEPTED / NOT_IMPLEMENTED |
 | INP-ADR-006 | Không phục hồi leading zeros ở numeric identifier; ambiguity → UNRESOLVED | ACCEPTED / NOT_IMPLEMENTED |
 | INP-ADR-007 | XlsxFormatAdapter; Dart excel v4 là ứng viên PoC, loss/capability phải minh bạch | ACCEPTED / PARSER_POC_PENDING |
 | INP-ADR-008 | Confirm matching mode/key/dtype/policy/mapping/direction trước run | ACCEPTED / NOT_IMPLEMENTED |
 | INP-ADR-009 | App-private temporary scratch, read-only, no raw retention, restore revalidate | ACCEPTED / NOT_IMPLEMENTED |
 
-**P0 Android:** .xlsx/.csv/.tsv + một nguồn ảnh .png/.jpg/.jpeg (không image-image), mỗi nguồn một bảng; comparison + CSV/JSON export và APK. JSON chuyển P1, iOS P1; PDF, multi-page OCR, cloud OCR sau P0. Master 2.2 và các chữ OPEN/P2 trong đặc tả con chỉ còn ý nghĩa lịch sử khi mâu thuẫn với 9 ADR này.
+**P0 Android:** .xlsx/.csv/.tsv + một nguồn ảnh .png/.jpg/.jpeg (không image-image), mỗi nguồn một bảng; comparison + CSV/JSON + merged diff PDF + Dytava report PDF và APK theo P0 mở rộng. JSON chuyển P1, iOS P1; **PDF input**, multi-page OCR, cloud OCR sau P0. Master 2.2 và các chữ OPEN/P2 trong đặc tả con chỉ còn ý nghĩa lịch sử khi mâu thuẫn với 9 ADR này.
 
-**Bắt buộc trước release:** migration schema InputConfig 0.1.0 để biểu diễn image P0, OCR extraction/review receipt contracts, Flutter adapter/parser PoC và corpus, benchmark Android thật, tests và APK. Không tự đánh dấu các acceptance cases PLANNED là PASS.
+**Bắt buộc trước release mở rộng:** large-input-v1 + streaming/private spill/cancel + [LARGE-TC-*](../../testing/EXPANDED_SCOPE_ACCEPTANCE.md), report/export schema + hai PDF/template + REP-TC-*; tiếp tục  migration schema InputConfig 0.1.0 để biểu diễn image P0, OCR extraction/review receipt contracts, Flutter adapter/parser PoC và corpus, benchmark Android thật, tests và APK. Không tự đánh dấu các acceptance cases PLANNED là PASS.
 
 ## Glossary
 
@@ -100,5 +102,7 @@ Các ID dưới đây có đúng một định nghĩa. Test registry tham chiế
 - [import_config.schema.json](schemas/import_config.schema.json)
 - [Fixtures và expected output](fixtures/README.md)
 - [Acceptance và lệnh verifier](09_acceptance_tests.md)
+- [Large-input acceptance](../../testing/EXPANDED_SCOPE_ACCEPTANCE.md) — bổ sung, không đổi registry INP-TC-001..040
+- [Report Export Specification](../report/README.md) — output riêng Input
 
 Verifier kiểm tra shape, negative examples, cross-file fixture consistency, IDs và local links. Nó không triển khai parser XLSX/OCR hay state machine ứng dụng. Các planned test giữ nguyên trạng thái PLANNED tới khi có evidence tương ứng.

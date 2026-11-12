@@ -1,3 +1,5 @@
+> **Mở rộng scope 12/11/2026:** [EXP-ADR-001..003](../../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) chốt **1 GB/source**, **merged diff PDF** và **PDF template Dytava**. [Report spec](../../specs/report/README.md) và [NFR](../../requirements/NFR.md) sở hữu chi tiết hiện hành. Các trần nhỏ/loại trừ PDF output trong baseline dưới đây chỉ là lịch sử; PDF input giữ pha riêng. Không đổi Core semantic invariants, không chứng minh implementation đã đạt.
+
 # ExcelCompare • Flutter Android P0 + iPhone/iOS P1
 
 **Phiên bản tài liệu:** 2.2-FLUTTER-ANDROID-IOS-DESIGN, 11/11/2026.

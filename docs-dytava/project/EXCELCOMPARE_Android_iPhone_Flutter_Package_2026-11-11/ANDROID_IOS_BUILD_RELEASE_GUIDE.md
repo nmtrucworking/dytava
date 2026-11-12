@@ -1,3 +1,5 @@
+> **Mở rộng scope 12/11/2026:** [EXP-ADR-001..003](../../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) chốt **1 GB/source**, **merged diff PDF** và **PDF template Dytava**. [Report spec](../../specs/report/README.md) và [NFR](../../requirements/NFR.md) sở hữu chi tiết hiện hành. Các trần nhỏ/loại trừ PDF output trong baseline dưới đây chỉ là lịch sử; PDF input giữ pha riêng. Không đổi Core semantic invariants, không chứng minh implementation đã đạt.
+
 # ExcelCompare — Android P0 / iPhone-iOS P1: Build & Release Guide
 
 **Ngày:** 11/11/2026 • **Trạng thái:** hướng dẫn cấu hình/CI, chưa có APK/AAB/IPA thực tế.
@@ -90,3 +92,13 @@ Flutter starter được xây dựng dưới dạng **source skeleton**, chưa t
 - https://docs.flutter.dev/deployment/android
 - https://docs.flutter.dev/deployment/ios
 - https://docs.flutter.dev/platform-integration/ios/setup
+
+## Release gate bổ sung — scope 1 GB và PDF
+
+Theo [NFR G7](../../requirements/NFR.md), release công bố scope mới phải có
+[LARGE-TC-*](../../testing/EXPANDED_SCOPE_ACCEPTANCE.md) và
+[REP-TC-*](../../specs/report/README.md#6-acceptance-registry), cùng profile/format/device
+matrix. Kiểm tra local font assets, Vietnamese PDF text extraction, page renders,
+counts/lineage, cancel/disk-full cleanup và export destination permissions. Signed APK/IPA
+không tự là bằng chứng pipeline 1 GB hoặc hai PDF hoạt động; không dùng evidence Web
+thay device Flutter. Các artifact/runners cho gate này hiện NOT_VERIFIED.

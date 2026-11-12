@@ -68,7 +68,7 @@ Font được đóng gói cục bộ cho Web và Flutter. Bộ font UI không th
 3. **Nhập dữ liệu:** Tải tệp XLSX, XLS, CSV, TSV, JSON, XML...
 4. **Ánh xạ cột:** Ghép nối các trường tương đương giữa hai nguồn dữ liệu.
 5. **Quy tắc chuẩn hóa:** Xây dựng và áp dụng bộ chuẩn hóa dữ liệu tự động.
-6. **Báo cáo:** Xuất báo cáo kết quả đối soát.
+6. **Báo cáo:** Xuất CSV/JSON và, theo scope mở rộng, PDF diff hợp nhất hoặc PDF báo cáo template Dytava. [Report spec](specs/report/README.md) sở hữu layout/template 1.0.0, font local, legend/status, không suy capability PDF từ icon.
 7. **Lịch sử:** Tra cứu các phiên làm việc và đối soát gần nhất.
 8. **Mẫu quy tắc:** Lưu trữ và tái sử dụng bộ chính sách (Policy).
 9. **Học tập:** Hướng dẫn sử dụng và tài liệu hỗ trợ.

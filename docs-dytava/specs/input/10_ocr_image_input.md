@@ -1,15 +1,15 @@
 # Input ảnh và OCR — phạm vi Android P0 tối thiểu
 
 Document ID: INP-010\
-Version: 0.1.0\
+Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 11/11/2026
+Updated: 12/11/2026
 
 ## 1. Mục đích và phạm vi
 
-Theo [INP-ADR-002 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md), Android P0 nhận tối đa một nguồn ảnh PNG/JPEG trong hai nguồn A/B (một ảnh, một bảng), dùng model nhận dạng chữ bundled on-device, và yêu cầu manual table/text review trước handoff. PDF, multi-page, cloud OCR, ảnh-ảnh và bố cục bảng phức tạp không thuộc P0. Quyết định chưa chứng minh đã có adapter/SDK chạy; mức OCR tối thiểu còn cần giảng viên xác nhận.
+Theo [INP-ADR-002 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md), Android P0 nhận tối đa một nguồn ảnh PNG/JPEG trong hai nguồn A/B (một ảnh, một bảng), dùng model nhận dạng chữ bundled on-device, và yêu cầu manual table/text review trước handoff. **PDF input**, multi-page, cloud OCR, ảnh-ảnh và bố cục bảng phức tạp không thuộc P0. Quyết định chưa chứng minh đã có adapter/SDK chạy; mức OCR tối thiểu còn cần giảng viên xác nhận.
 
 ## 2. Thuật ngữ và định nghĩa
 
@@ -39,7 +39,7 @@ File picker/camera explicit consent → local recognition nếu capability đã 
 
 ## 7. Edge Cases và Error Handling
 
-Ảnh mờ, nghiêng, không lưới, bảng chồng, chữ viết tay, merged cells và ảnh cắt mất hàng: 012 REVIEW hoặc 013/008 ERROR nếu không có cách an toàn. Confidence không có dùng null; không đặt 1.0. Polygon ngoài ảnh: 014. Image decompression/pixel limit: 004; không decode vô hạn. File HEIC icon không chứng minh codec/model hỗ trợ.
+Ảnh mờ, nghiêng, không lưới, bảng chồng, chữ viết tay, merged cells và ảnh cắt mất hàng: 012 REVIEW hoặc 013/008 ERROR nếu không có cách an toàn. Confidence không có dùng null; không đặt 1.0. Polygon ngoài ảnh: 014. Image decompression/pixel limit: 004; không decode vô hạn. File HEIC icon không chứng minh codec/model hỗ trợ. Trần source 1 GB của scope mở rộng không bỏ pixel/decode limits hoặc manual review; NFR sở hữu profile lớn. PDF export có thể trình bày kết quả từ OCR đã review theo Report spec, không trở thành PDF/OCR importer.
 
 ## 8. Security & Privacy
 

@@ -3,11 +3,11 @@
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
 Document ID: INP-004\
-Version: 0.1.0\
+Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 11/11/2026
+Updated: 12/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -63,7 +63,7 @@ Sheet không tồn tại, range ngược, header ngoài scope: INP-ERR-011. Head
 
 ## 8. Security & Privacy
 
-Giới hạn sheet/row/cell, độ dài field và preview từ resource profile đã benchmark. Không lưu preview có dữ liệu nhạy cảm trong logs. close phải chạy khi EOF, lỗi hoặc cancel.
+Giới hạn sheet/row/cell, độ dài field và preview từ resource profile có version theo [NFR §3](../../requirements/NFR.md#3-resource-profiles-và-trần-input-1-gb). Không kế thừa cap 20k rows/100 columns/500k cells của profile nhỏ sang large-input-v1. Table descriptor + row streams/private indexes vẫn phải giữ đầy đủ scope/EOF/hash/provenance; preview phân trang không thay full validation. Không lưu preview có dữ liệu nhạy cảm trong logs. close phải chạy khi EOF, lỗi hoặc cancel.
 
 ## 9. Acceptance Criteria
 

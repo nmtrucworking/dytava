@@ -90,7 +90,7 @@ class App {
     document.querySelectorAll('input[type=file]').forEach(el => { el.disabled = !uploads; });
     const key = document.getElementById('opt-key-column'); key.disabled = !this.isEnabled('FLAG_KEY_ALIGNMENT');
     if (key.disabled) key.value = '';
-    for (const id of ['btn-export-csv', 'btn-export-json']) document.getElementById(id).disabled = !this.isEnabled('FLAG_REPORT_EXPORT');
+    for (const id of ['btn-export-csv', 'btn-export-json', 'btn-export-pdf']) document.getElementById(id).disabled = !this.isEnabled('FLAG_REPORT_EXPORT');
     this.updateSaveButton();
   }
   setupModals() {
@@ -169,6 +169,7 @@ class App {
   }
   setupComparisonControls() {
     document.getElementById('btn-run-compare').onclick = () => this.runComparison();
+    document.getElementById('btn-export-pdf').onclick = () => this.openReportPreview();
     document.getElementById('btn-export-json').onclick = () => this.exportJsonReport();
     document.getElementById('btn-export-csv').onclick = () => this.exportCsvDiff();
     for (const id of ['opt-key-column', 'opt-tolerance', 'opt-leading-zeros', 'opt-case-sensitive', 'opt-trim', 'opt-identifier-case', 'opt-null-zero']) document.getElementById(id).onchange = () => { document.getElementById('opt-policy').value = ''; this.runComparison(); };
@@ -191,6 +192,7 @@ class App {
     this.busy = Math.max(0, this.busy + delta);
     const button = document.getElementById('btn-run-compare'); button.disabled = Boolean(this.busy); button.innerHTML = brandIcon(this.busy ? 'loading' : 'compare') + (this.busy ? 'Đang xử lý…' : 'Chạy so sánh');
     document.getElementById('compare-processing').hidden = !this.busy;
+    document.getElementById('btn-export-pdf').disabled = Boolean(this.busy) || !this.currentComparisonResult || !this.isEnabled('FLAG_REPORT_EXPORT');
     document.getElementById('compare-status').textContent = this.busy ? 'Đang xử lý cục bộ trong trình duyệt…' : '';
     this.updateSaveButton();
   }
@@ -270,6 +272,20 @@ class App {
     for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value ?? '(Trống)';
     document.getElementById('insp-status-badge').dataset.status = comparison.status;
     this.openModal('cell-inspector-modal');
+  }
+  openReportPreview() {
+    if (this.busy || !this.currentComparisonResult || !this.isEnabled('FLAG_REPORT_EXPORT')) return;
+    const snapshot = structuredClone(this.currentComparisonResult.report);
+    const token = crypto.randomUUID();
+    const preview = window.open(`report.html#${token}`, '_blank');
+    if (!preview) return this.showToast('Cho phép mở cửa sổ báo cáo rồi thử lại.', 'error');
+    const receive = event => {
+      if (event.origin !== location.origin || event.source !== preview || event.data?.type !== 'dytava-report-ready' || event.data.token !== token) return;
+      preview.postMessage({ type: 'dytava-report-payload', token, report: snapshot }, location.origin);
+      window.removeEventListener('message', receive);
+    };
+    window.addEventListener('message', receive);
+    setTimeout(() => window.removeEventListener('message', receive), 30000);
   }
   exportJsonReport() {
     if (!this.currentComparisonResult || !this.isEnabled('FLAG_REPORT_EXPORT')) return;

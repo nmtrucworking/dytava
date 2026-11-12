@@ -5,18 +5,21 @@ digraph Dytava {
   ui [label="Flutter UI / ViewModels\nAndroid P0 / iOS P1"];
   app [label="Application UseCases\nA/B import states + snapshot gates"];
   files [label="FileAccess\nAndroid SAF / iOS Files (read-only)"];
-  preflight [label="Preflight\nFormat / access / resource guards"];
-  adapter [label="FormatAdapter\nRaw types + source refs + losses"];
-  tables [label="SourceTable\nImmutable validated InputSnapshot"];
+  preflight [label="Preflight\nFormat / access / 1 GB per source\nProfile-specific resource guards"];
+  adapter [label="FormatAdapter\nBounded streams / private spill\nRaw types + source refs + losses"];
+  tables [label="SourceTable\nValidated descriptors / row streams\nEOF + hash + immutable snapshot"];
   review [label="Mapping / key / policy review\nExplicit comparison direction"];
   core [label="Pure Dart Core\nCanonicalization / alignment / comparison", fillcolor="#DCFCE7", color="#16A34A"];
-  report [label="Difference report / export"];
-  storage [label="Drift / private metadata\nRetention decision pending", fillcolor="#FEF3C7", color="#D97706"];
-  ocr [label="Image OCR P2\nGeometry + manual review", style="rounded,filled,dashed"];
+  report [label="Result snapshot / paginated diff\nCSV / JSON / merged diff PDF / Dytava report PDF"];
+  storage [label="Private scratch / external indexes\nSession lifetime / cleanup / startup sweep", fillcolor="#FEF3C7", color="#D97706"];
+  ocr [label="Image OCR Android P0\nGeometry + manual review", style="rounded,filled,dashed"];
   ui -> app;
   app -> files;
   files -> preflight -> adapter -> tables -> review -> core -> report;
   app -> storage;
+  adapter -> storage [style=dashed, label="bounded spill"];
+  core -> storage [style=dashed, label="external matching"];
+  report -> storage [style=dashed, label="PDF temp / commit"];
   ocr -> adapter [style=dashed];
   app -> review [label="A + B ready"];
   subgraph cluster_input { label="Input contract 0.1.0 DRAFT"; color="#93C5FD"; files; preflight; adapter; tables; }

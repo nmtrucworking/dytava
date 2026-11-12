@@ -97,3 +97,15 @@ Không chỉnh các bản SVG đã sao chép trong `web/assets/dytava/`; sửa n
 Web dùng logo sáng/tối, functional icons, illustration cho hero, xử lý, lỗi,
 lịch sử trống, bộ lọc trống và trang hướng dẫn/quyền riêng tư. Chỉ đóng gói SVG,
 không tải PNG 4K vào giao diện. Màu chính xanh dương, nhập tệp xanh lá, xuất báo cáo tím.
+
+## Scope thiết kế mở rộng
+
+[Quyết định 12/11/2026](../docs-dytava/decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) yêu cầu **1 GB/source**, **PDF diff hợp nhất A/B** và **PDF template Dytava**; [Report spec](../docs-dytava/specs/report/README.md) định nghĩa hai đầu ra. Đây là yêu cầu phải triển khai/kiểm thử, chưa là khả năng hiện tại. Web hiện vẫn 10 MiB/tệp (10.485.760 byte; UI ghi “10 MB”), 20.000 rows, 200 columns, 200.000 cells và CSV/JSON export. Giới hạn input runtime vẫn giữ nguyên. Template PDF preview/CLI được bổ sung ở mục renderer bên dưới.
+
+## Template report renderer
+
+Nút **PDF Dytava** mở preview local với tám phần theo branding rồi **In / Lưu PDF**.
+CLI `npm run report:render` tạo PDF mẫu, HTML và sidecar SHA-256.
+[Hướng dẫn renderer](../docs-dytava/specs/report/RENDERER.md) nêu contract, limits và evidence.
+Engine web legacy thiếu lineage được ghi rõ trên preview; merged diff PDF và pipeline
+input 1 GB vẫn chưa triển khai.

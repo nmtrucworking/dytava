@@ -3,11 +3,11 @@
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
 Document ID: INP-008\
-Version: 0.1.0\
+Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 11/11/2026
+Updated: 12/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -30,7 +30,7 @@ attempt_id định danh một lượt async đọc; generation tăng khi replace
 | FAILED | Attempt thất bại; giữ safe diagnostics, không snapshot dùng được |
 | CANCELLED | Tác vụ đã dừng; handles đóng, không snapshot dùng được |
 
-PREFLIGHTING/PARSING có cancellation token và resource scope; tất cả đường ra đóng handles/giải phóng scratch. State runtime lưu riêng, không trộn vào raw_kind hay SourceArtifact schema.
+PREFLIGHTING/PARSING có cancellation token, progress và resource scope. large-input-v1 theo NFR dùng bounded stream/private disk spill; không áp total watchdog 60s của profile nhỏ. Handles/temp thuộc attempt phải được đóng hoặc bàn giao ownership tường minh vào validated snapshot; snapshot row/index store còn sống khi UI/Core/export cần, cleanup khi consumers release/session close. Error/cancel/startup sweep không được giữ orphan scratch. State runtime lưu riêng, không trộn vào raw_kind hay SourceArtifact schema.
 
 ## 4. Quy tắc và ràng buộc
 

@@ -1,0 +1,215 @@
+{
+  "schema_version": "dytava-report/1.0.0",
+  "report_id": "DYT-DEMO-20261112-001",
+  "completion_state": "COMPLETED",
+  "current": true,
+  "ocr_review": "NOT_REQUIRED",
+  "generated_at": "2026-11-12T02:30:00Z",
+  "engine_version": "fixture-oracle/1.0.0",
+  "direction": "A_TO_B",
+  "direction_confirmed": true,
+  "inputs": {
+    "A": {
+      "label": "A",
+      "name": "source-a.csv",
+      "format": "csv",
+      "sha256": "815e80ca6e2aa6d69f7175e2526ef78c981f1ddec036ac73871f282ae8463760",
+      "size_bytes": 102,
+      "scope": "CSV records 1–4 · khóa ID · trường so sánh: Giá trị, Ghi chú",
+      "parser_version": "fixture-authoring/1.0.0"
+    },
+    "B": {
+      "label": "B",
+      "name": "source-b.csv",
+      "format": "csv",
+      "sha256": "a7250cb7f561ea6a20d2bc03aeab2871d4449ee404caaad6a0ca34b9ab7889f5",
+      "size_bytes": 101,
+      "scope": "CSV records 1–4 · khóa ID · trường so sánh: Giá trị, Ghi chú",
+      "parser_version": "fixture-authoring/1.0.0"
+    }
+  },
+  "policy_id": "dytava-demo-v1",
+  "policy_digest": "6ee205831a3f76892fc9d38023d9dc38fd87a45957efda7219ad48ace17a17ea",
+  "import_config_revision": "fixture-import-r1",
+  "matching_mode": "KEY",
+  "key_fields": [
+    "ID"
+  ],
+  "field_mapping": [
+    {
+      "left": "Giá trị",
+      "right": "Giá trị"
+    },
+    {
+      "left": "Ghi chú",
+      "right": "Ghi chú"
+    }
+  ],
+  "policy": {
+    "tolerance_abs": 0,
+    "preserve_leading_zeros": true,
+    "case_sensitive_text": true,
+    "trim_text": true,
+    "distinct_null_zero": true
+  },
+  "summary": {
+    "matched_cell_pairs": 4,
+    "exact": 1,
+    "equivalent": 1,
+    "different": 1,
+    "unresolved": 1,
+    "added_rows": 1,
+    "removed_rows": 1,
+    "added_fields": 0,
+    "removed_fields": 0,
+    "rows_a": 3,
+    "rows_b": 3,
+    "fields_a": 3,
+    "fields_b": 3
+  },
+  "details_scope": "FULL_COMPARISON",
+  "differences": [
+    {
+      "kind": "CELL",
+      "status": "EXACT",
+      "field": "Ghi chú",
+      "key": [
+        "SV001"
+      ],
+      "left": {
+        "raw": "Đã xác nhận",
+        "normalized": "Đã xác nhận",
+        "reference": {
+          "type": "csv",
+          "location": "logical record 2 · field 3"
+        }
+      },
+      "right": {
+        "raw": "Đã xác nhận",
+        "normalized": "Đã xác nhận",
+        "reference": {
+          "type": "csv",
+          "location": "logical record 2 · field 3"
+        }
+      },
+      "rule_id": "text/exact/v1",
+      "reason": "Hai biểu diễn gốc giống nhau."
+    },
+    {
+      "kind": "CELL",
+      "status": "EQUIVALENT",
+      "field": "Giá trị",
+      "key": [
+        "SV001"
+      ],
+      "left": {
+        "raw": "8.5",
+        "normalized": "8.5",
+        "reference": {
+          "type": "csv",
+          "location": "logical record 2 · field 2"
+        }
+      },
+      "right": {
+        "raw": "8,5",
+        "normalized": "8.5",
+        "reference": {
+          "type": "csv",
+          "location": "logical record 2 · field 2"
+        }
+      },
+      "rule_id": "decimal/explicit-locale/v1",
+      "reason": "Tương đương theo dấu thập phân đã cấu hình riêng cho A và B."
+    },
+    {
+      "kind": "CELL",
+      "status": "DIFFERENT",
+      "field": "Ghi chú",
+      "key": [
+        "SV002"
+      ],
+      "left": {
+        "raw": "Nguyễn Ánh",
+        "normalized": "Nguyễn Ánh",
+        "reference": {
+          "type": "csv",
+          "location": "logical record 3 · field 3"
+        }
+      },
+      "right": {
+        "raw": "Nguyễn Anh",
+        "normalized": "Nguyễn Anh",
+        "reference": {
+          "type": "csv",
+          "location": "logical record 3 · field 3"
+        }
+      },
+      "rule_id": "text/preserve-diacritics/v1",
+      "reason": "Dấu tiếng Việt khác nhau và được bảo toàn."
+    },
+    {
+      "kind": "CELL",
+      "status": "UNRESOLVED",
+      "field": "Giá trị",
+      "key": [
+        "SV002"
+      ],
+      "left": {
+        "raw": "07/10",
+        "normalized": null,
+        "reference": {
+          "type": "csv",
+          "location": "logical record 3 · field 2"
+        }
+      },
+      "right": {
+        "raw": "0.7",
+        "normalized": "0.7",
+        "reference": {
+          "type": "csv",
+          "location": "logical record 3 · field 2"
+        }
+      },
+      "rule_id": "numeric/ambiguous-value/v1",
+      "reason": "Chưa xác định 07/10 là tỷ lệ hay ngày tháng; cần người dùng xác minh."
+    },
+    {
+      "kind": "ROW",
+      "status": "REMOVED",
+      "key": [
+        "SV003"
+      ],
+      "left": {
+        "raw": "SV003 · 5.0 · Chỉ có ở A",
+        "normalized": null,
+        "reference": {
+          "type": "csv",
+          "location": "logical record 4 · field 1–3"
+        }
+      },
+      "right": null,
+      "reason": "Theo chiều A_TO_B, bản ghi chỉ có ở A."
+    },
+    {
+      "kind": "ROW",
+      "status": "ADDED",
+      "key": [
+        "SV004"
+      ],
+      "left": null,
+      "right": {
+        "raw": "SV004 · 9.0 · Chỉ có ở B",
+        "normalized": null,
+        "reference": {
+          "type": "csv",
+          "location": "logical record 4 · field 1–3"
+        }
+      },
+      "reason": "Theo chiều A_TO_B, bản ghi chỉ có ở B."
+    }
+  ],
+  "warnings": [
+    "DỮ LIỆU MINH HỌA: oracle được biên soạn từ hai CSV fixture, không phải bằng chứng engine đã xử lý dữ liệu nghiệp vụ."
+  ],
+  "metadata_complete": true
+}

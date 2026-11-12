@@ -3,11 +3,11 @@
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
 Document ID: INP-007\
-Version: 0.1.0\
+Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 11/11/2026
+Updated: 12/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -37,7 +37,7 @@ ValidationResult = {issues[], eof_validated, snapshot_id?, complete}
 - **INP-RULE-031:** Kiểm tra limits trước và trong khi đọc, không chỉ tin metadata size. Profile bắt buộc quy định bytes, decompressed bytes, ZIP entries/ratio, rows/cells, text length, JSON depth và thời gian/cancel budget.
 - **INP-RULE-032:** Không thay invalid bytes, truncate records, bỏ file parts hoặc sửa nguồn để vượt validation. Expected format mismatch có thể review; cấu trúc không an toàn luôn ERROR.
 
-Resource profile fixture-only-small-v1 chỉ phục vụ validation fixtures nhỏ, không là benchmark Android. INP-ADR-004 đã chọn bootstrap profile android-p0-conservative-v1 (10MiB/source; 64MiB uncompressed XLSX; 2.000 ZIP entries; 100:1 ratio; 20.000 rows; 100 columns; 500.000 cells; 12MP image; watchdog 60s), nhưng các giới hạn chưa được benchmark, không phải throughput được bảo đảm. Adapter không resolve được profile phải fail closed (INP-ERR-011).
+Resource profile fixture-only-small-v1 chỉ phục vụ validation fixtures nhỏ. Profile android-p0-conservative-v1/ADR-004 giữ lịch sử; [EXP-ADR-001](../../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) thay trần sản phẩm bằng 1 GB/source. [NFR §3](../../requirements/NFR.md#3-resource-profiles-và-trần-input-1-gb) là nguồn duy nhất cho đơn vị byte, profile large-input-v1, giải nén/pixels/disk/rows/buffers/watchdog. Không kế thừa cap nhỏ hoặc total timeout 60s để từ chối mọi file lớn. Adapter không resolve được profile/budgets phải fail closed (INP-ERR-011); không được gắn SUPPORTED 1 GB trước evidence.
 
 ## 5. Input / Output Contract
 
@@ -80,7 +80,7 @@ Tắt XML external entities/DTD resolution, macro, external workbook links và a
 
 ## 9. Acceptance Criteria
 
-INP-TC-001–016 giữ tiêu chí access/format ban đầu; INP-TC-031 kiểm tra issue severity/gating; INP-TC-032 kiểm tra size unknown và giới hạn runtime; INP-TC-033 kiểm tra malicious payload và log redaction. Xem [registry](09_acceptance_tests.md).
+INP-TC-001–016 giữ tiêu chí access/format ban đầu; INP-TC-031 kiểm tra issue severity/gating; INP-TC-032 kiểm tra size unknown và giới hạn runtime; INP-TC-033 kiểm tra malicious payload và log redaction. [LARGE-TC-001..008](../../testing/EXPANDED_SCOPE_ACCEPTANCE.md) bổ sung biên 1 GB/source, unknown-size stream, chunk/token/EOF/hash, quota/cleanup và full pipeline. Xem [registry](09_acceptance_tests.md).
 
 ## 10. Open Questions
 

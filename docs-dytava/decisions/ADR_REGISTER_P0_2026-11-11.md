@@ -13,15 +13,17 @@ supersedes: INP-ADR-001..009 OPEN register (Input 0.1.0)
 
 > **Phạm vi hiệu lực:** Quyết định thiết kế của nhóm dự án, không phải chứng nhận đã có tính năng hay chữ ký chấp thuận của giảng viên. Contract Input 0.1.0 vẫn **DRAFT**, acceptance tests vẫn **PLANNED**. Thay đổi schema/code theo quyết định này trước khi tuyên bố P0 hoàn thành. Master 2.2 (11/11/2026) là baseline lịch sử khi có xung đột về scope/priority; tài liệu này chỉ ghi đè các quyết định INP-ADR-001..009, không ghi đè semantic invariants của Core.
 
+> **Scope update 12/11/2026:** [EXP-ADR-001..003](ADR_SCOPE_EXPANSION_2026-11-12.md) ghi đè trần sản phẩm 10 MiB/source và loại trừ PDF output: scope mới 1 GB/source + merged diff PDF + Dytava template PDF. Các budgets nhỏ ở ADR-004 là profile lịch sử, không là default/cap scope mới. Semantic/OCR/source immutability giữ nguyên.
+
 ## Phạm vi giao P0 đã quyết định
 
 - **Nền tảng:** Flutter/Dart trên Android; APK cài được và chạy thử máy thật. iOS là P1.
 - **Chọn đúng 2 nguồn A/B:** .xlsx, .csv, .tsv; **một** trong hai nguồn được phép là **một** ảnh .png/.jpg/.jpeg, chụp hoặc chọn từ thư viện. Không hỗ trợ image-image ở P0.
 - **Cấu trúc:** chính xác một table/scope được chọn trên mỗi nguồn. XLSX có thể chứa nhiều sheet nhưng mỗi comparison chỉ chọn một sheet và một range; không tự ghép nhiều sheet.
-- **Chức năng:** đọc/preview, xác nhận header/scope, mapping, chọn positional hoặc key matching, xác nhận policy/chiều so sánh, chạy comparison, thống kê và chỉ ra vị trí A/B, export CSV + JSON. Status EXACT/EQUIVALENT/DIFFERENT/UNRESOLVED độc lập với input states.
+- **Chức năng:** đọc/preview, xác nhận header/scope, mapping, chọn positional hoặc key matching, xác nhận policy/chiều so sánh, chạy comparison, thống kê và chỉ ra vị trí A/B, export CSV + JSON và hai PDF theo EXP-ADR-002. Status EXACT/EQUIVALENT/DIFFERENT/UNRESOLVED độc lập với input states.
 - **Kiểu ngữ nghĩa P0:** IDENTIFIER, FREE_TEXT, DECIMAL, BOOLEAN, PERCENTAGE và null kinds trên corpus có oracle. DATE/TIME, MONEY, các subtype nâng cao phải qua test riêng mới bật; không thể suy ra từ icon/JSON policy.
-- **OCR P0 tối thiểu:** local/bundled Latin/Vietnamese text recognition, một ảnh chứa một bảng tương đối rõ; ảnh/crop/geometry cùng recognized text được giữ; bắt buộc người dùng sửa/xác nhận kết quả trước compare. Không cam kết trích xuất bảng không cần review, chữ viết tay, nhiều trang, bảng không đều, PDF, cloud OCR.
-- **Chưa thuộc P0:** JSON/JSONL, XLS/XLSM/XLSB/ODS, PDF, HEIC/WEBP, XML/HTML, multi-sheet pairing, ảnh–ảnh, iOS, cloud backend OCR, history đầy đủ, đồng bộ cloud.
+- **OCR P0 tối thiểu:** local/bundled Latin/Vietnamese text recognition, một ảnh chứa một bảng tương đối rõ; ảnh/crop/geometry cùng recognized text được giữ; bắt buộc người dùng sửa/xác nhận kết quả trước compare. Không cam kết trích xuất bảng không cần review, chữ viết tay, nhiều trang, bảng không đều, PDF input, cloud OCR.
+- **Chưa thuộc P0:** JSON/JSONL, XLS/XLSM/XLSB/ODS, **PDF input**, HEIC/WEBP, XML/HTML, multi-sheet pairing, ảnh–ảnh, iOS, cloud backend OCR, history đầy đủ, đồng bộ cloud.
 - **P0 release gate:** mỗi capability phải có adapter/device corpus và evidence; kết quả Web/PoC không được dùng thay kết quả Flutter. Flutter hiện chỉ là semantic comparison PoC.
 
 ## INP-ADR-001 — Vai trò A/B và hướng báo cáo
@@ -50,7 +52,9 @@ supersedes: INP-ADR-001..009 OPEN register (Input 0.1.0)
 
 **Kiểm chứng:** nhiều sheet → có UI chọn 1, không silent merge; đổi scope invalidate snapshot/mapping; sheet không tồn tại → CONFIG_INVALID.
 
-## INP-ADR-004 — Android P0 conservative resource profile
+## INP-ADR-004 — Android P0 conservative resource profile (lịch sử)
+
+**PARTIALLY SUPERSEDED về scope/bytes ceiling bởi EXP-ADR-001.** Các số dưới đây giữ để audit profile nhỏ; không áp làm giới hạn P0 mở rộng. NFR §3 sở hữu budgets hiện hành. Bảo vệ parser/ZIP/OCR không bị bãi bỏ.
 
 **Quyết định: ACCEPTED về chính sách, BUDGETS = BOOTSTRAP/CHƯA BENCHMARK.** Sử dụng registry read-only `android-p0-conservative-v1`; các **trần từ chối ban đầu** (không phải mức hiệu năng đã chứng minh):
 - file input đọc: ≤ **10 MiB/source**; XLSX tổng decompressed ≤ **64 MiB**, ≤ **2.000** ZIP entries, compression ratio tổng ≤ **100:1**;
@@ -87,7 +91,7 @@ Không cho file tự tăng limits; kiểm tra trước **và trong** read/decomp
 
 ## INP-ADR-009 — Scratch, retention, permission và restore
 
-**Quyết định: ACCEPTED.** File nguồn **read-only**; khi provider không seekable, có thể tạo bản sao *temporary app-private* của đúng bytes đã hash trong sandbox; không đồng bộ, không upload, không lưu cache raw mặc định. Scratch chỉ sống trong attempt/session hiện hành, cleanup khi success/fail/cancel/đóng phiên; nếu process bị kill, **startup sweep** xóa scratch còn sót, không tuyên bố xóa ngay trong thời điểm bị kill. Lịch sử P0 không chứa raw file, URI/token, recognized text hay full report; chỉ lưu metadata an toàn nếu có user opt-in. Export file/report phải là user action rõ ràng.
+**Quyết định: ACCEPTED, bổ sung lifecycle theo EXP-ADR-001/003.** Scope mới cho phép parsed chunks/key indexes/PDF temp app-private để xử lý 1 GB; giữ đến khi active consumers kết thúc, không tự lưu raw dài hạn. File nguồn **read-only**; khi provider không seekable, có thể tạo bản sao *temporary app-private* của đúng bytes đã hash trong sandbox; không đồng bộ, không upload, không lưu cache raw mặc định. Scratch chỉ sống trong attempt/session hiện hành, cleanup khi success/fail/cancel/đóng phiên; nếu process bị kill, **startup sweep** xóa scratch còn sót, không tuyên bố xóa ngay trong thời điểm bị kill. Lịch sử P0 không chứa raw file, URI/token, recognized text hay full report; chỉ lưu metadata an toàn nếu có user opt-in. Export file/report phải là user action rõ ràng.
 
 Sau restore, **không** tự tin cậy PREVIEW_READY hoặc resume từ partial parse: reset SELECTED/recheck access/hash/config/adapter; nếu access_ref không còn thì UNSELECTED. Permission revoked/source changed invalidate snapshots/receipts/mapping. Trên Android dùng system file picker/SAF grants qua platform API được kiểm chứng; không xin broad storage permission khi không cần. Scratch không được quảng cáo là encrypted-at-rest nếu thực tế chưa chứng minh.
 
@@ -100,7 +104,8 @@ Sau restore, **không** tự tin cậy PREVIEW_READY hoặc resume từ partial 
 | Contract | Update schemas/fixtures cho OCR P0, validate offline; đủ versioning | CHƯA THỰC THI |
 | Android input | XLSX/CSV/TSV thật, one-scope, parser corpus và provenance | CHƯA KIỂM CHỨNG |
 | Android OCR | Camera/gallery + bundled offline model + manual review + SourceTable | CHƯA KIỂM CHỨNG |
-| Comparison | Key/positional, policy confirmation, traceable diff, CSV/JSON export | CHƯA KIỂM CHỨNG |
+| Comparison | Key/positional, policy confirmation, traceable diff, CSV/JSON và hai PDF theo EXP-ADR-002 | CHƯA KIỂM CHỨNG |
+| P0 mở rộng | 1 GB/source + hai PDF + LARGE/REP gates theo NFR/Report spec | CHƯA KIỂM CHỨNG |
 | Reliability | Unit/integration/device tests, resource profile benchmark, CI green | CHƯA ĐẠT EVIDENCE |
 | Packaging | Signed/installable APK, installed offline smoke test, build metadata | CHƯA ĐẠT EVIDENCE |
 

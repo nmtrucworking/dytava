@@ -15,7 +15,8 @@
     "admin:create": "node scripts/create-admin.js",
     "db:backup": "node scripts/backup.js",
     "test:e2e": "playwright test",
-    "branding:sync": "node scripts/sync-branding.js"
+    "branding:sync": "node scripts/sync-branding.js",
+    "report:render": "node scripts/render-report.js"
   },
   "dependencies": {
     "dotenv": "^18.0.9",

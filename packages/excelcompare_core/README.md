@@ -24,3 +24,7 @@ The current artifact has **not** been executed because this file-generation runt
 - SourceCell provenance fields are intentionally omitted here; production work must implement them before report generation.
 
 Full semantic design: [Core spec](../../docs-dytava/project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md). Source wire contract: [Input 0.1.0 DRAFT](../../docs-dytava/specs/input/README.md); the PoC does not implement this complete contract.
+
+## Scope thiết kế mở rộng
+
+[Quyết định 12/11/2026](../../docs-dytava/decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) yêu cầu **1 GB/source**, **PDF diff hợp nhất A/B** và **PDF template Dytava**; [Report spec](../../docs-dytava/specs/report/README.md) định nghĩa hai đầu ra. Đây là yêu cầu phải triển khai/kiểm thử, chưa là khả năng hiện tại. Core PoC chưa có file adapters, matching toàn bảng, disk-backed pipeline hoặc exporters.

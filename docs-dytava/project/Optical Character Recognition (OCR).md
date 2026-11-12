@@ -1,3 +1,5 @@
+> **Tham chiếu nghiên cứu OCR:** phạm vi hiện hành ở [PRD](../product/PRD.md), [Input OCR](../specs/input/10_ocr_image_input.md) và [scope mở rộng](../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md). Trần source 1 GB không bỏ pixel/review guards; PDF output không đồng nghĩa nhập PDF. Luồng cloud/router bên dưới là nghiên cứu ngoài P0, không là runtime đã có.
+
 # Tổng quan vấn đề
 
 
