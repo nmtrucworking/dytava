@@ -107,9 +107,11 @@ excelcompare/
 
 ## Huong dan cai dat & khoi chay (Getting Started)
 
+**Mobile Android (macOS Apple Silicon, chỉ VS Code, không Android Studio hay điện thoại):** đọc [RUN_PROJECT.md](docs-dytava/guides/RUN_PROJECT.md). Cài Android SDK Command-line Tools và tạo AVD trước khi chạy `flutter run`. Bản mobile hiện là Semantic Comparison PoC, chưa nhập Excel/CSV/OCR/xuất báo cáo.
+
 ### Yeu cau moi truong (Prerequisites)
-- **Node.js**: v20+ (Khuyen dung v24+)
-- **Flutter SDK**: 3.x+ (cho phan he `mobile/`)
+- **Node.js**: v24+ (yeu cau tu `package.json`)
+- **Flutter SDK**: ban bao gom Dart SDK tuong thich `mobile/pubspec.yaml` (`^3.13.7`)
 - **Trinh duyet**: Chrome, Firefox, Safari hoac Edge phien ban moi
 
 ---
