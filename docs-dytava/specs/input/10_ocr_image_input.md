@@ -1,11 +1,11 @@
 # Input ảnh và OCR — phạm vi Android P0 tối thiểu
 
 Document ID: INP-010\
-Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
+Version: 0.2.0 (documentation/ISC-1; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 12/11/2026
+Updated: 13/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -51,7 +51,7 @@ INP-TC-039: confidence cao/thấp/null đều cần review, giữ recognized/cor
 
 ## 10. Open Questions
 
-INP-ADR-002 đã chốt OCR vào Android P0; INP-ADR-004 đặt bootstrap ceiling một ảnh tối đa 12MP, một bảng/page, chưa benchmark. Model/plugin PoC, corpus layout accuracy, review UX, schema migration và xác nhận giảng viên còn là implementation/acceptance gates, không phải ADR OPEN. Cần extraction manifest/receipt schema riêng khi bật P2.
+INP-ADR-002 đã chốt OCR vào Android P0; INP-ADR-004 đặt bootstrap ceiling một ảnh tối đa 12MP, một bảng/page, chưa benchmark. Model/plugin PoC, corpus layout accuracy, review UX, schema migration và xác nhận giảng viên còn là implementation/acceptance gates, không phải ADR OPEN. [ISC-1/target0.2](11_streaming_snapshot_contract.md) đã đặc tả image union/extraction/review receipts và migration; executable schemas/validators cần hiện thực trước bật **P0 OCR**, không chờ P2. Pixel/decode values hiện hành theo RP-1/NFR, không mặc định dùng12MP lịch sử cho mọi profile.
 
 ## 11. References
 

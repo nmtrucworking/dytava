@@ -1,10 +1,10 @@
 ---
 document_id: DYT-PRD-001
-version: 0.2.0
+version: 0.3.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-12
+updated: 2026-11-13
 release_baseline: P0 mở rộng (Android trước; web/iOS có gate riêng)
 source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 01-02 (historical)
 decision_authority: INP-ADR-001..009 + EXP-ADR-001..003 accepted for scope 2026-11-12
@@ -15,6 +15,8 @@ decision_authority: INP-ADR-001..009 + EXP-ADR-001..003 accepted for scope 2026-
 > **Tài liệu nguồn cho nhu cầu người dùng, giá trị, release scope và hành trình sản phẩm.** Các điều kiện hệ thống kiểm tra được thuộc [SRS](../requirements/SRS.md); NFR, kiến trúc, Input và semantic policy thuộc tài liệu chuyên trách. **DRAFT không có nghĩa đã triển khai/kiểm thử.**
 
 ## 1. Mục tiêu và căn cứ
+
+**Algorithm baseline:** DYTAVA_UDG_v3 được hoàn thiện thành [UDG3.1 contracts](../specs/engine/README.md). Đây là quyết định thiết kế để đáp ứng scope bên dưới, không thêm modes/dtypes/platform vào P0 hoặc công bố đã có capability runtime. [30 gaps đã có disposition/acceptance](../testing/UDG_CONTRACT_ACCEPTANCE.md); implementation/calibration/sign-off giữ riêng.
 
 Đề bài học phần: **so sánh 02 tệp Excel/bảng dữ liệu**, phát hiện điểm giống/khác, **thống kê và nêu vị trí sai khác**, **đọc dữ liệu từ ảnh chụp** và cung cấp **tệp cài đặt ứng dụng**. Mục tiêu là tránh các false differences do biểu diễn số, định dạng, thứ tự bản ghi và schema không đồng nhất, đồng thời không đưa ra kết luận tương đương khi thiếu bằng chứng.
 
@@ -44,7 +46,7 @@ decision_authority: INP-ADR-001..009 + EXP-ADR-001..003 accepted for scope 2026-
 | Dung lượng | Tối đa **1 GB/source**, hai nguồn độc lập; pipeline lớn và resource profile theo NFR | Không kế thừa trần nhỏ 10 MiB/20k rows làm cap sản phẩm; không tự mở cloud |
 | Scope | Một table/scope cho mỗi nguồn, XLSX cho phép người dùng chọn 1 sheet/range | Multi-sheet pairing/batch |
 | OCR | On-device bundled Latin/Vietnamese text recognition + chỉnh hàng/cột/text + xác nhận thủ công | Cloud OCR, không review, chữ viết tay, nhiều trang/bảng phức tạp |
-| Comparison | POSitional hoặc KEY explicit, mapping 1:1, dtype/policy xác nhận; phát hiện added/removed/changed, bốn trạng thái | MULTISET/ORDERED_SEQUENCE, tự suy key không xác nhận |
+| Comparison | POSITIONAL hoặc KEY explicit, mapping 1:1, dtype/policy xác nhận; phát hiện added/removed/changed, bốn trạng thái | MULTISET/ORDERED_SEQUENCE, tự suy key không xác nhận |
 | Semantic types | IDENTIFIER, FREE_TEXT, DECIMAL, BOOLEAN, PERCENTAGE + null kinds có golden corpus | DATE/TIME/MONEY, unit, formula/metadata compare chỉ bật sau tests/phase |
 | Kết quả | Thống kê đúng mẫu số, chi tiết hai phía, provenance/lý do, lọc sai khác | Dashboard doanh nghiệp, đồng bộ/cloud |
 | Export | CSV diff + JSON report/manifest; **một merged diff PDF** cho A/B và **PDF theo template Dytava**; không ghi nguồn | XLSX export, nhập PDF/OCR PDF và chia sẻ lịch sử nâng cao có scope riêng |

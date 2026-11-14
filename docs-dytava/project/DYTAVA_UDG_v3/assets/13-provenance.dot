@@ -1,0 +1,1 @@
+digraph G {rankdir=LR; node [shape=box,style="rounded,filled",fillcolor="#EAF2F8"]; source[label="XLSX A: Sheet2!C9"]; canon[label="Canonical field: score"]; match[label="Record pair: ID=SV008"]; rule[label="numeric comparison policy"]; evt[label="DiffEvent: VALUE_CHANGED"]; report[label="UI / export / audit"]; source->canon->match->rule->evt->report; }

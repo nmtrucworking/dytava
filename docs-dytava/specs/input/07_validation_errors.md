@@ -3,11 +3,11 @@
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
 Document ID: INP-007\
-Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
+Version: 0.2.0 (documentation/ISC-1; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 12/11/2026
+Updated: 13/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -84,7 +84,7 @@ INP-TC-001–016 giữ tiêu chí access/format ban đầu; INP-TC-031 kiểm tr
 
 ## 10. Open Questions
 
-INP-ADR-004 đã chốt profile bootstrap; cần benchmark máy thật và hạ trần nếu chưa đạt. Message catalog bản địa hóa và platform-specific exception mapping vẫn là implementation tasks trước release. Schema JSON hiện tại không serialize toàn bộ ValidationIssue; contract ứng dụng ở trên phải có integration tests khi triển khai.
+EXP-ADR-001/NFR thay trần sản phẩm bằng1GB/source; [RP-1](../../requirements/RESOURCE_PROFILES.md) đặc tả calibration/enable gates. Device không đạt phải ghi capability chưa hỗ trợ trên device đó, không âm thầm hạ trần sản phẩm. Message catalog bản địa hóa và platform-specific exception mapping vẫn là implementation tasks trước release. Schema JSON hiện tại không serialize toàn bộ ValidationIssue; contract ứng dụng ở trên phải có integration tests khi triển khai.
 
 ## 11. References
 

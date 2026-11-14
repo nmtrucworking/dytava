@@ -1,10 +1,10 @@
 ---
 document_id: DYT-REP-001
-version: 0.2.0
+version: 0.3.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-12
+updated: 2026-11-13
 release_baseline: P0 mở rộng
 ---
 
@@ -76,7 +76,7 @@ Có thể thêm template mới qua registry `template_id/version`, field mapping
 
 ## 4. Hợp đồng exporter và lifecycle
 
-Hợp đồng thiết kế, đã có [JSON Schema report 1.0.0](schemas/dytava-report.schema.json) + runtime guards cho template renderer; chưa có toàn bộ streaming export request/manifest contracts của target lớn:
+[EX-1 streaming query/export](STREAMING_EXPORT_CONTRACT.md) là nguồn chi tiết cho cursor/request/manifest, ER-1 target JSON, bridge legacy, PDF layout và publication protocol. Existing [JSON Schema report1.0.0](schemas/dytava-report.schema.json) giữ compatibility; executable target schemas/renderer/calibration chưa triển khai. Shape dưới đây chỉ là summary, EX-1 sở hữu nghĩa đầy đủ:
 
 ```text
 ExportRequest(result_snapshot_id, export_kind,

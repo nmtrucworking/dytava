@@ -1,0 +1,1 @@
+digraph G {rankdir=TB; node [shape=box,style="rounded,filled",fillcolor="#EAF2F8"]; unit[label="Unit + property + metamorphic tests"]; fixture[label="Golden XLSX / edge cases"]; integration[label="Device integration + lifecycle"]; perf[label="Performance matrix + regression"]; gate[label="Release gate P0 / P1"]; unit->fixture->integration->perf->gate; }

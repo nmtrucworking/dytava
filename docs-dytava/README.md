@@ -6,7 +6,11 @@
 
 Baseline nền tảng là **Flutter/Dart, Android P0 → iOS P1**; ưu tiên tính năng P0 đã được cập nhật bằng ADR register ngày 11/11/2026, ghi đè những phần roadmap Master 2.2 không còn phù hợp. Repository có Web/server riêng và Pure Dart core PoC; phạm vi thiết kế không là danh sách tính năng đã đạt kiểm thử.
 
-**Bắt đầu tại [Document Control](governance/DOCUMENT_CONTROL.md)** để xem nguồn sở hữu và quy trình thay đổi. Bốn tài liệu quản lý chính: **[PRD](product/PRD.md)** (phạm vi/US), **[SRS](requirements/SRS.md)** (FR), **[NFR](requirements/NFR.md)** (quality/measurements), **[Architecture](architecture/ARCHITECTURE.md)** (module/ports). [Traceability Matrix](requirements/TRACEABILITY_MATRIX.md) liên kết yêu cầu → kiểm thử/evidence. [Input Specification 0.1.0 — DRAFT](specs/input/README.md) tiếp tục sở hữu raw/format/provenance/validation/import state; Core giữ semantic policy/comparison. ADR-001..009 đã được chốt ở mức engineering baseline, không là approval của giảng viên hoặc triển khai.
+**Thuật toán chính (13/11/2026): DYTAVA_UDG_v3, hoàn thiện thành [đặc tả UDG3.1 theo 11 layer](specs/engine/README.md).** [30/30 gaps đã có hợp đồng và acceptance](testing/UDG_CONTRACT_ACCEPTANCE.md), kèm [resource/benchmark contract](requirements/RESOURCE_PROFILES.md). Đây là baseline docs DRAFT, chưa đọc/sửa mã triển khai hoặc chạy benchmark. [Review v3 ban đầu](project/DYTAVA_UDG_v3/LAYERED_SPEC_REVIEW.md) giữ để audit, không là backlog OPEN hiện hành.
+
+[Baseline bàn giao docs3.1](governance/SPECIFICATION_BASELINE_3_1.md) tổng hợp deliverables, compatibility và phần còn chờ implementation/evidence.
+
+**Bắt đầu tại [Document Control](governance/DOCUMENT_CONTROL.md)** để xem nguồn sở hữu và quy trình thay đổi. Bốn tài liệu quản lý chính: **[PRD](product/PRD.md)** (phạm vi/US), **[SRS](requirements/SRS.md)** (FR), **[NFR](requirements/NFR.md)** (quality/measurements), **[Architecture](architecture/ARCHITECTURE.md)** (module/ports). [Traceability Matrix](requirements/TRACEABILITY_MATRIX.md) liên kết yêu cầu → kiểm thử/evidence. [Input contracts — docs0.2 / schemas0.1 DRAFT](specs/input/README.md) tiếp tục sở hữu raw/format/provenance/validation/import state; Core giữ semantic policy/comparison. ADR-001..009 đã được chốt ở mức engineering baseline, không là approval của giảng viên hoặc triển khai.
 
 | Tài liệu / tài nguyên | Vai trò hiện hành |
 | --- | --- |
@@ -25,7 +29,10 @@ Baseline nền tảng là **Flutter/Dart, Android P0 → iOS P1**; ưu tiên tí
 | [ADR register P0](decisions/ADR_REGISTER_P0_2026-11-11.md) | 9 quyết định A/B, OCR, scope, budgets, header, identifier, XLSX, confirmation và retention |
 | [Input index](specs/input/README.md) | Nguồn biên soạn Input; hướng dẫn ưu tiên/versioning/glossary/ADR |
 | [Flutter Master 2.2 — Archive Reference](project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/EXCELCOMPARE_MASTER_ANDROID_IOS.md) | Snapshot lịch sử; PRD/SRS/NFR/Architecture không biên soạn song song ở Master |
-| [Core semantic spec](project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) | Canonicalization, policy và thuật toán; physical source types dẫn sang Input |
+| [UDG3.1 — đặc tả thuật toán theo layer](specs/engine/README.md) | Execution plan, geometry, canonical/index/alignment, verdict/result/runtime/query/export; DRAFT, chưa runtime verified |
+| [Gap resolution / UDG-TC-001..020](testing/UDG_CONTRACT_ACCEPTANCE.md) | 30/30 gap dispositions, golden examples, expected behavior và planned acceptance |
+| [Resource profiles RP-1](requirements/RESOURCE_PROFILES.md) | Dimensions/budget equations, calibration/enable gates, benchmark/evidence protocol; chưa có enabled device profile |
+| [Core semantic spec](project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) | Contract canonicalization, policy, bốn kết luận và key semantics mà UDG v3 phải tuân thủ; physical source types dẫn sang Input |
 | [Policy v2 chuẩn](project/comparison_policy.v2.example.json) | Một bản để biên soạn tiếp; policy_version=2.1.0, không trộn ImportConfig |
 | [Acceptance registry index](examples/README.md) | Tách semantic TC-* và Input INP-TC-* |
 | [Build/release guide](project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/ANDROID_IOS_BUILD_RELEASE_GUIDE.md) | Android/iOS signing và device gates |
@@ -33,7 +40,7 @@ Baseline nền tảng là **Flutter/Dart, Android P0 → iOS P1**; ưu tiên tí
 | [Core PoC source](../packages/excelcompare_core/README.md) | Mã nguồn chính thức để phát triển tiếp; chưa đầy đủ adapter/provenance |
 | [Branding](branding.md) | Nhận diện, không là capability registry |
 
-Trong phạm vi Input, đọc quy tắc tại specs/input/ và wire shape cùng version tại schemas/. Xung đột Markdown/schema phải được sửa trước approval. **PRD sở hữu product scope; SRS sở hữu FR; NFR sở hữu quality; Architecture sở hữu cấu trúc phần mềm; Input sở hữu raw/wire; Core spec sở hữu semantic equivalence; ADR sở hữu quyết định đã chốt.** Master/Core source demo/ZIP trong bundle chỉ là snapshot lịch sử; Core semantic spec vẫn là nguồn thuật toán hiện hành. Không duy trì định nghĩa trùng ở Master.
+Trong phạm vi Input, đọc quy tắc tại specs/input/ và wire shape cùng version tại schemas/. Xung đột cùng version phải sửa trước approval; [ISC-1/target Input0.2](specs/input/11_streaming_snapshot_contract.md) là contract thiết kế mới, chưa có executable schema thay0.1. **PRD sở hữu product scope; SRS sở hữu FR; NFR/RP-1 sở hữu quality/budgets; Architecture sở hữu cấu trúc phần mềm; Input sở hữu raw/wire; UDG3.1 sở hữu execution tổng thể; Core/CE-1/decision tables sở hữu semantic equivalence; Report/EX-1 sở hữu presentation/export; ADR sở hữu quyết định đã chốt.** Master/source demo/ZIP và v3 gốc là snapshot lịch sử; không dùng chúng ghi đè contracts hiện hành.
 
 Policy 2.1.0 được chọn từ bundle làm bản chuẩn tại project/. Bản bundle policy/acceptance giữ nguyên để audit, không là nguồn sửa song song. Nhận diện hiện hành dùng Dytava v2.0 tại branding/, web/assets/ và mobile/assets/.
 

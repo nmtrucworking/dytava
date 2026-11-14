@@ -3,15 +3,15 @@
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
 Document ID: INP-006\
-Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
+Version: 0.2.0 (documentation/ISC-1; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 12/11/2026
+Updated: 13/11/2026
 
 ## 1. Mục đích và phạm vi
 
-Tách cấu hình đọc cấu trúc nguồn khỏi mapping/key và semantic policy. Draft schema 0.1.0 mô tả InputConfig bảng tabular nhưng chưa encode image OCR vừa đưa lên Android P0; cần schema migration/version mới và receipt/extraction contracts. Không thay thế policy schema v2 và không chứng minh adapters đã triển khai.
+Tách cấu hình đọc cấu trúc nguồn khỏi mapping/key và semantic policy. Draft schema 0.1.0 mô tả InputConfig bảng tabular nhưng chưa encode image OCR vừa đưa lên Android P0; [ISC-1/target0.2](11_streaming_snapshot_contract.md) đã đặc tả migration/version mới và receipt/extraction contracts; executable schemas/validators vẫn pending. Không thay thế policy schema v2 và không chứng minh adapters đã triển khai.
 
 ## 2. Thuật ngữ và định nghĩa
 

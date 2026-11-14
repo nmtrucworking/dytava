@@ -1,10 +1,10 @@
 ---
 document_id: DYT-SRS-001
-version: 0.2.0
+version: 0.3.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-12
+updated: 2026-11-13
 release_baseline: P0 mở rộng (Android trước; web/iOS có gate riêng)
 source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 03-06 (historical)
 ---
@@ -20,6 +20,8 @@ source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 03-06 (historical)
 **Trạng thái tài liệu:** bản đặc tả cần implementation/evidence; code Flutter hiện là UI semantic comparison PoC, chưa là app hoàn chỉnh. Các `INP-TC-*` hiện `PLANNED`. [Input 0.1.0](../specs/input/README.md) định nghĩa raw source, schema, provenance, validation, state; [Core spec](../project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) định nghĩa canonicalization/semantic correctness.
 
 ## 2. Actors và preconditions
+
+**Detailed contracts:** [UDG3.1](../specs/engine/README.md) sở hữu execution plan/geometry/matching; [ISC-1](../specs/input/11_streaming_snapshot_contract.md) sở hữu streaming/Input0.2 target; [CE-1](../specs/core/CANONICAL_ENCODING.md) và [decision tables](../specs/core/COMPARISON_DECISIONS.md) mở rộng Core; [ER-1/WP-1](../specs/engine/04_result_runtime.md) sở hữu result/runtime; [EX-1](../specs/report/STREAMING_EXPORT_CONTRACT.md) sở hữu query/export; [RP-1](RESOURCE_PROFILES.md) sở hữu budgets/calibration. FR IDs/phase không đổi. Các contracts là DRAFT, executable schema/validators và runtime evidence chưa có.
 
 - **User:** chọn source và scope; review OCR/header/key/policy; chạy và xuất report. Không mặc định user là administrator.
 - **System:** giữ access grants trong scope được phép, preflight, resolve config, freeze source snapshot, execute comparison và export an toàn.
@@ -56,7 +58,7 @@ source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 03-06 (historical)
 
 ### 4.1. Source identity và snapshot
 
-Mỗi slot A/B có `artifact_id` độc lập, kể cả cùng tên hoặc cùng hash; `SourceTable` giữ coordinate thực (XLSX address, CSV logical record + physical lines, OCR image polygon). Preview sample có thể xuất hiện trước EOF nhưng chỉ `ParsedAndValidated` với hash/EOF/config hợp lệ mới chuyển sang `PREVIEW_READY`. Thay bytes/scope/header/parser version làm mất hiệu lực snapshot và mapping cũ. **Input rules/JSON wire shape là nguồn chuẩn tại INP-001..010**; SRS không định nghĩa schema thứ hai.
+Mỗi slot A/B có `artifact_id` độc lập, kể cả cùng tên hoặc cùng hash; `SourceTable` giữ coordinate thực (XLSX address, CSV logical record + physical lines, OCR image polygon). Preview sample có thể xuất hiện trước EOF nhưng chỉ `ParsedAndValidated` với hash/EOF/config hợp lệ mới chuyển sang `PREVIEW_READY`. Thay bytes/scope/header/parser version làm mất hiệu lực snapshot và mapping cũ. **Input rules/JSON wire shape là nguồn chuẩn tại INP-001..011, theo đúng version**; SRS không định nghĩa schema thứ hai.
 
 ### 4.2. Mapping / direction / alignment
 
@@ -80,7 +82,7 @@ Image/camera → bounded decode → orientation/crop → OCR text blocks+geometr
 Bốn export kinds và quy tắc format/merged union/template/lifecycle được định nghĩa tại [Report Export Specification](../specs/report/README.md). FR-013 sở hữu summary/CSV/JSON; FR-017/018 bổ sung PDF. Mọi exporter dùng cùng immutable result snapshot và không tự triển khai lại Core semantics.
 
 
-JSON report chứa source hashes/identities (không chứa access tokens/URI), engine/policy/config/version, direction, summary, field/record/cell diffs, unresolved, warnings và refs; contract đầy đủ cần bổ sung schema/version trước release. CSV an toàn trước spreadsheet formula injection: viết các giá trị chưa tin cậy như **text**, kiểm tra bằng công cụ đọc bảng tính phổ biến; không chỉ thêm dấu nháy rồi mặc định đã an toàn. Export do user khởi tạo, output không ghi đè nguồn, báo cáo dở không hiển thị là completed. DATE/TIME/MONEY chỉ hiển thị nếu có capability + tests.
+JSON report chứa source hashes/identities (không chứa access tokens/URI), engine/policy/config/version, direction, summary, field/record/cell diffs, unresolved, warnings và refs; logical contract ER-1/EX-1 đã có version; executable schema/validator target còn cần hiện thực trước release. CSV an toàn trước spreadsheet formula injection: viết các giá trị chưa tin cậy như **text**, kiểm tra bằng công cụ đọc bảng tính phổ biến; không chỉ thêm dấu nháy rồi mặc định đã an toàn. Export do user khởi tạo, output không ghi đè nguồn, báo cáo dở không hiển thị là completed. DATE/TIME/MONEY chỉ hiển thị nếu có capability + tests.
 
 ### 4.7. Dung lượng lớn và giới hạn mở rộng
 

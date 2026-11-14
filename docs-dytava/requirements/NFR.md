@@ -1,10 +1,10 @@
 ---
 document_id: DYT-NFR-001
-version: 0.2.0
+version: 0.3.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-12
+updated: 2026-11-13
 release_baseline: P0 mở rộng (Android trước; web/iOS có gate riêng)
 source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 09-11 (historical)
 ---
@@ -47,6 +47,8 @@ source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 09-11 (historical)
 NFR-PERF-01 và NFR-REL-01 là **mục tiêu tham khảo từ Master 2.2**, không phải kết quả đạt được. Mục tiêu OCR CER/WER/cell accuracy chưa có threshold được chốt bởi corpus; xem mục 5. Không được tự thiết lập 99% OCR accuracy mà không có mẫu số/CI.
 
 ## 3. Resource profiles và trần input 1 GB
+
+[RP-1 — resource profiles/benchmark contract](RESOURCE_PROFILES.md) là extension nguồn của NFR: typed dimensions, budget equations, soft/hard actions, calibration/enable gates và evidence protocol. Hợp đồng đã được đặc tả; actual device-specific values/ENABLED profiles còn CALIBRATION_REQUIRED, không tự điền throughput/RAM numbers.
 
 [EXP-ADR-001](../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) thay trần sản phẩm conservative của INP-ADR-004. **Trần input là 1 GB = 1.000.000.000 byte/source**, không phải 1 GiB (1.073.741.824 byte), không phải tổng A+B. Hai nguồn có thể tổng 2 GB; bytes output/scratch không tính vào source size. File đúng trần được qua size gate; byte thứ 1.000.000.001 phải bị chặn bằng INP-ERR-004. Size unknown phải kiểm đếm trong read; không tin extension/provider metadata hoặc chỉ compressed size.
 

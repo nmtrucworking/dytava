@@ -1,0 +1,1 @@
+digraph G {rankdir=LR; node [shape=box,style="rounded,filled",fillcolor="#EAF2F8"]; user[label="Người dùng"]; ui[label="Dytava Flutter UI"]; engine[label="Comparison Engine"]; storage[label="SQLite / local files"]; input[label="Workbook A + B"]; report[label="Report JSON / CSV"]; user->ui; input->ui; ui->engine; engine->storage; engine->report; report->ui; }

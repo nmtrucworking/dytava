@@ -1,10 +1,14 @@
 ---
-version: 0.2.0
+version: 0.3.0
 ---
 # Bộ dữ liệu kiểm thử Dytava - từ cơ bản đến siêu phức tạp
 
 >[!NOTE] Phạm vi
 >So sánh hai tệp dữ liệu có cấu trúc, kiểm tra độ chính xác của `Difference Engine`, `DataType Policy Engine`, khả năng đọc nhiều định dạng, hiệu năng và độ ổn định trên Android/iOS bằng Flutter. Chưa bao gồm OCR
+
+## Thuật toán UDG3.1 và contract acceptance
+
+[Gap resolution / UDG-TC-001..020](UDG_CONTRACT_ACCEPTANCE.md) bổ sung30/30 gap dispositions, golden examples và contract cases cho11 layers. [RP-1](../requirements/RESOURCE_PROFILES.md) sở hữu benchmark/calibration protocol. Toàn bộ UDG runtime cases NOT_RUN, không thay INP/Core/LARGE/REP registries. Bộ real-data dưới đây chưa có OCR corpus; OCR P0 có plan riêng tại INP-TC-039/040 và UDG-TC-006.
 
 ## Scope mở rộng và nghiệm thu
 

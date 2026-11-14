@@ -1,10 +1,10 @@
 ---
 document_id: DYT-DOC-CONTROL-001
-version: 0.2.0
+version: 0.4.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-12
+updated: 2026-11-13
 ---
 
 # Dytava — Document Control và nguồn quản lý yêu cầu
@@ -19,7 +19,8 @@ Dự án trước đây tập trung nội dung sản phẩm, FR, NFR, kiến tr�
 | [SRS — DYT-SRS-001](../requirements/SRS.md) | Functional requirements FR-001..FR-018, cross-feature behavior, pre/postconditions, measurable system acceptance | Raw Input schema/format rules, Core normalization semantics, quality SLO |
 | [NFR — DYT-NFR-001](../requirements/NFR.md) | Quality requirements/metrics, resource guardrails, privacy/security/accessibility/reliability verification, evidence gates | Product scope, business comparison logic, module layout |
 | [Architecture — DYT-ARCH-001](../architecture/ARCHITECTURE.md) | Architecture drivers, logical components, dependency rules, tech candidates, ports/flows and actual-vs-target matrix | User priority, wire type semantics, evidence that features work |
-| [Input Contract — INP-000..010](../specs/input/README.md) | Source metadata, format/adapter capability, raw physical types/provenance, ImportConfig, validation, input state/error, INP-REQ/RULE/TC | Semantic equivalence or product phase selection |
+| [Input Contract — INP-000..011](../specs/input/README.md) | Source metadata/physical raw/provenance, ImportConfig, validation/input state; ISC-1 streaming/snapshot/OCR target0.2/migration | Semantic equivalence or product phase selection |
+| [UDG3.1 — thuật toán chính từ DYTAVA_UDG_v3](../specs/engine/README.md) | Execution plan, geometry/candidates/alignment; ER-1/WP-1 runtime extension thuộc Architecture; [gap dispositions](../testing/UDG_CONTRACT_ACCEPTANCE.md) | Không ghi đè scope/FR, Input wire, Core semantic contract, NFR numeric budgets hoặc benchmark evidence |
 | [Core Semantic Spec](../project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) | Canonical values, datatype policies, comparison precedence, key matching semantics, reason codes | File bytes/permission, product release priority |
 | [ADR Register](../decisions/ADR_REGISTER_P0_2026-11-11.md) + [Scope expansion](../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) | Quyết định baseline và EXP-ADR-001..003; precedence cho 1 GB/hai PDF | Implementation proof, test PASS, automatic academic approval |
 | [Report Export Spec — DYT-REP-001](../specs/report/README.md) | Export kinds, merged diff layout, template Dytava/version, manifest và REP-TC-* | Core equivalence, Input format support, device resource thresholds |
@@ -27,6 +28,12 @@ Dự án trước đây tập trung nội dung sản phẩm, FR, NFR, kiến tr�
 | [Traceability Matrix](../requirements/TRACEABILITY_MATRIX.md) | Read-only cross-document references to IDs/tests/status/evidence | Redefinition of FR, INP-REQ or test expected values |
 
 **Rule:** nếu hai tài liệu cùng nhắc một ý, tài liệu không sở hữu chỉ ghi **tóm tắt + liên kết**, không tạo định nghĩa thứ hai. Mỗi ID được khai báo ở **một** nguồn; bản tham chiếu ở khác tài liệu có cùng ID.
+
+**Chỉ định thuật toán ngày 13/11/2026:** chủ dự án chọn DYTAVA_UDG_v3 làm thuật toán chính. [Layered review](../project/DYTAVA_UDG_v3/LAYERED_SPEC_REVIEW.md) là snapshot đánh giá ban đầu, nay SUPERSEDED bởi contracts3.1; các `UDG-Lx-*` là gap IDs, không phải FR/test IDs. V3 gốc Markdown/PDF/DOCX giữ làm nguồn review; tiêu đề implementation-ready và các phân pha khác baseline trong bản gốc chưa được chấp nhận chỉ bởi việc chọn thuật toán. Core giữ semantic laws/precedence, UDG thiết kế execution để tuân thủ chúng. Công việc hiện tại chỉ ở docs, chưa cấp trạng thái VERIFIED hoặc bắt đầu triển khai.
+
+**Baseline hoàn thiện docs:** [UDG3.1](../specs/engine/README.md) thay bản v3 gốc/review như nguồn thiết kế hiện hành. [30 gaps](../testing/UDG_CONTRACT_ACCEPTANCE.md) ở trạng thái SPECIFIED_PENDING_REVIEW; [RP-1](../requirements/RESOURCE_PROFILES.md), [ISC-1](../specs/input/11_streaming_snapshot_contract.md), [CE-1](../specs/core/CANONICAL_ENCODING.md), [Core decisions](../specs/core/COMPARISON_DECISIONS.md), [ER-1/WP-1](../specs/engine/04_result_runtime.md), [EX-1](../specs/report/STREAMING_EXPORT_CONTRACT.md) là owner extensions. Chưa có executable schema migration, enabled device profiles hoặc benchmark evidence. Những chữ OPEN trong snapshot review là lịch sử; dispositions mới không có nghĩa code/test đã PASS.
+
+[Baseline bàn giao3.1](SPECIFICATION_BASELINE_3_1.md) liệt kê owner contracts, version/migration, docs QA và ranh giới evidence.
 
 ## 2. Tiền lệ khi phát hiện xung đột
 
@@ -45,11 +52,13 @@ Không đặt một thứ tự ưu tiên toàn cục giữa PRD, SRS, NFR, Archi
 
 Mỗi tài liệu có front matter tối thiểu: `document_id`, `version`, `status`, `owner`, `reviewer`, `updated`, `release_baseline` khi phù hợp.
 
-- `DRAFT`: đang chuẩn hóa, có thể phản biện, chưa có review sign-off. PRD/SRS/NFR/SAD/RTM cập nhật **DRAFT 0.2.0**, Report spec **DRAFT 0.2.0**, renderer template 1.0.0 (Web/CLI, chưa đủ target gates); owner/reviewer **TBD**.
+- `DRAFT`: có thể phản biện, chưa có named review sign-off; version hiện hành ở front matter từng owner doc. UDG3.1 và owner extensions có specification_state=SPECIFIED_PENDING_REVIEW; reviewer cá nhân/calibration/evidence chưa có. Renderer template1.0.0 không tự thành target-streaming capability.
 - `REVIEW`: nội dung đã đóng phạm vi và gửi review, nhưng chưa APPROVED.
 - `APPROVED`: owner + reviewer, quyết định scope/ADR quan trọng, schemas/fixtures và acceptance được liên kết; **không tự đồng nghĩa implementation PASS**.
 - `SUPERSEDED`: có link sang version mới, giữ lịch sử.
 - **Implementation/evidence** độc lập: `NOT_IMPLEMENTED`, `IN_PROGRESS`, `VERIFIED` chỉ dùng sau khi có SHA/runner/fixture/device evidence, không tự suy từ documentation status.
+
+**Gap disposition** độc lập: `OPEN` chưa có quyết định thiết kế; `SPECIFIED` đã có owner contract/examples/error-budget semantics/acceptance; `VALIDATED` chỉ sau execution evidence; `CLOSED` chỉ khi scope-specific review+verification đạt. Lần hoàn thiện docs chỉ dùng SPECIFIED, không CLOSED/VALIDATED. Roles trong tài liệu là domain responsibility, không giả tên người đã đồng ý review.
 
 Thay cấu trúc/semantic/wire contract phải version và migration notes tương ứng; thay policy semantic có thể breaking dù app version không đổi. Không hồi tố chuyển `PLANNED` sang `PASS` khi chưa chạy test.
 
@@ -68,9 +77,9 @@ Thay cấu trúc/semantic/wire contract phải version và migration notes tươ
 | --- | --- | --- |
 | Owner & reviewer | Phân công được ghi rõ và review sign-off | OPEN |
 | Academic OCR scope | Giảng viên xác nhận “một ảnh/một bảng, manual review” đủ yêu cầu | PENDING |
-| Input schema migration | OCR P0 ImportConfig/receipts/extraction contracts có version | NOT_DONE |
+| Input schema migration | ISC-1/target0.2 đã có shape/migration; executable schemas/validators/fixtures còn cần hiện thực | SPECIFIED / NOT_IMPLEMENTED |
 | Adapter/Core capabilities | Parser/OCR/semantic integration và golden tests | NOT_VERIFIED |
-| Large-input / PDF contracts | Profile large-input-v1, report/export schema, template renderer và FULL/filtered count reconciliation | NOT_DONE |
+| Large-input / PDF contracts | RP-1/ER-1/EX-1 đã có lifecycle/budgets/count contracts; profile calibration, schemas/renderer/full-corpus cần thực thi | SPECIFIED / NOT_VERIFIED |
 | Quality/release evidence | Device benchmark, privacy, APK build/sign + smoke | NOT_VERIFIED |
 
 **Yêu cầu mở rộng của chủ dự án đã được chấp nhận về scope**; các gate triển khai/kiểm thử không yêu cầu xin lại scope hoặc tự biến yêu cầu thành tùy chọn. Archive/bundle giữ lịch sử, không sửa wire schema/ví dụ cũ bằng thay thế số dung lượng.

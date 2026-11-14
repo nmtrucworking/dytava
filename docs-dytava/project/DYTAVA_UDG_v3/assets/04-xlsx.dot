@@ -1,0 +1,1 @@
+digraph G {rankdir=LR; node [shape=box,style="rounded,filled",fillcolor="#EAF2F8"]; zip[label="Bounded ZIP reader"]; rel[label="workbook.xml + rels"]; shared[label="Shared strings / styles / epochs"]; sheets[label="sheet XML streams"]; batches[label="Cell batches + provenance"]; zip->rel; rel->shared; rel->sheets; shared->batches; sheets->batches; }

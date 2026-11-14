@@ -1,10 +1,10 @@
 ---
 document_id: DYT-ARCH-001
-version: 0.2.0
+version: 0.4.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-12
+updated: 2026-11-13
 release_baseline: P0 mở rộng (Android trước; web/iOS có gate riêng)
 source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 06-08 and 12 (historical)
 ---
@@ -13,7 +13,11 @@ source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 06-08 and 12 (historical)
 
 > **Nguồn chính thức cho cấu trúc, ranh giới module, phụ thuộc và runtime interaction của ứng dụng Flutter.** Đây là **target architecture**, không phải sơ đồ khẳng định code đã xây xong. [Input Specification](../specs/input/README.md) sở hữu source wire format/state/error; [Core Spec](../project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) sở hữu normalization/policy/matching; [ADR register](../decisions/ADR_REGISTER_P0_2026-11-11.md) sở hữu 9 lựa chọn đã chốt.
 
+**Thuật toán chính:** [DYTAVA_UDG_v3](../project/DYTAVA_UDG_v3/README.md), theo chỉ định ngày 13/11/2026. [Review lịch sử theo layer](../project/DYTAVA_UDG_v3/LAYERED_SPEC_REVIEW.md) là căn cứ hoàn thiện execution/correctness/performance contracts3.1. L0 tương ứng comparison plan; L1–2 Input; L3–7 Domain geometry/canonicalization/matching/diff; L8 result/persistence; L9 application/runtime; L10 presentation/export. Đây là phân lớp trách nhiệm, không yêu cầu thêm 11 package. Dependency direction tại SAD và ownership Input/Core/NFR/Report vẫn áp dụng; 30 gaps đã SPECIFIED tại [resolution registry](../testing/UDG_CONTRACT_ACCEPTANCE.md), chưa là implementation đã hoàn tất. Bảng actual-vs-target §6 bên dưới giữ hồ sơ kiểm tra trước đây, không được kiểm tra lại mã nguồn trong lần review docs này.
+
 ## 1. Context, architecture drivers và release
+
+**Execution baseline hiện hành:** [UDG3.1](../specs/engine/README.md) thay nguồn đề xuất v3 gốc. [ER-1/WP-1](../specs/engine/04_result_runtime.md) là extension runtime/result của SAD: single logical writer, bounded idempotent staging batches, atomic publish marker, lease ownership, byte-credit backpressure, cancel/restart tables. [ISC-1](../specs/input/11_streaming_snapshot_contract.md), [RP-1](../requirements/RESOURCE_PROFILES.md) và [EX-1](../specs/report/STREAMING_EXPORT_CONTRACT.md) là ports/contracts nguồn; không suy implementation từ phân lớp này.
 
 **Use case:** đọc hai nguồn A/B (XLSX/CSV/TSV hoặc tối đa một ảnh PNG/JPEG), bảo toàn bằng chứng, người dùng xác nhận schema/semantic, đối chiếu với Core Pure Dart rồi export CSV/JSON, merged diff PDF và PDF template Dytava không cần Internet; input tới 1 GB/source theo [scope mở rộng](../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md). External cloud/database không tham gia P0. iOS P1; Web/server trong monorepo là **implementation độc lập**, không phải evidence Flutter.
 
@@ -106,7 +110,7 @@ Image (PNG/JPEG) read-only
 
 Do not upload image or EXIF implicitly. Text recognition does **not** restore source Excel formulas/styles or hidden rows. Crop/rotation/layout mutation invalidates review receipts. A low confidence or null confidence must still require user confirmation.
 
-**Blocking architecture gap:** current InputConfig schema 0.1.0 models tabular import, not image P0, despite schema SourceRef OCR shape. Implement a **versioned** InputConfig extension/migration plus OCR extraction/review receipt schemas and verifier fixtures **before** wiring OCR importer; do not mark `SUPPORTED` based on this SAD. Native ML Kit/plugin version/Android minSdk/camera permissions must pass compatibility PoC on actual build.
+**Implementation gate:** [ISC-1/target Input0.2](../specs/input/11_streaming_snapshot_contract.md) đã đặc tả union TABULAR/IMAGE, extraction/review receipts và migration; JSON Schemas/validators hiện vẫn0.1.0 nên OCR chưa được enable từ docs. Implement versioned schemas/fixtures trước wiring importer. Native OCR/plugin compatibility/offline/device PoC vẫn phải chạy; không mark SUPPORTED dựa vào SAD.
 
 ## 6. Repository: hiện thực vs mục tiêu
 

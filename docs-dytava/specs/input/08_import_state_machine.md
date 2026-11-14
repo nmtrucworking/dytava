@@ -3,11 +3,11 @@
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
 Document ID: INP-008\
-Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
+Version: 0.2.0 (documentation/ISC-1; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 12/11/2026
+Updated: 13/11/2026
 
 ## 1. Mục đích và phạm vi
 
@@ -101,7 +101,7 @@ INP-TC-034 chuyển state chuẩn và guard; INP-TC-035 race cancel/replace; INP
 
 ## 10. Open Questions
 
-INP-ADR-009 về scratch/retention. Recovery strategy ở đây đề xuất restart an toàn, không hứa checkpoint/resume. Cần UX background handling và device lifecycle tests trước APPROVED.
+INP-ADR-009 đã chốt restart/revalidate. [ISC-1](11_streaming_snapshot_contract.md) sở hữu source/snapshot leases; [ER-1/WP-1](../engine/04_result_runtime.md) sở hữu comparison job/protocol/cleanup transitions, không thay Input state machine này. Thiết kế đã SPECIFIED; background/device lifecycle tests và named review vẫn cần trước approval/release, không hỗ trợ resume partial import P0.
 
 ## 11. References
 

@@ -1,15 +1,15 @@
 # Dytava — Input Specification
 
 Document ID: INP-000\
-Version: 0.1.1 (documentation; wire schemas vẫn 0.1.0)\
+Version: 0.2.0 (documentation/ISC-1; wire schemas vẫn 0.1.0)\
 Status: DRAFT\
 Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
-Updated: 12/11/2026
+Updated: 13/11/2026
 
 ## Phạm vi và trạng thái
 
-Đây là điểm vào chuẩn cho việc biên soạn Input Contract: hệ thống tiếp nhận gì, diễn giải cấu trúc thế nào, giữ bằng chứng nào, từ chối trường hợp nào và khi nào được giao dữ liệu sang Core. Có 10 đặc tả chuyên đề, 5 JSON Schema và fixtures; bộ này chưa APPROVED. Các quy tắc MUST/không được trong tài liệu là yêu cầu thiết kế đề xuất, không phải chứng cứ đã triển khai.
+Đây là điểm vào chuẩn cho việc biên soạn Input Contract: hệ thống tiếp nhận gì, diễn giải cấu trúc thế nào, giữ bằng chứng nào, từ chối trường hợp nào và khi nào được giao dữ liệu sang Core. Có 11 đặc tả chuyên đề, 5 JSON Schema0.1.0 và fixtures; bộ này chưa APPROVED. Các quy tắc MUST/không được trong tài liệu là yêu cầu thiết kế đề xuất, không phải chứng cứ đã triển khai.
 
 Baseline sản phẩm: Flutter/Dart, Android P0 và iOS P1 theo 9 ADR/PRD hiện hành. Package `packages/excelcompare_core/` hiện là semantic PoC, chưa có đầy đủ adapter/provenance. Web có implementation riêng; kết quả Web không tự chứng minh contract Flutter đã đạt. Icon/branding không chứng minh định dạng đã được hỗ trợ.
 
@@ -28,7 +28,8 @@ Baseline sản phẩm: Flutter/Dart, Android P0 và iOS P1 theo 9 ADR/PRD hiện
 | [INP-007 — Validation](07_validation_errors.md) | Severity và INP-ERR-001–018; INP-RULE-030–032 |
 | [INP-008 — Import state](08_import_state_machine.md) | Events/guards/recovery A/B; INP-RULE-033–036 |
 | [INP-009 — Acceptance](09_acceptance_tests.md) | Registry INP-TC-001–040 và bằng chứng; INP-RULE-040 |
-| [INP-010 — OCR](10_ocr_image_input.md) | OCR **Android P0 tối thiểu**, review/geometry; INP-RULE-037–039; schema migration pending |
+| [INP-010 — OCR](10_ocr_image_input.md) | OCR **Android P0 tối thiểu**, review/geometry; INP-RULE-037–039; executable schema migration pending |
+| [INP-011 — Streaming/snapshot/OCR target0.2](11_streaming_snapshot_contract.md) | ISC-1 source access, immutable spools, multi-pass parse, snapshot/cursors và target0.2 migration/receipts; đã SPECIFIED |
 
 Thứ tự đọc: Scope → Artifacts → Formats → Structure → Types → Configuration → Validation → State → Tests; đọc OCR khi đánh giá yêu cầu ảnh.
 
@@ -36,7 +37,7 @@ Thứ tự đọc: Scope → Artifacts → Formats → Structure → Types → C
 
 Trong phạm vi Input, Markdown ở đây sở hữu quy tắc/ngữ nghĩa và schema cùng version sở hữu wire shape. Hai phần phải đồng nhất; nếu mâu thuẫn thì mở issue và chặn approval, không tự chọn một bản để bỏ qua lỗi. Kiểm tra cross-record, trạng thái và permission cần validator runtime; JSON Schema không thay thế chúng. Không suy ra capability runtime từ schema có thể biểu diễn một format.
 
-[PRD](../../product/PRD.md) giữ phase/scope; [SRS](../../requirements/SRS.md) giữ FR; [NFR](../../requirements/NFR.md) giữ quality; [Architecture](../../architecture/ARCHITECTURE.md) giữ system structure. Master 2.2 là lịch sử; Core spec giữ normalization, policy compiler, key matching/comparison. Chi tiết Input trong Master được thay bằng liên kết tới bộ này; physical source types do INP-005 sở hữu. Nếu xung đột semantic policy thì xử lý tại Core spec, không nhân bản logic trong Input. Markdown Master/Core là nguồn tài liệu hiện hành.
+[PRD](../../product/PRD.md) giữ phase/scope; [SRS](../../requirements/SRS.md) giữ FR; [NFR](../../requirements/NFR.md) giữ quality; [Architecture](../../architecture/ARCHITECTURE.md) giữ system structure. Master 2.2 là lịch sử; Core spec giữ normalization, policy compiler, key matching/comparison. Chi tiết Input trong Master được thay bằng liên kết tới bộ này; physical source types do INP-005 sở hữu. Nếu xung đột semantic policy thì xử lý tại Core spec, không nhân bản logic trong Input. Master giữ lịch sử; Core/CE-1/decision tables giữ semantic contracts; [UDG3.1](../engine/README.md) là algorithm execution baseline hiện hành.
 
 Schema `$id` dùng namespace `https://dytava.example/specs/input/0.1.0/` để định danh, không phải endpoint đã publish. Resolver phải nạp local/offline, không fetch dữ liệu từ URL do người dùng nhập. schema_version Import=0.1.0 độc lập với policy schema_version=2. Breaking shape/semantics cần tăng contract version và migration notes. config_revision thay đổi mỗi lần effective import config đổi; adapter/parser version và source hashes thuộc snapshot lineage.
 
@@ -77,7 +78,7 @@ Các ID dưới đây có đúng một định nghĩa. Test registry tham chiế
 
 **P0 Android:** .xlsx/.csv/.tsv + một nguồn ảnh .png/.jpg/.jpeg (không image-image), mỗi nguồn một bảng; comparison + CSV/JSON + merged diff PDF + Dytava report PDF và APK theo P0 mở rộng. JSON chuyển P1, iOS P1; **PDF input**, multi-page OCR, cloud OCR sau P0. Master 2.2 và các chữ OPEN/P2 trong đặc tả con chỉ còn ý nghĩa lịch sử khi mâu thuẫn với 9 ADR này.
 
-**Bắt buộc trước release mở rộng:** large-input-v1 + streaming/private spill/cancel + [LARGE-TC-*](../../testing/EXPANDED_SCOPE_ACCEPTANCE.md), report/export schema + hai PDF/template + REP-TC-*; tiếp tục  migration schema InputConfig 0.1.0 để biểu diễn image P0, OCR extraction/review receipt contracts, Flutter adapter/parser PoC và corpus, benchmark Android thật, tests và APK. Không tự đánh dấu các acceptance cases PLANNED là PASS.
+**Bắt buộc trước release mở rộng:** large-input-v1 + streaming/private spill/cancel + [LARGE-TC-*](../../testing/EXPANDED_SCOPE_ACCEPTANCE.md), report/export schema + hai PDF/template + REP-TC-*; hiện thực migration Input0.2/validators theo [ISC-1](11_streaming_snapshot_contract.md), OCR extraction/review receipt contracts đã đặc tả, Flutter adapter/parser PoC và corpus, benchmark Android thật, tests và APK. Không tự đánh dấu các acceptance cases PLANNED là PASS.
 
 ## Glossary
 

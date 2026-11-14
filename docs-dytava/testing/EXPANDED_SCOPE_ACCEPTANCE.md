@@ -1,16 +1,18 @@
 ---
 document_id: DYT-QA-EXP-001
-version: 0.1.0
+version: 0.2.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-12
+updated: 2026-11-13
 release_baseline: P0 mở rộng
 ---
 
 # Kế hoạch nghiệm thu input 1 GB và hai PDF
 
 Nguồn yêu cầu: [Scope expansion](../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md), [SRS FR-016..018](../requirements/SRS.md), [NFR §3](../requirements/NFR.md#3-resource-profiles-và-trần-input-1-gb), [Report spec](../specs/report/README.md). Toàn bộ test dưới đây **PLANNED/NOT_RUN**. Không có corpus 1 GB hoặc PDF golden được tạo/chạy trong lần cập nhật docs này.
+
+[UDG3.1 contracts](../specs/engine/README.md), [RP-1 calibration](../requirements/RESOURCE_PROFILES.md) và [UDG-TC-001..020](UDG_CONTRACT_ACCEPTANCE.md) bổ sung execution/budget/coverage rules. Positive boundary/full output gates dưới đây giữ nguyên; specs complete không chuyển tests sang PASS.
 
 ## 1. Registry dung lượng lớn — LARGE-TC-*
 

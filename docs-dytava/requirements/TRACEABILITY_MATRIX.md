@@ -1,10 +1,10 @@
 ---
 document_id: DYT-RTM-001
-version: 0.2.0
+version: 0.4.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-12
+updated: 2026-11-13
 release_baseline: P0 mở rộng (Android trước; web/iOS có gate riêng)
 ---
 
@@ -80,3 +80,39 @@ notes: "Documented plan; no runtime evidence yet."
 Baseline mới: [LARGE-TC-*](../testing/EXPANDED_SCOPE_ACCEPTANCE.md) và [REP-TC-*](../specs/report/README.md#6-acceptance-registry) bổ sung, không thay INP-TC-001..040/semantic TC-*.
 
 PRD US/phase change → SRS FR mapping → Input/Core contract/ADR implications → NFR gates → architecture module changes → fixtures/test runner → evidence. Nếu không resolve đủ liên kết, giữ DRAFT và mở issue thay vì âm thầm xóa ID.
+
+## 5. Thuật toán chính UDG v3 → layers → requirements
+
+Nguồn thiết kế hiện hành: [UDG3.1](../specs/engine/README.md); [30 gap dispositions và UDG-TC-001..020](../testing/UDG_CONTRACT_ACCEPTANCE.md) liên kết owner contracts/examples. [Review v3](../project/DYTAVA_UDG_v3/LAYERED_SPEC_REVIEW.md) chỉ giữ lịch sử gap IDs. Bảng này không định nghĩa thêm yêu cầu, thay oracle hoặc công bố PASS; fixtures Fxx vẫn là danh mục thiết kế.
+
+| Layer | Requirement / owner refs | Verification kế hoạch |
+| --- | --- | --- |
+| L0 Scope/plan | FR-001/002/005/006/012/016, EXP-ADR-001..003, NFR §3 | Capability/phase/profile và confirmation gates |
+| L1 Access | FR-001/003/015/016, Input/ADR-009 | INP-TC-003/006/037; LARGE-TC-001/004/005/008 |
+| L2 Parse/snapshot | FR-003/008/012/016, INP-005/008/010 | INP-TC-021..025/039/040; LARGE-TC-003/004 |
+| L3 Geometry/mapping | FR-002/004/005, Input scope/field IDs | Scope/header/field mapping cases; v3 F10/F11/F12/F13/F22/F24 theo phase |
+| L4 Policy/hash | FR-008/009/014, Core §5.2..6 | Semantic golden; v3 F04/F06/F07/F15/F19 |
+| L5 Candidates/index | FR-006/016, Core keys | Global duplicate/null/collision cases; LARGE-TC-002/003/006 |
+| L6 Alignment | FR-006/007/014, SRS §4.2 | KEY/POSITIONAL P0; v3 F16/F20 chỉ extension ORDERED/MULTISET |
+| L7 Typed diff | FR-008/009; FR-010/011 P1+ | Core semantic golden, flags/verdict precedence, unknown/loss cases |
+| L8 Audit/result | FR-007/013/014/015, SRS §4.4, Report | Conservation/counts, stale/partial guards; LARGE-TC-005/007/008 |
+| L9 Runtime | FR-015/016, INP-008, ADR-009, NFR-REL-02/03 | INP-TC-034..038; LARGE-TC-005/006 |
+| L10 UI/export | FR-013/017/018, Report/NFR-UX-02 | REP-TC-001..012; LARGE-TC-007; no incomplete publication |
+
+Toàn bộ thực thi của phần bổ sung này là **PLANNED/NOT_RUN**; lần cập nhật 13/11/2026 chỉ review/biên soạn docs, không kiểm tra mã hoặc chạy benchmark.
+
+## 6. Contract baseline → UDG cases
+
+| Contract | FR / NFR liên quan | UDG verification kế hoạch |
+| --- | --- | --- |
+| EP-1/capability matrix | FR-001/002/005/006/012/016 | UDG-TC-001/002/015 |
+| ISC-1/target Input0.2 | FR-001/003/008/012/015/016, NFR-SEC/PRIV/REL | UDG-TC-003..006/018 |
+| GF-1/geometry | FR-002/004/005, explainability | UDG-TC-007/008 |
+| CE-1/CFG-1 | FR-008/009/014, NFR-COR-01/02 | UDG-TC-009/010/011 |
+| Candidate/alignment | FR-006/007/014/016, bounded work | UDG-TC-011..013; extensions riêng P0 |
+| Core decision tables | FR-008/009; FR-010/011 extensions | UDG-TC-014/015 |
+| ER-1/WP-1 | FR-013/014/015/016, NFR-REL/COR/PRIV | UDG-TC-015..018 |
+| EX-1 | FR-013/017/018, NFR-UX-02/SEC-03 | UDG-TC-019/020; REP-TC-* |
+| RP-1 | NFR-PERF-01..04, NFR-REL-02/03 | UDG-TC-002/013/017; LARGE-TC-* |
+
+Execution mọi hàng NOT_RUN. Schema/validator migration, calibration và device evidence còn cần hiện thực; contract SPECIFIED không tự thành VERIFIED. Không thay semantic/Input/Report/LARGE oracle cũ.

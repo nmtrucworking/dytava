@@ -2,6 +2,8 @@
 
 # ExcelCompare • Flutter Android P0 + iPhone/iOS P1
 
+> **Điểm vào hiện hành13/11/2026:** [UDG3.1](../../specs/engine/README.md), [baseline docs](../../governance/SPECIFICATION_BASELINE_3_1.md) và [gap resolution](../../testing/UDG_CONTRACT_ACCEPTANCE.md). Bundle2.2/source demo/ZIP là snapshot; Core semantic spec cùng CE-1/decision extensions vẫn là owner semantic contract. Không dùng roadmap hoặc giới hạn cũ của bundle ghi đè PRD/SRS/NFR/ADR.
+
 **Phiên bản tài liệu:** 2.2-FLUTTER-ANDROID-IOS-DESIGN, 11/11/2026.
 
 **Trạng thái:** updated design + Dart core PoC + Flutter source demo skeleton; **không có APK/AAB/IPA đã biên dịch**.

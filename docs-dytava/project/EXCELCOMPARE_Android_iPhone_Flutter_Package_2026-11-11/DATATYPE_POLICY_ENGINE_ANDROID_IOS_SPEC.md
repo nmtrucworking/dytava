@@ -2,6 +2,8 @@
 
 # ExcelCompare — DataType, Semantic Normalization & Policy Engine (Flutter/Dart)
 
+> **Core contract extensions13/11/2026:** [CE-1 canonical encoding/hash/cache](../../specs/core/CANONICAL_ENCODING.md) và [typed comparison decisions](../../specs/core/COMPARISON_DECISIONS.md) sở hữu byte grammar/decision tables chi tiết. [UDG3.1](../../specs/engine/README.md) là execution baseline. Policy schema_version2 và semantic laws giữ nguyên; các phân pha cũ bên dưới được đồng bộ với PRD/SRS/ADR. Đây là đặc tả DRAFT, chưa verification runtime.
+
 > Ranh giới sau khi tách Input: physical types/provenance/raw lexical thuộc [Input 0.1.0 DRAFT](../../specs/input/README.md); tài liệu này giữ canonicalization, policy compiler, key matching và comparison. Ví dụ policy v2 chuẩn: [project policy](../comparison_policy.v2.example.json). Dart PoC hiện tại chưa triển khai đầy đủ wire contract này.
 
 **Trạng thái:** 2.2.0-FLUTTER-ANDROID-IOS-DESIGN | **Ngày cập nhật:** 11/11/2026 | **Nền tảng phát hành:** Flutter mobile — Android P0 (APK/AAB) rồi iPhone/iOS P1 (IPA); web/desktop ngoài phạm vi | **Policy JSON:** schema 2 (giữ tương thích)
@@ -123,7 +125,7 @@ excelcompare/
     lib/features/policy/
     lib/features/compare/
     lib/features/results/
-    lib/features/ocr/           # P2
+    lib/features/ocr/           # Android P0 reviewed OCR; adapter ngoài Core
     lib/infrastructure/         # file adapters, Drift, permissions
   packages/excelcompare_core/   # Pure Dart; no flutter/material.dart, android.*, Java POI
     lib/src/model/
@@ -134,13 +136,13 @@ excelcompare/
   docs/                         # ADRs, policy schemas, test fixtures
 ```
 
-**Công nghệ gợi ý (cần khóa version khi bắt đầu dự án):** Flutter SDK + Dart 3; `decimal` cho số chính xác, `file_picker` cho nguồn do người dùng chọn, `drift`/`drift_flutter` cho SQLite; Riverpod cho state (quyết định kiến trúc, không bắt buộc); `google_mlkit_text_recognition` ở P2 (chỉ Android/iOS, không tự có OCR web). Không áp đặt Apache POI Java vào Flutter: thử nghiệm package XLSX Dart trên device real với merged cells, formula caches, high cardinality shared strings và zip-bomb constraints; khi không đạt, dùng adapter native/platform channel có PoC hoặc giới hạn định dạng. Không tuyên bố CSV/XLSX streaming khi chưa benchmark.
+**Công nghệ gợi ý (cần khóa version khi bắt đầu dự án):** Flutter SDK + Dart 3; `decimal` cho số chính xác, `file_picker` cho nguồn do người dùng chọn, `drift`/`drift_flutter` cho SQLite; Riverpod cho state (quyết định kiến trúc, không bắt buộc); `google_mlkit_text_recognition` là ứng viên OCR Android P0 (cần compatibility/offline PoC) (chỉ Android/iOS, không tự có OCR web). Không áp đặt Apache POI Java vào Flutter: thử nghiệm package XLSX Dart trên device real với merged cells, formula caches, high cardinality shared strings và zip-bomb constraints; khi không đạt, dùng adapter native/platform channel có PoC hoặc giới hạn định dạng. Không tuyên bố CSV/XLSX streaming khi chưa benchmark.
 
 Flutter job dài: chạy parser/compare CPU intensive ngoài UI isolate bằng `Isolate.run`/long-lived Isolate khi phù hợp, giới hạn memory/bytes, progress/cancellation/checkpoint. Flutter Web không có isolate cùng mô hình; tính năng Web là out-of-scope ban đầu. Plugin calls/OCR phải đặt ngoài pure Dart domain. Platform-specific permissions và SAF URI lifecycle cần integration tests.
 
 ## 5.9. Data contracts, safety và vận hành
 
-`ComparisonReport` gồm `source_a`, `source_b`, `mapping`, `policy_snapshot`, `policy_digest`, `engine_version`, `adapter_versions`, `summary`, `record_differences`, `cell_differences`, `structural_differences`, `unresolved`, `warnings`. `SourceRef` tagged union `{type: excel, sheet, address}`, `{type: csv, line, field}`, `{type: json, pointer}`, `{type: ocr, imageId, polygon}`; không giả Sheet1 cho CSV/ảnh.
+Detailed result contract thuộc [ER-1](../../specs/engine/04_result_runtime.md), query/export thuộc [EX-1](../../specs/report/STREAMING_EXPORT_CONTRACT.md). Physical SourceRef union chỉ có nguồn định nghĩa tại [INP-005](../../specs/input/05_data_types_provenance.md); không giữ shape rút gọn cạnh tranh ở Core hoặc giả Sheet1 cho CSV/ảnh.
 
 UI không log raw/canonical, file URI, email, phone, OCR images vào telemetry. Cache Drift chứa dữ liệu nhạy cảm nếu persist: Drift/SQLite **không tự mã hóa**; áp dụng TTL và chọn SQLite encryption có PoC hoặc không lưu raw data. Export XLSX giữ user text như string cell, CSV chống formula injection, không mở external links/macros. Đổi policy/engine/source hash phải invalidate semantic comparison cache và tăng `config_revision`.
 
@@ -166,9 +168,9 @@ Release gates: validator & golden cases 100% pass trong scope implemented; prope
 ## 5.11. Kế hoạch chuyển đổi theo giai đoạn
 
 - **G0 / Nền tảng học:** học Dart 3 (records, sealed, async/await, isolates), Flutter widgets/state/navigation, unit tests; chạy thử package `excelcompare_core` độc lập với app.
-- **G1 / Lõi ngữ nghĩa:** implement & test toàn bộ semantic dtypes; policy compiler/validator; stable digest; key alignment; golden fixtures.
-- **G2 / Android MVP:** Flutter Import/Preview/Mapping/Policy/Results; CSV/JSON + XLSX theo PoC; Drift local sessions, safe export.
-- **G3 / Mở rộng:** OCR ML Kit + manual review, các format khác, thiết bị/OS matrix, optional iOS/desktop.
+- **G1 / Lõi P0:** implement/test năm dtypes P0 theo PRD, policy compiler/CE-1 digest, KEY/POSITIONAL và golden fixtures; dtypes còn lại extension disabled đến khi đủ contracts/tests.
+- **G2 / Android P0 mở rộng:** Input XLSX/CSV/TSV và một OCR source reviewed, source1GB/profile RP-1, Mapping/Policy/Results, CSV/JSON + hai PDF theo ER-1/EX-1; private scratch, restart/revalidate.
+- **G3 / Mở rộng:** additional formats/types, multi-sheet/modes, iOS/OS matrix và optional desktop; OCR tối thiểu không bị đẩy ra khỏi P0.
 
 ## Nguồn tham khảo đối chiếu (truy cập 11/11/2026)
 
@@ -179,7 +181,7 @@ Release gates: validator & golden cases 100% pass trong scope implemented; prope
 - `drift`: https://pub.dev/packages/drift
 - ML Kit Flutter plugin/platform constraints: https://pub.dev/packages/google_mlkit_text_recognition
 
-**Các giả định cần xác nhận khi triển khai:** giới hạn file/device, nền tảng thứ hai sau Android, cấu trúc XLSX cần hỗ trợ (formulas/merged/style), có lưu dữ liệu thô ở máy hay không, chính sách OCR/consent, chỉ tiêu hiệu năng trên corpus đại diện.
+**Quyết định scope/lifecycle đã có:** source1GB theo NFR, Android P0/iOS P1, reviewed OCR P0, no raw retention mặc định theo ADR-009, formulas/style P1+. **Cần evidence khi triển khai:** parser/normalizer/native compatibility, RP-1 device calibration, performance/correctness corpus và reviewer/academic sign-off; không mở lại scope đã chốt như giả định chưa quyết định.
 
 
 ## 5.12. Cross-platform contract và release parity — Android P0 / iOS P1
