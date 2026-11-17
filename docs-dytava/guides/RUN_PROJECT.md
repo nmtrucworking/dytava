@@ -1,7 +1,7 @@
 # Dytava — Hướng dẫn cài đặt, chạy và kiểm thử dự án
 
 **Mã tài liệu:** DY-OPS-001  
-**Phiên bản:** 1.1 — 12/11/2026  
+**Phiên bản:** 1.2 — 18/11/2026<br>
 **Repository:** https://github.com/nmtrucworking/dytava  
 **Nhánh đối chiếu:** `main`  
 **Tình trạng xác minh:** Đã đối chiếu cấu hình repository và hướng dẫn Android chính thức; **chưa xác minh trên máy người dùng**. Hướng dẫn bên dưới không đồng nghĩa đã build/test thành công.
@@ -12,12 +12,12 @@
 
 | Thành phần | Đường dẫn | Công nghệ | Lệnh chính | Trạng thái phạm vi |
 |---|---|---|---|---|
-| Flutter Mobile | `mobile/` | Flutter + Dart | `flutter run` | PoC so sánh **hai giá trị ngữ nghĩa** |
+| Flutter Mobile | `mobile/` | Flutter + Dart | `flutter run` | Flow/activity trên **dữ liệu mẫu** + diagnostic semantic |
 | Semantic Core | `packages/excelcompare_core/` | Pure Dart | `dart test` | Engine PoC, một phần các semantic types |
 | Web + Express | Gốc repo, `web/`, `server/` | Node.js + Express + SQLite | `npm run dev` | Ứng dụng Web và API riêng |
 | Tài liệu thiết kế | `docs-dytava/` | Markdown, sơ đồ, đặc tả | Không chạy trực tiếp | Nhiều chức năng là mục tiêu thiết kế |
 
-**Quan trọng:** Flutter demo hiện dùng `mobile/lib/main.dart` để so sánh hai giá trị A/B. Mã nguồn ghi rõ **chưa đọc Excel/CSV hoặc xuất báo cáo trong mobile**. Web có pipeline độc lập; chạy Web không đồng nghĩa chạy mobile. Flutter demo không cần khởi động Express server.
+**Quan trọng:** Flutter mở guided flow với dữ liệu mẫu; diagnostic hai giá trị vẫn truy cập từ Home. Xem [implementation guide](MOBILE_IMPLEMENTATION.md). Mã nguồn ghi rõ **chưa đọc Excel/CSV hoặc xuất báo cáo trong mobile**. Web có pipeline độc lập; chạy Web không đồng nghĩa chạy mobile. Flutter demo không cần khởi động Express server.
 
 ### Scope mới và capability đang chạy
 
@@ -278,18 +278,20 @@ Trong VS Code có thể thay thế lệnh chạy bằng **Command Palette → Fl
 
 ### 4.8. Smoke test, analyze và widget test
 
-Giao diện hiện tại trong `mobile/lib/main.dart` là **ExcelCompare — Semantic PoC**:
+Ứng dụng mở Home của **Dytava flow/activity**. Theo [walkthrough](MOBILE_IMPLEMENTATION.md#3-luồng-kiểm-tra-thủ-công):
 
-1. Giá trị A mặc định `8.5`, B mặc định `8,5`.
-2. Chọn semantic dtype `decimal`, nhấn **So sánh**.
-3. Kỳ vọng trạng thái `EQUIVALENT` theo `mobile/test/widget_test.dart`.
+1. Chọn **So sánh mới (dữ liệu mẫu)**; nhập và xác nhận A/B độc lập.
+2. Ghép `id→id`, `amount→amount`; xác nhận mapping, mode, policy và direction.
+3. Chạy: mẫu chuẩn có EXACT=5, EQUIVALENT=1, DIFFERENT=1, UNRESOLVED=1, ROW_ADDED=1.
+4. Xem raw/canonical/rule ở detail và thử JSON preview. OCR review có nhánh giả lập riêng; không nhận dạng ảnh thật.
+5. Diagnostic cũ tại **Mở thử nghiệm so sánh hai giá trị**: `8.5` ↔ `8,5` cho EQUIVALENT.
 
 ```bash
 flutter analyze
 flutter test
 ```
 
-Đây là thử nghiệm so sánh **hai giá trị**; phiên bản Flutter này **chưa nhập XLSX/CSV, OCR hoặc xuất báo cáo**. Không dùng kết quả smoke test thay bằng chứng hoàn thành tính năng Android P0 trong PRD.
+Chạy lệnh ở `mobile/`, không analyze từ gốc monorepo vì `branding/` có Dart source mẫu ngoài Flutter package. Fixture tests không thay bằng chứng parser/OCR/export/1 GB hoặc release Android P0.
 
 ### 4.9. Build và cài APK vào emulator
 
@@ -433,7 +435,7 @@ npm run test:e2e
 - [ ] `flutter doctor -v` không còn lỗi Android toolchain/licensing; cảnh báo không cài Android Studio được phân loại riêng.
 - [ ] `emulator -list-avds` có `Dytava_API35`; `adb devices` có thiết bị trạng thái `device`.
 - [ ] `flutter pub get`, `flutter analyze`, `flutter test` chạy từ `mobile/`.
-- [ ] `flutter run` mở được **ExcelCompare — Semantic PoC** trên Android ảo.
+- [ ] `flutter run` mở được **Dytava flow/activity** trên Android ảo.
 - [ ] `flutter build apk --debug` tạo APK; lưu log/ảnh kết quả thực tế.
 - [ ] `dart test` chạy được trong `packages/excelcompare_core/` nếu cần kiểm thử Core riêng.
 - [ ] Khi cần Web độc lập: Node.js >=24, `npm ci`, `npm run build`, `npm test`, `npm run dev`, `/api/health`.
@@ -458,7 +460,7 @@ npm run test:e2e
 | `npm` báo `EBADENGINE` | Node.js thấp hơn `>=24` | Nâng Node.js 24+ |
 | `Chạy npm run build trước khi khởi động.` | Chưa build `dist/index.html` | Từ gốc monorepo chạy `npm run build` |
 | `EADDRINUSE` tại port 3000 | Port bị sử dụng | Dừng process trùng hoặc đổi `PORT` và `APP_ORIGIN` đồng bộ |
-| Mong đợi giao diện Flutter nhập Excel/OCR | Mobile hiện chỉ là PoC | Không suy diễn scope từ PRD; kiểm tra `mobile/lib/main.dart` |
+| Mong đợi giao diện Flutter nhập Excel/OCR | Mobile mới chạy fixture | Đọc [implementation guide](MOBILE_IMPLEMENTATION.md); chưa có adapters thật |
 | `flutter build ios` thất bại | Repo chưa có `mobile/ios/` | iOS chưa phải target sẵn sàng; triển khai riêng theo kế hoạch P1 |
 
 Trước khi dọn cache hoặc reset AVD, sao lưu log. `-wipe-data` sẽ xóa dữ liệu giả lập và không phải lựa chọn xử lý lỗi mặc định.
@@ -472,7 +474,7 @@ Trước khi dọn cache hoặc reset AVD, sao lưu log. `-wipe-data` sẽ xóa 
 | Cấu hình thiết bị | OS, chip/CPU, RAM, Android API, tên thiết bị hoặc emulator |
 | Flutter/Dart | Kết quả `flutter --version`, `dart --version`, `flutter doctor -v` |
 | Android build | Kết quả `flutter build apk --debug`, đường dẫn APK và dung lượng |
-| Functional demo | Ảnh màn hình PoC, cặp A/B được thử, loại semantic, kết quả hiển thị |
+| Functional demo | Walkthrough fixture, confirmations, summary/detail/preview; không coi là file E2E |
 | Kiểm thử tự động | Số test chạy, passed/failed, lệnh và thời điểm |
 | Web/API | Node version, URL local, phản hồi `/api/health`, ảnh Web |
 | Giới hạn | Chức năng đang chạy thực tế so với chức năng mới ở bản thiết kế |
@@ -484,7 +486,7 @@ Trước khi dọn cache hoặc reset AVD, sao lưu log. `-wipe-data` sẽ xóa 
 - [`README.md`](https://github.com/nmtrucworking/dytava/blob/main/README.md): giới thiệu dự án và lệnh chạy cơ bản.
 - [`package.json`](https://github.com/nmtrucworking/dytava/blob/main/package.json): Node engine và scripts thực tế.
 - [`mobile/pubspec.yaml`](https://github.com/nmtrucworking/dytava/blob/main/mobile/pubspec.yaml): Dart SDK, Flutter packages và assets.
-- [`mobile/lib/main.dart`](https://github.com/nmtrucworking/dytava/blob/main/mobile/lib/main.dart): phạm vi mobile PoC đang triển khai.
+- [`mobile/lib/main.dart`](https://github.com/nmtrucworking/dytava/blob/main/mobile/lib/main.dart): entrypoint flow; chi tiết tại implementation guide.
 - [`mobile/android/app/build.gradle`](https://github.com/nmtrucworking/dytava/blob/main/mobile/android/app/build.gradle): Android package và signing hiện tại.
 - [`server/config.js`](https://github.com/nmtrucworking/dytava/blob/main/server/config.js): cấu hình Web/API.
 - [`docs-dytava/README.md`](https://github.com/nmtrucworking/dytava/blob/main/docs-dytava/README.md): chỉ mục tài liệu thiết kế, không thay thế hướng dẫn chạy.

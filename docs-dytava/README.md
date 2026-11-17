@@ -14,6 +14,7 @@ Baseline nền tảng là **Flutter/Dart, Android P0 → iOS P1**; ưu tiên tí
 
 | Tài liệu / tài nguyên | Vai trò hiện hành |
 | --- | --- |
+| [Mobile implementation — flow/activity](guides/MOBILE_IMPLEMENTATION.md) | Bản triển khai 18/11: 10 màn hình chức năng trên fixture, state/guards/cancel/invalidation, tests và backlog; chưa là capability production |
 | [Run Project — VS Code + Android Emulator CLI](guides/RUN_PROJECT.md) | Hướng dẫn macOS Apple Silicon không Android Studio/điện thoại ngoài; xử lý sdkmanager, AVD, Flutter run, APK; Web/Core riêng |
 | [Document Control](governance/DOCUMENT_CONTROL.md) | Nguồn sở hữu, trạng thái, thứ tự xử lý xung đột, change control |
 | [PRD](product/PRD.md) | Persona, outcome, phạm vi pha, US-01..15 và hành trình |

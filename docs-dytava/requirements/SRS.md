@@ -1,10 +1,10 @@
 ---
 document_id: DYT-SRS-001
-version: 0.3.0
+version: 0.3.1
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-13
+updated: 2026-11-18
 release_baseline: P0 mở rộng (Android trước; web/iOS có gate riêng)
 source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 03-06 (historical)
 ---
@@ -17,7 +17,7 @@ source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 03-06 (historical)
 
 **Target:** Android Flutter P0; **hai** source slots A/B; XLSX/CSV/TSV và tối đa một source ảnh PNG/JPEG; một table/scope mỗi source; OCR chỉ khi đã manual review; kết quả CSV/JSON và, theo [scope mở rộng](../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md), **input tới 1 GB/source + merged diff PDF + Dytava report PDF**. NFR sở hữu định nghĩa bytes/profile; Report spec sở hữu template/layout. iOS, JSON input, compare formula/style/metadata, cloud OCR là P1+ theo [ADR register](../decisions/ADR_REGISTER_P0_2026-11-11.md).
 
-**Trạng thái tài liệu:** bản đặc tả cần implementation/evidence; code Flutter hiện là UI semantic comparison PoC, chưa là app hoàn chỉnh. Các `INP-TC-*` hiện `PLANNED`. [Input 0.1.0](../specs/input/README.md) định nghĩa raw source, schema, provenance, validation, state; [Core spec](../project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) định nghĩa canonicalization/semantic correctness.
+**Trạng thái tài liệu:** bản đặc tả cần implementation/evidence; code Flutter hiện có [nền tảng flow/activity trên fixture](../guides/MOBILE_IMPLEMENTATION.md) và diagnostic semantic PoC, chưa là app hoàn chỉnh hoặc capability tệp thật. Các `INP-TC-*` hiện `PLANNED`. [Input 0.1.0](../specs/input/README.md) định nghĩa raw source, schema, provenance, validation, state; [Core spec](../project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) định nghĩa canonicalization/semantic correctness.
 
 ## 2. Actors và preconditions
 

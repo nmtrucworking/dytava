@@ -1,10 +1,10 @@
 ---
 document_id: DYT-RTM-001
-version: 0.4.0
+version: 0.4.1
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-13
+updated: 2026-11-18
 release_baseline: P0 mở rộng (Android trước; web/iOS có gate riêng)
 ---
 
@@ -116,3 +116,7 @@ Toàn bộ thực thi của phần bổ sung này là **PLANNED/NOT_RUN**; lần
 | RP-1 | NFR-PERF-01..04, NFR-REL-02/03 | UDG-TC-002/013/017; LARGE-TC-* |
 
 Execution mọi hàng NOT_RUN. Schema/validator migration, calibration và device evidence còn cần hiện thực; contract SPECIFIED không tự thành VERIFIED. Không thay semantic/Input/Report/LARGE oracle cũ.
+
+## 6. Partial implementation evidence — mobile flow 18/11/2026
+
+[Mobile implementation](../guides/MOBILE_IMPLEMENTATION.md#5-test-và-mức-evidence) liên kết ACT-01..08/SCR-01..10 tới source và runners `mobile/test/workflow/`. Có tests điều phối/state races, KEY/POSITIONAL ownership và widget walkthrough trên fixture. Đây là partial evidence cho FR-001/002/005..009/013..015; không chứng minh parser, OCR, durable store/export, 1 GB hay PDF. Các trạng thái acceptance registry ở trên **giữ PLANNED/NOT_VERIFIED**; không chuyển PASS từ fixture tests.

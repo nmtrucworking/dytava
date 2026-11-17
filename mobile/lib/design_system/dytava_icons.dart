@@ -65,6 +65,7 @@ class DytavaIcons {
   // File Formats
   static const String fileXlsx = '$assetPrefix/formats/svg/file-xlsx.svg';
   static const String fileCsv = '$assetPrefix/formats/svg/file-csv.svg';
+  static const String filePng = '$assetPrefix/formats/svg/file-png.svg';
   static const String fileXls = '$assetPrefix/formats/svg/file-xls.svg';
   static const String filePdf = '$assetPrefix/formats/svg/file-pdf.svg';
   static const String fileJson = '$assetPrefix/formats/svg/file-json.svg';

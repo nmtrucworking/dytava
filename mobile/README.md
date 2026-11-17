@@ -1,6 +1,12 @@
 # Dytava Mobile (Flutter / Android)
 
-Ứng dụng Flutter hiện là **Semantic Comparison PoC**: so sánh hai giá trị qua `excelcompare_core`. **Chưa** hỗ trợ nhập Excel/CSV, OCR hay xuất báo cáo trên mobile. Phạm vi trong PRD/SRS là mục tiêu triển khai, không phải tính năng đã kiểm thử.
+Ứng dụng hiện có **nền tảng flow/activity với dữ liệu mẫu**, bám sát [8 activity](../docs-dytava/diagrams/MOBILE_ACTIVITIES.md) và [10 màn hình UI/UX](../docs-dytava/design/UI_UX_SPEC.md). Giao diện đã được nâng cấp bám theo hệ thống nhận diện Dytava Design System v2.0 (màu sắc, typography, status badges, icons, cards, stepper header) với đầy đủ logic xử lý, state/guards và 33 tests pass.
+
+**Đọc trước:** [Mobile implementation — flow, cấu trúc, invariants, walkthrough và backlog](../docs-dytava/guides/MOBILE_IMPLEMENTATION.md).
+
+Flow chạy được: chọn A/B độc lập → review scope/header (hoặc review từng ô OCR giả lập) → mapping 1:1 → xác nhận KEY/POSITIONAL, policy và direction → so sánh → summary/filter/detail → JSON preview. Có cancel/retry, stale callback guards, invalidation và đóng phiên.
+
+**Chưa hỗ trợ tệp thật:** XLSX/CSV/TSV import, OCR ảnh thật, lưu/chia sẻ báo cáo, 1 GB, CSV và hai PDF vẫn chưa được bật. JSON hiện chỉ là preview fixture trong bộ nhớ, không là report production. Core semantic PoC cũ giữ trong diagnostic từ Home. Tests fixture không thay Android/device acceptance.
 
 ## Chạy trên macOS bằng VS Code, không cài Android Studio
 
@@ -36,7 +42,7 @@ flutter test
 flutter build apk --debug
 ```
 
-Giao diện thử nghiệm mặc định nhận A=`8.5` và B=`8,5`; nhấn **So sánh** để xem `EQUIVALENT`. Bản APK debug thường nằm tại `build/app/outputs/flutter-apk/app-debug.apk`.
+Tại Home chọn **So sánh mới (dữ liệu mẫu)** và làm theo walkthrough trong implementation guide. Bộ mẫu đủ 4 verdict và một `ROW_ADDED`; diagnostic hai giá trị vẫn nhận A=`8.5`, B=`8,5`. Bản APK debug thường nằm tại `build/app/outputs/flutter-apk/app-debug.apk`.
 
 ## Branding
 
@@ -49,4 +55,4 @@ Tài nguyên thương hiệu chuẩn được lưu trong thư mục `../branding
 
 ## Scope thiết kế mở rộng
 
-[Quyết định 12/11/2026](../docs-dytava/decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) yêu cầu **1 GB/source**, **PDF diff hợp nhất A/B** và **PDF template Dytava**; [Report spec](../docs-dytava/specs/report/README.md) định nghĩa hai đầu ra. Đây là yêu cầu phải triển khai/kiểm thử, chưa là khả năng hiện tại. Mobile vẫn là PoC so sánh hai giá trị, chưa nhập tệp hoặc xuất report.
+[Quyết định 12/11/2026](../docs-dytava/decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) yêu cầu **1 GB/source**, **PDF diff hợp nhất A/B** và **PDF template Dytava**; [Report spec](../docs-dytava/specs/report/README.md) định nghĩa hai đầu ra. Đây là yêu cầu phải triển khai/kiểm thử, chưa là khả năng hiện tại. Mobile mới có flow trên fixture và JSON preview; chưa nhập tệp hoặc xuất report thật.

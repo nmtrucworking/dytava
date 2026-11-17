@@ -1,10 +1,10 @@
 ---
 document_id: DYT-UX-001
-version: 0.1.0
+version: 0.1.1
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-14
+updated: 2026-11-18
 release_baseline: Flutter / Android P0 expanded; iOS P1
 scope: IA, user flow, screen contracts, visual system, interaction states, UX acceptance
 ---
@@ -13,7 +13,7 @@ scope: IA, user flow, screen contracts, visual system, interaction states, UX ac
 
 > **Mục tiêu:** chuyển yêu cầu PRD/SRS thành hành vi giao diện có thể thiết kế, lập trình và kiểm thử trên Flutter Android. Đây là **bản thiết kế mục tiêu**, không phải ảnh chụp chức năng đang chạy.
 >
-> **Implementation evidence:** theo `mobile/README.md` và `mobile/lib/main.dart`, mobile hiện chỉ có **CompareDemoPage**, nhập hai giá trị, chọn semantic type, bấm so sánh và xem status/rule/canonical. Các màn hình `SCR-01..SCR-10` bên dưới **PROPOSED / NOT_IMPLEMENTED**, trừ những thành phần demo/design-system tái sử dụng được. Không được ghi chúng là đã triển khai.
+> **Implementation evidence (18/11/2026):** đã có màn hình chức năng tối thiểu SCR-01..10 và coordinator trên **fixture**, gồm OCR review giả lập và JSON preview. [Implementation guide](../guides/MOBILE_IMPLEMENTATION.md) ghi rõ code/test/gaps; **chưa đạt Definition of Done production** cho bất kỳ screen nào. `CompareDemoPage` cũ giữ làm diagnostic. Visual, adapters thật và Android/device/accessibility evidence còn thiếu.
 
 ## 1. Nguồn điều khiển và phạm vi
 
@@ -72,16 +72,16 @@ flowchart TD
 
 | ID | Màn hình | Người dùng đạt được gì | FR chính | Triển khai Flutter |
 | --- | --- | --- | --- | --- |
-| SCR-01 | Home / Start | Hiểu tác vụ, khởi tạo so sánh | US-01, FR-001 | PROPOSED |
-| SCR-02 | Source Selection | Chọn rõ A/B, đổi/đảo vai trò nguồn | FR-001, FR-012 | PROPOSED |
-| SCR-03 | Preflight & Scope Preview | Kiểm tra định dạng, cấu hình sheet/header/CSV, xem preview hợp lệ | FR-001..004, FR-016 | PROPOSED |
-| SCR-04 | OCR Review (conditional) | Xem ảnh gốc + geometry, sửa và xác nhận bảng | FR-003/012 | PROPOSED |
-| SCR-05 | Field Mapping | Ghép field A↔B bằng Field IDs 1:1 | FR-005 | PROPOSED |
-| SCR-06 | Matching & Policy | Chọn KEY/POSITIONAL, dtype, rules, direction | FR-004/006/008/009 | PROPOSED |
-| SCR-07 | Comparison Progress | Hiểu giai đoạn, progress/cancel, lỗi | FR-015/016 | PROPOSED |
-| SCR-08 | Results Overview | Thống kê chính xác, lọc, tìm sai khác | FR-007/009/013 | PROPOSED |
-| SCR-09 | Difference Detail | Kiểm tra raw A/B, canonical, rule/reason, SourceRef | FR-003/007/008/009/013 | PROPOSED |
-| SCR-10 | Export | Chọn CSV/JSON/2 PDF, phạm vi, lưu/chia sẻ | FR-013/015/017/018 | PROPOSED |
+| SCR-01 | Home / Start | Hiểu tác vụ, khởi tạo so sánh | US-01, FR-001 | FLOW_ONLY / fixture |
+| SCR-02 | Source Selection | Chọn rõ A/B, đổi/đảo vai trò nguồn | FR-001, FR-012 | FLOW_ONLY / fixture |
+| SCR-03 | Preflight & Scope Preview | Kiểm tra định dạng, cấu hình sheet/header/CSV, xem preview hợp lệ | FR-001..004, FR-016 | FLOW_ONLY / fixture |
+| SCR-04 | OCR Review (conditional) | Xem ảnh gốc + geometry, sửa và xác nhận bảng | FR-003/012 | FLOW_ONLY / fixture |
+| SCR-05 | Field Mapping | Ghép field A↔B bằng Field IDs 1:1 | FR-005 | FLOW_ONLY / fixture |
+| SCR-06 | Matching & Policy | Chọn KEY/POSITIONAL, dtype, rules, direction | FR-004/006/008/009 | FLOW_ONLY / fixture |
+| SCR-07 | Comparison Progress | Hiểu giai đoạn, progress/cancel, lỗi | FR-015/016 | FLOW_ONLY / fixture |
+| SCR-08 | Results Overview | Thống kê chính xác, lọc, tìm sai khác | FR-007/009/013 | FLOW_ONLY / fixture |
+| SCR-09 | Difference Detail | Kiểm tra raw A/B, canonical, rule/reason, SourceRef | FR-003/007/008/009/013 | FLOW_ONLY / fixture |
+| SCR-10 | Export | Chọn CSV/JSON/2 PDF, phạm vi, lưu/chia sẻ | FR-013/015/017/018 | FLOW_ONLY / fixture |
 
 Các trạng thái **Error / Empty / Loading / Review / Permission / Cancel** là các variants hoặc sheets theo ngữ cảnh, không cần một route độc lập cho mỗi lỗi. `CompareDemoPage` hiện hành giữ làm diagnostic/sandbox, không được gọi là SCR-08 production.
 

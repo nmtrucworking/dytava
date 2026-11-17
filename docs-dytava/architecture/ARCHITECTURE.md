@@ -1,10 +1,10 @@
 ---
 document_id: DYT-ARCH-001
-version: 0.4.0
+version: 0.4.1
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-13
+updated: 2026-11-18
 release_baseline: P0 mở rộng (Android trước; web/iOS có gate riêng)
 source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 06-08 and 12 (historical)
 ---
@@ -13,7 +13,7 @@ source: EXCELCOMPARE_MASTER_ANDROID_IOS 2.2 sections 06-08 and 12 (historical)
 
 > **Nguồn chính thức cho cấu trúc, ranh giới module, phụ thuộc và runtime interaction của ứng dụng Flutter.** Đây là **target architecture**, không phải sơ đồ khẳng định code đã xây xong. [Input Specification](../specs/input/README.md) sở hữu source wire format/state/error; [Core Spec](../project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md) sở hữu normalization/policy/matching; [ADR register](../decisions/ADR_REGISTER_P0_2026-11-11.md) sở hữu 9 lựa chọn đã chốt.
 
-**Thuật toán chính:** [DYTAVA_UDG_v3](../project/DYTAVA_UDG_v3/README.md), theo chỉ định ngày 13/11/2026. [Review lịch sử theo layer](../project/DYTAVA_UDG_v3/LAYERED_SPEC_REVIEW.md) là căn cứ hoàn thiện execution/correctness/performance contracts3.1. L0 tương ứng comparison plan; L1–2 Input; L3–7 Domain geometry/canonicalization/matching/diff; L8 result/persistence; L9 application/runtime; L10 presentation/export. Đây là phân lớp trách nhiệm, không yêu cầu thêm 11 package. Dependency direction tại SAD và ownership Input/Core/NFR/Report vẫn áp dụng; 30 gaps đã SPECIFIED tại [resolution registry](../testing/UDG_CONTRACT_ACCEPTANCE.md), chưa là implementation đã hoàn tất. Bảng actual-vs-target §6 bên dưới giữ hồ sơ kiểm tra trước đây, không được kiểm tra lại mã nguồn trong lần review docs này.
+**Thuật toán chính:** [DYTAVA_UDG_v3](../project/DYTAVA_UDG_v3/README.md), theo chỉ định ngày 13/11/2026. [Review lịch sử theo layer](../project/DYTAVA_UDG_v3/LAYERED_SPEC_REVIEW.md) là căn cứ hoàn thiện execution/correctness/performance contracts3.1. L0 tương ứng comparison plan; L1–2 Input; L3–7 Domain geometry/canonicalization/matching/diff; L8 result/persistence; L9 application/runtime; L10 presentation/export. Đây là phân lớp trách nhiệm, không yêu cầu thêm 11 package. Dependency direction tại SAD và ownership Input/Core/NFR/Report vẫn áp dụng; 30 gaps đã SPECIFIED tại [resolution registry](../testing/UDG_CONTRACT_ACCEPTANCE.md), chưa là implementation đã hoàn tất. Bảng actual-vs-target §6 cập nhật phần mobile flow ngày 18/11/2026; các mục khác giữ snapshot kiểm tra trước đây, không suy evidence production từ cấu trúc code.
 
 ## 1. Context, architecture drivers và release
 
@@ -116,7 +116,10 @@ Do not upload image or EXIF implicitly. Text recognition does **not** restore so
 
 | Đường dẫn thực tế (đã kiểm tra) | Tình trạng | Kiến trúc mục tiêu / chưa có |
 | --- | --- | --- |
-| `mobile/lib/main.dart` | Flutter PoC: 2 text inputs, chọn semantic type, compare 2 cells | UI import A/B, OCR review, mapping, jobs, reports |
+| `mobile/lib/main.dart`, `app/`, `features/workflow/` | Guided flow SCR-01..10 với Material tối thiểu trên fixture; diagnostic cũ ở `features/diagnostics/` | Visual hoàn chỉnh, production adapters và device UX gates |
+| `mobile/lib/domain/`, `application/` | Internal immutable models/ports, controller state/route guards, confirmations, stale/cancel/invalidation/recovery entry points | Không phải ISC/EP/ER/EX wire; chưa durable journal, timeout/strong-stop, leases/WP-1 |
+| `mobile/lib/infrastructure/demo/` | Fixture Input, bounded KEY/POSITIONAL + Core PoC, JSON preview | Không đọc tệp/nhận dạng ảnh/lưu output; chưa SQLite/streaming/1 GB/PDF |
+| `mobile/test/workflow/` | Coordinator races, matcher ownership, guided widget flow có runner | Chỉ partial fixture evidence; không thay release acceptance |
 | `mobile/lib/design_system/` | Dart theme/components/assets | Dùng lại trong Presentation; không là processing evidence |
 | `packages/excelcompare_core/lib/src/semantic_poc.dart` | Pure Dart semantic PoC subset | Policy compiler, keys, comparator/report semantics đầy đủ |
 | `packages/excelcompare_core/test/semantic_poc_test.dart` | Core unit cases | Golden/matching/invariant corpus theo SRS |
@@ -125,6 +128,8 @@ Do not upload image or EXIF implicitly. Text recognition does **not** restore so
 | `web/`, `server/` | Separate web/backend implementation | Không dùng để chứng nhận Android |
 | `web/js/report/`, `scripts/render-report.js` | Template Dytava 1.0.0: Web local preview + CLI Chromium PDF, schema/guards, fixture nhỏ | Flutter renderer, merged diff PDF, streaming report/result lớn và device lifecycle gates |
 | `docs-dytava/specs/input/` | Schemas + fixtures + contract verifier, DRAFT | Image migration + adapters + runtime validation |
+
+**Snapshot flow implementation 18/11:** xem [Mobile implementation](../guides/MOBILE_IMPLEMENTATION.md) để biết actual paths, tests và phần còn thiếu. Không suy production capability từ các state/screen đã dựng.
 
 **Target module layout (không phải danh sách thư mục đang tồn tại):**
 

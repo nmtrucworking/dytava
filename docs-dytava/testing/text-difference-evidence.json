@@ -1,0 +1,52 @@
+{
+  "record_type": "tool_execution_summary",
+  "execution_date_local": "2026-11-18",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "base_commit": "30cd73e9f3ccc4200d75790cac776e5700cd4048",
+  "source_state": "uncommitted working tree; prior local UI changes preserved",
+  "change": "Explain text DIFFERENT using Unicode scalar positions and visible whitespace; semantics unchanged",
+  "source_fingerprint_method": "SHA256 of sorted relative_path + NUL + file_sha256 + LF for mobile/lib and mobile/test Dart files",
+  "source_fingerprint_sha256": "cc54296e5ed98cb66aef9ae2a8bcfd40f862674bb06692654197e861335b46f6",
+  "source_file_count": 22,
+  "checks": [
+    {
+      "cwd": "mobile",
+      "command": "flutter analyze",
+      "outcome": "PASS",
+      "issues": 0
+    },
+    {
+      "cwd": "mobile",
+      "command": "flutter test",
+      "outcome": "PASS",
+      "tests": 39
+    },
+    {
+      "cwd": "mobile",
+      "command": "flutter build apk --debug",
+      "outcome": "PASS"
+    }
+  ],
+  "regression": {
+    "a": "nguyen van a",
+    "b": "nguyen vana",
+    "verdict": "DIFFERENT",
+    "first_unicode_scalar_position_1_based": 11,
+    "differing_span_a": "U+0020 SPACE",
+    "differing_span_b": "empty",
+    "widget_test": "mobile/test/widget_test.dart: text mismatch explains the internal space without changing DIFFERENT"
+  },
+  "artifact": {
+    "path": "mobile/build/app/outputs/flutter-apk/app-debug.apk",
+    "bytes": 170619346,
+    "sha256": "35b5ed0abae4b274d5e2ac6718550725c21acd2db9d4f1eaa80a9b1c91121c5d",
+    "build_type": "debug"
+  },
+  "limitations": [
+    "No engine-policy or verdict change",
+    "Canonical scalar positions are not source-byte or grapheme offsets",
+    "Single contiguous differing region, not minimal multi-region diff",
+    "Display limit 8192 UTF-16 code units per side; oversized highlights explicitly omitted",
+    "No device/emulator execution or production streaming-highlight evidence"
+  ]
+}

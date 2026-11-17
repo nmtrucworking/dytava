@@ -1,9 +1,9 @@
 {
   "contract": "dytava-mobile-diagrams-source-baseline/1.0.0",
-  "review_date": "2026-11-17",
+  "review_date": "2026-11-18",
   "status": "DRAFT",
   "execution_state": "NOT_VERIFIED",
-  "scope": "Current owner contracts; archive snapshots do not override owners; fingerprint checks are documentation QA only.",
+  "scope": "Current owner contracts; implementation status updated for fixture-only mobile foundation on 2026-11-18, target diagrams unchanged. Archive snapshots do not override owners; fingerprint checks are documentation QA only.",
   "renderer": {
     "name": "mermaid",
     "version": "11.12.2",
@@ -20,7 +20,7 @@
     },
     {
       "path": "docs-dytava/architecture/ARCHITECTURE.md",
-      "sha256": "879556a11b9a774105ed3cb0cda0b5a5e390aa3163671196b22efc1ed4e26734"
+      "sha256": "71b25a1aab937408d7255183677f84060f6047eb9abbe85ae957bc3476e2b4a2"
     },
     {
       "path": "docs-dytava/branding.md",
@@ -36,7 +36,7 @@
     },
     {
       "path": "docs-dytava/design/UI_UX_SPEC.md",
-      "sha256": "6f27c287a3135e67a75946a75f449cdffa19d3d26aa6b19d0fcd608da854de7c"
+      "sha256": "895ff07cf32e1cfd9e515555e55741b49452b5e22b9399c696fe50453faf95a8"
     },
     {
       "path": "docs-dytava/examples/acceptance_cases.json",
@@ -84,11 +84,11 @@
     },
     {
       "path": "docs-dytava/requirements/SRS.md",
-      "sha256": "56745588a7ab8678d16ad50463f5681a80194dbaedaac663ad1b551429a8d3c9"
+      "sha256": "c5b4e912d52347fd7de9a84fb1583245f271b3e842c5b7f1b788e4175e798cf7"
     },
     {
       "path": "docs-dytava/requirements/TRACEABILITY_MATRIX.md",
-      "sha256": "9f726fdcb4d5273aca225b8c601d0c0b9f2928f0fe707d71fd9a2720ad9f31df"
+      "sha256": "f8381f65660717f3a8c574d9697e6fdbf7b3d9eb728121e287e6c1199c4e0ba9"
     },
     {
       "path": "docs-dytava/specs/core/CANONICAL_ENCODING.md",

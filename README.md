@@ -23,13 +23,13 @@
 
 ## Tài liệu thiết kế hiện hành
 
-**Thuật toán chính: DYTAVA_UDG_v3, hoàn thiện thành [UDG3.1 theo 11 layer](docs-dytava/specs/engine/README.md).** [Baseline bàn giao docs](docs-dytava/governance/SPECIFICATION_BASELINE_3_1.md) tổng hợp owner contracts, migration và trạng thái; [30/30 gaps](docs-dytava/testing/UDG_CONTRACT_ACCEPTANCE.md) đã có đặc tả/acceptance, chưa là runtime PASS. Lần cập nhật này chỉ làm docs, không kiểm tra/sửa mã triển khai hoặc chạy benchmark.
+**Thuật toán chính: DYTAVA_UDG_v3, hoàn thiện thành [UDG3.1 theo 11 layer](docs-dytava/specs/engine/README.md).** [Baseline bàn giao docs](docs-dytava/governance/SPECIFICATION_BASELINE_3_1.md) tổng hợp owner contracts, migration và trạng thái; [30/30 gaps](docs-dytava/testing/UDG_CONTRACT_ACCEPTANCE.md) đã có đặc tả/acceptance, chưa là runtime PASS. Baseline docs này chưa là runtime evidence. [Cập nhật mobile 18/11](docs-dytava/guides/MOBILE_IMPLEMENTATION.md) bổ sung nền tảng flow và tests trên fixture; chưa có benchmark/device release evidence.
 
 **Bộ tài liệu có owner riêng:** [PRD](docs-dytava/product/PRD.md) · [SRS](docs-dytava/requirements/SRS.md) · [NFR](docs-dytava/requirements/NFR.md) · [Architecture](docs-dytava/architecture/ARCHITECTURE.md) · [Traceability](docs-dytava/requirements/TRACEABILITY_MATRIX.md) · [Document Control](docs-dytava/governance/DOCUMENT_CONTROL.md). Nội dung 01/02/03/07/09/10 của Master 2.2 là snapshot lịch sử, không là nơi sửa đồng thời với các nguồn này.
 
-**Mở rộng phạm vi 12/11/2026:** [quyết định 1 GB và PDF](docs-dytava/decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) yêu cầu tối đa **1 GB/tệp nguồn**, **một PDF diff hợp nhất A/B có format theo trạng thái** và **PDF báo cáo theo template Dytava**. [Report spec](docs-dytava/specs/report/README.md) và [kế hoạch nghiệm thu](docs-dytava/testing/EXPANDED_SCOPE_ACCEPTANCE.md) phân biệt yêu cầu với capability hiện có: web vẫn giới hạn 10 MiB (UI ghi “10 MB”), có CSV/JSON và [template PDF preview/CLI](docs-dytava/specs/report/RENDERER.md); mobile vẫn là PoC, chưa nhập tệp/xuất report. Merged diff PDF và pipeline 1 GB chưa triển khai.
+**Mở rộng phạm vi 12/11/2026:** [quyết định 1 GB và PDF](docs-dytava/decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) yêu cầu tối đa **1 GB/tệp nguồn**, **một PDF diff hợp nhất A/B có format theo trạng thái** và **PDF báo cáo theo template Dytava**. [Report spec](docs-dytava/specs/report/README.md) và [kế hoạch nghiệm thu](docs-dytava/testing/EXPANDED_SCOPE_ACCEPTANCE.md) phân biệt yêu cầu với capability hiện có: web vẫn giới hạn 10 MiB (UI ghi “10 MB”), có CSV/JSON và [template PDF preview/CLI](docs-dytava/specs/report/RENDERER.md); mobile có [nền tảng flow/activity trên dữ liệu mẫu](docs-dytava/guides/MOBILE_IMPLEMENTATION.md), chưa nhập tệp/xuất report thật. Merged diff PDF và pipeline 1 GB chưa triển khai.
 
-**Quyết định phạm vi kỹ thuật 11/11/2026:** [9 ADR Android P0](docs-dytava/decisions/ADR_REGISTER_P0_2026-11-11.md) đã chốt OCR ảnh PNG/JPEG có review vào P0; XLSX/CSV/TSV là nguồn bảng tính P0; JSON và iOS chuyển P1. Đây là mục tiêu triển khai; Flutter app hiện là PoC, chưa đạt release/device gates.
+**Quyết định phạm vi kỹ thuật 11/11/2026:** [9 ADR Android P0](docs-dytava/decisions/ADR_REGISTER_P0_2026-11-11.md) đã chốt OCR ảnh PNG/JPEG có review vào P0; XLSX/CSV/TSV là nguồn bảng tính P0; JSON và iOS chuyển P1. Đây là mục tiêu triển khai; Flutter app hiện có flow fixture và diagnostic semantic PoC, chưa đạt release/device gates.
 
 Bắt đầu tại [Input contracts — docs0.2 / schemas0.1 DRAFT](docs-dytava/specs/input/README.md): nguồn A/B, định dạng, raw types/provenance, cấu hình, validation, state machine và [ISC-1 streaming/OCR target0.2](docs-dytava/specs/input/11_streaming_snapshot_contract.md). Executable schema migration còn pending. Baseline thiết kế mobile là Flutter/Dart — Android P0, iOS P1; danh sách định dạng dự kiến không là bằng chứng adapter đã hỗ trợ.
 
@@ -105,7 +105,7 @@ excelcompare/
 
 ## Huong dan cai dat & khoi chay (Getting Started)
 
-**Mobile Android (macOS Apple Silicon, chỉ VS Code, không Android Studio hay điện thoại):** đọc [RUN_PROJECT.md](docs-dytava/guides/RUN_PROJECT.md). Cài Android SDK Command-line Tools và tạo AVD trước khi chạy `flutter run`. Bản mobile hiện là Semantic Comparison PoC, chưa nhập Excel/CSV/OCR/xuất báo cáo.
+**Mobile Android (macOS Apple Silicon, chỉ VS Code, không Android Studio hay điện thoại):** đọc [RUN_PROJECT.md](docs-dytava/guides/RUN_PROJECT.md). Cài Android SDK Command-line Tools và tạo AVD trước khi chạy `flutter run`. Bản mobile hiện có [flow/activity trên fixture](docs-dytava/guides/MOBILE_IMPLEMENTATION.md), chưa nhập Excel/CSV/OCR hoặc xuất báo cáo thật.
 
 ### Yeu cau moi truong (Prerequisites)
 - **Node.js**: v24+ (yeu cau tu `package.json`)

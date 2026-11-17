@@ -68,6 +68,15 @@ class DytavaTypography {
     height: 1.4,
   );
 
+  static const TextStyle bodySmall = TextStyle(
+    fontFamily: primaryFont,
+    fontFamilyFallback: [fallbackFont],
+    fontSize: 11,
+    fontWeight: FontWeight.w400,
+    color: DytavaColors.textSecondary,
+    height: 1.5,
+  );
+
   static const TextStyle labelLarge = TextStyle(
     fontFamily: primaryFont,
     fontFamilyFallback: [fallbackFont],

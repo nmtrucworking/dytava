@@ -1,0 +1,48 @@
+{
+  "record_type": "tool_execution_summary",
+  "execution_date_local": "2026-11-18",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "base_commit": "30cd73e9f3ccc4200d75790cac776e5700cd4048",
+  "source_state": "uncommitted working tree; base commit alone does not identify tested source",
+  "source_fingerprint_method": "SHA256 of sorted relative_path + NUL + file_sha256 + LF for mobile/lib and mobile/test Dart files",
+  "source_fingerprint_sha256": "87e756bee76f7a7228f75de4e1c991407ad02d0a039e37b1966d4c4f70c4b207",
+  "source_file_count": 19,
+  "sdk": {
+    "flutter": "3.47.9 stable",
+    "dart": "3.13.7",
+    "host": "macOS ARM64"
+  },
+  "checks": [
+    {
+      "cwd": "mobile",
+      "command": "flutter analyze",
+      "outcome": "PASS",
+      "issues": 0
+    },
+    {
+      "cwd": "mobile",
+      "command": "flutter test",
+      "outcome": "PASS",
+      "tests": 33,
+      "scope": "fixture coordinator/matcher/widget and semantic diagnostic"
+    },
+    {
+      "cwd": "mobile",
+      "command": "flutter build apk --debug",
+      "outcome": "PASS"
+    }
+  ],
+  "artifact": {
+    "path": "mobile/build/app/outputs/flutter-apk/app-debug.apk",
+    "bytes": 170589935,
+    "sha256": "6b3dec09f98a00deb9d06b3873a2b67467ba3c50bd06867143e5b50282652e41",
+    "build_type": "debug"
+  },
+  "limitations": [
+    "No real file input or OCR",
+    "JSON is in-memory fixture preview only",
+    "No device/emulator execution in this run",
+    "No durable result/export/journal or 1GB/PDF evidence",
+    "No production acceptance registry changed to PASS"
+  ]
+}
