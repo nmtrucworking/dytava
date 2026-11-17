@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "dc4b1382d2379401",
+        "id": "c306c3f05887b511",
         "type": "tabs",
         "children": [
           {
-            "id": "14073c9d86fcd1e6",
+            "id": "456b14ea2e2b942e",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "branding.md",
+                "file": "diagrams/MOBILE_MODELS.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "branding"
+              "title": "MOBILE_MODELS"
             }
           }
         ]
@@ -189,8 +189,31 @@
       "bases:Tạo cơ sở mới": false
     }
   },
-  "active": "14073c9d86fcd1e6",
+  "active": "456b14ea2e2b942e",
   "lastOpenFiles": [
+    "diagrams/mobile-models/11-release-gates.svg",
+    "diagrams/mobile-models/10-extension-gates.svg",
+    "diagrams/mobile-models/09-resources-leases.svg",
+    "diagrams/mobile-models/08-signatures-cache.svg",
+    "diagrams/mobile-models/07-geometry.svg",
+    "diagrams/mobile-models/06-udg-layers.svg",
+    "diagrams/mobile-models/05-deployment.svg",
+    "diagrams/mobile-models/04-result-erd.svg",
+    "diagrams/mobile-models/02-components.svg",
+    "diagrams/mobile-models/01-context-use-cases.svg",
+    "diagrams/MOBILE_SEQUENCES.md",
+    "diagrams/mobile-models/03-domain-classes.svg",
+    "diagrams/mobile-models",
+    "diagrams/mobile-states",
+    "diagrams/mobile-sequences",
+    "diagrams/MOBILE_DIAGRAM_COVERAGE.md",
+    "diagrams/MOBILE_MODELS.md",
+    "diagrams/mobile-diagrams.baseline.json",
+    "diagrams/MOBILE_ACTIVITIES.md",
+    "diagrams/MOBILE_STATES.md",
+    "diagrams/mobile-activities",
+    "diagrams/README.md",
+    "branding.md",
     "governance/SPECIFICATION_BASELINE_3_1.md",
     "testing/UDG_CONTRACT_ACCEPTANCE.md",
     "specs/report/STREAMING_EXPORT_CONTRACT.md",
@@ -211,31 +234,8 @@
     "project/DYTAVA_UDG_v3/LAYERED_SPEC_REVIEW.md",
     "governance/DOCUMENT_CONTROL.md",
     "project/Unified Data Geometry Engine.md",
-    "project/DYTAVA_UDG_v3/README.md",
-    "DYTAVA_Unified_Data_Geometry_Engine_v2.md",
-    "project/DYTAVA_UDG_v3/assets/14-test.png",
     "project/DYTAVA_UDG_v3/assets/14-test.dot",
-    "project/DYTAVA_UDG_v3/assets/13-provenance.png",
     "project/DYTAVA_UDG_v3/assets/13-provenance.dot",
-    "project/DYTAVA_UDG_v3/assets/12-sequence.png",
-    "project/DYTAVA_UDG_v3/assets/12-sequence.dot",
-    "project/DYTAVA_UDG_v3/assets/11-resource.png",
-    "project/DYTAVA_UDG_v3/assets/11-resource.dot",
-    "project/DYTAVA_UDG_v3/assets/10-state.png",
-    "project/DYTAVA_UDG_v3/assets/10-state.dot",
-    "project/DYTAVA_UDG_v3/assets/09-storage.png",
-    "project/DYTAVA_UDG_v3/assets/09-storage.dot",
-    "project/DYTAVA_UDG_v3/assets/08-isolates.png",
-    "project/DYTAVA_UDG_v3/assets/08-isolates.dot",
-    "project/DYTAVA_UDG_v3/assets/07-cell.png",
-    "project/DYTAVA_UDG_v3/assets/07-cell.dot",
-    "project/DYTAVA_UDG_v3/assets/06-match.png",
-    "project/DYTAVA_UDG_v3/assets/05-workbook.png",
-    "project/DYTAVA_UDG_v3/DYTAVA_Unified_Data_Geometry_Engine_v3.md",
-    "DYTAVA_UDG_v3/DYTAVA_Unified_Data_Geometry_Engine_v3.md",
-    "guides/RUN_PROJECT.md",
-    "examples/report-renderer/README.md",
-    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md",
-    "project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/ANDROID_IOS_BUILD_RELEASE_GUIDE.md"
+    "project/DYTAVA_UDG_v3/assets/12-sequence.dot"
   ]
 }

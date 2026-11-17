@@ -37,6 +37,9 @@ Baseline nền tảng là **Flutter/Dart, Android P0 → iOS P1**; ưu tiên tí
 | [Acceptance registry index](examples/README.md) | Tách semantic TC-* và Input INP-TC-* |
 | [Build/release guide](project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/ANDROID_IOS_BUILD_RELEASE_GUIDE.md) | Android/iOS signing và device gates |
 | [Architecture diagrams](diagrams/README.md) | DOT/SVG cho pipeline Input; Architecture doc là nguồn cấu trúc toàn app |
+| [Mobile activity diagrams](diagrams/MOBILE_ACTIVITIES.md) | Tám luồng mục tiêu Android P0: nhập/OCR, xác nhận plan, UDG3.1, kết quả/export và cancel/recovery; Mermaid + SVG |
+| [Mobile sequence diagrams](diagrams/MOBILE_SEQUENCES.md) | Tám sequence theo ISC-1/EP-1/ER-1/WP-1/EX-1: interactions, backpressure, publish, cancel và recovery |
+| [Mobile states và system/domain models](diagrams/MOBILE_MODELS.md) | Class/ERD/components/deployment và các model bổ sung; [3 state machines](diagrams/MOBILE_STATES.md), [coverage/baseline](diagrams/MOBILE_DIAGRAM_COVERAGE.md) của 30 sơ đồ |
 | [Core PoC source](../packages/excelcompare_core/README.md) | Mã nguồn chính thức để phát triển tiếp; chưa đầy đủ adapter/provenance |
 | [Branding](branding.md) | Nhận diện, không là capability registry |
 
