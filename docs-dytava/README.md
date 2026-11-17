@@ -18,6 +18,8 @@ Baseline nền tảng là **Flutter/Dart, Android P0 → iOS P1**; ưu tiên tí
 | [Document Control](governance/DOCUMENT_CONTROL.md) | Nguồn sở hữu, trạng thái, thứ tự xử lý xung đột, change control |
 | [PRD](product/PRD.md) | Persona, outcome, phạm vi pha, US-01..15 và hành trình |
 | [SRS](requirements/SRS.md) | FR-001..018, preconditions, expected system behavior |
+| [Business Requirements & Workflows](requirements/BUSINESS_REQUIREMENTS.md) | DYT-BRD-001 (DRAFT): quy trình nghiệp vụ, điểm kiểm soát BIZ-* và kịch bản nghiệm thu; không thay PRD/SRS |
+| [UI/UX Interaction & Screen Specification](design/UI_UX_SPEC.md) | DYT-UX-001 (DRAFT): luồng 10 màn hình SCR-*, interaction states, UX-TC-*; chưa phải evidence UI đã triển khai |
 | [NFR](requirements/NFR.md) | Quality goals, bảo mật, giới hạn bootstrap, cách đo và release gates |
 | [Architecture](architecture/ARCHITECTURE.md) | Kiến trúc mục tiêu, module, ports và actual-vs-target gap |
 | [Requirement Traceability](requirements/TRACEABILITY_MATRIX.md) | Quan hệ US–FR–INP/Core–Test–Evidence (chưa verified) |

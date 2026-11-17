@@ -1,10 +1,10 @@
 ---
 document_id: DYT-DOC-CONTROL-001
-version: 0.4.0
+version: 0.4.1
 status: DRAFT
 owner: TBD
 reviewer: TBD
-updated: 2026-11-13
+updated: 2026-11-14
 ---
 
 # Dytava — Document Control và nguồn quản lý yêu cầu
@@ -17,6 +17,8 @@ Dự án trước đây tập trung nội dung sản phẩm, FR, NFR, kiến tr�
 | --- | --- | --- |
 | [PRD — DYT-PRD-001](../product/PRD.md) | User problem, persona, outcome, US-01..US-15, phase/scope, UX journey, stakeholder acceptance | Detailed algorithms, typed schemas, metric benchmarks |
 | [SRS — DYT-SRS-001](../requirements/SRS.md) | Functional requirements FR-001..FR-018, cross-feature behavior, pre/postconditions, measurable system acceptance | Raw Input schema/format rules, Core normalization semantics, quality SLO |
+| [Business Requirements — DYT-BRD-001](../requirements/BUSINESS_REQUIREMENTS.md) | Quy trình thực hiện, business checkpoints BIZ-* và acceptance từ góc độ người dùng; DRAFT | Product scope, FR, Input/Core comparison laws, release evidence |
+| [UI/UX Spec — DYT-UX-001](../design/UI_UX_SPEC.md) | IA, flow, screen contracts SCR-*, interaction states, UX-TC-* và visual application; DRAFT | FR semantics, benchmark NFR, bằng chứng giao diện đã triển khai |
 | [NFR — DYT-NFR-001](../requirements/NFR.md) | Quality requirements/metrics, resource guardrails, privacy/security/accessibility/reliability verification, evidence gates | Product scope, business comparison logic, module layout |
 | [Architecture — DYT-ARCH-001](../architecture/ARCHITECTURE.md) | Architecture drivers, logical components, dependency rules, tech candidates, ports/flows and actual-vs-target matrix | User priority, wire type semantics, evidence that features work |
 | [Input Contract — INP-000..011](../specs/input/README.md) | Source metadata/physical raw/provenance, ImportConfig, validation/input state; ISC-1 streaming/snapshot/OCR target0.2/migration | Semantic equivalence or product phase selection |
@@ -28,6 +30,8 @@ Dự án trước đây tập trung nội dung sản phẩm, FR, NFR, kiến tr�
 | [Traceability Matrix](../requirements/TRACEABILITY_MATRIX.md) | Read-only cross-document references to IDs/tests/status/evidence | Redefinition of FR, INP-REQ or test expected values |
 
 **Rule:** nếu hai tài liệu cùng nhắc một ý, tài liệu không sở hữu chỉ ghi **tóm tắt + liên kết**, không tạo định nghĩa thứ hai. Mỗi ID được khai báo ở **một** nguồn; bản tham chiếu ở khác tài liệu có cùng ID.
+
+**BRD/UIUX bổ trợ (14/11/2026):** hai tài liệu dùng mã `BIZ-*`, `SCR-*`, `UX-TC-*` để hỗ trợ triển khai và kiểm thử. Không được dùng chúng ghi đè `US-*`/`FR-*`/INP/Core contracts, không suy ra `VERIFIED` từ bản DRAFT. Crosslinks trong traceability matrix sẽ cần review khi chốt prototype và cases.
 
 **Chỉ định thuật toán ngày 13/11/2026:** chủ dự án chọn DYTAVA_UDG_v3 làm thuật toán chính. [Layered review](../project/DYTAVA_UDG_v3/LAYERED_SPEC_REVIEW.md) là snapshot đánh giá ban đầu, nay SUPERSEDED bởi contracts3.1; các `UDG-Lx-*` là gap IDs, không phải FR/test IDs. V3 gốc Markdown/PDF/DOCX giữ làm nguồn review; tiêu đề implementation-ready và các phân pha khác baseline trong bản gốc chưa được chấp nhận chỉ bởi việc chọn thuật toán. Core giữ semantic laws/precedence, UDG thiết kế execution để tuân thủ chúng. Công việc hiện tại chỉ ở docs, chưa cấp trạng thái VERIFIED hoặc bắt đầu triển khai.
 

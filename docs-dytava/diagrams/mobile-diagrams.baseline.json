@@ -35,12 +35,16 @@
       "sha256": "c10345997fb97ff88a7ad35ee21c27e0d83e003aa02f4ef4634f39b73940f368"
     },
     {
+      "path": "docs-dytava/design/UI_UX_SPEC.md",
+      "sha256": "6f27c287a3135e67a75946a75f449cdffa19d3d26aa6b19d0fcd608da854de7c"
+    },
+    {
       "path": "docs-dytava/examples/acceptance_cases.json",
       "sha256": "3c8828c316ab77867297de72c3f282c396de95bf4e9c46079fd39a53c296461a"
     },
     {
       "path": "docs-dytava/governance/DOCUMENT_CONTROL.md",
-      "sha256": "557ef52b1b256cc2557e8f3d3c0326f71a33c885fe53671aed37a27a396eea9e"
+      "sha256": "8d006044e99ea8e0171b1196e92314b63fbfa351f42e85c3cb1e65b646d903f8"
     },
     {
       "path": "docs-dytava/governance/SPECIFICATION_BASELINE_3_1.md",
@@ -65,6 +69,10 @@
     {
       "path": "docs-dytava/project/comparison_policy.v2.example.json",
       "sha256": "cc632da823f4dcdf2f21849203dfdc217e39df9c7f16917f4e82a76cc3494892"
+    },
+    {
+      "path": "docs-dytava/requirements/BUSINESS_REQUIREMENTS.md",
+      "sha256": "dd634315c6d8439704fccdacad900ee14b8f6d8468a80b8ee456b7979888d2c3"
     },
     {
       "path": "docs-dytava/requirements/NFR.md",

@@ -22,6 +22,7 @@ Theo [Document Control](../governance/DOCUMENT_CONTROL.md), domain owner quyết
 | Domain | Nguồn sở hữu hiện hành | Cách áp dụng trong sơ đồ |
 | --- | --- | --- |
 | Product/phase | [PRD](../product/PRD.md), [SRS](../requirements/SRS.md), [ADR register](../decisions/ADR_REGISTER_P0_2026-11-11.md), [scope expansion](../decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) | Android P0, một scope mỗi nguồn, tối đa một ảnh, 1 GB/source và hai PDF |
+| Business/UI bổ trợ | [Business Requirements](../requirements/BUSINESS_REQUIREMENTS.md), [UI/UX Spec](../design/UI_UX_SPEC.md) | BIZ-* và SCR-* diễn giải workflow/screen gates; không ghi đè FR/Input/Core hoặc chứng minh UI đã triển khai |
 | Input/raw | [Input index INP-001..011](../specs/input/README.md), [ISC-1](../specs/input/11_streaming_snapshot_contract.md), [current schemas](../specs/input/schemas/import_config.schema.json) | Strict validation, raw/provenance, EOF/hash, target0.2 migration và readiness guards |
 | Core | [Semantic spec](../project/EXCELCOMPARE_Android_iPhone_Flutter_Package_2026-11-11/DATATYPE_POLICY_ENGINE_ANDROID_IOS_SPEC.md), [policy2.1.0](../project/comparison_policy.v2.example.json), [CE-1](../specs/core/CANONICAL_ENCODING.md), [decision tables](../specs/core/COMPARISON_DECISIONS.md) | Typed field policies, four verdicts, framing, signatures, no implicit casts |
 | Execution | [UDG3.1](../specs/engine/README.md), [EP-1](../specs/engine/01_execution_plan.md), [Geometry](../specs/engine/02_geometry_mapping.md), [Matching](../specs/engine/03_candidate_alignment.md) | Frozen plan, confirmed geometry, P0 matching và disabled extension gates |
@@ -33,6 +34,8 @@ Theo [Document Control](../governance/DOCUMENT_CONTROL.md), domain owner quyết
 [mobile-diagrams.baseline.json](mobile-diagrams.baseline.json) ghi SHA-256 các owner docs, registry/schema và nguồn chính được đối chiếu. Fingerprint chỉ phát hiện nội dung thay đổi; không là phê duyệt, chữ ký hoặc chứng minh semantics. Khi fingerprint thay đổi phải review diagram affected rồi cập nhật baseline có chủ ý, không tự ghi đè baseline để làm checker xanh.
 
 Archive Master2.2, UDG3.0 PDF/DOCX/review gốc và bundle snapshots chỉ dùng audit khi được owner docs dẫn. README/code PoC/brand assets không là capability evidence. Không snapshot `.obsidian`, raw user datasets hoặc file người dùng đang biên tập riêng vào baseline này.
+
+Đối chiếu khi tích hợp BRD/UIUX: BIZ-01..16 giữ các gates A/B, scope, OCR review, confirmed policy, four verdicts, counts, export và recovery đã biểu diễn trong ACT-01..08/SEQ-01..08. SCR-01..03 tương ứng ACT-01/02, SCR-04 với ACT-03, SCR-05/06 với ACT-04, SCR-07 với ACT-05/08, SCR-08/09 với ACT-06/07 và SEQ-05, SCR-10 với ACT-07 và SEQ-06. BAC/UX-TC vẫn PLANNED; accessibility/wireframes/prototypes cần QA/evidence riêng theo MOD-11, không được xác nhận chỉ bằng sơ đồ.
 
 ### Các điểm xung đột lịch sử đã xử lý
 
@@ -195,6 +198,6 @@ node scripts/render-mobile-diagrams.mjs --render
 
 Checker so fingerprints, các link/anchor, ID coverage và syntax/render của 30 Mermaid blocks; kiểm node labels không tràn và edge labels không chồng nhau trong layout đã render. Nó **không tự chứng minh semantic compliance**, không tự enable capabilities, sửa requirements, cập nhật baseline hoặc chạy acceptance runtime. Renderer dùng Mermaid11.12.2 pinned với SHA-256 integrity check, cache tạm ngoài repo; Chromium từ Playwright. Nếu môi trường chưa có browser thì cần cài theo tooling của repo trước khi chạy, không thay package/runtime dependencies của app chỉ để vẽ sơ đồ.
 
-Docs QA ngày 17/11/2026: render/check 30 diagrams, 48 source fingerprints, 219 local links/anchors; đủ coverage references cho 18 FR, 12 INP-REQ, 19 NFR và 30 UDG gaps. Standalone SVG XML và source-to-SVG metadata được kiểm tra; các hình sequence/state/resource đại diện được xem lại. Kết quả này chỉ áp dụng tài liệu, không đổi execution state NOT_VERIFIED của runtime/acceptance registries.
+Docs QA ngày 17/11/2026, sau tích hợp BRD/UIUX: check 30 diagrams, 50 source fingerprints, 223 local links/anchors; đủ coverage references cho 18 FR, 12 INP-REQ, 19 NFR và 30 UDG gaps. Standalone SVG XML và source-to-SVG metadata được kiểm tra; các hình sequence/state/resource đại diện đã được xem lại ở lần render trước merge. Kết quả này chỉ áp dụng tài liệu, không đổi execution state NOT_VERIFIED của runtime/acceptance registries.
 
 `MANIFEST_SHA256.txt` được cập nhật cho chính các file thuộc công việc này. Files `.obsidian` hoặc ảnh người dùng tạo riêng không bị sửa/thêm vào bộ sơ đồ hay baseline. Khi bổ sung diagram ID/source phải cập nhật index/coverage, rerender và refresh task-owned manifest entries; giữ execution status riêng với docs QA.
