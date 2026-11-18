@@ -255,18 +255,14 @@ class _WorkflowPageState extends State<WorkflowPage>
   }
 
   String _appBarTitle() {
-    if (_auxView == _AuxiliaryView.history) return 'Dytava · Phiên hiện tại';
-    if (_auxView == _AuxiliaryView.presets) {
-      return 'Dytava · Mẫu quy tắc & Chuẩn';
-    }
-    if (_auxView == _AuxiliaryView.settings) {
-      return 'Dytava · Cài đặt & Bảo mật';
-    }
+    if (_auxView == _AuxiliaryView.history) return 'Phiên hiện tại';
+    if (_auxView == _AuxiliaryView.presets) return 'Mẫu quy tắc';
+    if (_auxView == _AuxiliaryView.settings) return 'Cài đặt & bảo mật';
     const titles = [
-      'Bắt đầu',
+      'Dytava',
       'Chọn nguồn A/B',
       'Kiểm tra nguồn',
-      'Review OCR mẫu',
+      'Duyệt dữ liệu OCR',
       'Ánh xạ cột',
       'Xác nhận cấu hình',
       'Tiến trình',
@@ -274,7 +270,7 @@ class _WorkflowPageState extends State<WorkflowPage>
       'Chi tiết sai khác',
       'Xuất báo cáo',
     ];
-    return 'Dytava · ${titles[flow.screen.index]}';
+    return titles[flow.screen.index];
   }
 
   @override
@@ -306,19 +302,35 @@ class _WorkflowPageState extends State<WorkflowPage>
                 tooltip: 'Phiên trong bộ nhớ',
                 onPressed: () =>
                     setState(() => _auxView = _AuxiliaryView.history),
-                icon: const BrandIcon(DytavaIcons.history, size: 20),
+                icon: const Icon(Icons.history_rounded),
               ),
-              IconButton(
-                tooltip: 'Mẫu quy tắc & Hướng dẫn',
-                onPressed: () =>
-                    setState(() => _auxView = _AuxiliaryView.presets),
-                icon: const BrandIcon(DytavaIcons.learn, size: 20),
-              ),
-              IconButton(
-                tooltip: 'Cài đặt & Bảo mật',
-                onPressed: () =>
-                    setState(() => _auxView = _AuxiliaryView.settings),
-                icon: const BrandIcon(DytavaIcons.settings, size: 20),
+              PopupMenuButton<_AuxiliaryView>(
+                tooltip: 'Thêm tùy chọn',
+                icon: const Icon(Icons.more_vert_rounded),
+                onSelected: (view) =>
+                    setState(() => _auxView = view),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: _AuxiliaryView.presets,
+                    child: Row(
+                      children: [
+                        Icon(Icons.tune_rounded, size: 20),
+                        SizedBox(width: 12),
+                        Text('Mẫu quy tắc'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: _AuxiliaryView.settings,
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings_outlined, size: 20),
+                        SizedBox(width: 12),
+                        Text('Cài đặt & bảo mật'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
             if (!isRootHome)
@@ -477,10 +489,6 @@ class _WorkflowPageState extends State<WorkflowPage>
               await flow.closeSession();
               if (mounted) setState(() => _auxView = _AuxiliaryView.none);
             },
-            onOpenPresets: () =>
-                setState(() => _auxView = _AuxiliaryView.presets),
-            onOpenSettings: () =>
-                setState(() => _auxView = _AuxiliaryView.settings),
           ),
         ];
       case WorkflowScreen.sources:
