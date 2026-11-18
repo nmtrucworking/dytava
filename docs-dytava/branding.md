@@ -17,6 +17,22 @@
 
 Bản sắc thị giác của Dytava loại bỏ phong cách neon/AI dashboard trang trí rườm rà. Màu nổi bật chỉ xuất hiện khi mang ý nghĩa nghiệp vụ: hành động chính, dữ liệu thay đổi hoặc tình trạng cần chú ý. Toàn bộ phần còn lại sử dụng nền trung tính thanh nhã, typography sắc nét và bố cục có nhịp điệu (editorial rhythm).
 
+### Bộ Logo chính thức · `dytava-svg-logo-pack`
+
+Hệ thống nhận diện thương hiệu sử dụng trọn bộ vector SVG chuẩn từ gói `dytava-svg-logo-pack`:
+- **Biểu tượng Monogram D (Spreadsheet Mark):** Chữ D cách điệu từ bảng tính 3D isometric với 2 vạch nhấn so sánh đối chiếu: Vạch trên màu Lime (`#D8F36A`) đại diện cho dữ liệu trùng khớp/tiến trình; Vạch dưới màu Coral (`#E97965`) đại diện cho phát hiện sai lệch.
+- **Logotype DYTAVA:** Kiểu chữ hình học đậm nét kết hợp dấu chấm tròn Lime (`#D8F36A`).
+- **Tagline tiếng Việt:** "SO SÁNH DỮ LIỆU CHÍNH XÁC" định vị rõ ràng giải pháp đối chiếu chuyên nghiệp.
+
+| Tên tệp SVG | Loại logo | Nền áp dụng | Mục đích sử dụng |
+|---|---|---|---|
+| `dytava-logo-primary.svg` | Bản đầy đủ (Primary) | Nền sáng (`#F7F6F2`, `#FFFFFF`) | Header Web, Báo cáo PDF/In ấn, Màn hình Splash sáng |
+| `dytava-logo-reverse.svg` | Bản đảo ngược (Reverse) | Nền tối (`#0F1A1C`, `#1B2426`) | Dark mode, Footer Web, Thẻ Focus Diff tối |
+| `dytava-symbol.svg` | Monogram Mark (Color) | Linh hoạt | Favicon Web, AppBar Mobile, Tab icon, Avatar |
+| `dytava-symbol-monochrome.svg` | Monogram Mark (Đơn sắc) | Nền đơn sắc | Watermark, Tài liệu xuất Word/Excel đơn sắc |
+| `dytava-app-icon.svg` | App Launcher Icon (Dark) | Nền Graphite | Launcher icon Mobile Android/iOS, PWA App icon |
+| `dytava-app-icon-light.svg` | App Launcher Icon (Light) | Nền Off-white | Launcher icon phiên bản sáng tùy chọn |
+
 ```
    dytava.
    PRECISION WORKSPACE

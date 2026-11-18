@@ -10,9 +10,18 @@ class DytavaIcons {
   static const String assetPrefix = 'assets/dytava';
 
   // ==========================================
-  // 1. Brand Symbols & Logos (12)
+  // 1. Brand Symbols & Logos (Official dytava-svg-logo-pack)
   // ==========================================
+  static const String logoPrimary =
+      '$assetPrefix/brand/svg/dytava-logo-primary.svg';
+  static const String logoReverse =
+      '$assetPrefix/brand/svg/dytava-logo-reverse.svg';
   static const String symbol = '$assetPrefix/brand/svg/dytava-symbol.svg';
+  static const String symbolMonochrome =
+      '$assetPrefix/brand/svg/dytava-symbol-monochrome.svg';
+  static const String appIcon = '$assetPrefix/brand/svg/dytava-app-icon.svg';
+  static const String appIconLight =
+      '$assetPrefix/brand/svg/dytava-app-icon-light.svg';
   static const String horizontal =
       '$assetPrefix/brand/svg/dytava-horizontal.svg';
   static const String horizontalCompact =
@@ -220,7 +229,12 @@ class DytavaIcons {
 
   /// Danh sách các tài nguyên icon chính thức dùng cho kiểm thử tự động (Asset QA)
   static const List<String> allCoreAssets = [
+    logoPrimary,
+    logoReverse,
     symbol,
+    symbolMonochrome,
+    appIcon,
+    appIconLight,
     horizontal,
     horizontalCompact,
     compare,

@@ -1,6 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-<title id="title">Dytava — App Icon Light</title>
-<desc id="desc">Rounded square Dytava app launcher icon; fully vector artwork.</desc>
-<rect width="512" height="512" rx="108" fill="#F7F6F2"/>
-<g transform="translate(80 95) scale(1.69) translate(-392 -149)"><path fill="#142428" fill-rule="evenodd" d="M 420 149 L 435 185 C 435 185 437.53 186.95 439 187 C 440.47 187.05 508.93 187.03 516 188 C 523.07 188.97 528.41 195.55 534 200 C 539.59 204.45 565 227 565 227 C 565 227 547.44 287.3 546 291 C 544.56 294.7 539.37 297.47 537 299 C 534.63 300.53 531.81 301.8 529 302 C 526.19 302.2 482 303 482 303 L 471 336 C 471 336 521.85 336.41 528 336 C 534.15 335.59 540.4 333.57 546 331 C 551.6 328.43 559.36 323.81 565 319 C 570.64 314.19 576.44 306.9 580 302 C 583.56 297.1 586.65 291.58 589 286 C 591.35 280.42 594.73 269.5 596 264 C 597.27 258.5 598.22 252.64 598 247 C 597.78 241.36 597.43 223.11 594 212 C 590.57 200.89 582.21 186.19 577 179 C 571.79 171.81 564.6 165.59 557 161 C 549.4 156.41 538.89 150.87 529 150 C 519.11 149.13 420 149 420 149 Z M 501 200 L 432 201 L 393 336 L 459 335 L 501 200 Z M 438 240 C 438 240 441.28 226.72 442 225 C 442.72 223.28 446 221 446 221 L 479 221 L 481 223 C 481 223 479.15 234.45 478 237 C 476.85 239.55 472 243 472 243 L 441 243 L 438 240 Z M 430 265 C 430.25 262.61 433.22 254.46 434 253 C 434.78 251.54 438 250 438 250 C 438 250 467.81 249.93 469 250 C 470.19 250.07 472 252 472 252 L 468 269 L 464 272 L 432 272 C 432 272 429.75 267.39 430 265 Z M 420 298 L 427 280 L 462 280 L 464 283 L 456 301 L 422 301 L 420 298 Z"/><path fill="#D8F36A" d="M 506.5 232 H 546 Q 550 232 549 236 L 545 250.5 Q 544 255 540 255.5 H 502 Q 497 255.5 498.5 251 L 502.8 237 Q 504 232 506.5 232 Z"/><path fill="#E97965" d="M 496.5 266.5 H 535.5 Q 540.5 266.5 539 271.5 L 535 285.5 Q 534 290 530 290 H 492 Q 487 290 488.5 285 L 492.5 271 Q 493.7 266.5 496.5 266.5 Z"/></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><defs>
+ <linearGradient id="brandBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3B82F6"/><stop offset="1" stop-color="#1850EB"/></linearGradient>
+ <linearGradient id="cyanLayer" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#34DBF2"/><stop offset="1" stop-color="#029BDB"/></linearGradient>
+ <linearGradient id="purpleLayer" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#A18AFF"/><stop offset="1" stop-color="#6E46ED"/></linearGradient>
+ <linearGradient id="appBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#428DFF"/><stop offset=".55" stop-color="#2563EB"/><stop offset="1" stop-color="#153EC5"/></linearGradient>
+ <linearGradient id="tileBg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#F3F6FD"/></linearGradient>
+ <linearGradient id="lightBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5CA6FF"/><stop offset="1" stop-color="#2563EB"/></linearGradient>
+ </defs><rect width="512" height="512" fill="#F8FAFF" rx="118"/><g>
+ <!-- Two offset cards are the brand's cyan + violet data layers. -->
+ <g transform="rotate(-8 228 217)"><rect x="91" y="87" width="254" height="318" rx="38" fill="url(#cyanLayer)"/><path d="M114 148v-20q0-19 19-19h167" stroke="#99F0FF" stroke-width="9" opacity=".8" fill="none" stroke-linecap="round"/></g>
+ <g transform="rotate(-7 282 249)"><rect x="163" y="134" width="239" height="287" rx="36" fill="url(#purpleLayer)"/>
+ <path d="M185 207v-29a19 19 0 0 1 19-19h154" fill="none" stroke="white" stroke-opacity=".72" stroke-width="10" stroke-linecap="round"/>
+ <rect x="215" y="286" width="31" height="80" rx="7" fill="white"/>
+ <rect x="262" y="245" width="31" height="121" rx="7" fill="white"/>
+ <rect x="309" y="209" width="31" height="157" rx="7" fill="white"/>
+ </g>
+ <!-- Blue verification seal, with independent white check. -->
+ <circle cx="388" cy="388" r="72" fill="white"/>
+ <circle cx="388" cy="388" r="61" fill="url(#brandBlue)"/>
+ <path d="m360 389 18 18 41-43" fill="none" stroke="white" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+ </g></svg>
