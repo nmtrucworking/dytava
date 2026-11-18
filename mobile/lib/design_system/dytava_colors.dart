@@ -13,7 +13,7 @@ class DytavaColors {
   static const Color green = Color(0xFF10B981); // Emerald Green / Excel
   static const Color amber = Color(0xFFF59E0B); // Amber Warning
   static const Color red = Color(0xFFEF4444); // Crimson Danger
-  static const Color background = Color(0xFFF3F4F6); // Light Gray Background
+  static const Color background = Color(0xFFF8FAFC); // Soft neutral app canvas
   static const Color border = Color(0xFFE5E7EB); // Border / Line Gray
   static const Color white = Color(0xFFFFFFFF); // Pure White
 

@@ -4,13 +4,11 @@ import 'package:flutter/material.dart';
 import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
-import '../../diagnostics/compare_demo_page.dart';
-import '../widgets/workflow_common_widgets.dart';
 
-/// Màn hình Trang chủ (`SCR-01`) thiết kế theo mô hình Guided Mobile Workflow:
-/// - Một nhiệm vụ trọng tâm: bắt đầu phiên đối chiếu mới hoặc tiếp tục phiên hiện tại.
-/// - Hiển thị đúng 1 `BrandIllustration.hero` (`heroGetStarted` / `heroEmptyWorkspace`).
-/// - Loại bỏ lưới 8 module kiểu web dashboard; gom các tiện ích phụ vào thanh tác vụ thứ cấp gọn nhẹ.
+/// SCR-01: mobile-first entry point.
+///
+/// Show one clear primary action and distinguish the fixture-only demo from
+/// production file import. Keep current-session recovery ahead of new work.
 class HomeScreenView extends StatelessWidget {
   final WorkflowController flow;
   final bool quickProcessing;
@@ -18,8 +16,6 @@ class HomeScreenView extends StatelessWidget {
   final VoidCallback onQuickRun;
   final VoidCallback onResumeSession;
   final VoidCallback onCloseSession;
-  final VoidCallback onOpenPresets;
-  final VoidCallback onOpenSettings;
 
   const HomeScreenView({
     super.key,
@@ -29,8 +25,6 @@ class HomeScreenView extends StatelessWidget {
     required this.onQuickRun,
     required this.onResumeSession,
     required this.onCloseSession,
-    required this.onOpenPresets,
-    required this.onOpenSettings,
   });
 
   bool get _hasActiveSession =>
@@ -66,125 +60,21 @@ class HomeScreenView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 1. Thẻ nhiệm vụ chính: Bắt đầu phiên so sánh mới (Mobile-first Hero)
-        WorkflowSectionCard(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: DytavaColors.softBlue,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: const BrandIcon(DytavaIcons.symbol, size: 28),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Dytava',
-                        style: DytavaTypography.titleMedium,
-                      ),
-                      Text(
-                        'So sánh dữ liệu trên thiết bị',
-                        style: DytavaTypography.bodySmall.copyWith(
-                          color: DytavaColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Center(
-              child: BrandIllustration.hero(
-                hasActiveSession: _hasActiveSession,
-                maxHeight: 108,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'So sánh hai nguồn dữ liệu',
-              style: DytavaTypography.titleLarge.copyWith(
-                color: DytavaColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Phát hiện sai khác giữa hai bảng tính, kiểm tra từng giá trị và vị trí nguồn.',
-              style: DytavaTypography.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            // Định dạng hỗ trợ với BrandIcon
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: const [
-                _FormatChip(
-                  iconAsset: DytavaIcons.fileXlsx,
-                  label: 'Excel (XLSX)',
-                ),
-                _FormatChip(
-                  iconAsset: DytavaIcons.fileCsv,
-                  label: 'CSV / TSV',
-                ),
-                _FormatChip(
-                  iconAsset: DytavaIcons.filePng,
-                  label: 'Dữ liệu từ ảnh (OCR)',
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // CTA Chính: Bắt đầu phiên mới (Chọn 2 nguồn dữ liệu)
-            WorkflowPrimaryButton(
-              label: 'So sánh mới (dữ liệu mẫu)',
-              iconAsset: DytavaIcons.importData,
-              onPressed: onStartNewSession,
-            ),
-            const SizedBox(height: 6),
-            // CTA Nhanh: Trải nghiệm nhanh 1 chạm với bộ dữ liệu mẫu
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(48, 48),
-                  backgroundColor: DytavaColors.softBlue,
-                  side: const BorderSide(color: DytavaColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: quickProcessing ? null : onQuickRun,
-                icon: quickProcessing
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const BrandIcon(DytavaIcons.play, size: 18),
-                label: Text(
-                  quickProcessing
-                      ? 'Đang tự động xử lý 2 Sheets...'
-                      : 'Trải nghiệm nhanh (1 chạm)',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: DytavaColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ],
+        const Padding(
+          padding: EdgeInsets.fromLTRB(4, 4, 4, 0),
+          child: _HomeHeading(),
         ),
-
-        // 2. Phiên hiện tại ("Tiếp tục phiên so sánh") — chỉ hiển thị khi có phiên hợp lệ
+        const SizedBox(height: 20),
         if (_hasActiveSession) ...[
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 10),
+            child: Text(
+              'Tiếp tục phiên của bạn',
+              style: DytavaTypography.titleMedium.copyWith(
+                fontSize: 16,
+              ),
+            ),
+          ),
           DytavaSessionResumeCard(
             stageLabel: _sessionStageLabel(),
             sourceSummary: _sessionSourceSummary(),
@@ -193,6 +83,7 @@ class HomeScreenView extends StatelessWidget {
             onCloseSession: flow.usable ? onCloseSession : null,
           ),
           if (flow.resultCurrent && flow.result != null) ...[
+            const SizedBox(height: 12),
             DytavaResultCard(
               fileA: flow.slot(SourceSide.a).artifact?.label ?? 'Sheet A',
               fileB: flow.slot(SourceSide.b).artifact?.label ?? 'Sheet B',
@@ -202,110 +93,380 @@ class HomeScreenView extends StatelessWidget {
               unresolvedCount: flow.result!.count(DecisionStatus.unresolved),
               onTap: onResumeSession,
             ),
-            const SizedBox(height: 12),
           ],
+          const SizedBox(height: 20),
         ],
+        _StartComparisonPanel(
+          hasActiveSession: _hasActiveSession,
+          quickProcessing: quickProcessing,
+          onStartNewSession: onStartNewSession,
+          onQuickRun: onQuickRun,
+        ),
+        const SizedBox(height: 16),
+        const _PrivacyNotice(),
+        const SizedBox(height: 12),
+        const _WorkflowSteps(),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+}
 
-        // 3. Quyền riêng tư & Tiện ích phụ trợ (không cạnh tranh với CTA chính)
-        WorkflowSectionCard(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Row(
-              children: [
-                BrandIllustration.securityLocal(size: 42),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Xử lý tại thiết bị; không tự tải dữ liệu lên mạng',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: DytavaColors.exact,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Bản hiện hành dùng dữ liệu mẫu cục bộ để kiểm chứng hành trình 4 bước và bằng chứng sai khác.',
-                        style: DytavaTypography.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 22),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(48, 44),
-                  ),
-                  onPressed: onOpenPresets,
-                  icon: const BrandIcon(DytavaIcons.saveRule, size: 16),
-                  label: const Text('Mẫu quy tắc'),
-                ),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(48, 44),
-                  ),
-                  onPressed: onOpenSettings,
-                  icon: const BrandIcon(DytavaIcons.settings, size: 16),
-                  label: const Text('Cài đặt & Bảo mật'),
-                ),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(48, 44),
-                  ),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const CompareDemoPage(),
-                    ),
-                  ),
-                  icon: const BrandIcon(DytavaIcons.compare, size: 16),
-                  label: const Text('Mở thử nghiệm so sánh hai giá trị'),
-                ),
-              ],
-            ),
-          ],
+class _HomeHeading extends StatelessWidget {
+  const _HomeHeading();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ĐỐI CHIẾU DỮ LIỆU',
+          style: DytavaTypography.labelSmall.copyWith(
+            color: DytavaColors.primary,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.3,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Nhìn rõ từng sai khác.',
+          style: DytavaTypography.displayMedium.copyWith(
+            fontSize: 27,
+            height: 1.19,
+            letterSpacing: -0.65,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Đối chiếu hai nguồn bảng tính và truy vết kết quả đến từng giá trị.',
+          style: DytavaTypography.bodyLarge.copyWith(
+            color: DytavaColors.textSecondary,
+            height: 1.45,
+          ),
         ),
       ],
     );
   }
 }
 
-class _FormatChip extends StatelessWidget {
-  final String iconAsset;
-  final String label;
+class _StartComparisonPanel extends StatelessWidget {
+  final bool hasActiveSession;
+  final bool quickProcessing;
+  final VoidCallback onStartNewSession;
+  final VoidCallback onQuickRun;
 
-  const _FormatChip({required this.iconAsset, required this.label});
+  const _StartComparisonPanel({
+    required this.hasActiveSession,
+    required this.quickProcessing,
+    required this.onStartNewSession,
+    required this.onQuickRun,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: DytavaColors.background,
-        borderRadius: BorderRadius.circular(10),
+        color: DytavaColors.white,
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: DytavaColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: DytavaColors.darkNavy.withValues(alpha: 0.035),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BrandIcon(iconAsset, size: 16),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              label,
-              style: DytavaTypography.bodySmall.copyWith(
-                color: DytavaColors.textPrimary,
-                fontWeight: FontWeight.w600,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  hasActiveSession ? 'SO SÁNH KHÁC' : 'PHIÊN SO SÁNH MỚI',
+                  style: DytavaTypography.labelSmall.copyWith(
+                    color: DytavaColors.textSecondary,
+                    letterSpacing: 0.9,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: DytavaColors.softAmber,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  'Bản demo',
+                  style: DytavaTypography.labelSmall.copyWith(
+                    color: const Color(0xFF92400E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Row(
+            children: [
+              Expanded(
+                child: _SourceTile(
+                  tag: 'A',
+                  title: 'Bảng tham chiếu',
+                  icon: Icons.description_outlined,
+                  accentColor: DytavaColors.primary,
+                  backgroundColor: DytavaColors.softBlue,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 7),
+                child: Icon(
+                  Icons.sync_alt_rounded,
+                  size: 22,
+                  color: DytavaColors.textSecondary,
+                ),
+              ),
+              Expanded(
+                child: _SourceTile(
+                  tag: 'B',
+                  title: 'Bảng đối chiếu',
+                  icon: Icons.table_chart_outlined,
+                  accentColor: Color(0xFF047857),
+                  backgroundColor: DytavaColors.softGreen,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onStartNewSession,
+              icon: const Icon(Icons.add_rounded, size: 22),
+              label: const Text('Bắt đầu so sánh'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(54),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                textStyle: DytavaTypography.labelLarge.copyWith(
+                  fontSize: 15,
+                ),
               ),
             ),
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: quickProcessing ? null : onQuickRun,
+              icon: quickProcessing
+                  ? const SizedBox(
+                      height: 17,
+                      width: 17,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.play_circle_outline_rounded, size: 21),
+              label: Text(
+                quickProcessing
+                    ? 'Đang chạy dữ liệu mẫu…'
+                    : 'Thử nhanh với dữ liệu mẫu',
+              ),
+              style: TextButton.styleFrom(
+                minimumSize: const Size.fromHeight(46),
+                foregroundColor: DytavaColors.primary,
+                textStyle: DytavaTypography.labelLarge,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Chức năng chọn tệp thật chưa được tích hợp ở bản hiện tại.',
+            textAlign: TextAlign.center,
+            style: DytavaTypography.bodySmall.copyWith(
+              color: DytavaColors.textSecondary,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SourceTile extends StatelessWidget {
+  final String tag;
+  final String title;
+  final IconData icon;
+  final Color accentColor;
+  final Color backgroundColor;
+
+  const _SourceTile({
+    required this.tag,
+    required this.title,
+    required this.icon,
+    required this.accentColor,
+    required this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 114),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 27, color: accentColor),
+          const SizedBox(height: 11),
+          Text(
+            'NGUỒN $tag',
+            style: DytavaTypography.labelSmall.copyWith(
+              color: accentColor,
+              letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: DytavaTypography.bodySmall.copyWith(
+              color: DytavaColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrivacyNotice extends StatelessWidget {
+  const _PrivacyNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: DytavaColors.softBlue,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.shield_outlined,
+            color: DytavaColors.primary,
+            size: 23,
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Xử lý dữ liệu mẫu trên thiết bị',
+                  style: DytavaTypography.titleMedium.copyWith(
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Không tự tải dữ liệu demo lên máy chủ.',
+                  style: DytavaTypography.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkflowSteps extends StatelessWidget {
+  const _WorkflowSteps();
+
+  @override
+  Widget build(BuildContext context) {
+    const steps = ['Nguồn', 'Ánh xạ', 'Đối chiếu', 'Kết quả'];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'QUY TRÌNH 4 BƯỚC',
+            style: DytavaTypography.labelSmall.copyWith(
+              letterSpacing: 0.8,
+              color: DytavaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              for (var i = 0; i < steps.length; i++) ...[
+                if (i > 0)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: DytavaColors.textMuted,
+                    ),
+                  ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 27,
+                        width: 27,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: i == 0
+                              ? DytavaColors.primary
+                              : DytavaColors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: i == 0
+                                ? DytavaColors.primary
+                                : DytavaColors.border,
+                          ),
+                        ),
+                        child: Text(
+                          '${i + 1}',
+                          style: DytavaTypography.labelSmall.copyWith(
+                            color: i == 0
+                                ? DytavaColors.white
+                                : DytavaColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        steps[i],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DytavaTypography.bodySmall.copyWith(
+                          fontSize: 10.5,
+                          color: DytavaColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),
