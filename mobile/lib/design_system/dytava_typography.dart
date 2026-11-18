@@ -71,10 +71,10 @@ class DytavaTypography {
   static const TextStyle bodySmall = TextStyle(
     fontFamily: primaryFont,
     fontFamilyFallback: [fallbackFont],
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: FontWeight.w400,
     color: DytavaColors.textSecondary,
-    height: 1.5,
+    height: 1.45,
   );
 
   static const TextStyle labelLarge = TextStyle(
@@ -83,6 +83,7 @@ class DytavaTypography {
     fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.2,
+    height: 1.3,
   );
 
   static const TextStyle labelSmall = TextStyle(
@@ -90,7 +91,8 @@ class DytavaTypography {
     fontFamilyFallback: [fallbackFont],
     fontSize: 11,
     fontWeight: FontWeight.w600,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
+    height: 1.3,
   );
 
   static const TextStyle metricNumber = TextStyle(
@@ -110,6 +112,15 @@ class DytavaTypography {
     height: 1.5,
   );
 
+  static const TextStyle dataSmall = TextStyle(
+    fontFamily: dataFont,
+    fontFamilyFallback: [primaryFont, fallbackFont],
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    fontFeatures: [FontFeature.tabularFigures()],
+    height: 1.4,
+  );
+
   static const TextTheme textTheme = TextTheme(
     displayLarge: displayLarge,
     displayMedium: displayMedium,
@@ -122,12 +133,7 @@ class DytavaTypography {
     titleSmall: titleMedium,
     bodyLarge: bodyLarge,
     bodyMedium: bodyMedium,
-    bodySmall: TextStyle(
-      fontFamily: primaryFont,
-      fontSize: 11,
-      height: 1.5,
-      color: DytavaColors.textSecondary,
-    ),
+    bodySmall: bodySmall,
     labelLarge: labelLarge,
     labelMedium: labelLarge,
     labelSmall: labelSmall,

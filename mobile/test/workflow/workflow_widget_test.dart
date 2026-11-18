@@ -4,8 +4,9 @@ import 'package:dytava/domain/workflow.dart';
 import 'package:dytava/features/workflow/workflow_page.dart';
 import 'package:dytava/infrastructure/demo/demo_workflow_ports.dart';
 import 'package:dytava/main.dart';
+import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide ComparisonResult;
 
 Future<void> tap(WidgetTester tester, String text) async {
   final target = find.text(text);
@@ -215,6 +216,214 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(DytavaHistoryCard), findsOneWidget);
       expect(find.byType(DytavaResultCard), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'P0: configuration confirmation sheet prevents silent policy approval until user explicitly confirms',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final f = WorkflowController(
+        input: DemoInputPort(),
+        comparator: DemoComparisonPort(),
+        exporter: DemoExportPort(),
+      );
+      addTearDown(f.dispose);
+
+      await tester.runAsync(() async {
+        for (final side in SourceSide.values) {
+          await f.selectSource(
+            side,
+            SourceFormat.csv,
+            side == SourceSide.a ? 'fixture:a' : 'fixture:b',
+            'sample.csv',
+          );
+          await f.importSource(side);
+          await f.confirmImport(side, expectedBinding: f.slot(side).binding);
+        }
+        f.configure(
+          ComparisonConfiguration(
+            mappings: const [
+              FieldMapping('id', 'id'),
+              FieldMapping('amount', 'amount'),
+            ],
+            rules: const {
+              'id': FieldRule(type: SemanticType.identifier),
+              'amount': FieldRule(type: SemanticType.decimal),
+            },
+            mappingConfirmed: true,
+            modeConfirmed: false,
+            policyConfirmed: false,
+            directionConfirmed: false,
+          ),
+        );
+        f.navigate(WorkflowScreen.policy);
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: DytavaTheme.lightTheme,
+          home: WorkflowPage(controller: f),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tapping fast confirm on unapproved config opens the confirmation summary sheet instead of silently running
+      await tap(tester, 'Xem tóm tắt & Xác nhận cấu hình');
+      expect(
+        find.text('Xác nhận cấu hình đối chiếu tổng hợp'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('1. Chế độ ghép hàng & Khóa định danh'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('2. Chính sách chuẩn hóa'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('3. Chiều so sánh'), findsOneWidget);
+
+      // Dismissing via "Chỉnh sửa lại" does not run comparison
+      await tester.tap(find.text('Chỉnh sửa lại'));
+      await tester.pumpAndSettle();
+      expect(f.screen, WorkflowScreen.policy);
+      expect(f.config.policyConfirmed, isFalse);
+
+      // Opening again and confirming runs comparison
+      await tap(tester, 'Xem tóm tắt & Xác nhận cấu hình');
+      await tester.tap(find.text('Xác nhận lần này & Chạy'));
+      await tester.pumpAndSettle();
+      expect(f.screen, WorkflowScreen.results);
+      expect(f.config.modeConfirmed, isTrue);
+      expect(f.config.policyConfirmed, isTrue);
+      expect(f.config.directionConfirmed, isTrue);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'P0: wide 8-column table scrolls horizontally with pinned row identifier and opens cell detail bottom sheet',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final fields = [
+        for (var i = 1; i <= 8; i++)
+          TableField('col_$i', 'Trường dữ liệu mở rộng số $i'),
+      ];
+      final records = [
+        for (var r = 0; r < 3; r++)
+          TableRecord(
+            'r_${r + 1}',
+            r,
+            {
+              for (var i = 1; i <= 8; i++)
+                'col_$i': SourceCell(
+                  CellKind.text,
+                  rawLexeme: 'Giá trị hàng ${r + 1} cột $i',
+                ),
+            },
+            {for (var i = 1; i <= 8; i++) 'col_$i': 'R${r + 1}C$i'},
+          ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: DytavaTheme.lightTheme,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: DytavaSheetPreviewTable(
+                sheetTitle: 'Bảng rộng 8 cột',
+                fields: fields,
+                records: records,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('3 hàng × 8 cột · ↔ Cuộn ngang'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'P0 & P1: priority diff cards, bottom sheet detail, 200% text scale and responsive device matrix render without overflow',
+    (tester) async {
+      for (final viewport in const [
+        Size(320, 640),
+        Size(360, 780),
+        Size(390, 844),
+        Size(768, 1024),
+      ]) {
+        tester.view.physicalSize = viewport;
+        tester.view.devicePixelRatio = 1;
+
+        await tester.pumpWidget(
+          MediaQuery(
+            data: MediaQueryData(
+              size: viewport,
+              textScaler: const TextScaler.linear(2.0),
+            ),
+            child: const ExcelCompareApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      }
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: DytavaTheme.lightTheme,
+          home: const WorkflowPage(),
+        ),
+      );
+      await tap(tester, 'Trải nghiệm nhanh (1 chạm)');
+
+      // Priority diff section is shown above the spreadsheet grid
+      await tester.scrollUntilVisible(
+        find.textContaining('Các khác biệt cần kiểm tra'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(
+        find.textContaining('Các khác biệt cần kiểm tra'),
+        findsOneWidget,
+      );
+      expect(find.byType(DytavaPriorityDiffCard), findsWidgets);
+
+      // Open quick inspection Bottom Sheet from Priority Diff Card
+      final quickSheetBtn = find.text('Xem nhanh (Sheet)').first;
+      await tester.ensureVisible(quickSheetBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(quickSheetBtn);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          '1. Phân biệt Giá trị gốc (Raw) & Sau chuẩn hóa (Canonical)',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text('2. Nguyên nhân & Căn cứ quyết định (Rationale)'),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(find.text('Đóng'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Đóng'));
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },
   );

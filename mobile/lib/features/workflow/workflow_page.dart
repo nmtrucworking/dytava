@@ -204,35 +204,70 @@ class _WorkflowPageState extends State<WorkflowPage>
     ),
   );
 
+  String _remediationForIssue(WorkflowIssue issue) {
+    final code = issue.code.toUpperCase();
+    if (code.contains('KEY')) {
+      return 'Hướng xử lý: Chọn ít nhất 1 cột khóa kiểu IDENTIFIER và xác nhận chế độ ghép hàng.';
+    }
+    if (code.contains('MAP')) {
+      return 'Hướng xử lý: Ghép ít nhất 1 cặp cột 1:1 giữa Nguồn A và Nguồn B rồi bấm xác nhận ánh xạ.';
+    }
+    if (code.contains('POLICY') || code.contains('RULE')) {
+      return 'Hướng xử lý: Kiểm tra kiểu dữ liệu từng cột và đánh dấu xác nhận toàn bộ policy.';
+    }
+    if (code.contains('DIRECTION')) {
+      return 'Hướng xử lý: Chọn chiều đối chiếu (A → B hoặc B → A) và đánh dấu xác nhận.';
+    }
+    if (code.contains('OCR') || code.contains('REVIEW')) {
+      return 'Hướng xử lý: Mở màn hình Review để duyệt đầy đủ từng ô nhận dạng trước khi tiếp tục.';
+    }
+    return 'Hướng xử lý: Kiểm tra lại trạng thái nguồn dữ liệu hoặc thử nạp lại nguồn hợp lệ.';
+  }
+
   Widget _issues(Iterable<WorkflowIssue> issues) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       for (final issue in issues)
         Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: DytavaColors.softRed,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: DytavaColors.different.withValues(alpha: 0.4),
+              color: DytavaColors.different.withValues(alpha: 0.45),
             ),
           ),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 18,
-                color: DytavaColors.different,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${issue.code}: ${issue.message}',
-                  style: DytavaTypography.bodySmall.copyWith(
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 18,
                     color: DytavaColors.different,
-                    fontWeight: FontWeight.w600,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${issue.code}: ${issue.message}',
+                      style: DytavaTypography.bodySmall.copyWith(
+                        color: DytavaColors.different,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 26),
+                child: Text(
+                  _remediationForIssue(issue),
+                  style: DytavaTypography.bodySmall.copyWith(
+                    color: DytavaColors.textPrimary,
                   ),
                 ),
               ),
@@ -313,110 +348,138 @@ class _WorkflowPageState extends State<WorkflowPage>
       WorkflowScreen.detail ||
       WorkflowScreen.export => 4,
     };
+    final stepDetailTitle = switch (flow.screen) {
+      WorkflowScreen.home => 'Bắt đầu phiên',
+      WorkflowScreen.sources => 'Bước 1/4 · Chọn & kiểm tra Nguồn A/B',
+      WorkflowScreen.preview => 'Bước 1/4 · Xem trước & xác nhận bảng nguồn',
+      WorkflowScreen.ocrReview => 'Bước 1/4 · Duyệt từng ô OCR mẫu',
+      WorkflowScreen.mapping => 'Bước 2/4 · Ánh xạ cột 1:1 giữa A và B',
+      WorkflowScreen.policy => 'Bước 2/4 · Xác nhận khóa, policy & chiều so sánh',
+      WorkflowScreen.progress => 'Bước 3/4 · Đang thực thi đối chiếu',
+      WorkflowScreen.results => 'Bước 4/4 · Kết quả đối chiếu & Sheet Diff',
+      WorkflowScreen.detail => 'Bước 4/4 · Kiểm tra chi tiết bằng chứng ô',
+      WorkflowScreen.export => 'Bước 4/4 · Xem trước & xuất báo cáo JSON',
+    };
     final steps = [
       (1, 'Nguồn', Icons.folder_open),
       (2, 'Cấu hình', Icons.tune),
       (3, 'So sánh', Icons.compare_arrows),
       (4, 'Sheet Diff', Icons.grid_on),
     ];
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: DytavaColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DytavaColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            offset: Offset(0, 2),
-            blurRadius: 8,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              for (var i = 0; i < steps.length; i++) ...[
-                if (i > 0)
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: currentStep > steps[i].$1 - 1
-                          ? DytavaColors.primary
-                          : DytavaColors.border,
-                    ),
-                  ),
-                Column(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: currentStep == steps[i].$1
+    return Semantics(
+      container: true,
+      label: 'Tiến độ phiên so sánh: $stepDetailTitle',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: DytavaColors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: DytavaColors.border),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x06000000),
+              offset: Offset(0, 2),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                for (var i = 0; i < steps.length; i++) ...[
+                  if (i > 0)
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        color: currentStep > steps[i].$1 - 1
                             ? DytavaColors.primary
-                            : (currentStep > steps[i].$1
-                                  ? DytavaColors.softBlue
-                                  : DytavaColors.background),
-                        border: Border.all(
-                          color: currentStep >= steps[i].$1
-                              ? DytavaColors.primary
-                              : DytavaColors.border,
-                          width: 1.5,
-                        ),
+                            : DytavaColors.border,
                       ),
-                      alignment: Alignment.center,
-                      child: currentStep > steps[i].$1
-                          ? const Icon(
-                              Icons.check,
-                              size: 15,
-                              color: DytavaColors.primary,
-                            )
-                          : Icon(
-                              steps[i].$3,
-                              size: 14,
+                    ),
+                  Flexible(
+                    flex: 2,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: currentStep == steps[i].$1
+                                ? DytavaColors.primary
+                                : (currentStep > steps[i].$1
+                                      ? DytavaColors.softBlue
+                                      : DytavaColors.background),
+                            border: Border.all(
+                              color: currentStep >= steps[i].$1
+                                  ? DytavaColors.primary
+                                  : DytavaColors.border,
+                              width: 1.5,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: currentStep > steps[i].$1
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 15,
+                                  color: DytavaColors.primary,
+                                )
+                              : Icon(
+                                  steps[i].$3,
+                                  size: 14,
+                                  color: currentStep == steps[i].$1
+                                      ? DytavaColors.white
+                                      : DytavaColors.textSecondary,
+                                ),
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            steps[i].$2,
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: currentStep == steps[i].$1
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
                               color: currentStep == steps[i].$1
-                                  ? DytavaColors.white
+                                  ? DytavaColors.primary
                                   : DytavaColors.textSecondary,
                             ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      steps[i].$2,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: currentStep == steps[i].$1
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        color: currentStep == steps[i].$1
-                            ? DytavaColors.primary
-                            : DytavaColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ],
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: DytavaColors.softBlue,
-              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text(
-              'CHẾ ĐỘ DỮ LIỆU MẪU · Nguồn → Cấu hình → So sánh → Kết quả',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: DytavaColors.primary,
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: DytavaColors.softBlue,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'DYTAVA / PHIÊN SO SÁNH · $stepDetailTitle',
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: DytavaColors.primary,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -542,8 +605,8 @@ class _WorkflowPageState extends State<WorkflowPage>
     );
   }
 
-  /// Xác nhận nhanh toàn bộ cấu hình và chạy so sánh (1-Tap Fast Run)
-  void _quickConfirmAllAndRun() {
+  /// Áp dụng cấu hình đã được người dùng phê duyệt và khởi chạy đối chiếu
+  void _applyApprovedConfigAndRun() {
     var updated = flow.config.copyWith(
       mappingConfirmed: flow.config.mappings.isNotEmpty,
       modeConfirmed: true,
@@ -567,12 +630,40 @@ class _WorkflowPageState extends State<WorkflowPage>
     }
   }
 
-  /// Trải nghiệm toàn bộ luồng so sánh 2 Sheets từ Home chỉ với 1 chạm
+  /// Kiểm soát xác nhận cấu hình (P0):
+  /// - Nếu cấu hình đã được phê duyệt đầy đủ, cho phép chạy ngay.
+  /// - Nếu còn hạng mục chưa xác nhận (mode / policy / direction), mở màn hình
+  ///   Xác nhận cấu hình tổng hợp để người dùng kiểm tra khóa ghép, chính sách chuẩn hóa
+  ///   và chiều so sánh trước khi xác nhận chạy lần này.
+  Future<void> _quickConfirmAllAndRun() async {
+    final cfg = flow.config;
+    final alreadyApproved =
+        cfg.mappingConfirmed &&
+        cfg.modeConfirmed &&
+        cfg.policyConfirmed &&
+        cfg.directionConfirmed &&
+        (cfg.mode != MatchingMode.key || cfg.keys.isNotEmpty);
+
+    if (alreadyApproved) {
+      _applyApprovedConfigAndRun();
+      return;
+    }
+
+    final approvedThisTime = await showDytavaConfigConfirmationSheet(
+      context: context,
+      config: cfg,
+    );
+    if (approvedThisTime == true && mounted) {
+      _applyApprovedConfigAndRun();
+    }
+  }
+
+  /// Trải nghiệm toàn bộ luồng so sánh 2 Sheets từ Home với cấu hình mẫu đã phê duyệt (`academic-records-v1`)
   Future<void> _oneTapQuickRun() async {
     await _quickPrepareBoth();
     if (!flow.inputsReady) return;
     _autoMapFields();
-    _quickConfirmAllAndRun();
+    _applyApprovedConfigAndRun();
   }
 
   String _appBarTitle() {
@@ -1736,24 +1827,76 @@ class _WorkflowPageState extends State<WorkflowPage>
 
   List<Widget> _policy() {
     final config = flow.config;
+    final allConfirmed =
+        config.mappingConfirmed &&
+        config.modeConfirmed &&
+        config.policyConfirmed &&
+        config.directionConfirmed;
     return [
-      Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        child: FilledButton.icon(
-          icon: const Icon(Icons.bolt, size: 20),
-          label: const Text(
-            'Xác nhận tất cả & Chạy so sánh (1 chạm)',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      _card(
+        color: DytavaColors.softBlue,
+        border: Border.all(
+          color: DytavaColors.primary.withValues(alpha: 0.35),
+        ),
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.fact_check_outlined,
+                color: DytavaColors.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Tóm tắt cấu hình đối chiếu',
+                  style: DytavaTypography.titleMedium.copyWith(
+                    color: DytavaColors.primary,
+                  ),
+                ),
+              ),
+              _statusPill(
+                allConfirmed ? 'Đã phê duyệt' : 'Cần xác nhận',
+                allConfirmed ? DytavaColors.exact : DytavaColors.unresolved,
+                allConfirmed ? DytavaColors.softGreen : DytavaColors.softAmber,
+              ),
+            ],
           ),
-          style: FilledButton.styleFrom(
-            backgroundColor: DytavaColors.primary,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: 8),
+          _text(
+            '• Khóa ghép: ${_name(config.mode)}${config.mode == MatchingMode.key ? ' (${config.keys.isEmpty ? 'chưa chọn' : config.keys.join(' → ')})' : ''}\n'
+            '• Chính sách chuẩn hóa: ${config.mappings.length} cột ánh xạ (${config.policyConfirmed ? 'đã xác nhận' : 'chưa xác nhận'})\n'
+            '• Chiều so sánh: ${config.direction == ComparisonDirection.aToB ? 'A → B' : 'B → A'} (${config.directionConfirmed ? 'đã xác nhận' : 'chưa xác nhận'})',
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              icon: Icon(
+                allConfirmed ? Icons.play_arrow : Icons.fact_check,
+                size: 20,
+              ),
+              label: Text(
+                allConfirmed
+                    ? 'Chạy nhanh với cấu hình đã duyệt'
+                    : 'Xem tóm tắt & Xác nhận cấu hình',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: DytavaColors.primary,
+                minimumSize: const Size(48, 48),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: _quickConfirmAllAndRun,
             ),
           ),
-          onPressed: _quickConfirmAllAndRun,
-        ),
+        ],
       ),
       _card(
         children: [
@@ -2129,7 +2272,7 @@ class _WorkflowPageState extends State<WorkflowPage>
               selected: flow.resultFilter == status,
               label: Text(label),
               labelStyle: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: flow.resultFilter == status
                     ? FontWeight.bold
                     : FontWeight.w500,
@@ -2152,10 +2295,21 @@ class _WorkflowPageState extends State<WorkflowPage>
 
   List<Widget> _results() {
     final result = flow.result!;
+    final priorityCells = result.cells
+        .where(
+          (c) =>
+              c.decision.status == DecisionStatus.different ||
+              c.decision.status == DecisionStatus.unresolved,
+        )
+        .toList();
+    final labelA = flow.slot(SourceSide.a).artifact?.label ?? 'Nguồn A';
+    final labelB = flow.slot(SourceSide.b).artifact?.label ?? 'Nguồn B';
+
     return [
       _card(
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
@@ -2176,11 +2330,16 @@ class _WorkflowPageState extends State<WorkflowPage>
                   children: [
                     _heading('COMPLETED · Kết quả bộ dữ liệu mẫu'),
                     Text(
-                      'Chiều: ${result.plan.config.direction == ComparisonDirection.aToB ? 'A → B' : 'B → A'}',
+                      '$labelA ↔ $labelB · Chiều: ${result.plan.config.direction == ComparisonDirection.aToB ? 'A → B' : 'B → A'}',
                       style: DytavaTypography.bodySmall,
                     ),
                   ],
                 ),
+              ),
+              _statusPill(
+                'Hoàn thành',
+                DytavaColors.exact,
+                DytavaColors.softGreen,
               ),
             ],
           ),
@@ -2189,7 +2348,28 @@ class _WorkflowPageState extends State<WorkflowPage>
             'Ô ghép: ${result.cells.length} · Hàng ghép: ${result.matchedRecords}',
           ),
           const SizedBox(height: 12),
-          // 4 Trạng thái ô ghép
+          // Hàng 1 (Ưu tiên cao — P1): Khác biệt & Chưa kết luận
+          Row(
+            children: [
+              _metricBox(
+                'DIFFERENT: ${result.count(DecisionStatus.different)}',
+                result.count(DecisionStatus.different),
+                'Ô khác biệt',
+                DytavaColors.different,
+                DytavaColors.differentBg,
+              ),
+              const SizedBox(width: 8),
+              _metricBox(
+                'UNRESOLVED: ${result.count(DecisionStatus.unresolved)}',
+                result.count(DecisionStatus.unresolved),
+                'Chưa kết luận',
+                DytavaColors.unresolved,
+                DytavaColors.unresolvedBg,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Hàng 2 (Bổ trợ — P1): Trùng khớp & Tương đương
           Row(
             children: [
               _metricBox(
@@ -2209,26 +2389,6 @@ class _WorkflowPageState extends State<WorkflowPage>
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _metricBox(
-                'DIFFERENT: ${result.count(DecisionStatus.different)}',
-                result.count(DecisionStatus.different),
-                'Khác biệt',
-                DytavaColors.different,
-                DytavaColors.differentBg,
-              ),
-              const SizedBox(width: 8),
-              _metricBox(
-                'UNRESOLVED: ${result.count(DecisionStatus.unresolved)}',
-                result.count(DecisionStatus.unresolved),
-                'Chưa kết luận',
-                DytavaColors.unresolved,
-                DytavaColors.unresolvedBg,
-              ),
-            ],
-          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(10),
@@ -2242,6 +2402,43 @@ class _WorkflowPageState extends State<WorkflowPage>
           ),
         ],
       ),
+      // Khu vực Data-first UX (Mục 4): "Các khác biệt cần kiểm tra"
+      if (priorityCells.isNotEmpty)
+        _card(
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.priority_high_rounded,
+                  color: DytavaColors.different,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _heading(
+                    'Các khác biệt cần kiểm tra (${priorityCells.length})',
+                  ),
+                ),
+              ],
+            ),
+            _text(
+              'Kiểm tra nhanh các ô Khác biệt hoặc Chưa kết luận trước khi mở toàn bộ bảng đối chiếu.',
+            ),
+            const SizedBox(height: 8),
+            for (final pCell in priorityCells.take(5))
+              DytavaPriorityDiffCard(
+                cell: pCell,
+                onQuickBottomSheet: () => showDytavaCellDetailBottomSheet(
+                  context: context,
+                  cell: pCell,
+                  onOpenFullDetail: () =>
+                      _go(WorkflowScreen.detail, cellId: pCell.id),
+                ),
+                onInspectDetail: () =>
+                    _go(WorkflowScreen.detail, cellId: pCell.id),
+              ),
+          ],
+        ),
       if (result.structural.isNotEmpty || result.unresolvedRecords.isNotEmpty)
         _card(
           children: [
@@ -2280,7 +2477,11 @@ class _WorkflowPageState extends State<WorkflowPage>
         ),
       _card(
         children: [
-          _heading('Chi tiết theo trang'),
+          _heading('Xem bảng đối chiếu đầy đủ'),
+          _text(
+            'Mở bảng cuộn ngang với cột định danh cố định và các hàng được ghép tương ứng.',
+          ),
+          const SizedBox(height: 8),
           // Thanh TabBar chọn góc nhìn: Sheet Diff (2 Bảng) vs Theo ô
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -2351,6 +2552,9 @@ class _WorkflowPageState extends State<WorkflowPage>
             children: [
               Expanded(
                 child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(48, 48),
+                  ),
                   onPressed: flow.page > 0 ? () => flow.turnPage(-1) : null,
                   child: const Text('Trang trước'),
                 ),
@@ -2358,6 +2562,9 @@ class _WorkflowPageState extends State<WorkflowPage>
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(48, 48),
+                  ),
                   onPressed:
                       (flow.page + 1) * WorkflowController.pageSize <
                           flow.selectedCells.length
@@ -2383,33 +2590,28 @@ class _WorkflowPageState extends State<WorkflowPage>
     Color bgColor,
   ) => Expanded(
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              fullLabel,
-              style: DytavaTypography.labelLarge.copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
+          Text(
+            fullLabel,
+            style: DytavaTypography.labelLarge.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 2),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              subLabel,
-              style: DytavaTypography.bodySmall.copyWith(color: color),
+          Text(
+            subLabel,
+            style: DytavaTypography.bodySmall.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -2443,6 +2645,7 @@ class _WorkflowPageState extends State<WorkflowPage>
             icon: const Icon(Icons.chevron_left, size: 18),
             label: const Text('Trước'),
             style: OutlinedButton.styleFrom(
+              minimumSize: const Size(48, 48),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             ),
             onPressed: hasPrev
@@ -2461,6 +2664,7 @@ class _WorkflowPageState extends State<WorkflowPage>
             icon: const Icon(Icons.chevron_right, size: 18),
             label: const Text('Sau'),
             style: OutlinedButton.styleFrom(
+              minimumSize: const Size(48, 48),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             ),
             onPressed: hasNext
@@ -2489,7 +2693,9 @@ class _WorkflowPageState extends State<WorkflowPage>
               _decisionBadge(cell.decision.status),
             ],
           ),
-          _text(_name(cell.decision.status)),
+          _text(
+            '${_name(cell.decision.status)} · Hàng ${cell.rowA} ↔ ${cell.rowB}',
+          ),
         ],
       ),
       for (final side in SourceSide.values) ...[
@@ -2561,6 +2767,7 @@ class _WorkflowPageState extends State<WorkflowPage>
       _card(
         children: [
           _heading('Căn cứ quyết định (Rationale)'),
+          _text('Nguyên nhân: ${DytavaPriorityDiffCard.summarizeCause(cell)}'),
           _text('Rule: ${cell.decision.ruleId}'),
           if (cell.decision.reason != null)
             _text('Reason: ${cell.decision.reason!.name}'),
