@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../application/workflow_controller.dart';
@@ -197,8 +199,9 @@ class SourceSelectionView extends StatelessWidget {
             FilledButton.tonalIcon(
               style: FilledButton.styleFrom(minimumSize: const Size(48, 44)),
               icon: const BrandIcon(DytavaIcons.upload, size: 16),
-              onPressed:
-                  slot.busy ? null : () => _handleFileUpload(context, side),
+              onPressed: slot.busy
+                  ? null
+                  : () => _handleFileUpload(context, side),
               label: Text(
                 slot.artifact == null
                     ? 'Tải tệp $sideUpper từ thiết bị'
@@ -283,6 +286,42 @@ class SourceSelectionView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Comparison Rail: Dual-stream visual pipeline
+        ComparisonRail(
+          sessionTitle: 'COMPARISON RAIL / NGUỒN DỮ LIỆU',
+          statusLabel: flow.inputsReady ? 'Sẵn sàng ánh xạ' : 'Đang chuẩn bị',
+          sourceA: RailStreamData(
+            sideTag: 'A',
+            title:
+                flow.slot(SourceSide.a).artifact?.label ??
+                'Nguồn A (Tham chiếu)',
+            subtitle: flow.slot(SourceSide.a).artifact != null
+                ? 'Đã tải: ${flow.slot(SourceSide.a).artifact!.format.name.toUpperCase()}'
+                : 'Chưa chọn tệp',
+            format: flow.slot(SourceSide.a).artifact?.format.name,
+            status: flow.slot(SourceSide.a).artifact != null
+                ? RailNodeStatus.ready
+                : RailNodeStatus.unselected,
+            onTap: () => onOpenPreview(SourceSide.a),
+          ),
+          sourceB: RailStreamData(
+            sideTag: 'B',
+            title:
+                flow.slot(SourceSide.b).artifact?.label ??
+                'Nguồn B (Đối chiếu)',
+            subtitle: flow.slot(SourceSide.b).artifact != null
+                ? 'Đã tải: ${flow.slot(SourceSide.b).artifact!.format.name.toUpperCase()}'
+                : 'Chưa chọn tệp',
+            format: flow.slot(SourceSide.b).artifact?.format.name,
+            status: flow.slot(SourceSide.b).artifact != null
+                ? RailNodeStatus.ready
+                : RailNodeStatus.unselected,
+            onTap: () => onOpenPreview(SourceSide.b),
+          ),
+          isCompact: true,
+        ),
+        const SizedBox(height: 14),
+
         // Màn hình 1 — Chọn dữ liệu: Header & Bộ chọn tác vụ theo mục tiêu người dùng
         WorkflowSectionCard(
           padding: const EdgeInsets.all(16),
@@ -334,14 +373,12 @@ class SourceSelectionView extends StatelessWidget {
                 for (final mode in ComparisonTaskMode.values)
                   ChoiceChip(
                     selected: flow.taskMode == mode,
-                    avatar: BrandIcon(
-                      switch (mode) {
-                        ComparisonTaskMode.compareFiles => DytavaIcons.compareTable,
-                        ComparisonTaskMode.compareColumns => DytavaIcons.columns,
-                        ComparisonTaskMode.reconcile => DytavaIcons.key,
-                      },
-                      size: 16,
-                    ),
+                    avatar: BrandIcon(switch (mode) {
+                      ComparisonTaskMode.compareFiles =>
+                        DytavaIcons.compareTable,
+                      ComparisonTaskMode.compareColumns => DytavaIcons.columns,
+                      ComparisonTaskMode.reconcile => DytavaIcons.key,
+                    }, size: 16),
                     label: Text(mode.label),
                     selectedColor: DytavaColors.softBlue,
                     backgroundColor: DytavaColors.white,
@@ -468,7 +505,8 @@ class SourceSelectionView extends StatelessWidget {
             ),
             clipBehavior: Clip.antiAlias,
             child: Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              data: Theme.of(context)
+                  .copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 leading: const BrandIcon(DytavaIcons.settings, size: 20),
                 title: const Text(
@@ -499,10 +537,12 @@ class SourceSelectionView extends StatelessWidget {
                     ],
                     onChanged: (dir) {
                       if (dir != null) {
-                        flow.configure(flow.config.copyWith(
-                          direction: dir,
-                          directionConfirmed: true,
-                        ));
+                        flow.configure(
+                          flow.config.copyWith(
+                            direction: dir,
+                            directionConfirmed: true,
+                          ),
+                        );
                       }
                     },
                   ),
@@ -581,9 +621,38 @@ class SourceSelectionView extends StatelessWidget {
   }
 
   Future<void> _handleFileUpload(BuildContext context, SourceSide side) async {
+    final generation = flow.slot(side).generation;
+    final navigator = Navigator.of(context);
+    final dialog = DialogRoute<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(),
+              ),
+              SizedBox(width: 16),
+              Expanded(child: Text('Đang chọn và đọc tệp…')),
+            ],
+          ),
+        ),
+      ),
+    );
+    unawaited(navigator.push(dialog));
     try {
       final info = await MobileFileUploadService.pickAndProcessFile(side);
       if (info == null) return;
+      if (!context.mounted ||
+          !flow.usable ||
+          flow.slot(side).generation != generation) {
+        MobileFileUploadService.release(info.privateRef);
+        return;
+      }
       await flow.selectSource(
         side,
         info.format,
@@ -614,6 +683,8 @@ class SourceSelectionView extends StatelessWidget {
           ),
         );
       }
+    } finally {
+      if (dialog.isActive) navigator.removeRoute(dialog);
     }
   }
 }

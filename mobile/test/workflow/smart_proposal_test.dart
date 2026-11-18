@@ -1,3 +1,4 @@
+import 'package:dytava/app/workflow_composition.dart';
 import 'package:dytava/domain/smart_proposal_engine.dart';
 import 'package:dytava/domain/workflow.dart';
 import 'package:dytava/main.dart';
@@ -123,7 +124,10 @@ void main() {
       expect(proposal.keys, contains('id'));
       expect(proposal.reconcileKeyColumn, 'id');
       expect(proposal.reconcileValueColumn, 'amount');
-      expect(proposal.mappings.map((m) => m.fieldA), containsAll(['id', 'amount']));
+      expect(
+        proposal.mappings.map((m) => m.fieldA),
+        containsAll(['id', 'amount']),
+      );
       expect(proposal.isHighConfidence, isTrue);
     });
 
@@ -167,14 +171,19 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(const ExcelCompareApp());
+        await tester.pumpWidget(
+          ExcelCompareApp(controller: createDemoWorkflow()),
+        );
 
         // Screen 0 -> Home: Tap "Bắt đầu so sánh"
         await tap(tester, 'Bắt đầu so sánh');
 
         // Screen 1: Data Selection (Chọn dữ liệu)
         expect(find.text('So sánh dữ liệu'), findsOneWidget);
-        expect(find.text('Chọn hai bảng tính để tìm các giá trị thay đổi.'), findsOneWidget);
+        expect(
+          find.text('Chọn hai bảng tính để tìm các giá trị thay đổi.'),
+          findsOneWidget,
+        );
         expect(find.text('So sánh hai tệp'), findsOneWidget);
         expect(find.text('So sánh hai cột'), findsOneWidget);
         expect(find.text('Đối soát theo ID'), findsOneWidget);
@@ -190,15 +199,21 @@ void main() {
 
         // Screen 2: Proposal Review (Kiểm tra đề xuất)
         expect(find.text('Kiểm tra đề xuất đối chiếu'), findsOneWidget);
-        expect(find.textContaining('Dytava tự động phân tích cấu trúc'), findsOneWidget);
+        expect(
+          find.textContaining('Dytava tự động phân tích cấu trúc'),
+          findsOneWidget,
+        );
         expect(find.text('Tiến hành so sánh'), findsOneWidget);
 
         // 1 Tap on "Tiến hành so sánh" -> executes and leads straight to Screen 3!
         await tap(tester, 'Tiến hành so sánh');
 
         // Screen 3: Results (Kết quả)
-        expect(find.text('COMPLETED · Kết quả bộ dữ liệu mẫu'), findsOneWidget);
-        expect(find.text('Kết quả đối soát theo ID (Reconcile by ID)'), findsOneWidget);
+        expect(find.text('COMPLETED · Kết quả so sánh'), findsOneWidget);
+        expect(
+          find.text('Kết quả đối soát theo ID (Reconcile by ID)'),
+          findsOneWidget,
+        );
         expect(find.text('Bắt đầu phiên so sánh mới'), findsOneWidget);
         expect(find.text('Xuất / xem trước báo cáo'), findsOneWidget);
       },

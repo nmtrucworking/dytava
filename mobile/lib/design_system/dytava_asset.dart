@@ -127,12 +127,15 @@ class BrandIcon extends StatelessWidget {
     semanticLabel: semanticLabel,
   );
 
-  /// Phân giải màu ngữ nghĩa chuẩn Dytava v2.0 cho các functional icons (`svg/glyph/`)
+  /// Phân giải màu ngữ nghĩa chuẩn DYTAVA — Precision Workspace cho các functional icons
   static Color defaultSemanticColor(String asset, BuildContext context) {
     final ambientColor = IconTheme.of(context).color;
-    // Nếu đang nằm trong FilledButton nền đậm (chữ/icon trắng), ưu tiên màu trắng của nút
+    // Nếu đang nằm trong FilledButton nền đậm (chữ/icon trắng hoặc đen), ưu tiên màu ambient của nút
     if (ambientColor == Colors.white || ambientColor == DytavaColors.white) {
       return DytavaColors.white;
+    }
+    if (ambientColor == DytavaColors.graphite) {
+      return DytavaColors.graphite;
     }
     if (asset.endsWith('/exact.svg') ||
         asset.endsWith('/success.svg') ||
@@ -152,23 +155,11 @@ class BrandIcon extends StatelessWidget {
         asset.endsWith('/duplicate.svg')) {
       return DytavaColors.unresolved;
     }
-    if (asset.endsWith('/ocr.svg') || asset.endsWith('/camera.svg')) {
-      return DytavaColors.cyan;
+    if (asset.endsWith('/equivalent.svg')) {
+      return DytavaColors.lime600;
     }
-    if (asset.endsWith('/mapping.svg') ||
-        asset.endsWith('/policy.svg') ||
-        asset.endsWith('/save-rule.svg') ||
-        asset.endsWith('/normalize.svg') ||
-        asset.endsWith('/learn.svg')) {
-      return DytavaColors.purple;
-    }
-    if (asset.endsWith('/back.svg') ||
-        asset.endsWith('/close.svg') ||
-        asset.endsWith('/settings.svg') ||
-        asset.endsWith('/history.svg')) {
-      return DytavaColors.textPrimary;
-    }
-    return DytavaColors.primary;
+    // Mặc định các icon chức năng mang màu Graphite chuẩn Data Instrument
+    return DytavaColors.graphite;
   }
 
   @override

@@ -1,13 +1,26 @@
-/* Generated from branding/mobile/assets/dytava/design_tokens.json. */
+/* Generated from branding/mobile/assets/dytava/design_tokens.json (Precision Workspace v3.2). */
 :root {
-  --brand-primary: #2563EB;
-  --brand-secondary: #3B82F6;
-  --brand-purple: #8B5CF6;
-  --brand-cyan: #06B6D4;
-  --brand-green: #10B981;
-  --brand-amber: #F59E0B;
-  --brand-red: #EF4444;
-  --brand-bg-subtle: #F3F4F6;
-  --brand-border: #E5E7EB;
+  --brand-lime-primary: #C8FF4A;
+  --brand-lime-600: #86E63A;
+  --brand-off-white: #F7F6F2;
+  --brand-warm-surface: #EDEBE4;
+  --brand-graphite: #0F1A1C;
+  --brand-graphite-800: #1B2426;
+  --brand-difference-coral: #E97965;
+  --brand-danger-red: #EF4444;
+  --brand-success-green: #10B981;
+  --brand-warning-amber: #F59E0B;
+  --brand-source-a: #C8FF4A;
+  --brand-source-b: #38BDF8;
+  --brand-border-subtle: #D8D5CC;
+  /* Semantic Aliases for UI & Theme Compatibility */
+  --brand-primary: var(--brand-lime-primary);
+  --brand-primary-hover: var(--brand-lime-600);
+  --brand-secondary: var(--brand-graphite);
+  --brand-text: var(--brand-graphite);
+  --brand-signal-lime: var(--brand-lime-primary);
+  --brand-warm-white: var(--brand-off-white);
+  --brand-warm-canvas: var(--brand-off-white);
+  --brand-border: var(--brand-border-subtle);
   --brand-white: #FFFFFF;
 }

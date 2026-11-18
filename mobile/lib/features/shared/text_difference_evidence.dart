@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/design_system.dart';
 import '../../domain/text_difference.dart';
+import '../../domain/word_difference.dart';
 
 /// A lazy, small-text diagnostic aid; not the production streaming highlighter.
 class TextDifferenceEvidence extends StatelessWidget {
@@ -39,11 +40,36 @@ class TextDifferenceEvidence extends StatelessWidget {
         'Không tô vùng khác biệt: chuỗi vượt giới hạn hiển thị của màn hình thử nghiệm. Kết luận so sánh được giữ nguyên.',
       );
     }
+    final words = WordDifference.between(a, b);
     final difference = TextDifference.between(a, b);
     if (difference == null) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (words.similarity != null)
+          Text('Độ tương đồng: ${words.similarity}%'),
+        for (final side in [(words.a, 'A'), (words.b, 'B')])
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: SelectableText.rich(
+              TextSpan(
+                style: DytavaTypography.dataMedium,
+                children: [
+                  TextSpan(text: '${side.$2}: '),
+                  for (final token in side.$1)
+                    TextSpan(
+                      text: token.text,
+                      style: token.changed
+                          ? const TextStyle(
+                              backgroundColor: DytavaColors.differentBg,
+                              fontWeight: FontWeight.bold,
+                            )
+                          : null,
+                    ),
+                ],
+              ),
+            ),
+          ),
         const SizedBox(height: 12),
         const Text(
           'Khác biệt trong chuỗi',

@@ -228,20 +228,32 @@ class DytavaSessionResumeCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: FilledButton.tonalIcon(
+                  child: FilledButton(
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(48, 48),
-                      backgroundColor: DytavaColors.softBlue,
-                      foregroundColor: DytavaColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      backgroundColor: DytavaColors.limePrimary,
+                      foregroundColor: DytavaColors.graphite,
+                      elevation: 0,
+                      shape: const StadiumBorder(),
                     ),
                     onPressed: onResume,
-                    icon: const BrandIcon(DytavaIcons.forward, size: 18),
-                    label: const Text(
-                      'Tiếp tục phiên so sánh',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Tiếp tục phiên so sánh',
+                            style: TextStyle(
+                              fontFamily: DytavaTypography.editorialFont,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        BrandIcon(DytavaIcons.forward, size: 18),
+                      ],
                     ),
                   ),
                 ),
@@ -329,9 +341,9 @@ class DytavaStickyActionBar extends StatelessWidget {
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(48, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          foregroundColor: DytavaColors.graphite,
+                          side: const BorderSide(color: DytavaColors.subtleBorder),
+                          shape: const StadiumBorder(),
                         ),
                         onPressed: onSecondaryPressed,
                         child: Text(
@@ -348,11 +360,14 @@ class DytavaStickyActionBar extends StatelessWidget {
                     flex: 3,
                     child: FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: DytavaColors.primary,
-                        foregroundColor: DytavaColors.white,
+                        backgroundColor: DytavaColors.limePrimary,
+                        foregroundColor: DytavaColors.graphite,
+                        elevation: 0,
                         minimumSize: const Size(48, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        shape: const StadiumBorder(),
+                        textStyle: const TextStyle(
+                          fontFamily: DytavaTypography.editorialFont,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                       onPressed: onPrimaryPressed,
@@ -669,6 +684,7 @@ class DytavaPriorityDiffCard extends StatelessWidget {
   });
 
   static String summarizeCause(CellDifference cell) {
+    if (cell.decision.explanation != null) return cell.decision.explanation!;
     final status = cell.decision.status;
     final rawA = cell.a.rawLexeme;
     final rawB = cell.b.rawLexeme;
@@ -1464,6 +1480,7 @@ class DytavaFileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (badgeText, badgeBg) = switch (format) {
+      SourceFormat.json => ('JSON', DytavaColors.softPurple),
       SourceFormat.xlsx => ('XLSX', DytavaColors.softGreen),
       SourceFormat.csv => ('CSV', DytavaColors.softBlue),
       SourceFormat.tsv => ('TSV', DytavaColors.softCyan),
@@ -1476,12 +1493,12 @@ class DytavaFileCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: DytavaColors.background,
+          color: DytavaColors.warmSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: verified
-                ? DytavaColors.exact.withValues(alpha: 0.4)
-                : DytavaColors.border,
+                ? DytavaColors.exact.withValues(alpha: 0.5)
+                : DytavaColors.subtleBorder,
           ),
         ),
         child: InkWell(

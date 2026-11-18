@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
+import '../../../infrastructure/file_upload_service.dart';
 import '../widgets/workflow_common_widgets.dart';
 
 /// Màn hình Xem trước & Kiểm tra nguồn (`SCR-03`):
@@ -52,6 +53,45 @@ class PreviewScreenView extends StatelessWidget {
               WorkflowUiHelpers.formatEnumName(source.state),
               style: DytavaTypography.bodyMedium,
             ),
+            if (source.artifact != null &&
+                MobileFileUploadService.info(source.artifact!.privateRef) !=
+                    null)
+              if (MobileFileUploadService.info(source.artifact!.privateRef)!
+                      .sheets
+                      .length >
+                  1)
+                DropdownButtonFormField<String>(
+                  key: ValueKey(
+                    'sheet-${source.side.name}-${MobileFileUploadService.info(source.artifact!.privateRef)!.sheetName}',
+                  ),
+                  initialValue: MobileFileUploadService.info(
+                    source.artifact!.privateRef,
+                  )!.sheetName,
+                  decoration: const InputDecoration(labelText: 'Sheet dữ liệu'),
+                  items: [
+                    for (final name in MobileFileUploadService.info(
+                      source.artifact!.privateRef,
+                    )!.sheets)
+                      DropdownMenuItem(value: name, child: Text(name)),
+                  ],
+                  onChanged: flow.busy
+                      ? null
+                      : (name) async {
+                          if (name == null) return;
+                          final artifact = source.artifact!;
+                          MobileFileUploadService.selectSheet(
+                            artifact.privateRef,
+                            name,
+                          );
+                          await flow.selectSource(
+                            source.side,
+                            artifact.format,
+                            artifact.privateRef,
+                            artifact.label,
+                          );
+                          await flow.importSource(source.side);
+                        },
+                ),
             if (source.snapshot != null) ...[
               const SizedBox(height: 10),
               // Tóm tắt nhanh số hàng & số cột trước khi đi vào bảng chi tiết
@@ -175,7 +215,9 @@ class PreviewScreenView extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Đã xác thực toàn bộ fixture · ${source.snapshot!.records.length} hàng. Đây không phải bằng chứng parser tệp thật.',
+                      source.artifact?.isFixture == true
+                          ? 'Đã nạp dữ liệu mẫu · ${source.snapshot!.records.length} hàng.'
+                          : 'Đã đọc và xác thực ${source.snapshot!.records.length} hàng từ tệp nguồn.',
                       style: DytavaTypography.titleMedium.copyWith(
                         color: DytavaColors.textPrimary,
                       ),

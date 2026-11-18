@@ -19,9 +19,23 @@ export async function syncBranding(targets = ['web', 'mobile']) {
     await cp(path.join(vault, 'design_tokens.json'), path.join(destination, 'design_tokens.json'));
   }
   if (targets.includes('web')) {
-    await writeFile(path.join(root, 'web/css/brand-tokens.css'),
-      '/* Generated from branding/mobile/assets/dytava/design_tokens.json. */\n:root {\n' +
-      Object.entries(tokens.palette).map(([name, value]) => `  --brand-${name.replaceAll('_', '-')}: ${value.hex};`).join('\n') + '\n}\n');
+    const cssLines = [
+      '/* Generated from branding/mobile/assets/dytava/design_tokens.json (Precision Workspace v3.2). */',
+      ':root {',
+      ...Object.entries(tokens.palette).map(([name, value]) => `  --brand-${name.replaceAll('_', '-')}: ${value.hex};`),
+      '  /* Semantic Aliases for UI & Theme Compatibility */',
+      '  --brand-primary: var(--brand-lime-primary);',
+      '  --brand-primary-hover: var(--brand-lime-600);',
+      '  --brand-secondary: var(--brand-graphite);',
+      '  --brand-text: var(--brand-graphite);',
+      '  --brand-signal-lime: var(--brand-lime-primary);',
+      '  --brand-warm-white: var(--brand-off-white);',
+      '  --brand-warm-canvas: var(--brand-off-white);',
+      '  --brand-border: var(--brand-border-subtle);',
+      '  --brand-white: #FFFFFF;',
+      '}'
+    ].join('\n');
+    await writeFile(path.join(root, 'web/css/brand-tokens.css'), cssLines + '\n');
     await cp(path.join(vault, 'design_tokens.json'), path.join(root, 'web/assets/design-tokens.json'));
   }
 }

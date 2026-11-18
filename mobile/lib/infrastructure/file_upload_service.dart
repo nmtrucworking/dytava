@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'dart:async';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:csv/csv.dart';
-import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:xml/xml.dart';
 
@@ -11,385 +12,475 @@ import '../domain/workflow.dart';
 import 'demo/demo_workflow_ports.dart';
 
 final class UploadedFileInfo {
-  final String fileName;
-  final SourceFormat format;
-  final String privateRef;
-  final int rowCount;
-  final int columnCount;
-
   const UploadedFileInfo({
     required this.fileName,
     required this.format,
     required this.privateRef,
     required this.rowCount,
     required this.columnCount,
+    this.sheets = const [],
+    this.sheetName,
   });
+  final String fileName, privateRef;
+  final SourceFormat format;
+  final int rowCount, columnCount;
+  final List<String> sheets;
+  final String? sheetName;
+}
+
+final class _ParsedTable {
+  const _ParsedTable(this.headers, this.rows, this.headerRow);
+  final List<String> headers;
+  final List<List<String>> rows;
+  final int headerRow;
+}
+
+final class _ParsedFile {
+  const _ParsedFile(this.name, this.format, this.tables);
+  final String name;
+  final SourceFormat format;
+  final Map<String, _ParsedTable> tables;
 }
 
 abstract final class MobileFileUploadService {
-  /// Opens device native file picker and parses CSV / TSV / XLSX into memory.
+  static const maxFileBytes = 500 * 1024 * 1024,
+      maxRows = 1500000,
+      maxColumns = 500,
+      maxCells = 25000000;
+  static final _files = <String, _ParsedFile>{};
+  static final _selected = <String, String>{};
   static Future<UploadedFileInfo?> pickAndProcessFile(SourceSide side) async {
     final files = await FilePicker.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['csv', 'tsv', 'txt', 'xlsx', 'xls'],
+      allowedExtensions: ['csv', 'tsv', 'txt', 'json', 'xlsx'],
     );
-
-    if (files.isEmpty) {
-      return null;
-    }
-
+    if (files.isEmpty) return null;
     final file = files.first;
-    final fileName = file.name;
-
     final bytes = await file.readAsBytes();
-    if (bytes.isEmpty) {
-      throw Exception('Tệp trống hoặc không thể đọc dữ liệu.');
+    if (bytes.isEmpty || bytes.length > maxFileBytes) {
+      throw const FormatException('Tệp phải có dữ liệu và không vượt 500 MB.');
     }
-
-    return processFileBytes(
-      side: side,
-      fileName: fileName,
-      bytes: bytes,
-    );
+    final name = file.name;
+    final parsed = await _parseInBackground(name, bytes);
+    return _register(side, parsed);
   }
 
-  /// Parses raw file bytes and registers them with [DemoInputPort].
+  static Future<_ParsedFile> _parseInBackground(
+    String name,
+    Uint8List bytes,
+  ) async {
+    final port = ReceivePort();
+    Isolate? worker;
+    try {
+      worker = await Isolate.spawn(_parseWorker, (port.sendPort, name, bytes));
+      final message = await port.first.timeout(const Duration(seconds: 30));
+      if (message is _ParsedFile) return message;
+      throw FormatException(message.toString());
+    } on TimeoutException {
+      throw const FormatException(
+        'Tệp xử lý quá 30 giây. Hãy chọn tệp nhỏ hơn.',
+      );
+    } finally {
+      worker?.kill(priority: Isolate.immediate);
+      port.close();
+    }
+  }
+
+  static void _parseWorker((SendPort, String, Uint8List) input) {
+    try {
+      input.$1.send(_parse(input.$2, input.$3));
+    } catch (error) {
+      input.$1.send(
+        error is FormatException
+            ? error.message
+            : 'Không đọc được tệp. Hãy lưu lại dạng XLSX hoặc CSV.',
+      );
+    }
+  }
+
+  /// Synchronous entry point for deterministic parser tests; device picker uses an isolate.
   static UploadedFileInfo processFileBytes({
     required SourceSide side,
     required String fileName,
     required Uint8List bytes,
-  }) {
-    final ext = fileName.contains('.')
-        ? fileName.split('.').last.toLowerCase()
-        : '';
+  }) => _register(side, _parse(fileName, bytes));
+  static UploadedFileInfo _register(SourceSide side, _ParsedFile parsed) {
+    final ref =
+        'userfile:${DateTime.now().microsecondsSinceEpoch}_${side.name}';
+    _files[ref] = parsed;
+    return selectSheet(ref, parsed.tables.keys.first);
+  }
 
-    List<TableField> fields = [];
-    List<List<String>> rows = [];
-    SourceFormat format = SourceFormat.csv;
+  static UploadedFileInfo? info(String ref) {
+    final file = _files[ref];
+    if (file == null) return null;
+    final name = _selected[ref] ?? file.tables.keys.first,
+        table = file.tables[name]!;
+    return UploadedFileInfo(
+      fileName: file.name,
+      format: file.format,
+      privateRef: ref,
+      rowCount: table.rows.length,
+      columnCount: table.headers.length,
+      sheets: file.format == SourceFormat.xlsx
+          ? file.tables.keys.toList()
+          : const [],
+      sheetName: file.format == SourceFormat.xlsx ? name : null,
+    );
+  }
 
-    if (ext == 'xlsx' || ext == 'xls') {
-      format = SourceFormat.xlsx;
-      try {
-        final excel = Excel.decodeBytes(bytes);
-        if (excel.tables.isEmpty) {
-          throw Exception('Tệp Excel không chứa sheet dữ liệu nào.');
-        }
-
-        Sheet? targetSheet;
-        for (final table in excel.tables.values) {
-          if (table.maxRows > 0) {
-            targetSheet = table;
-            break;
-          }
-        }
-        targetSheet ??= excel.tables.values.first;
-
-        final maxRows = targetSheet.maxRows;
-        final maxCols = targetSheet.maxColumns;
-
-        if (maxRows == 0) {
-          throw Exception('Sheet Excel không có dữ liệu.');
-        }
-
-        final rawHeaders = <String>[];
-        for (var c = 0; c < maxCols; c++) {
-          final cell = targetSheet.cell(
-            CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0),
-          );
-          final val = cell.value?.toString().trim() ?? '';
-          rawHeaders.add(val.isEmpty ? 'Cột ${c + 1}' : val);
-        }
-
-        final seen = <String, int>{};
-        fields = rawHeaders.map((h) {
-          var name = h;
-          if (seen.containsKey(name)) {
-            seen[name] = seen[name]! + 1;
-            name = '$name (${seen[name]})';
-          } else {
-            seen[name] = 1;
-          }
-          return TableField(name, name);
-        }).toList();
-
-        for (var r = 1; r < maxRows; r++) {
-          final rowData = <String>[];
-          var hasData = false;
-          for (var c = 0; c < maxCols; c++) {
-            final cell = targetSheet.cell(
-              CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r),
-            );
-            final val = cell.value?.toString() ?? '';
-            if (val.trim().isNotEmpty) hasData = true;
-            rowData.add(val);
-          }
-          if (hasData) {
-            rows.add(rowData);
-          }
-        }
-      } catch (e) {
-        // Fallback for files where Excel.decodeBytes fails (e.g. "Damaged Excel file: styles",
-        // missing/corrupted styles.xml, non-standard OpenXML, or HTML table disguised as .xls)
-        final fallback = _parseXlsxDirectXml(bytes);
-        fields = fallback.fields;
-        rows = fallback.rows;
-      }
-    } else {
-      format = ext == 'tsv' ? SourceFormat.tsv : SourceFormat.csv;
-      final text = utf8.decode(bytes, allowMalformed: true);
-      final delimiter = ext == 'tsv'
-          ? '\t'
-          : (text.contains(';') && !text.contains(',') ? ';' : ',');
-      final parsed = CsvDecoder(
-        fieldDelimiter: delimiter,
-        dynamicTyping: false,
-      ).convert(
-        text
-            .replaceAll('\r\n', '\n')
-            .replaceAll('\r', '\n'),
-      );
-
-      if (parsed.isEmpty) {
-        throw Exception('Tệp bảng tính CSV trống.');
-      }
-
-      final rawHeaders = parsed.first.map((c) => c.toString().trim()).toList();
-      final seen = <String, int>{};
-      fields = rawHeaders.asMap().entries.map((entry) {
-        var name = entry.value.isEmpty ? 'Cột ${entry.key + 1}' : entry.value;
-        if (seen.containsKey(name)) {
-          seen[name] = seen[name]! + 1;
-          name = '$name (${seen[name]})';
-        } else {
-          seen[name] = 1;
-        }
-        return TableField(name, name);
-      }).toList();
-
-      for (var i = 1; i < parsed.length; i++) {
-        final line = parsed[i];
-        if (line.isEmpty) continue;
-        final strRow = line.map((c) => c.toString()).toList();
-        while (strRow.length < fields.length) {
-          strRow.add('');
-        }
-        if (strRow.any((cell) => cell.trim().isNotEmpty)) {
-          rows.add(strRow);
-        }
-      }
+  static UploadedFileInfo selectSheet(String ref, String name) {
+    final file = _files[ref];
+    final table = file?.tables[name];
+    if (file == null || table == null) {
+      throw const FormatException('Không tìm thấy sheet dữ liệu.');
     }
-
-    final ref = 'userfile:${DateTime.now().microsecondsSinceEpoch}_${side.name}';
+    _selected[ref] = name;
     DemoInputPort.registerUserFile(
       ref,
-      fileName: fileName,
-      format: format,
-      fields: fields,
-      values: rows,
+      fileName: file.name,
+      format: file.format,
+      fields: table.headers.map((h) => TableField(h, h)).toList(),
+      values: table.rows,
+      sheetName: file.format == SourceFormat.xlsx ? name : null,
+      headerRow: table.headerRow,
     );
+    return info(ref)!;
+  }
 
-    return UploadedFileInfo(
-      fileName: fileName,
-      format: format,
-      privateRef: ref,
-      rowCount: rows.length,
-      columnCount: fields.length,
+  static void release(String ref) {
+    _files.remove(ref);
+    _selected.remove(ref);
+    DemoInputPort.forgetUserFile(ref);
+  }
+
+  static void clear() {
+    _files.clear();
+    _selected.clear();
+    DemoInputPort.clearUserFiles();
+  }
+
+  static _ParsedFile _parse(String name, Uint8List bytes) {
+    if (bytes.isEmpty || bytes.length > maxFileBytes) {
+      throw const FormatException('Tệp phải có dữ liệu và không vượt 500 MB.');
+    }
+    final ext = name.split('.').last.toLowerCase();
+    if (!{'csv', 'tsv', 'txt', 'json', 'xlsx'}.contains(ext)) {
+      throw const FormatException(
+        'Chỉ hỗ trợ XLSX, CSV, TSV, TXT và JSON. Hãy lưu XLS cũ thành XLSX.',
+      );
+    }
+    if (ext == 'xlsx') return _xlsx(name, bytes);
+    final text = utf8.decode(bytes).replaceFirst('\ufeff', '');
+    if (ext == 'json') {
+      final json = jsonDecode(text);
+      List<String> headers;
+      List<List<String>> rows;
+      String cell(Object? v) {
+        if (v is Map || v is List) {
+          throw const FormatException('Ô JSON phải là giá trị đơn.');
+        }
+        return v?.toString() ?? '';
+      }
+
+      if (json is List && json.isNotEmpty && json.every((r) => r is Map)) {
+        headers = {
+          for (final row in json) ...(row as Map).keys.map((k) => k.toString()),
+        }.toList();
+        rows = json
+            .map((r) => headers.map((h) => cell(r[h])).toList())
+            .toList();
+      } else if (json is Map &&
+          json['headers'] is List &&
+          json['rows'] is List) {
+        headers = (json['headers'] as List).map(cell).toList();
+        rows = (json['rows'] as List).map((r) {
+          if (r is! List) {
+            throw const FormatException('Dòng JSON phải là mảng.');
+          }
+          return r.map(cell).toList();
+        }).toList();
+      } else {
+        throw const FormatException(
+          'JSON cần là mảng bản ghi hoặc {headers, rows}.',
+        );
+      }
+      return _ParsedFile(name, SourceFormat.json, {
+        'Data': _validate(headers, rows, 1),
+      });
+    }
+    final first = text.split(RegExp(r'\r?\n')).first;
+    int count(String d) => d.allMatches(first).length;
+    final delimiter = ext == 'tsv'
+        ? '\t'
+        : count('\t') >= count(',') &&
+              count('\t') >= count(';') &&
+              count('\t') > 0
+        ? '\t'
+        : count(';') > count(',')
+        ? ';'
+        : ',';
+    final parsed = CsvDecoder(fieldDelimiter: delimiter, dynamicTyping: false)
+        .convert(text.replaceAll('\r\n', '\n').replaceAll('\r', '\n'))
+        .map((r) => r.map((v) => v.toString()).toList())
+        .where((r) => r.any((v) => v.trim().isNotEmpty))
+        .toList();
+    if (parsed.isEmpty) {
+      throw const FormatException('Tệp không có tiêu đề cột.');
+    }
+    return _ParsedFile(
+      name,
+      ext == 'tsv' ? SourceFormat.tsv : SourceFormat.csv,
+      {'Data': _validate(parsed.first, parsed.skip(1).toList(), 1)},
     );
   }
 
-  /// Trực tiếp giải nén ZIP OpenXML và phân tích `sheet1.xml` + `sharedStrings.xml`.
-  /// Bỏ qua hoàn toàn `styles.xml` để khắc phục triệt để lỗi "Damaged Excel file: styles".
-  static ({List<TableField> fields, List<List<String>> rows}) _parseXlsxDirectXml(
-    Uint8List bytes,
-  ) {
-    try {
-      final archive = ZipDecoder().decodeBytes(bytes);
-      final sharedStrings = <String>[];
-      final sharedStringsFile = archive.findFile('xl/sharedStrings.xml');
-      if (sharedStringsFile != null) {
-        final content = utf8.decode(sharedStringsFile.content, allowMalformed: true);
-        final doc = XmlDocument.parse(content);
-        for (final si in doc.findAllElements('si')) {
-          final tList = si.findAllElements('t').map((e) => e.innerText).join();
-          sharedStrings.add(tList);
+  static _ParsedTable _validate(
+    List<String> headers,
+    List<List<String>> rows,
+    int headerRow, {
+    bool repair = false,
+  }) {
+    headers = headers.map((v) => v.replaceFirst('\ufeff', '').trim()).toList();
+    if (repair) {
+      final used = <String>{};
+      headers = [
+        for (var c = 0; c < headers.length; c++)
+          (() {
+            final base = headers[c].isEmpty ? 'Cột ${c + 1}' : headers[c];
+            var h = base, n = 1;
+            while (used.contains(h)) {
+              h = '$base (${++n})';
+            }
+            used.add(h);
+            return h;
+          })(),
+      ];
+    }
+    if (headers.isEmpty ||
+        headers.any((h) => h.isEmpty) ||
+        headers.toSet().length != headers.length) {
+      throw const FormatException(
+        'Tiêu đề cột phải có tên duy nhất và không để trống.',
+      );
+    }
+    if (headers.length > maxColumns ||
+        rows.length > maxRows ||
+        rows.length * headers.length > maxCells) {
+      throw const FormatException('Tệp vượt giới hạn dòng, cột hoặc ô.');
+    }
+    for (final row in rows) {
+      if (row.length > headers.length) {
+        throw const FormatException('Có dòng chứa nhiều ô hơn tiêu đề cột.');
+      }
+      if (row.any((v) => v.length > 32767)) {
+        throw const FormatException('Nội dung một ô vượt 32.767 ký tự.');
+      }
+      while (row.length < headers.length) {
+        row.add('');
+      }
+    }
+    return _ParsedTable(headers, rows, headerRow);
+  }
+
+  static _ParsedFile _xlsx(String name, Uint8List bytes) {
+    final archive = ZipDecoder().decodeBytes(bytes, verify: true);
+    if (archive.files.length > 20000 ||
+        archive.files.fold<int>(0, (n, f) => n + f.size) > 1500 * 1024 * 1024 ||
+        archive.files.any((f) => f.size > 500 * 1024 * 1024)) {
+      throw const FormatException('Workbook vượt giới hạn giải nén.');
+    }
+    XmlDocument? doc(String path) {
+      final file = archive.findFile(path);
+      return file == null ? null : XmlDocument.parse(utf8.decode(file.content));
+    }
+
+    Iterable<XmlElement> elements(XmlNode? node, String name) =>
+        node?.descendants.whereType<XmlElement>().where(
+          (e) => e.name.local == name,
+        ) ??
+        const [];
+    String text(XmlNode node, String name) =>
+        elements(node, name).map((e) => e.innerText).join();
+    final strings = elements(
+      doc('xl/sharedStrings.xml'),
+      'si',
+    ).map((si) => text(si, 't')).toList();
+    final styles = doc('xl/styles.xml');
+    final formats = <int, String>{
+      for (final f in elements(styles, 'numFmt'))
+        int.parse(f.getAttribute('numFmtId')!):
+            f.getAttribute('formatCode') ?? '',
+    };
+    final xfs = elements(styles, 'cellXfs').firstOrNull;
+    final styleIds = xfs == null
+        ? <int>[]
+        : elements(xfs, 'xf')
+              .map((e) => int.tryParse(e.getAttribute('numFmtId') ?? '') ?? 0)
+              .toList();
+    final rels = <String, String>{
+      for (final r in elements(
+        doc('xl/_rels/workbook.xml.rels'),
+        'Relationship',
+      ))
+        r.getAttribute('Id') ?? '': r.getAttribute('Target') ?? '',
+    };
+    final workbook = doc('xl/workbook.xml');
+    final date1904 =
+        elements(
+          workbook,
+          'workbookPr',
+        ).firstOrNull?.getAttribute('date1904') ==
+        '1';
+    final sheets = <String, String>{};
+    for (final sheet in elements(workbook, 'sheet')) {
+      if (sheet.getAttribute('state') == 'hidden' ||
+          sheet.getAttribute('state') == 'veryHidden') {
+        continue;
+      }
+      final id = sheet.attributes
+          .where((a) => a.name.local == 'id')
+          .firstOrNull
+          ?.value;
+      var path = rels[id];
+      if (path == null) continue;
+      path = path.startsWith('/')
+          ? path.substring(1)
+          : path.startsWith('xl/')
+          ? path
+          : 'xl/$path';
+      if (path.contains('..')) {
+        throw const FormatException('Đường dẫn sheet không hợp lệ.');
+      }
+      sheets[sheet.getAttribute('name') ?? 'Sheet ${sheets.length + 1}'] = path;
+    }
+    if (sheets.isEmpty && workbook == null) {
+      for (final f in archive.files.where(
+        (f) => RegExp(r'^xl/worksheets/sheet\d+\.xml$').hasMatch(f.name),
+      )) {
+        sheets['Sheet ${sheets.length + 1}'] = f.name;
+      }
+    }
+    final tables = <String, _ParsedTable>{};
+    for (final entry in sheets.entries) {
+      final sheet = doc(entry.value);
+      if (sheet == null) continue;
+      final sparse = <int, Map<int, String>>{};
+      var width = 0;
+      for (final row in elements(sheet, 'row')) {
+        final ri =
+            int.tryParse(row.getAttribute('r') ?? '') ?? sparse.length + 1;
+        if (ri > maxRows + 1) {
+          throw const FormatException('Sheet vượt giới hạn dòng.');
         }
-      }
-
-      ArchiveFile? sheetFile = archive.findFile('xl/worksheets/sheet1.xml');
-      if (sheetFile == null) {
-        for (final file in archive.files) {
-          if (file.name.startsWith('xl/worksheets/sheet') && file.name.endsWith('.xml')) {
-            sheetFile = file;
-            break;
+        final values = <int, String>{};
+        for (final c in row.childElements.where((e) => e.name.local == 'c')) {
+          final letters = (c.getAttribute('r') ?? '').replaceAll(
+            RegExp(r'\d'),
+            '',
+          );
+          var col = 0;
+          for (final code in letters.toUpperCase().codeUnits) {
+            col = col * 26 + code - 64;
           }
-        }
-      }
-      if (sheetFile == null) {
-        throw Exception('Không tìm thấy sheet dữ liệu trong tệp Excel.');
-      }
-
-      final sheetXml = utf8.decode(sheetFile.content, allowMalformed: true);
-      final sheetDoc = XmlDocument.parse(sheetXml);
-      final sheetRows = <Map<int, String>>[];
-      var maxColIndex = 0;
-
-      for (final rowElem in sheetDoc.findAllElements('row')) {
-        final rowMap = <int, String>{};
-        for (final cElem in rowElem.findElements('c')) {
-          final rAttr = cElem.getAttribute('r');
-          final tAttr = cElem.getAttribute('t');
-
-          var colIndex = 0;
-          if (rAttr != null) {
-            colIndex = _columnLetterToIndex(rAttr.replaceAll(RegExp(r'[0-9]'), ''));
+          col = col == 0 ? values.length : col - 1;
+          if (col >= maxColumns) {
+            throw const FormatException('Sheet vượt giới hạn cột.');
           }
-          if (colIndex > maxColIndex) maxColIndex = colIndex;
-
-          String cellVal = '';
-          if (tAttr == 's') {
-            final vElem = cElem.findElements('v').firstOrNull;
-            if (vElem != null) {
-              final sIndex = int.tryParse(vElem.innerText.trim()) ?? -1;
-              if (sIndex >= 0 && sIndex < sharedStrings.length) {
-                cellVal = sharedStrings[sIndex];
+          final t = c.getAttribute('t'), v = text(c, 'v');
+          var value = v;
+          if (t == 's') {
+            final i = int.tryParse(v);
+            if (i == null || i < 0 || i >= strings.length) {
+              throw const FormatException('Shared string không hợp lệ.');
+            }
+            value = strings[i];
+          } else if (t == 'inlineStr') {
+            value = text(c, 't');
+          } else if (t == 'b') {
+            value = v == '1' ? 'true' : 'false';
+          } else if (elements(c, 'f').isNotEmpty && v.isEmpty) {
+            value = '=${text(c, 'f')}';
+          } else if (t == null || t == 'n') {
+            final s = int.tryParse(c.getAttribute('s') ?? '') ?? -1;
+            final fmt = s >= 0 && s < styleIds.length ? styleIds[s] : 0,
+                number = double.tryParse(v);
+            final code = formats[fmt] ?? '';
+            if (number != null) {
+              if (RegExp(r'^0+$').hasMatch(code)) {
+                value = number.toInt().toString().padLeft(code.length, '0');
+              } else if (code.contains('%') || fmt == 9 || fmt == 10) {
+                final percent = number * 100;
+                value =
+                    '${percent == percent.truncateToDouble() ? percent.toInt() : percent}%';
+              } else if ((fmt >= 14 && fmt <= 22) ||
+                  RegExp(
+                    r'[dy]',
+                    caseSensitive: false,
+                  ).hasMatch(code.replaceAll(RegExp(r'"[^"]*"'), 'null'))) {
+                final date = DateTime.utc(
+                  date1904 ? 1904 : 1899,
+                  date1904 ? 1 : 12,
+                  date1904 ? 1 : 30,
+                ).add(Duration(milliseconds: (number * 86400000).round()));
+                value = date.toIso8601String().substring(0, 10);
               }
             }
-          } else if (tAttr == 'inlineStr') {
-            cellVal = cElem.findAllElements('t').map((e) => e.innerText).join();
-          } else {
-            final vElem = cElem.findElements('v').firstOrNull;
-            cellVal = vElem?.innerText.trim() ?? '';
           }
-
-          rowMap[colIndex] = cellVal;
+          if (value.length > 32767) {
+            throw const FormatException('Nội dung một ô vượt 32.767 ký tự.');
+          }
+          values[col] = value;
+          if (col + 1 > width) width = col + 1;
         }
-        if (rowMap.isNotEmpty) {
-          sheetRows.add(rowMap);
+        if (values.isNotEmpty) sparse[ri] = values;
+      }
+      if (sparse.isEmpty) continue;
+      if (sparse.length * width > maxCells) {
+        throw const FormatException('Sheet vượt giới hạn số ô.');
+      }
+      List<String> rowAt(int r) =>
+          List.generate(width, (c) => sparse[r]?[c] ?? '');
+      var header = 1;
+      List<String> headers = [];
+      for (var r = 1; r <= 15; r++) {
+        final row = rowAt(r).map((v) => v.trim()).toList();
+        while (row.isNotEmpty && row.last.isEmpty) {
+          row.removeLast();
+        }
+        if (row.isEmpty) continue;
+        final numeric = row
+            .where(
+              (v) =>
+                  RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(v) ||
+                  num.tryParse(v) != null,
+            )
+            .length;
+        if (row.every((v) => v.isNotEmpty) &&
+            row.toSet().length == row.length &&
+            numeric < (row.length / 2).ceil() &&
+            sparse[r + 1]?.values.any((v) => v.isNotEmpty) == true) {
+          header = r;
+          headers = row;
+          break;
         }
       }
-
-      if (sheetRows.isEmpty) {
-        throw Exception('Sheet Excel không có dữ liệu.');
-      }
-
-      final totalCols = maxColIndex + 1;
-      final headerMap = sheetRows.first;
-      final rawHeaders = List.generate(totalCols, (c) => headerMap[c]?.trim() ?? '');
-      final seen = <String, int>{};
-      final fields = rawHeaders.asMap().entries.map((entry) {
-        var name = entry.value.isEmpty ? 'Cột ${entry.key + 1}' : entry.value;
-        if (seen.containsKey(name)) {
-          seen[name] = seen[name]! + 1;
-          name = '$name (${seen[name]})';
-        } else {
-          seen[name] = 1;
+      if (headers.isEmpty) {
+        headers = rowAt(1);
+        while (headers.isNotEmpty && headers.last.isEmpty) {
+          headers.removeLast();
         }
-        return TableField(name, name);
-      }).toList();
-
+      }
       final rows = <List<String>>[];
-      for (var i = 1; i < sheetRows.length; i++) {
-        final rMap = sheetRows[i];
-        final rowList = List.generate(fields.length, (c) => rMap[c] ?? '');
-        if (rowList.any((val) => val.trim().isNotEmpty)) {
-          rows.add(rowList);
-        }
+      for (final r in sparse.keys.where((r) => r > header).toList()..sort()) {
+        final row = List.generate(headers.length, (c) => sparse[r]?[c] ?? '');
+        if (row.any((v) => v.isNotEmpty)) rows.add(row);
       }
-
-      return (fields: fields, rows: rows);
-    } catch (_) {
-      // Fallback nếu tệp thực chất là bảng HTML hoặc CSV được lưu dưới đuôi .xls/.xlsx
-      final text = utf8.decode(bytes, allowMalformed: true);
-      if (text.contains('<table') || text.contains('<TABLE')) {
-        return _parseHtmlTable(text);
-      }
-      return _parseCsvFallback(text);
+      tables[entry.key] = _validate(headers, rows, header, repair: true);
     }
-  }
-
-  static int _columnLetterToIndex(String letters) {
-    if (letters.isEmpty) return 0;
-    var result = 0;
-    final upper = letters.toUpperCase();
-    for (var i = 0; i < upper.length; i++) {
-      final code = upper.codeUnitAt(i);
-      if (code >= 65 && code <= 90) {
-        result = result * 26 + (code - 64);
-      }
+    if (tables.isEmpty) {
+      throw const FormatException('Workbook không có sheet dữ liệu hiển thị.');
     }
-    return result > 0 ? result - 1 : 0;
-  }
-
-  static ({List<TableField> fields, List<List<String>> rows}) _parseHtmlTable(String html) {
-    final trRegex = RegExp(r'<tr[^>]*>(.*?)<\/tr>', caseSensitive: false, dotAll: true);
-    final cellRegex = RegExp(r'<t[dh][^>]*>(.*?)<\/t[dh]>', caseSensitive: false, dotAll: true);
-    final allRows = <List<String>>[];
-
-    for (final trMatch in trRegex.allMatches(html)) {
-      final trContent = trMatch.group(1) ?? '';
-      final cells = cellRegex.allMatches(trContent).map((m) {
-        return m.group(1)?.replaceAll(RegExp(r'<[^>]+>'), '').trim() ?? '';
-      }).toList();
-      if (cells.isNotEmpty) allRows.add(cells);
-    }
-
-    if (allRows.isEmpty) throw Exception('Không thể đọc dữ liệu bảng từ tệp.');
-    final rawHeaders = allRows.first;
-    final seen = <String, int>{};
-    final fields = rawHeaders.asMap().entries.map((entry) {
-      var name = entry.value.isEmpty ? 'Cột ${entry.key + 1}' : entry.value;
-      if (seen.containsKey(name)) {
-        seen[name] = seen[name]! + 1;
-        name = '$name (${seen[name]})';
-      } else {
-        seen[name] = 1;
-      }
-      return TableField(name, name);
-    }).toList();
-
-    final rows = <List<String>>[];
-    for (var i = 1; i < allRows.length; i++) {
-      final line = allRows[i];
-      while (line.length < fields.length) {
-        line.add('');
-      }
-      if (line.any((c) => c.trim().isNotEmpty)) {
-        rows.add(line);
-      }
-    }
-    return (fields: fields, rows: rows);
-  }
-
-  static ({List<TableField> fields, List<List<String>> rows}) _parseCsvFallback(String text) {
-    final delimiter = text.contains('\t')
-        ? '\t'
-        : (text.contains(';') && !text.contains(',') ? ';' : ',');
-    final parsed = CsvDecoder(fieldDelimiter: delimiter, dynamicTyping: false)
-        .convert(text.replaceAll('\r\n', '\n').replaceAll('\r', '\n'));
-    if (parsed.isEmpty) throw Exception('Tệp không chứa dữ liệu hợp lệ.');
-    final rawHeaders = parsed.first.map((c) => c.toString().trim()).toList();
-    final seen = <String, int>{};
-    final fields = rawHeaders.asMap().entries.map((entry) {
-      var name = entry.value.isEmpty ? 'Cột ${entry.key + 1}' : entry.value;
-      if (seen.containsKey(name)) {
-        seen[name] = seen[name]! + 1;
-        name = '$name (${seen[name]})';
-      } else {
-        seen[name] = 1;
-      }
-      return TableField(name, name);
-    }).toList();
-
-    final rows = <List<String>>[];
-    for (var i = 1; i < parsed.length; i++) {
-      final line = parsed[i].map((c) => c.toString()).toList();
-      while (line.length < fields.length) {
-        line.add('');
-      }
-      if (line.any((c) => c.trim().isNotEmpty)) {
-        rows.add(line);
-      }
-    }
-    return (fields: fields, rows: rows);
+    return _ParsedFile(name, SourceFormat.xlsx, tables);
   }
 }

@@ -1,12 +1,10 @@
 # Dytava Mobile (Flutter / Android)
 
-Ứng dụng hiện có **nền tảng flow/activity với dữ liệu mẫu**, bám sát [8 activity](../docs-dytava/diagrams/MOBILE_ACTIVITIES.md) và [10 màn hình UI/UX](../docs-dytava/design/UI_UX_SPEC.md). Giao diện đã được nâng cấp bám theo hệ thống nhận diện Dytava Design System v2.0 (màu sắc, typography, status badges, icons, cards, stepper header) với đầy đủ logic xử lý, state/guards và 33 tests pass.
+Ứng dụng Flutter hiện dùng thuật toán và luồng xử lý được port từ bản web bằng Dart native, chạy trên isolate.
 
-**Đọc trước:** [Mobile implementation — flow, cấu trúc, invariants, walkthrough và backlog](../docs-dytava/guides/MOBILE_IMPLEMENTATION.md).
+Chọn A/B (XLSX/CSV/TSV/TXT/JSON) → xem trước/chọn sheet → đề xuất và xác nhận cấu hình → ghép theo khóa, căn chỉnh chuỗi hoặc vị trí → bảng A/B đồng bộ cuộn, lọc và xem chi tiết → CSV/JSON preview và lưu cục bộ.
 
-Flow chạy được: chọn A/B độc lập → review scope/header (hoặc review từng ô OCR giả lập) → mapping 1:1 → xác nhận KEY/POSITIONAL, policy và direction → so sánh → summary/filter/detail → JSON preview. Có cancel/retry, stale callback guards, invalidation và đóng phiên.
-
-**Chưa hỗ trợ tệp thật:** XLSX/CSV/TSV import, OCR ảnh thật, lưu/chia sẻ báo cáo, 1 GB, CSV và hai PDF vẫn chưa được bật. JSON hiện chỉ là preview fixture trong bộ nhớ, không là report production. Core semantic PoC cũ giữ trong diagnostic từ Home. Tests fixture không thay Android/device acceptance.
+[Hướng dẫn port web → mobile](../docs-dytava/guides/MOBILE_WEB_PARITY.md) mô tả thuật toán, các khác biệt có chủ đích để sửa lỗi web, test parity và giới hạn. Bộ flow mẫu cũ vẫn có qua injection; OCR thật, PDF và pipeline 1 GB chưa bật.
 
 ## Chạy trên macOS bằng VS Code, không cài Android Studio
 
@@ -42,7 +40,7 @@ flutter test
 flutter build apk --debug
 ```
 
-Tại Home chọn **So sánh mới (dữ liệu mẫu)** và làm theo walkthrough trong implementation guide. Bộ mẫu đủ 4 verdict và một `ROW_ADDED`; diagnostic hai giá trị vẫn nhận A=`8.5`, B=`8,5`. Bản APK debug thường nằm tại `build/app/outputs/flutter-apk/app-debug.apk`.
+Tại Home chọn **Bắt đầu so sánh**, chọn hai tệp hoặc thử dữ liệu mẫu. Bộ mẫu có các ô trùng, tương đương, khác biệt và một hàng thêm; diagnostic hai giá trị vẫn nhận A=`8.5`, B=`8,5`. Bản APK debug thường nằm tại `build/app/outputs/flutter-apk/app-debug.apk`.
 
 ## Branding
 
@@ -55,4 +53,4 @@ Tài nguyên thương hiệu chuẩn được lưu trong thư mục `../branding
 
 ## Scope thiết kế mở rộng
 
-[Quyết định 12/11/2026](../docs-dytava/decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) yêu cầu **1 GB/source**, **PDF diff hợp nhất A/B** và **PDF template Dytava**; [Report spec](../docs-dytava/specs/report/README.md) định nghĩa hai đầu ra. Đây là yêu cầu phải triển khai/kiểm thử, chưa là khả năng hiện tại. Mobile mới có flow trên fixture và JSON preview; chưa nhập tệp hoặc xuất report thật.
+[Quyết định 12/11/2026](../docs-dytava/decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) yêu cầu **1 GB/source**, **PDF diff hợp nhất A/B** và **PDF template Dytava**; [Report spec](../docs-dytava/specs/report/README.md) định nghĩa hai đầu ra. Đây là yêu cầu phải triển khai/kiểm thử, chưa là khả năng hiện tại. Mobile đã nhập tệp thật và tạo/lưu CSV/JSON; chưa có pipeline 1 GB hoặc PDF.

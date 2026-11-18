@@ -1,44 +1,49 @@
-# DYTAVA BRANDING & UI ASSET VAULT v2.0 (CHÍNH THỨC)
+# DYTAVA BRANDING & UI ASSET VAULT (PRECISION WORKSPACE v3.2)
 
-Đây là kho lưu trữ tài nguyên thiết kế và nhận diện thương hiệu **chính thức** của **Dytava** (dự án `excelcompare`), được xây dựng chuẩn theo bản thiết kế **Design System & UI Assets (Flutter / Material)** đã được phê duyệt.
+Đây là kho lưu trữ tài nguyên thiết kế và nhận diện thương hiệu **chính thức** của **Dytava** (dự án `excelcompare`), chuẩn hóa theo hệ thống ngôn ngữ thiết kế:
+**DYTAVA — Precision Workspace (Editorial Minimalism × Data Instrument × Native Interaction)**.
+
+Tagline: `PRECISION WORKSPACE`
+Slogan: "Đối chiếu dữ liệu chính xác, nhanh chóng và rõ ràng."
 
 ---
 
 ## 1. Thành phần kho tài nguyên
 
 - **Thương hiệu & Biểu trưng (Brand & Logos):**
+  - Wordmark `dytava.` có dấu chấm tròn, font Manrope hình học hiện đại.
+  - Tagline đi kèm: `PRECISION WORKSPACE`.
   - Logo chính ngang (`dytava-horizontal.svg`, PNG 4K).
-  - Biến thể Logo dạng Pill Badge nền xanh (`dytava-pill-blue.svg`).
+  - Biến thể Logo đơn sắc trắng trên nền Graphite (`dytava-horizontal-white.svg`).
+  - Biến thể Logo dạng Pill Badge (`dytava-pill-blue.svg`).
   - Biểu tượng ứng dụng đa nền tảng (`dytava-app.svg`, `dytava-app-light.svg`, `dytava-app-dark.svg`, `dytava-app-circle.svg`, `dytava-app-purple.svg`, `dytava-ios-fullbleed.svg`).
   - Biểu tượng Android Adaptive (`android-adaptive-foreground.svg`).
 - **116 Biểu tượng chức năng (Functional Icons):** Đầy đủ 3 biến thể SVG (`color`, `outline`, `glyph`) và các mức độ phân giải PNG (`png_4k`, `png_512`, `png_128`).
 - **18 Biểu tượng định dạng tệp:** XLSX, XLS, CSV, TSV, JSON, JSONL, ODS, PDF, XML, HTML, TXT, PNG, JPG, WEBP, HEIC, XLSM, XLSB, MD.
-- **Hệ thống Flutter Dart Design System (`mobile/lib/design_system/`):**
-  - `dytava_colors.dart`: Bảng màu chuẩn 10 màu và trạng thái so sánh.
-  - `dytava_typography.dart`: Precision Core: Plus Jakarta Sans / Be Vietnam Pro / IBM Plex Mono, đóng gói cục bộ.
-  - `dytava_icons.dart`: Hằng số định danh và ánh xạ icon toàn hệ thống.
-  - `dytava_theme.dart`: ThemeData Material 3 chuẩn cho ứng dụng Flutter.
-  - `dytava_components.dart`: Các widget UI mẫu (Result Card, Policy Card, Status Badge, Empty State...).
+- **Hệ thống Design System:**
+  - Typography: **Manrope** (Tiêu đề, điểm nhấn), **Inter** (Giao diện, nội dung & số liệu Tabular).
+  - Signature Components: Nút chính Pill Lime `#C8FF4A`, Nút phụ Pill `#EDEBE4`, Thẻ tệp File Card, Status Pill `● Đang tiến hành`, Difference Fingerprint & Donut ring.
 - **Brand Showcase HTML tương tác:**
   - `branding/index.html`: Trang tài liệu thương hiệu trực quan, tương tác trực tiếp với toàn bộ bảng màu, logo, nhóm tính năng và linh kiện UI.
   - `branding/catalog/index.html`: Thư viện tra cứu và tìm kiếm offline 116+ icons và định dạng tệp.
 
 ---
 
-## 2. Bảng màu chính thức (Official Palette)
+## 2. Bảng màu chuẩn · Precision Workspace
 
 | Vai trò | Mã HEX | Mô tả |
 |---|---|---|
-| **Primary Blue** | `#2563EB` | Màu thương hiệu chính, nút so sánh chính, trạng thái EQUIVALENT |
-| **Sky Blue** | `#3B82F6` | Màu nhấn, điểm sáng gradient |
-| **Purple Accent** | `#8B5CF6` | Nút xuất báo cáo, module ánh xạ cột, học tập |
-| **Cyan Accent** | `#06B6D4` | Điểm nhấn trích xuất OCR, bảng tính nền |
-| **Emerald Green** | `#10B981` | Nút nhập tệp, Excel, trạng thái EXACT, Hoàn thành |
-| **Amber Warning** | `#F59E0B` | Trạng thái UNRESOLVED, cảnh báo đối soát |
-| **Crimson Danger**| `#EF4444` | Nút xóa, cảnh báo lỗi, trạng thái DIFFERENT |
-| **Background** | `#F3F4F6` | Nền ứng dụng trung tính |
-| **Border** | `#E5E7EB` | Đường viền các thẻ, phân cách bảng |
-| **White** | `#FFFFFF` | Nền thẻ bề mặt, chữ nổi trên nền màu |
+| **Lime Primary** | `#C8FF4A` | Màu nhận diện thương hiệu chính, nút CTA dạng Pill, switch active, tiến trình |
+| **Lime-600** | `#86E63A` | Điểm nhấn viền active, hover state, chỉ báo tiến trình |
+| **Off-white** | `#F7F6F2` | Nền canvas mặc định của ứng dụng và website, thanh nhã |
+| **Warm Surface** | `#EDEBE4` | Bề mặt container thẻ, vùng tải tệp và ô nhập dữ liệu |
+| **Graphite** | `#0F1A1C` | Màu chữ chính, nút phụ tương phản cao, header kỹ thuật |
+| **Graphite-800** | `#1B2426` | Bề mặt tối cho Dark Mode, container Focus Diff, status pill nền đen |
+| **Difference Coral** | `#E97965` | Sai khác dữ liệu (`DIFFERENT`), mật độ sai lệch trên Difference Fingerprint |
+| **Emerald Green** | `#10B981` | Trạng thái `EXACT` (trùng khớp hoàn toàn 100%), icon Excel xanh lá |
+| **Amber Warning** | `#F59E0B` | Cảnh báo đối soát, trạng thái `UNRESOLVED` |
+| **Crimson Danger**| `#EF4444` | Nút xóa, cảnh báo lỗi nghiêm trọng |
+| **Subtle Divider** | `#D8D5CC` | Đường viền các thẻ, phân cách bảng tính |
 
 ---
 

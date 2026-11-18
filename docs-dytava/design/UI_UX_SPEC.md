@@ -1,19 +1,27 @@
 ---
 document_id: DYT-UX-001
-version: 0.2.0
-status: DRAFT
-owner: TBD
-reviewer: TBD
+version: 0.3.0
+status: APPROVED_BASELINE
+owner: UX Lead
+reviewer: Architecture & Product
 updated: 2026-11-18
 release_baseline: Flutter / Android P0 expanded; iOS P1
-scope: IA, user flow, screen contracts, visual system, brand asset specification, interaction states, UX acceptance
+scope: IA, user flow, screen contracts, visual system, precision workspace language, signature components, UX acceptance
 ---
 
 # Dytava — UI/UX Interaction & Screen Specification
 
-> **Mục tiêu:** chuyển yêu cầu PRD/SRS thành hành vi giao diện có thể thiết kế, lập trình và kiểm thử trên Flutter Android. Đây là **bản thiết kế mục tiêu**, không phải ảnh chụp chức năng đang chạy.
+> **Định hướng thiết kế chuẩn hóa: DYTAVA — Precision Workspace**
 >
-> **Implementation evidence (18/11/2026):** đã tái cấu trúc tầng Presentation theo mô hình **Guided Mobile Workflow** (tách thành 6 module màn hình độc lập dưới `mobile/lib/features/workflow/screens/`), loại bỏ thanh 5 tab trang trí cố định và lưới dashboard 8 module trên Home, đồng thời tích hợp đồng bộ `BrandIcon` + `BrandIllustration` theo trạng thái nghiệp vụ. [Implementation guide](../guides/MOBILE_IMPLEMENTATION.md) ghi rõ code/test/gaps; **chưa đạt Definition of Done production** cho bất kỳ screen nào vì adapters vẫn chạy trên fixture. `CompareDemoPage` giữ làm diagnostic. Visual trên thiết bị vật lý, adapters thật và Android/device/accessibility evidence còn thiếu.
+> **Triết lý:** **Editorial Minimalism × Data Instrument × Native Interaction**
+>
+> Vấn đề không nằm ở việc Dytava chưa áp dụng đủ Material Design. Vấn đề là **Dytava cần một ngôn ngữ thiết kế riêng đủ mạnh để người dùng nhận diện sản phẩm mà không cần nhìn logo**.
+> Material 3 và Material 3 Expressive là nền tảng về hành vi và accessibility, không phải toàn bộ bản sắc. Dytava được định vị là ứng dụng đối chiếu dữ liệu có thẩm mỹ của công cụ phân tích chuyên nghiệp (data instrument), nhưng trải nghiệm thao tác tương tự các ứng dụng mobile hiện đại.
+>
+> **3 đặc trưng nhận diện cốt lõi (Core Signature Differentiators):**
+> 1. **Comparison Rail:** Biểu diễn hai nguồn đầu vào A & B như hai luồng dữ liệu kết nối vật lý thuộc cùng một phiên đối chiếu, trạng thái nằm trực tiếp trên luồng.
+> 2. **Difference Fingerprint:** Dải trực quan biểu diễn vị trí và mật độ sai khác trên toàn bảng, cho phép chạm vào từng phân đoạn để lọc/nhảy đến bản ghi tương ứng.
+> 3. **Focus Diff:** Trải nghiệm xem sai lệch di động tập trung theo cặp giá trị Cũ/Mới, vuốt (swipe) để chuyển giữa các sai khác kèm haptic feedback, không ép đọc bảng nén chật chội.
 
 ## 1. Nguồn điều khiển và phạm vi
 
@@ -85,25 +93,42 @@ flowchart TD
 
 Các trạng thái **Error / Empty / Loading / Review / Permission / Cancel** là các variants hoặc sheets theo ngữ cảnh, không cần một route độc lập cho mỗi lỗi. `CompareDemoPage` hiện hành giữ làm diagnostic/sandbox, không được gọi là SCR-08 production.
 
-## 3. Đặc tả chi tiết màn hình
+## 3. Đặc tả chi tiết màn hình (Precision Workspace 5-Screen Suite)
 
-### SCR-01 — Home / Start
+### SCR-01 — Home / Start (Workspace Overview)
 
-**Thông tin bắt buộc:** logo Dytava; heading “So sánh hai nguồn dữ liệu”; giải thích ngắn “Phát hiện sai khác và vị trí giữa hai bảng”; CTA **So sánh mới**; chú thích quyền riêng tư “Xử lý tại thiết bị; không tự tải dữ liệu lên mạng”. Có thể hiển thị biểu tượng định dạng đầu vào được **phê duyệt P0** chứ không tuyên bố hỗ trợ tất cả icon trong vault.
+**Ngôn ngữ thị giác:** Editorial Minimalism. Tránh kiểu dashboard nhiều thẻ màu mè hoặc biểu đồ trang trí rỗng.
+- **Header:**
+  - Wordmark: `dytava.` (lowercase bold, chữ đen graphite).
+  - Sub-tag: `WORKSPACE / 01` (font kỹ thuật `IBM Plex Mono` / monospace, chữ xám trung tính, letter-spacing rộng).
+  - Tiêu đề chính: **Đối chiếu dữ liệu** (Typography `Manrope` / displayMedium).
+  - Slogan / Subtitle: *Hai nguồn. Một kết quả rõ ràng.* (Màu `textSecondary`, editorial spacing).
+- **Thành phần trọng điểm — Comparison Rail (Active Comparison Card):**
+  - Card chính bo **20dp**, viền hairline sắc nét `#E5E7EB`, nền `#FFFFFF` hoặc graphite tinh tế.
+  - Header khối: `ACTIVE COMPARISON` kèm trạng thái luồng (ví dụ: `Đang chuẩn bị`, `Sẵn sàng đối chiếu` hoặc `Đã hoàn tất`).
+  - **Luồng dữ liệu kết nối (Dual Stream Rail):** Nguồn A và Nguồn B được biểu diễn trực quan nối nhau bằng đường ray đồng nhất (Comparison Rail line):
+    - **Nguồn A (Tham chiếu):** Huy hiệu tag `A` trên nền Signal Lime (`#D8F36A`) hoặc Neutral, tên tệp (vd: `sample-image.png`), nhãn trạng thái nghiệp vụ (vd: `Cần xác minh dữ liệu` hoặc `1,250 dòng · Sẵn sàng`).
+    - **Nguồn B (Đối chiếu):** Huy hiệu tag `B`, tên tệp (vd: `Chọn nguồn B` hoặc `target-data.xlsx`), nhãn trạng thái (vd: `Chưa có dữ liệu`).
+  - **Action CTA:** Nút chính bo **12dp** với màu Signal Lime (`#D8F36A`) chữ graphite đậm hoặc Primary Blue với nhãn **Tiếp tục thiết lập** (khi đã có dữ liệu) hoặc **Bắt đầu so sánh** (khi tạo mới).
+- **Phân vùng Gần đây (Recent Sessions):**
+  - Header: `Gần đây` bên trái, `Xem tất cả` bên phải.
+  - Thẻ phiên hiện tại: `Phiên hiện tại · Bước 1/4 · Chưa hoàn tất` hoặc tóm tắt phiên gần nhất kèm fingerprint kết quả.
+- **Thanh điều hướng tối giản (Minimal Navigation):**
+  - 3 điểm chạm chính ở vùng ngón cái: `Trang chủ`, `Lịch sử`, `Cài đặt`.
 
-**Empty state:** không có phiên so sánh; CTA luôn sẵn sàng. **Không** tạo số liệu lịch sử, nút đăng nhập hoặc “AI so sánh tự động” nếu chưa có tính năng.
+### SCR-02 — Source Selection (Dual-Stream Comparison Rail)
 
-**Acceptance UX:** người dùng chạm một CTA để chuyển sang chọn A/B; TalkBack đọc được logo, tiêu đề và CTA theo thứ tự hợp lý.
-
-### SCR-02 — Source Selection
-
-**Cấu trúc:** hai thẻ/nhóm **Nguồn A (tham chiếu)** và **Nguồn B (đối chiếu)**; mỗi thẻ hiển thị tên hiển thị, detected format, dung lượng, status, nút `Chọn`, `Thay`, `Xóa`, `Chi tiết`. Chọn từ document picker hoặc camera/gallery theo scope Android. Chỉ một phía được chọn ảnh; khi một phía đã là ảnh, phía kia chỉ chọn bảng, kèm giải thích vì sao.
-
-**Trạng thái:** UNSELECTED / SELECTED / PREFLIGHTING / NEEDS_REVIEW / PREVIEW_READY / FAILED / CANCELLED (nguồn thật tại INP-008). Hai nguồn có thể trùng tên; UI không gộp. Có thể hiển thị fingerprint ngắn/ID kỹ thuật ở **Chi tiết nguồn**, không để người dùng tự dựa vào tên để phân biệt.
-
-**CTA:** `Tiếp tục` chỉ khi cả hai slot có artifact để tiến tới cấu hình; không cho vào mapping cho đến khi **cả hai** PREVIEW_READY. Nếu thay file, hiển thị impact “Cấu hình ánh xạ và kết quả liên quan sẽ cần thiết lập lại”.
-
-**Bảo mật:** dùng scoped picker, không yêu cầu quyền storage rộng; không cho phép ghi đè nguồn. Không tự tải tệp cloud từ ứng dụng; file provider OS có thể có đặc tính riêng, cần thông báo nếu nguồn không có bytes local.
+**Cấu trúc:** Hai nguồn dữ liệu được kết nối bằng một cấu trúc thị giác chung mang tên **Comparison Rail**. Trạng thái đọc tệp, xác minh và chuẩn bị đối chiếu nằm ngay trên luồng, thay vì những form nhập liệu độc lập.
+- **Visual Rail Pipeline:**
+  - Một đường ray dọc bên trái hoặc dải liên kết giữa hai khối kết nối luồng A và B.
+  - Các node trạng thái trên rail: `1. Đọc tệp` → `2. Xác minh định dạng (Format Guards)` → `3. Chuẩn bị đối chiếu`.
+  - Node đổi màu theo trạng thái: Chờ (`#607276`), Đang xử lý (`#3B82F6`), Lỗi/Cần xem xét (`#E97965`), Sẵn sàng (`#D8F36A` / `#10B981`).
+- **Thẻ Nguồn A & Nguồn B:**
+  - Card bo **20dp**, nền trắng trên canvas trung tính (`#F8F9FA`).
+  - Data chips bo **8dp** hiển thị dung lượng, định dạng (`XLSX`, `CSV`, `IMG/OCR`) và fingerprint rút gọn.
+  - Thao tác tích hợp: `Chọn tệp / Đổi nguồn`, `Xem cấu hình & phạm vi (Preflight)`, `Đảo vai trò A ↔ B`.
+- **Ràng buộc nghiệp vụ:** Khi một nguồn là ảnh (OCR), nguồn còn lại khóa chỉ cho chọn bảng tính và hiển thị giải thích rõ ràng.
+- **CTA:** `Tiếp tục sang Ánh xạ` chỉ mở khi cả hai nguồn đạt `PREVIEW_READY`.
 
 ### SCR-03 — Preflight & Scope Preview
 
@@ -111,66 +136,68 @@ Các trạng thái **Error / Empty / Loading / Review / Permission / Cancel** l�
 
 **Thiết kế đề xuất:** chuyển A/B bằng segmented control; vùng metadata tóm tắt; nhóm validation issues (Error/Needs review/Warning); vùng preview phân trang/virtualization; sticky header/row index; nút `Xác nhận phạm vi`.
 
-**Phân biệt trạng thái:** hiển thị “Đang xem trước một phần” trong lúc parse và “Đã kiểm tra toàn bộ nguồn” chỉ khi PREVIEW_READY đầy đủ; **không** dùng 100% preview làm tín hiệu full validation. Dung lượng lớn hiển thị progress theo stage, số byte đọc/thời điểm có thể đo; không bịa phần trăm khi provider không cho biết total.
-
-**Exception:** sai MIME/định dạng, parser unsupported, hết space, invalid encoding, permission revoked, ZIP/pixel guard → mã lỗi an toàn + mô tả + hành động `Thử lại`, `Đổi tệp`, `Chỉnh cấu hình`; không lộ toàn URI/raw cells trong logs hoặc UI lỗi.
-
 ### SCR-04 — OCR Review
 
 **Bố cục:** vùng **Ảnh gốc** với crop/rotate và polygon/bounding boxes; vùng **Bảng dựng nháp** theo hàng/cột; thanh cảnh báo các ô chưa review hoặc cell/layout ambiguous; cho phép chỉnh văn bản ô, chia/gộp hàng/cột ở mức được implement, chọn selected scope, xác nhận từng ô/vùng và **Xác nhận toàn bộ sau review**.
 
-**Bắt buộc:** đối chiếu ảnh gốc ↔ text đã nhận dạng; phân biệt `recognized_raw_text` với `reviewed_text`; confidence chỉ là tín hiệu tham khảo; hiển thị dấu tiếng Việt và mã `00123` đúng, không tự ép kiểu. Mỗi selected OCR cell có receipt hiện hành. `Thay crop / rotation / layout / ảnh` invalidate receipts bị ảnh hưởng theo Input contract; CTA tiếp tục bị khóa cho đến khi re-review.
+### SCR-05 — Column Mapping (Data Instrument Pairing)
 
-**Không hứa:** tự phục hồi bảng chính xác 100%, formula/style, multiple pages, handwriting, cloud OCR hay ảnh–ảnh P0.
-
-**UX acceptance:** một ô chưa confirm thì không thể compare; người dùng có thể tìm ra tại sao bị chặn; bảng quá kém chất lượng được thông báo `NEEDS_REVIEW`/`UNSUPPORTED` đúng ngữ cảnh, không dựng ô đoán rồi cho qua.
-
-### SCR-05 — Field Mapping
-
-**Cấu trúc:** hai cột thông tin **Field A ↔ Field B**, nhãn hiển thị, Field ID kỹ thuật khi cần, sample raw/dtype gợi ý; dropdown/chọn tương ứng cho từng field, trạng thái mapped/unmapped/ambiguous; structural fields không map cũng phải được nêu rõ.
-
-**Hành vi:** P0 mapping **thủ công 1:1**, không cho chọn hai fields B vào cùng một field A hoặc mapping đến field đã không còn ở snapshot hiện hành. Gợi ý tự động (nếu có trong phiên tương lai) **không mặc định xác nhận**.
-
-**CTA:** `Tiếp tục` khi mapping hợp lệ; khi đổi scope/header thì mapping stale bị loại và yêu cầu xác nhận lại. Cho phép quay về preview để sửa scope mà không gây lỗi ngầm.
+**Cấu trúc:** Thẩm mỹ công cụ đo lường dữ liệu chính xác (Data Instrument). Bố cục phân cấp sắc nét, loại bỏ chi tiết đồ họa dư thừa.
+- **Ma trận ghép 1:1:**
+  - Hiển thị song song hai cột: **Trường Nguồn A** ↔ **Trường Nguồn B**.
+  - Mỗi hàng ghép là một **Mapping Rail Item** bo **10dp**, nền trắng, viền hairline `#E5E7EB`.
+  - Cột giữa có connector chỉ thị trạng thái liên kết:
+    - Mapped (Đã ghép): Đường line màu Signal Lime hoặc Primary kèm icon liên kết chắc chắn.
+    - Unmapped (Chưa ghép): Đường đứt đoạn màu Precision Slate `#607276`.
+    - Ambiguous / Conflict (Trùng/Xung đột): Điểm báo màu Difference Coral `#E97965`.
+- **Tabular Figures:** Tên trường kèm kiểu dữ liệu suy luận (`IDENTIFIER`, `DECIMAL`, `TEXT`), chỉ số cột và giá trị mẫu sử dụng font `IBM Plex Mono` / monospace căn lề chuẩn xác.
+- **Thanh tổng kết tiến độ ánh xạ:** `Đã ghép: X/Y trường` kèm nút `Tự động gợi ý` và `Tiếp tục cấu hình chính sách`.
 
 ### SCR-06 — Matching, Semantic Policy & Direction
 
 **Sections:**
-1. **Phương pháp ghép bản ghi:** `Theo vị trí (POSITIONAL)` hoặc `Theo khóa (KEY)`. KEY cho phép chọn một/nhiều field có thứ tự; hiện rõ số key null/duplicate nếu phát hiện được toàn scope và hành vi xử lý/blocked tương ứng. Không giải thích POSITIONAL là đối chiếu “dù đổi thứ tự vẫn đúng”.
-2. **Kiểu và chính sách theo field:** IDENTIFIER, FREE_TEXT, DECIMAL, BOOLEAN, PERCENTAGE và null kinds; source-specific separators/locale, trim, absolute tolerance chỉ khi policy cho phép; trường inference mặc định là “Gợi ý”. Không tự chuẩn hóa ngầm.
-3. **Hướng so sánh:** mặc định giao diện gợi ý A→B nhưng **người dùng phải xác nhận**; giải thích: A→B, chỉ ở B = ADDED, chỉ ở A = REMOVED; đảo direction đổi các nhãn này.
-4. **Review summary:** hai source hashes/identity rút gọn, scopes, mapping, key/mode, số fields, policy digest/version, các warning cần chấp nhận.
-
-**CTA:** `Chạy so sánh` chỉ khi A/B snapshots hiện hành, OCR receipts đủ, mapping, mode, dtype/policy và direction confirmed. Nếu blocker, để CTA disabled có kèm danh sách lý do **dễ đọc**, không chỉ tooltip.
+1. **Phương pháp ghép bản ghi:** `Theo vị trí (POSITIONAL)` hoặc `Theo khóa (KEY)`. KEY cho phép chọn một/nhiều field có thứ tự; hiện rõ số key null/duplicate nếu phát hiện được toàn scope.
+2. **Kiểu và chính sách theo field:** IDENTIFIER, FREE_TEXT, DECIMAL, BOOLEAN, PERCENTAGE; tolerance, case, whitespace.
+3. **Hướng so sánh:** A→B (hoặc B→A) được người dùng xác nhận có chủ đích.
+4. **CTA:** `Chạy đối chiếu` kích hoạt tiến trình so sánh.
 
 ### SCR-07 — Comparison Progress
 
-**Bố cục:** tên phiên, progress stage (Read/Index/Align/Compare/Audit), số hàng đã xử lý/số byte hoặc trạng thái indeterminate tùy evidence, elapsed time nếu đo được, nút `Hủy`. Không hiển thị % giả hoặc “xử lý thành công” khi chưa có kết quả hoàn chỉnh.
+**Bố cục:** Tên phiên, progress stage (Read/Index/Align/Compare/Audit), số hàng đã xử lý dạng Tabular figures, nút `Hủy` an toàn.
 
-**Khi hủy:** thao tác cancel và cleanup an toàn; kết quả bị hủy không thể được xuất như completed. **Khi lỗi:** hiển thị stage, nguyên nhân có thể hiểu và đường dẫn `Sửa nguồn/cấu hình`, `Thử lại`; không “tiếp tục từ byte X” nếu chưa triển khai resume P0. **Sau app kill:** về luồng chọn nguồn/revalidation thay vì giả khôi phục READY.
+### SCR-08 — Comparison Results (Difference Fingerprint & Summary)
 
-### SCR-08 — Results Overview
+**Thành phần chữ ký — Difference Fingerprint (Dải vân tay sai khác):**
+- Đặt nổi bật ngay dưới header kết quả: Một dải ngang đa phân đoạn (Multi-segment density strip) thể hiện toàn bộ không gian dữ liệu đối soát:
+  - Phân đoạn **Trùng khớp (Exact/Matched)**: Màu xám trung tính nhạt `#E5E7EB` / `#607276`.
+  - Phân đoạn **Sai khác (Difference)**: Màu Difference Coral rực sáng `#E97965`.
+  - Phân đoạn **Cần xem xét (Unresolved / Structural)**: Màu Amber `#F59E0B`.
+- **Tương tác chạm (Interactive Drill-down):** Người dùng có thể chạm trực tiếp vào bất kỳ cụm màu nào trên Fingerprint để danh sách bên dưới tự động cuộn và lọc đến đúng khoảng dòng dữ liệu đó.
+- Phía trên dải có legend giải thích: `Trùng khớp`, `Sai khác`, `Cần xem xét` cùng tỷ lệ phần trăm dạng Tabular figures.
 
-**Thứ tự thông tin:**
-1. Nguồn A/B + direction đã xác nhận, scope/metadata và badge kết quả COMPLETED.
-2. Phần **Thống kê ô ghép**: EXACT, EQUIVALENT, DIFFERENT, UNRESOLVED. `compared_matched_pairs = tổng 4 nhóm`; exact rate và semantic agreement rate có mẫu số, **N/A nếu 0**.
-3. Phần **Thay đổi cấu trúc** riêng: ROW_ADDED / ROW_REMOVED, FIELD_ADDED / FIELD_REMOVED; không trộn vào cell count.
-4. Bộ lọc `Tất cả`, `Khác biệt`, `Tương đương`, `Chưa kết luận`, `Thay đổi cấu trúc`; ô tìm kiếm theo key/field khi có và hỗ trợ phân trang.
-5. Danh sách diff (row identity, field, side A/B, status + lý do ngắn) và nút `Chi tiết`; CTA `Xuất báo cáo`.
+**Phân vùng thống kê (Instrument Metrics):**
+- Thống kê 4 nhóm kết luận (Exact, Equivalent, Different, Unresolved) trong các box bo **14dp** với số liệu lớn, font Tabular figures.
+- Thay đổi cấu trúc (Thêm/Bớt hàng, Thêm/Bớt cột) được tách riêng, không cộng gộp lẫn lộn.
+- Dải bộ lọc (Filter Rail) tối giản cho phép chuyển nhanh giữa `Tất cả`, `Sai khác (#E97965)`, `Tương đương`, `Chưa kết luận`.
+- Danh sách sai khác hiển thị dưới dạng các thẻ tóm tắt có chỉ số dòng/khóa và nút mở `Chi tiết sai khác`.
 
-**Default list:** ưu tiên các trường hợp `DIFFERENT`, `UNRESOLVED` và structural, nhưng số liệu toàn bộ phiên vẫn hiện rõ. Danh sách có thể cho chọn tất cả theo tab/filter nhưng **không** giấu EXACT khỏi summary.
+### SCR-09 — Difference Detail (Focus Diff)
 
-**Empty states:** không có khác biệt có thể hiển thị “Không phát hiện khác biệt theo quy tắc đã xác nhận” **chỉ khi** không có unresolved/structural differences; nếu có unresolved thì không tuyên bố hai nguồn hoàn toàn giống nhau.
-
-### SCR-09 — Difference Detail
-
-**Thông tin bắt buộc:** loại `MATCHED_CELL` hoặc structural event, key/ordinal, mapping field, status + reason/rule, **A raw / B raw** có side labels, parsed/canonical nếu có và khi được phép hiển thị, SourceRef **thực** từng phía (XLSX sheet/cell, CSV logical record/physical lines, OCR polygon/image coordinates), missing reason nếu không có reference.
-
-**Thiết kế:** hai khối A và B có cùng mức ưu tiên, nút copy **có nhãn dữ liệu nhạy cảm** nếu phù hợp, next/previous diff trong cùng filter; mở rộng panel `Vì sao có kết luận này?` hiển thị rule_id/version/policy trace; biểu diễn null/missing/blank/empty string bằng nhãn khác nhau.
-
-**Hành vi:** `EQUIVALENT` vẫn cho thấy **hai biểu diễn raw khác nhau**; `UNRESOLVED` giải thích thiếu chứng cứ nào; không cho đổi verdict bằng thao tác tô màu. Nếu người dùng thay policy/scope thì phải thực hiện comparison mới; detail cũ được đánh dấu stale/không thể export.
+**Triết lý: Focus Diff trên màn hình nhỏ:** Không ép người dùng xem hai bảng Excel cạnh nhau gây tràn ngang và mất bối cảnh. Mỗi bản ghi được biểu diễn theo một **cặp giá trị Cũ/Mới tập trung**:
+- **Cấu trúc Focus Diff Card:**
+  - Card chính bo **20dp**, nền `#FFFFFF` với viền hairline sắc sảo.
+  - **Khối Nguồn A (Tham chiếu / Cũ):** Nhãn `NGUỒN A`, giá trị raw, kiểu dữ liệu, định danh dòng và tọa độ SourceRef (`Sheet1!C4` hoặc dòng CSV).
+  - **Đường chuyển tiếp Diff Connector:** Ký hiệu chuyển đổi hoặc mức độ chênh lệch.
+  - **Khối Nguồn B (Đối chiếu / Mới):** Nhãn `NGUỒN B`, giá trị raw mới, highlight ký tự hoặc phần giá trị sai khác bằng màu Difference Coral (`#E97965`).
+  - **Trường Canonical & Quy tắc áp dụng:** Hiển thị rõ giá trị sau chuẩn hóa, Rule ID và lý do kết luận (`reasons`).
+- **Thao tác Native Interaction (Swipe & Haptics):**
+  - Người dùng có thể vuốt ngang (hoặc dùng thanh điều hướng Previous/Next) để lật qua lại giữa các bản ghi sai khác trong danh sách đã lọc.
+  - Mỗi lần lật bản ghi kích hoạt phản hồi xúc giác nhẹ (Haptics: `lightImpact` / `selectionClick`) tạo cảm giác tương tác vật lý chân thực như công cụ đo lường.
+- Nút sao chép dữ liệu có nhãn bảo vệ tính riêng tư.
 
 ### SCR-10 — Export & Share
+
+Tùy chọn xuất báo cáo đa định dạng (CSV, JSON, PDF diff hợp nhất A/B, PDF báo cáo Dytava). Cấu hình phạm vi xuất (Toàn bộ, Chỉ sai khác, Theo bộ lọc) kèm cảnh báo bảo mật trước khi chia sẻ.
 
 **Tùy chọn chính:** `CSV diff`, `JSON report`, `PDF diff hợp nhất A/B`, `PDF báo cáo Dytava` (template/version). Có thể chọn nhiều output **nhưng mỗi loại tạo artifact riêng**; hai PDF không bị hợp nhất thành một output. Merged diff PDF là **một PDF bao gồm union A/B**.
 
@@ -194,26 +221,38 @@ Các trạng thái **Error / Empty / Loading / Review / Permission / Cancel** l�
 
 Không sử dụng một `DataTable` hiển thị đồng thời toàn bộ bảng lớn. Virtualization, search/filter và cursor queries phải tuân thủ UDG3.1/EX-1; giao diện không được yêu cầu materialize toàn result trong RAM.
 
-## 5. Visual design — sử dụng hệ Dytava v2.0
+## 5. Visual design — Chuẩn Precision Workspace (DYTAVA v3.2 UI Mockup Set)
 
-### 5.1. Design tokens có nguồn mã thật
+### 5.1. Design Tokens chuẩn hóa Precision Workspace
 
-| Semantic role | Token Flutter/source | HEX |
-| --- | --- | --- |
-| Primary action / EQUIVALENT | `DytavaColors.primary/equivalent` | `#2563EB` |
-| Secondary blue | `DytavaColors.secondary` | `#3B82F6` |
-| Mapping/export accent | `DytavaColors.purple` | `#8B5CF6` |
-| OCR accent | `DytavaColors.cyan` | `#06B6D4` |
-| EXACT / import | `DytavaColors.exact` | `#10B981` |
-| UNRESOLVED / review | `DytavaColors.unresolved` | `#F59E0B` |
-| DIFFERENT / destructive error | `DytavaColors.different` | `#EF4444` |
-| Background | `DytavaColors.background` | `#F3F4F6` |
-| Surface / border | `DytavaColors.white/border` | `#FFFFFF` / `#E5E7EB` |
-| Main text / secondary text | `DytavaColors.textPrimary/textSecondary` | `#1E293B` / `#64748B` |
+| Semantic Role | Token Code | HEX | Mục đích & Ngữ cảnh sử dụng |
+| --- | --- | --- | --- |
+| **LIME PRIMARY** | `DytavaColors.limePrimary` | `#C8FF4A` | Hành động chính (CTA Pill, "Bắt đầu đối chiếu", "Tiếp tục"), toggle switch active, vòng tròn tiến trình |
+| **LIME-600** | `DytavaColors.lime600` | `#86E63A` | Điểm nhấn viền active, hover state, chỉ báo tiến trình chạy nền |
+| **OFF-WHITE** | `DytavaColors.offWhite` | `#F7F6F2` | Nền canvas sáng mặc định của ứng dụng và website, thanh nhã và êm mắt |
+| **WARM SURFACE** | `DytavaColors.warmSurface` | `#EDEBE4` | Bề mặt container thẻ, vùng tải tệp và ô nhập dữ liệu |
+| **GRAPHITE** | `DytavaColors.graphite` | `#0F1A1C` | Màu chữ chính trên nền sáng, nút phụ tương phản cao, header kỹ thuật |
+| **GRAPHITE-800** | `DytavaColors.graphite800` | `#1B2426` | Bề mặt tối cho Dark Mode, container Focus Diff, status pill nền đen |
+| **DIFFERENCE CORAL** | `DytavaColors.differenceCoral` | `#E97965` | Sai khác dữ liệu (`DIFFERENT`), mật độ sai lệch trên Difference Fingerprint, Focus Diff highlight |
+| **NEUTRAL** | `DytavaColors.precisionNeutral` | `#607276` | Đường ray kết nối (rail), nhãn kỹ thuật, chỉ dẫn cấu trúc, trạng thái chờ |
+| **EXACT / SUCCESS** | `DytavaColors.exact` | `#10B981` | Trùng khớp tuyệt đối 100% (`EXACT`), icon Excel xanh lá |
+| **UNRESOLVED / AMBER** | `DytavaColors.unresolved` | `#F59E0B` | Chưa đủ căn cứ (`UNRESOLVED`), cảnh báo rà soát thủ công |
+| **SOURCE BLUE** | `DytavaColors.sourceBlue` | `#38BDF8` | Phân định luồng dữ liệu Nguồn B |
+| **SUBTLE BORDER** | `DytavaColors.border` | `#D8D5CC` | Đường hairline phân cách thẻ, phân vùng bảng tính |
 
-**Typography hiện có:** `Plus Jakarta Sans` (headings/display), `Be Vietnam Pro` (tiếng Việt/UI copy), `IBM Plex Mono` (key/hash/địa chỉ/metrics), fallback Roboto. **Components hiện có** trong design system như status badge và illustration là tài sản để tái sử dụng, không phải xác nhận screen đã có.
+**Quy chuẩn Typography:**
+- **Tiêu đề / Display:** **Manrope** (500, 600, 700, 800) mang cấu trúc hình học hiện đại và dứt khoát.
+- **Giao diện & Nội dung:** **Inter (System)** (400, 500, 600, 700) tối ưu cho việc đọc mật độ cao trên màn hình.
+- **Dữ liệu kỹ thuật & số liệu:** **Inter (Tabular)** bắt buộc dùng **Tabular Figures** (`tabular-nums lining-nums`) để các cột số và số dòng căn thẳng hàng tuyệt đối.
+- *Fallback offline cục bộ:* `Plus Jakarta Sans` cho Display, `Be Vietnam Pro` cho Interface, `IBM Plex Mono` cho Mono code.
 
-**Khuyến nghị trình bày (PROPOSED, chưa duyệt token):** spacing dựa 4 dp (8/12/16/24), card radius 12–16 dp theo theme, minimum tap targets mục tiêu 48×48 dp; max readable column width/line length xác định qua usability test. Không sửa màu logo/brand chỉ để báo status; dùng semantic icon/label kèm màu mềm, tránh chữ màu amber/green nhỏ trên trắng nếu không đủ contrast.
+**Quy chuẩn Signature Components:**
+- **Nút chính (Primary CTA):** Hình dạng viên con nhộng (**Pill**, `border-radius: 9999px`), nền Lime Primary `#C8FF4A`, chữ Graphite `#0F1A1C` đậm, icon mũi tên `→`.
+- **Nút phụ (Secondary):** Hình dạng viên con nhộng (**Pill**), nền Warm Surface `#EDEBE4` hoặc viền mảnh Graphite.
+- **Status Pill:** Nền tối Graphite-800 `#1B2426`, chữ và chấm tròn phát sáng Lime Primary `#C8FF4A` (`● Đang tiến hành`).
+- **Thẻ tệp (File Card):** Nền Warm Surface `#EDEBE4`, icon Excel xanh lá, hiển thị tên tệp, số dòng và kích thước.
+- **Difference Fingerprint:** Ma trận trực quan hóa vị trí và mật độ sai khác theo từng sheet.
+- **Donut Progress Ring:** Vòng cung Lime rực rỡ thể hiện tỷ lệ trùng khớp (`96,8% Trùng khớp`) hoặc tiến trình xử lý.
 
 ### 5.2. Quy ước trạng thái và nội dung chữ
 

@@ -19,7 +19,7 @@ void main() {
       );
 
       expect(find.text('Nhìn rõ từng sai khác.'), findsOneWidget);
-      expect(find.text('Bản demo'), findsOneWidget);
+      expect(find.text('Trên thiết bị'), findsOneWidget);
       expect(find.text('Bắt đầu so sánh'), findsOneWidget);
       expect(find.byTooltip('Thêm tùy chọn'), findsOneWidget);
       expect(tester.takeException(), isNull);

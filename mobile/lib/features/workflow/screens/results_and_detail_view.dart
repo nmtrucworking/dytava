@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:flutter/material.dart';
 
@@ -5,6 +9,7 @@ import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
 import '../../shared/text_difference_evidence.dart';
+import '../widgets/mobile_aligned_grid.dart';
 import '../widgets/workflow_common_widgets.dart';
 
 /// Màn hình Kết quả đối chiếu (`SCR-08`):
@@ -135,7 +140,9 @@ class ResultsScreenView extends StatelessWidget {
               selectedColor: bg,
               checkmarkColor: color,
               side: BorderSide(
-                color: flow.resultFilter == status ? color : DytavaColors.border,
+                color: flow.resultFilter == status
+                    ? color
+                    : DytavaColors.border,
               ),
               onSelected: (_) => flow.filterResults(status),
             ),
@@ -161,6 +168,18 @@ class ResultsScreenView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // 1. Summary ngắn + BrandIllustration.success(successCompare)
+        DifferenceFingerprint.fromCounts(
+          exactCount: result.count(DecisionStatus.exact),
+          equivalentCount: result.count(DecisionStatus.equivalent),
+          differentCount: result.count(DecisionStatus.different),
+          unresolvedCount: result.count(DecisionStatus.unresolved),
+          onSegmentTap: (index) {
+            if (index == 0) flow.filterResults(DecisionStatus.exact);
+            if (index == 1) flow.filterResults(DecisionStatus.different);
+            if (index == 2) flow.filterResults(DecisionStatus.unresolved);
+          },
+        ),
+        const SizedBox(height: 12),
         WorkflowSectionCard(
           children: [
             Row(
@@ -176,7 +195,7 @@ class ResultsScreenView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'COMPLETED · Kết quả bộ dữ liệu mẫu',
+                        'COMPLETED · Kết quả so sánh',
                         style: DytavaTypography.titleLarge.copyWith(
                           color: DytavaColors.textPrimary,
                         ),
@@ -263,7 +282,9 @@ class ResultsScreenView extends StatelessWidget {
         if (flow.taskMode == ComparisonTaskMode.compareColumns)
           WorkflowSectionCard(
             color: DytavaColors.softBlue,
-            border: Border.all(color: DytavaColors.primary.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: DytavaColors.primary.withValues(alpha: 0.3),
+            ),
             children: [
               Row(
                 children: [
@@ -309,7 +330,9 @@ class ResultsScreenView extends StatelessWidget {
         else if (flow.taskMode == ComparisonTaskMode.reconcile)
           WorkflowSectionCard(
             color: DytavaColors.softBlue,
-            border: Border.all(color: DytavaColors.primary.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: DytavaColors.primary.withValues(alpha: 0.3),
+            ),
             children: [
               Row(
                 children: [
@@ -496,136 +519,142 @@ class ResultsScreenView extends StatelessWidget {
                 onChanged: onResultViewTabChanged,
               ),
             ),
-            _filterChips(result),
-            DropdownButtonFormField<DecisionStatus?>(
-              key: ValueKey('filter-${flow.resultFilter}'),
-              initialValue: flow.resultFilter,
-              decoration: const InputDecoration(
-                labelText: 'Lọc trạng thái ô',
-                prefixIcon: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: BrandIcon(DytavaIcons.filter, size: 18),
-                ),
-              ),
-              items: [
-                const DropdownMenuItem<DecisionStatus?>(
-                  value: null,
-                  child: Text('Tất cả'),
-                ),
-                for (final s in DecisionStatus.values)
-                  DropdownMenuItem(
-                    value: s,
-                    child: Text(WorkflowUiHelpers.formatEnumName(s)),
+            if (resultViewTab == 0 && result.alignedRows.isNotEmpty)
+              MobileAlignedGrid(result: result, onOpenCell: onOpenDetail)
+            else ...[
+              _filterChips(result),
+              DropdownButtonFormField<DecisionStatus?>(
+                key: ValueKey('filter-${flow.resultFilter}'),
+                initialValue: flow.resultFilter,
+                decoration: const InputDecoration(
+                  labelText: 'Lọc trạng thái ô',
+                  prefixIcon: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: BrandIcon(DytavaIcons.filter, size: 18),
                   ),
-              ],
-              onChanged: flow.filterResults,
-            ),
-            const SizedBox(height: 12),
-            if (flow.visibleCells.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: DytavaColors.background,
-                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  children: [
-                    BrandIllustration.emptyFilter(size: 72),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Không có ô nào khớp bộ lọc hiện tại',
-                      style: DytavaTypography.titleMedium,
+                items: [
+                  const DropdownMenuItem<DecisionStatus?>(
+                    value: null,
+                    child: Text('Tất cả'),
+                  ),
+                  for (final s in DecisionStatus.values)
+                    DropdownMenuItem(
+                      value: s,
+                      child: Text(WorkflowUiHelpers.formatEnumName(s)),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Hãy chọn Tất cả hoặc một trạng thái khác để xem tiếp các cặp ô.',
-                      textAlign: TextAlign.center,
-                      style: DytavaTypography.bodySmall,
-                    ),
-                  ],
-                ),
-              )
-            else if (resultViewTab == 0)
-              DytavaSheetDiffView(
-                result: result,
-                visibleCells: flow.visibleCells,
-                onSelectCell: onOpenDetail,
-                sourceALabel: labelA,
-                sourceBLabel: labelB,
-                sourceAFormat:
-                    flow.slot(SourceSide.a).artifact?.format ?? SourceFormat.csv,
-                sourceBFormat:
-                    flow.slot(SourceSide.b).artifact?.format ?? SourceFormat.csv,
-                onExport: onOpenExport,
-              )
-            else
-              for (final cell in flow.visibleCells)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Material(
-                    color: DytavaColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: const BorderSide(color: DytavaColors.border),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      leading: BrandIcon.decision(
-                        cell.decision.status,
-                        size: 22,
-                      ),
-                      title: Text(
-                        '${cell.mapping.fieldA}: ${WorkflowUiHelpers.formatEnumName(cell.decision.status)}',
+                ],
+                onChanged: flow.filterResults,
+              ),
+              const SizedBox(height: 12),
+              if (flow.visibleCells.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: DytavaColors.background,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      BrandIllustration.emptyFilter(size: 72),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Không có ô nào khớp bộ lọc hiện tại',
                         style: DytavaTypography.titleMedium,
                       ),
-                      subtitle: Text(
-                        'A: ${cell.a.rawLexeme ?? '[${cell.a.kind.name}]'} · B: ${cell.b.rawLexeme ?? '[${cell.b.kind.name}]'}',
-                        style: DytavaTypography.dataMedium,
+                      const SizedBox(height: 4),
+                      Text(
+                        'Hãy chọn Tất cả hoặc một trạng thái khác để xem tiếp các cặp ô.',
+                        textAlign: TextAlign.center,
+                        style: DytavaTypography.bodySmall,
                       ),
-                      trailing: _decisionBadge(cell.decision.status),
-                      onTap: () => onOpenDetail(cell.id),
+                    ],
+                  ),
+                )
+              else if (resultViewTab == 0)
+                DytavaSheetDiffView(
+                  result: result,
+                  visibleCells: flow.visibleCells,
+                  onSelectCell: onOpenDetail,
+                  sourceALabel: labelA,
+                  sourceBLabel: labelB,
+                  sourceAFormat:
+                      flow.slot(SourceSide.a).artifact?.format ??
+                      SourceFormat.csv,
+                  sourceBFormat:
+                      flow.slot(SourceSide.b).artifact?.format ??
+                      SourceFormat.csv,
+                  onExport: onOpenExport,
+                )
+              else
+                for (final cell in flow.visibleCells)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Material(
+                      color: DytavaColors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: const BorderSide(color: DytavaColors.border),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        leading: BrandIcon.decision(
+                          cell.decision.status,
+                          size: 22,
+                        ),
+                        title: Text(
+                          '${cell.mapping.fieldA}: ${WorkflowUiHelpers.formatEnumName(cell.decision.status)}',
+                          style: DytavaTypography.titleMedium,
+                        ),
+                        subtitle: Text(
+                          'A: ${cell.a.rawLexeme ?? '[${cell.a.kind.name}]'} · B: ${cell.b.rawLexeme ?? '[${cell.b.kind.name}]'}',
+                          style: DytavaTypography.dataMedium,
+                        ),
+                        trailing: _decisionBadge(cell.decision.status),
+                        onTap: () => onOpenDetail(cell.id),
+                      ),
                     ),
                   ),
-                ),
-            const SizedBox(height: 10),
-            Text(
-              'Trang ${flow.page + 1} · ${flow.selectedCells.length} ô trong bộ lọc. Summary phía trên là toàn bộ kết quả.',
-              style: DytavaTypography.bodyMedium,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(48, 48),
+              const SizedBox(height: 10),
+              Text(
+                'Trang ${flow.page + 1} · ${flow.selectedCells.length} ô trong bộ lọc. Summary phía trên là toàn bộ kết quả.',
+                style: DytavaTypography.bodyMedium,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                      ),
+                      icon: const BrandIcon(DytavaIcons.back, size: 16),
+                      onPressed: flow.page > 0 ? () => flow.turnPage(-1) : null,
+                      label: const Text('Trang trước'),
                     ),
-                    icon: const BrandIcon(DytavaIcons.back, size: 16),
-                    onPressed: flow.page > 0 ? () => flow.turnPage(-1) : null,
-                    label: const Text('Trang trước'),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(48, 48),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                      ),
+                      icon: const BrandIcon(DytavaIcons.forward, size: 16),
+                      onPressed:
+                          (flow.page + 1) * WorkflowController.pageSize <
+                              flow.selectedCells.length
+                          ? () => flow.turnPage(1)
+                          : null,
+                      label: const Text('Trang sau'),
                     ),
-                    icon: const BrandIcon(DytavaIcons.forward, size: 16),
-                    onPressed:
-                        (flow.page + 1) * WorkflowController.pageSize <
-                            flow.selectedCells.length
-                        ? () => flow.turnPage(1)
-                        : null,
-                    label: const Text('Trang sau'),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 8),
@@ -753,7 +782,7 @@ class DifferenceDetailScreenView extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          'Vị trí fixture: ${location ?? '[không có reference]'}',
+          'Vị trí nguồn: ${location ?? '[không có reference]'}',
           style: DytavaTypography.bodySmall.copyWith(
             color: DytavaColors.textSecondary,
           ),
@@ -823,6 +852,30 @@ class DifferenceDetailScreenView extends StatelessWidget {
             ],
           ),
         ),
+
+        // Precision Workspace: Focus Diff Card (Single record focused comparison)
+        FocusDiffCard(
+          fieldName: '${cell.mapping.fieldA} ↔ ${cell.mapping.fieldB}',
+          rowIdentifier: 'Hàng ${cell.rowA} ↔ ${cell.rowB}',
+          statusText: WorkflowUiHelpers.formatEnumName(cell.decision.status),
+          statusColor: cell.decision.status == DecisionStatus.different
+              ? DytavaColors.differenceCoral
+              : (cell.decision.status == DecisionStatus.unresolved
+                    ? DytavaColors.amber
+                    : DytavaColors.primary),
+          rawA: cell.a.rawLexeme ?? '(trống)',
+          rawB: cell.b.rawLexeme ?? '(trống)',
+          sourceRefA: cell.locationA,
+          sourceRefB: cell.locationB,
+          ruleReason: cell.decision.reason != null
+              ? 'Mã lý do: ${cell.decision.reason!.name} (${cell.decision.ruleId})'
+              : 'Quy tắc: ${cell.decision.ruleId}',
+          currentIndex: index >= 0 ? index + 1 : 1,
+          totalDiffs: list.length,
+          onPrevious: hasPrev ? () => onSelectCellId(list[index - 1].id) : null,
+          onNext: hasNext ? () => onSelectCellId(list[index + 1].id) : null,
+        ),
+        const SizedBox(height: 14),
 
         // Thẻ tiêu đề kết luận kèm `BrandIllustration.verdict(...)`
         WorkflowSectionCard(
@@ -924,7 +977,7 @@ class DifferenceDetailScreenView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Nguyên nhân: ${DytavaPriorityDiffCard.summarizeCause(cell)}',
+              'Nguyên nhân: ${cell.decision.explanation ?? DytavaPriorityDiffCard.summarizeCause(cell)}',
               style: DytavaTypography.bodyMedium.copyWith(
                 fontWeight: FontWeight.w600,
                 color: DytavaColors.textPrimary,
@@ -1010,7 +1063,7 @@ class ExportScreenView extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Báo cáo có thể chứa dữ liệu nguồn. Bản flow chỉ tạo preview JSON trong bộ nhớ, chưa lưu/chia sẻ tệp.',
+                        'Báo cáo chứa dữ liệu nguồn. Xem trước CSV / JSON và lưu cục bộ vào vị trí bạn chọn.',
                         style: DytavaTypography.bodyMedium,
                       ),
                     ],
@@ -1055,7 +1108,7 @@ class ExportScreenView extends StatelessWidget {
                   DropdownMenuItem(
                     value: kind,
                     child: Text(
-                      '${WorkflowUiHelpers.formatEnumName(kind)}${flow.exporter.supports(kind) ? ' (preview mẫu)' : ' (chưa hỗ trợ)'}',
+                      '${WorkflowUiHelpers.formatEnumName(kind)}${flow.exporter.supports(kind) ? ' (xem trước)' : ' (chưa hỗ trợ)'}',
                     ),
                   ),
               ],
@@ -1102,13 +1155,13 @@ class ExportScreenView extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Capability chưa được bật. Chọn JSON để kiểm tra preview mẫu.',
+                  'Định dạng này chưa được hỗ trợ. Chọn một định dạng xem trước đang bật.',
                   style: DytavaTypography.bodyMedium,
                 ),
               ),
             const SizedBox(height: 12),
             WorkflowPrimaryButton(
-              label: 'Tạo preview JSON mẫu',
+              label: 'Tạo bản xem trước',
               iconAsset: DytavaIcons.fileJson,
               onPressed:
                   scopeConfirmed &&
@@ -1149,6 +1202,38 @@ class ExportScreenView extends StatelessWidget {
             ],
           ],
         ),
+        if (flow.receipt?.fileName != null)
+          WorkflowPrimaryButton(
+            label: 'Lưu tệp vào thiết bị',
+            iconAsset: DytavaIcons.export,
+            onPressed: () async {
+              final receipt = flow.receipt!;
+              try {
+                final uri = await FilePicker.saveFile(
+                  fileName: receipt.fileName!,
+                  bytes: Uint8List.fromList(utf8.encode(receipt.previewText)),
+                  mimeType: receipt.fileName!.endsWith('.csv')
+                      ? 'text/csv'
+                      : 'application/json',
+                );
+                if (context.mounted && uri != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đã lưu báo cáo.')),
+                  );
+                }
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Không lưu được báo cáo. Hãy chọn lại vị trí.',
+                      ),
+                    ),
+                  );
+                }
+              }
+            },
+          ),
         if (flow.receipt != null)
           WorkflowSectionCard(
             children: [
@@ -1158,7 +1243,7 @@ class ExportScreenView extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Preview hoàn tất · Không có tệp được xuất.',
+                      'Bản xem trước đã sẵn sàng.',
                       style: DytavaTypography.titleMedium.copyWith(
                         color: DytavaColors.exact,
                       ),
@@ -1174,7 +1259,9 @@ class ExportScreenView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: SelectableText(
-                  flow.receipt!.previewText,
+                  flow.receipt!.previewText.length > 20000
+                      ? '${flow.receipt!.previewText.substring(0, 20000)}\n… Xem trước 20.000 ký tự; tệp lưu chứa toàn bộ dữ liệu.'
+                      : flow.receipt!.previewText,
                   style: const TextStyle(
                     fontFamily: DytavaTypography.dataFont,
                     fontSize: 12,

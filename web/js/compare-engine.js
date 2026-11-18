@@ -3,6 +3,17 @@
  * Compliant with EXC PRD 1.0-DESIGN
  */
 
+export const EXACT_CMP = Object.freeze({
+  status: 'EXACT',
+  type: 'text',
+  rawA: '',
+  rawB: '',
+  normA: '',
+  normB: '',
+  ruleId: 'exact/verbatim',
+  reason: 'Giá trị tuyệt đối giống nhau (Exact identical value)'
+});
+
 export class CompareEngine {
   constructor(policy = {}) {
     this.policy = {
@@ -435,18 +446,49 @@ export class CompareEngine {
     let strB = this.policy.trim_text ? rawB.trim() : rawB;
 
     if (strA === strB) return { status: 'EQUIVALENT', type: 'string', rawA, rawB, normA: strA, normB: strB, ruleId: 'text/trim', reason: 'Tương đương sau khi loại bỏ khoảng trắng.' };
+
+    if (this.policy.trim_text) {
+      const normSpaceA = strA.replace(/[\s\u00A0]+/g, ' ');
+      const normSpaceB = strB.replace(/[\s\u00A0]+/g, ' ');
+      if (normSpaceA === normSpaceB) {
+        return {
+          status: 'EQUIVALENT',
+          type: 'string',
+          rawA, rawB,
+          normA: normSpaceA,
+          normB: normSpaceB,
+          ruleId: 'text/whitespace_normalized',
+          reason: 'Tương đương sau khi chuẩn hóa khoảng trắng thừa (Whitespace normalized).'
+        };
+      }
+    }
+
     if (!this.policy.case_sensitive_text) {
-      if (strA.toLowerCase() === strB.toLowerCase()) {
+      const normCaseA = (this.policy.trim_text ? strA.replace(/[\s\u00A0]+/g, ' ') : strA).toLowerCase();
+      const normCaseB = (this.policy.trim_text ? strB.replace(/[\s\u00A0]+/g, ' ') : strB).toLowerCase();
+      if (normCaseA === normCaseB) {
         return {
           status: "EQUIVALENT",
           type: "string",
           rawA, rawB,
-          normA: strA.toLowerCase(),
-          normB: strB.toLowerCase(),
+          normA: normCaseA,
+          normB: normCaseB,
           ruleId: "text/case_fold",
           reason: "Tương đương sau khi bỏ qua chữ hoa/thường (Case-fold equivalent)"
         };
       }
+    }
+
+    const wordDiff = this.computeWordDiff(rawA, rawB);
+    const maxLen = Math.max(strA.length, strB.length);
+    const levDist = this.levenshteinDistance(strA, strB);
+    const similarity = maxLen > 0 ? Math.round((1 - levDist / maxLen) * 100) : 100;
+
+    let diffReason = 'Nội dung chuỗi ký tự khác nhau';
+    if (wordDiff.changedA.length && wordDiff.changedB.length) {
+      diffReason = `Khác biệt từ: '${wordDiff.changedA.slice(0, 3).join(', ')}' ↔ '${wordDiff.changedB.slice(0, 3).join(', ')}' (Độ tương đồng ${similarity}%)`;
+    } else if (similarity >= 80) {
+      diffReason = `Chuỗi tương đồng cao (${similarity}%), khác một số ký tự`;
     }
 
     return {
@@ -455,14 +497,363 @@ export class CompareEngine {
       rawA, rawB,
       normA: strA, normB: strB,
       ruleId: "text/lexical_diff",
-      reason: "Nội dung chuỗi ký tự khác nhau (Preserve accents & characters)"
+      reason: diffReason,
+      similarity,
+      diffHtmlA: wordDiff.htmlA,
+      diffHtmlB: wordDiff.htmlB
     };
   }
 
   /**
-   * Compare two datasets (tables) aligned by a Key Column or by Row Index
+   * Escape HTML entities
    */
-  compareTables(fileA, fileB, keyColumn = null) {
+  escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /**
+   * Bounded Levenshtein distance for strings
+   */
+  levenshteinDistance(s1, s2) {
+    if (s1 === s2) return 0;
+    const len1 = s1.length;
+    const len2 = s2.length;
+    if (!len1) return len2;
+    if (!len2) return len1;
+    if (len1 > 1000 || len2 > 1000) return Math.abs(len1 - len2);
+
+    let prev = new Int32Array(len2 + 1);
+    let curr = new Int32Array(len2 + 1);
+    for (let j = 0; j <= len2; j++) prev[j] = j;
+
+    for (let i = 1; i <= len1; i++) {
+      curr[0] = i;
+      const c1 = s1.charCodeAt(i - 1);
+      for (let j = 1; j <= len2; j++) {
+        const cost = c1 === s2.charCodeAt(j - 1) ? 0 : 1;
+        curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+      }
+      const tmp = prev;
+      prev = curr;
+      curr = tmp;
+    }
+    return prev[len2];
+  }
+
+  /**
+   * Compute token/word-level diff with HTML markups
+   */
+  computeWordDiff(strA, strB) {
+    const rawA = String(strA ?? '');
+    const rawB = String(strB ?? '');
+    if (rawA === rawB) {
+      const esc = this.escapeHtml(rawA);
+      return { htmlA: esc, htmlB: esc, changedA: [], changedB: [] };
+    }
+
+    const tokenize = s => s.split(/(\s+|[.,;:\-–—/()]+)/).filter(Boolean);
+    const tokensA = tokenize(rawA);
+    const tokensB = tokenize(rawB);
+
+    const m = tokensA.length;
+    const n = tokensB.length;
+    if (m * n > 250000) {
+      return {
+        htmlA: `<mark class="diff-word-del">${this.escapeHtml(rawA)}</mark>`,
+        htmlB: `<mark class="diff-word-ins">${this.escapeHtml(rawB)}</mark>`,
+        changedA: [rawA],
+        changedB: [rawB]
+      };
+    }
+
+    const dp = Array.from({ length: m + 1 }, () => new Int32Array(n + 1));
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        dp[i][j] = tokensA[i - 1] === tokensB[j - 1]
+          ? dp[i - 1][j - 1] + 1
+          : Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+
+    let i = m, j = n;
+    const chunksA = [], chunksB = [];
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && tokensA[i - 1] === tokensB[j - 1]) {
+        const t = tokensA[i - 1];
+        chunksA.unshift({ text: t, type: 'equal' });
+        chunksB.unshift({ text: t, type: 'equal' });
+        i--; j--;
+      } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        chunksB.unshift({ text: tokensB[j - 1], type: 'ins' });
+        j--;
+      } else if (i > 0 && (j === 0 || dp[i][j - 1] < dp[i - 1][j])) {
+        chunksA.unshift({ text: tokensA[i - 1], type: 'del' });
+        i--;
+      }
+    }
+
+    const render = chunks => chunks.map(c => {
+      const esc = this.escapeHtml(c.text);
+      if (c.type === 'del') return `<mark class="diff-word-del">${esc}</mark>`;
+      if (c.type === 'ins') return `<mark class="diff-word-ins">${esc}</mark>`;
+      return esc;
+    }).join('');
+
+    const changedA = chunksA.filter(c => c.type === 'del').map(c => c.text.trim()).filter(Boolean);
+    const changedB = chunksB.filter(c => c.type === 'ins').map(c => c.text.trim()).filter(Boolean);
+
+    return {
+      htmlA: render(chunksA),
+      htmlB: render(chunksB),
+      changedA,
+      changedB
+    };
+  }
+
+  /**
+   * Check if a column header is an ordinal / sequence number metadata column
+   */
+  isOrdinalHeader(header) {
+    return /^(#|no\.?|stt|số thứ tự|ordinal|row_?num|index)$/i.test(String(header || '').trim());
+  }
+
+  /**
+   * Detect ordinal columns in datasets
+   */
+  detectOrdinalColumns(headers, rows) {
+    const ordinalCols = new Set();
+    for (let c = 0; c < headers.length; c++) {
+      const h = headers[c];
+      if (this.isOrdinalHeader(h)) {
+        const sample = rows.slice(0, 25).map(r => String(r[c] ?? '').trim()).filter(Boolean);
+        const isNumeric = sample.length > 0 && sample.every(v => v === '-' || !isNaN(Number(v)));
+        if (isNumeric) ordinalCols.add(h);
+      }
+    }
+    return ordinalCols;
+  }
+
+  /**
+   * Sequence Alignment (Anchored LCS / Needleman-Wunsch with Gap Penalty)
+   * Prevents off-by-one cascade errors when rows are inserted or removed in the middle.
+   */
+  alignBySequence(rowsA, rowsB, headersA, headersB, ordinalCols, options = {}) {
+    const indexA = new Map(headersA.map((h, i) => [h, i]));
+    const indexB = new Map(headersB.map((h, i) => [h, i]));
+    const commonHeaders = headersA.filter(h => headersB.includes(h));
+    const bizHeaders = commonHeaders.filter(h => !ordinalCols.has(h));
+    const activeHeaders = bizHeaders.length > 0 ? bizHeaders : commonHeaders;
+
+    const getSig = (row, idxMap) => {
+      return activeHeaders.map(h => String(row[idxMap.get(h)] ?? '').trim()).join('|||');
+    };
+
+    const isBlankRow = (row, idxMap) => {
+      return activeHeaders.every(h => {
+        const v = String(row[idxMap.get(h)] ?? '').trim();
+        return v === '' || v === '-';
+      });
+    };
+
+    // Calculate row similarity between 0.0 and 1.0
+    const calcRowSimilarity = (rA, rB) => {
+      const blankA = isBlankRow(rA, indexA);
+      const blankB = isBlankRow(rB, indexB);
+      if (blankA && blankB) return 1.0;
+      if (blankA || blankB) return 0.0;
+
+      let matchCount = 0;
+      for (const h of activeHeaders) {
+        const valA = String(rA[indexA.get(h)] ?? '').trim();
+        const valB = String(rB[indexB.get(h)] ?? '').trim();
+        if (valA === valB) {
+          matchCount += 1.0;
+        } else if (valA.toLowerCase() === valB.toLowerCase()) {
+          matchCount += 0.9;
+        } else if (!isNaN(Number(valA)) && !isNaN(Number(valB)) && Number(valA) === Number(valB)) {
+          matchCount += 1.0;
+        }
+      }
+      return matchCount / activeHeaders.length;
+    };
+
+    // Phase 1: Identify Unique Monotonic Exact Anchors
+    const mapA = new Map();
+    rowsA.forEach((r, i) => {
+      if (isBlankRow(r, indexA)) return;
+      const sig = getSig(r, indexA);
+      if (!mapA.has(sig)) mapA.set(sig, []);
+      mapA.get(sig).push(i);
+    });
+
+    const mapB = new Map();
+    rowsB.forEach((r, j) => {
+      if (isBlankRow(r, indexB)) return;
+      const sig = getSig(r, indexB);
+      if (!mapB.has(sig)) mapB.set(sig, []);
+      mapB.get(sig).push(j);
+    });
+
+    const candidateAnchors = [];
+    for (const [sig, listA] of mapA.entries()) {
+      if (listA.length === 1 && mapB.has(sig) && mapB.get(sig).length === 1) {
+        candidateAnchors.push({ i: listA[0], j: mapB.get(sig)[0] });
+      }
+    }
+    candidateAnchors.sort((a, b) => a.i - b.i);
+
+    // Compute Longest Increasing Subsequence on j to preserve monotonic order
+    const lis = [];
+    const parent = new Array(candidateAnchors.length).fill(-1);
+    const lisIndices = [];
+
+    for (let k = 0; k < candidateAnchors.length; k++) {
+      const jVal = candidateAnchors[k].j;
+      let low = 0, high = lis.length - 1, pos = lis.length;
+      while (low <= high) {
+        const mid = (low + high) >> 1;
+        if (candidateAnchors[lisIndices[mid]].j >= jVal) {
+          pos = mid;
+          high = mid - 1;
+        } else {
+          low = mid + 1;
+        }
+      }
+      lisIndices[pos] = k;
+      if (pos > 0) parent[k] = lisIndices[pos - 1];
+      if (pos === lis.length) lis.push(k);
+    }
+
+    const anchors = [];
+    let curr = lis.length > 0 ? lisIndices[lis.length - 1] : undefined;
+    while (curr !== undefined && curr !== -1) {
+      anchors.push(candidateAnchors[curr]);
+      curr = parent[curr];
+    }
+    anchors.reverse();
+
+    // Phase 2: Align segments between anchors
+    const alignedPairs = [];
+
+    const alignSegment = (startA, endA, startB, endB) => {
+      const lenA = endA - startA + 1;
+      const lenB = endB - startB + 1;
+      if (lenA <= 0 && lenB <= 0) return;
+      if (lenA <= 0) {
+        for (let j = startB; j <= endB; j++) {
+          alignedPairs.push({ rowA: null, rowB: rowsB[j], idxA: null, idxB: j, rationale: 'Dòng chèn mới ở Nguồn B' });
+        }
+        return;
+      }
+      if (lenB <= 0) {
+        for (let i = startA; i <= endA; i++) {
+          alignedPairs.push({ rowA: rowsA[i], rowB: null, idxA: i, idxB: null, rationale: 'Dòng bị xóa ở Nguồn A' });
+        }
+        return;
+      }
+
+      // If segment is very large, avoid massive O(M*N) allocation
+      if (lenA * lenB > 4000000) {
+        const maxLen = Math.max(lenA, lenB);
+        for (let k = 0; k < maxLen; k++) {
+          const rA = k < lenA ? rowsA[startA + k] : null;
+          const rB = k < lenB ? rowsB[startB + k] : null;
+          alignedPairs.push({ rowA: rA, rowB: rB, idxA: rA ? startA + k : null, idxB: rB ? startB + k : null, rationale: 'Căn chỉnh đoạn lớn theo vị trí' });
+        }
+        return;
+      }
+
+      // Needleman-Wunsch DP on bounded segment
+      const dp = Array.from({ length: lenA + 1 }, () => new Float64Array(lenB + 1));
+      for (let i = 0; i <= lenA; i++) dp[i][0] = i * 1.0;
+      for (let j = 0; j <= lenB; j++) dp[0][j] = j * 1.0;
+
+      for (let i = 1; i <= lenA; i++) {
+        const rA = rowsA[startA + i - 1];
+        for (let j = 1; j <= lenB; j++) {
+          const rB = rowsB[startB + j - 1];
+          const sim = calcRowSimilarity(rA, rB);
+          // If sim >= 0.5, subCost in [0, 1] is cheaper than deletion + insertion (2.0)
+          // If sim < 0.5, subCost is 2.5 (> 2.0), forcing insert/delete instead of false pairing
+          const subCost = sim >= 0.5 ? 2.0 * (1.0 - sim) : 2.5;
+
+          const costDiag = dp[i - 1][j - 1] + subCost;
+          const costDel = dp[i - 1][j] + 1.0;
+          const costIns = dp[i][j - 1] + 1.0;
+
+          dp[i][j] = Math.min(costDiag, costDel, costIns);
+        }
+      }
+
+      // Traceback
+      let i = lenA, j = lenB;
+      const segPairs = [];
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0) {
+          const rA = rowsA[startA + i - 1];
+          const rB = rowsB[startB + j - 1];
+          const sim = calcRowSimilarity(rA, rB);
+          const subCost = sim >= 0.5 ? 2.0 * (1.0 - sim) : 2.5;
+          const costDiag = dp[i - 1][j - 1] + subCost;
+          const costDel = dp[i - 1][j] + 1.0;
+          const costIns = dp[i][j - 1] + 1.0;
+
+          if (Math.abs(dp[i][j] - costDiag) < 1e-6 && subCost < 2.0) {
+            segPairs.push({
+              rowA: rA, rowB: rB, idxA: startA + i - 1, idxB: startB + j - 1,
+              rationale: sim === 1.0 ? 'Khớp toàn bộ nội dung' : `Khớp chuỗi tương đồng (${Math.round(sim * 100)}%)`
+            });
+            i--; j--;
+            continue;
+          }
+          if (Math.abs(dp[i][j] - costDel) < 1e-6) {
+            segPairs.push({ rowA: rA, rowB: null, idxA: startA + i - 1, idxB: null, rationale: 'Dòng bị xóa ở Nguồn A' });
+            i--;
+            continue;
+          }
+          segPairs.push({ rowA: null, rowB: rB, idxA: null, idxB: startB + j - 1, rationale: 'Dòng chèn mới ở Nguồn B' });
+          j--;
+        } else if (i > 0) {
+          segPairs.push({ rowA: rowsA[startA + i - 1], rowB: null, idxA: startA + i - 1, idxB: null, rationale: 'Dòng bị xóa ở Nguồn A' });
+          i--;
+        } else {
+          segPairs.push({ rowA: null, rowB: rowsB[startB + j - 1], idxA: null, idxB: startB + j - 1, rationale: 'Dòng chèn mới ở Nguồn B' });
+          j--;
+        }
+      }
+      segPairs.reverse();
+      alignedPairs.push(...segPairs);
+    };
+
+    let prevA = 0, prevB = 0;
+    for (const anchor of anchors) {
+      alignSegment(prevA, anchor.i - 1, prevB, anchor.j - 1);
+      alignedPairs.push({
+        rowA: rowsA[anchor.i], rowB: rowsB[anchor.j],
+        idxA: anchor.i, idxB: anchor.j,
+        rationale: 'Mốc chuỗi chính xác (Anchor)'
+      });
+      prevA = anchor.i + 1;
+      prevB = anchor.j + 1;
+    }
+    alignSegment(prevA, rowsA.length - 1, prevB, rowsB.length - 1);
+
+    return alignedPairs;
+  }
+
+  /**
+   * Compare two datasets (tables) aligned by a Key Column, Sequence Alignment, or Row Index
+   */
+  compareTables(fileA, fileB, keyColumn = null, options = {}) {
+    if (typeof keyColumn === 'object' && keyColumn !== null) {
+      options = keyColumn;
+      keyColumn = options.keyColumn || null;
+    }
     const headersA = fileA.headers || [];
     const headersB = fileB.headers || [];
     const rowsA = fileA.rows || [];
@@ -473,40 +864,142 @@ export class CompareEngine {
     const summary = { total_cells_checked: 0, exact: 0, equivalent: 0, different: 0, unresolved: 0, added_rows: 0, removed_rows: 0 };
     const alignedRows = [];
     const differences = [];
+
+    // Determine alignment mode
+    let mode = options.alignmentMode || 'AUTO';
+    if (keyColumn === '__ORDERED_SEQUENCE__') {
+      mode = 'ORDERED_SEQUENCE';
+      keyColumn = null;
+    } else if (keyColumn === '__POSITIONAL__') {
+      mode = 'POSITIONAL';
+      keyColumn = null;
+    } else if (keyColumn) {
+      mode = 'KEY';
+    } else if (mode === 'AUTO') {
+      mode = 'POSITIONAL';
+    }
+
+    const ordinalCols = this.detectOrdinalColumns(headers, [...rowsA.slice(0, 50), ...rowsB.slice(0, 50)]);
+    const treatOrdinalAsMetadata = options.treatOrdinalAsMetadata ?? this.policy.treat_ordinal_as_metadata ?? true;
+
     let pairs;
-    if (keyColumn) {
+    if (mode === 'KEY') {
       if (!indexA.has(keyColumn) || !indexB.has(keyColumn)) throw new Error('Cột khóa phải tồn tại trong cả hai tệp.');
       const makeMap = (rows, index, side) => {
         const map = new Map();
-        for (const row of rows) {
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
           const key = String(row[index] ?? '').trim();
           if (!key || map.has(key)) throw new Error(`Nguồn ${side} có khóa trống hoặc trùng. Chọn cột khóa duy nhất hoặc căn chỉnh theo thứ tự dòng.`);
-          map.set(key, row);
+          map.set(key, { row, idx: i });
         }
         return map;
       };
       const a = makeMap(rowsA, indexA.get(keyColumn), 'A');
       const b = makeMap(rowsB, indexB.get(keyColumn), 'B');
-      pairs = [...new Set([...a.keys(), ...b.keys()])].map(key => [key, a.get(key), b.get(key)]);
+      pairs = [];
+      const visited = new Set();
+      for (const [key, itemA] of a) {
+        visited.add(key);
+        const itemB = b.get(key) || null;
+        pairs.push({
+          key,
+          rowA: itemA.row,
+          rowB: itemB ? itemB.row : null,
+          sourceLineA: itemA.idx + 1,
+          sourceLineB: itemB ? itemB.idx + 1 : null,
+          rationale: itemB ? `Khóa định danh: ${key}` : 'Chỉ tồn tại ở Nguồn A'
+        });
+      }
+      for (const [key, itemB] of b) {
+        if (!visited.has(key)) {
+          pairs.push({
+            key,
+            rowA: null,
+            rowB: itemB.row,
+            sourceLineA: null,
+            sourceLineB: itemB.idx + 1,
+            rationale: 'Chỉ tồn tại ở Nguồn B'
+          });
+        }
+      }
+    } else if (mode === 'ORDERED_SEQUENCE') {
+      const seqPairs = this.alignBySequence(rowsA, rowsB, headersA, headersB, ordinalCols, options);
+      pairs = seqPairs.map(p => {
+        const lineA = p.idxA != null ? p.idxA + 1 : null;
+        const lineB = p.idxB != null ? p.idxB + 1 : null;
+        let keyStr;
+        if (p.rowA && p.rowB) {
+          keyStr = lineA === lineB ? `Dòng ${lineA}` : `A!${lineA} ↔ B!${lineB}`;
+        } else if (p.rowA) {
+          keyStr = `A!${lineA} (-Xóa)`;
+        } else {
+          keyStr = `B!${lineB} (+Thêm)`;
+        }
+        return {
+          key: keyStr,
+          rowA: p.rowA,
+          rowB: p.rowB,
+          sourceLineA: lineA,
+          sourceLineB: lineB,
+          rationale: p.rationale
+        };
+      });
     } else {
-      pairs = Array.from({ length: Math.max(rowsA.length, rowsB.length) }, (_, i) => [`Dòng ${i + 1}`, rowsA[i], rowsB[i]]);
+      // POSITIONAL
+      pairs = Array.from({ length: Math.max(rowsA.length, rowsB.length) }, (_, i) => {
+        const rowA = rowsA[i] || null;
+        const rowB = rowsB[i] || null;
+        return {
+          key: `Dòng ${i + 1}`,
+          rowA,
+          rowB,
+          sourceLineA: rowA ? i + 1 : null,
+          sourceLineB: rowB ? i + 1 : null,
+          rationale: 'So sánh theo thứ tự dòng (Positional)'
+        };
+      });
     }
-    for (const [key, rowA, rowB] of pairs) {
+
+    for (const pair of pairs) {
+      const { key, rowA, rowB, sourceLineA, sourceLineB, rationale } = pair;
       const cellComparisons = Object.create(null);
       let rowStatus = 'EXACT';
       let type = 'MATCHED';
       if (!rowA || !rowB) {
         type = rowStatus = rowA ? 'REMOVED' : 'ADDED';
         summary[rowA ? 'removed_rows' : 'added_rows']++;
-        differences.push({ kind: 'ROW', key, status: rowStatus, left: rowA || null, right: rowB || null });
+        differences.push({ kind: 'ROW', key, status: rowStatus, left: rowA || null, right: rowB || null, rationale });
       } else {
         for (const col of headers) {
           const a = rowA[indexA.get(col)] ?? '';
           const b = rowB[indexB.get(col)] ?? '';
-          const cmp = !indexA.has(col) || !indexB.has(col) ? {
-            status: 'DIFFERENT', type: 'schema', rawA: String(a), rawB: String(b), normA: String(a), normB: String(b),
-            ruleId: 'schema/missing_column', reason: 'Cột chỉ tồn tại ở một nguồn dữ liệu.'
-          } : this.compareCells(a, b, col);
+          let cmp;
+          if (!indexA.has(col) || !indexB.has(col)) {
+            cmp = {
+              status: 'DIFFERENT', type: 'schema', rawA: String(a), rawB: String(b), normA: String(a), normB: String(b),
+              ruleId: 'schema/missing_column', reason: 'Cột chỉ tồn tại ở một nguồn dữ liệu.'
+            };
+          } else if (a === b) {
+            cmp = EXACT_CMP;
+          } else {
+            cmp = this.compareCells(a, b, col);
+          }
+
+          // Downgrade ordinal column difference if row content matches
+          if (ordinalCols.has(col) && treatOrdinalAsMetadata && cmp.status === 'DIFFERENT') {
+            cmp = {
+              status: 'EQUIVALENT',
+              type: 'metadata',
+              rawA: String(a),
+              rawB: String(b),
+              normA: String(a),
+              normB: String(b),
+              ruleId: 'metadata/ordinal_renumbered',
+              reason: 'Số thứ tự dòng thay đổi do dịch chuyển vị trí (Metadata).'
+            };
+          }
+
           cellComparisons[col] = cmp;
           summary.total_cells_checked++;
           summary[cmp.status.toLowerCase()]++;
@@ -519,8 +1012,19 @@ export class CompareEngine {
           });
         }
       }
-      alignedRows.push({ type, key, rowStatus, rowA: rowA || null, rowB: rowB || null, cellComparisons });
+      alignedRows.push({
+        type,
+        key,
+        rowStatus,
+        rowA: rowA || null,
+        rowB: rowB || null,
+        sourceLineA,
+        sourceLineB,
+        matchRationale: rationale,
+        cellComparisons
+      });
     }
+
     const report = {
       schema_version: 1, report_id: `rep-${globalThis.crypto.randomUUID()}`, engine_version: '1.0.0-web',
       policy_id: this.policy.policy_id, policy: { ...this.policy }, key_column: keyColumn,

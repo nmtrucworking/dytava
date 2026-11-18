@@ -70,11 +70,71 @@ class HomeScreenView extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4, bottom: 10),
             child: Text(
               'Tiếp tục phiên của bạn',
-              style: DytavaTypography.titleMedium.copyWith(
-                fontSize: 16,
-              ),
+              style: DytavaTypography.titleMedium.copyWith(fontSize: 16),
             ),
           ),
+          ComparisonRail(
+            sessionTitle: 'ACTIVE COMPARISON',
+            statusLabel: flow.resultCurrent
+                ? 'Đã hoàn tất'
+                : (flow.inputsReady ? 'Sẵn sàng' : 'Đang chuẩn bị'),
+            sourceA: RailStreamData(
+              sideTag: 'A',
+              title:
+                  flow.slot(SourceSide.a).artifact?.label ??
+                  'Chưa chọn Nguồn A',
+              subtitle: flow.slot(SourceSide.a).artifact != null
+                  ? (flow.slot(SourceSide.a).artifact?.format.isImage == true
+                        ? 'Cần xác minh dữ liệu'
+                        : 'Đã sẵn sàng tham chiếu')
+                  : 'Chưa có dữ liệu',
+              format: flow.slot(SourceSide.a).artifact?.format.name,
+              status: flow.slot(SourceSide.a).artifact != null
+                  ? RailNodeStatus.ready
+                  : RailNodeStatus.unselected,
+              onTap: onResumeSession,
+            ),
+            sourceB: RailStreamData(
+              sideTag: 'B',
+              title:
+                  flow.slot(SourceSide.b).artifact?.label ??
+                  'Chưa chọn Nguồn B',
+              subtitle: flow.slot(SourceSide.b).artifact != null
+                  ? 'Đã sẵn sàng đối chiếu'
+                  : 'Chưa có dữ liệu',
+              format: flow.slot(SourceSide.b).artifact?.format.name,
+              status: flow.slot(SourceSide.b).artifact != null
+                  ? RailNodeStatus.ready
+                  : RailNodeStatus.unselected,
+              onTap: onResumeSession,
+            ),
+            onPrimaryAction: onResumeSession,
+            primaryActionLabel: 'Tiếp tục thiết lập',
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'Gần đây',
+                  style: DytavaTypography.titleMedium.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                'Xem tất cả',
+                style: DytavaTypography.bodySmall.copyWith(
+                  color: DytavaColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           DytavaSessionResumeCard(
             stageLabel: _sessionStageLabel(),
             sourceSummary: _sessionSourceSummary(),
@@ -120,27 +180,86 @@ class _HomeHeading extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            RichText(
+              text: TextSpan(
+                text: 'dytava',
+                style: DytavaTypography.titleMedium.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: DytavaColors.graphite,
+                  fontSize: 20,
+                  letterSpacing: -0.6,
+                ),
+                children: const [
+                  TextSpan(
+                    text: '.',
+                    style: TextStyle(color: DytavaColors.lime600),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: DytavaColors.warmSurface,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: DytavaColors.subtleBorder, width: 0.8),
+              ),
+              child: Text(
+                'PRECISION WORKSPACE',
+                style: DytavaTypography.precisionTag.copyWith(
+                  fontSize: 9.5,
+                  letterSpacing: 1.2,
+                  color: DytavaColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
         Text(
-          'ĐỐI CHIẾU DỮ LIỆU',
+          'TRANG CHỦ',
           style: DytavaTypography.labelSmall.copyWith(
-            color: DytavaColors.primary,
+            color: DytavaColors.lime600,
             fontWeight: FontWeight.w800,
-            letterSpacing: 1.3,
+            letterSpacing: 1.4,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
+        Text(
+          'Đối chiếu dữ liệu',
+          style: DytavaTypography.workspaceHeader.copyWith(
+            fontSize: 28,
+            height: 1.18,
+            letterSpacing: -0.7,
+          ),
+        ),
+        const SizedBox(height: 6),
         Text(
           'Nhìn rõ từng sai khác.',
-          style: DytavaTypography.displayMedium.copyWith(
-            fontSize: 27,
-            height: 1.19,
-            letterSpacing: -0.65,
+          style: DytavaTypography.titleMedium.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: DytavaColors.graphite,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
+        Text(
+          'So sánh hai nguồn dữ liệu, phát hiện mọi khác biệt một cách chính xác.',
+          style: DytavaTypography.bodyMedium.copyWith(
+            color: DytavaColors.textSecondary,
+            fontSize: 13.5,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 4),
         Text(
           'Đối chiếu hai nguồn bảng tính và truy vết kết quả đến từng giá trị.',
-          style: DytavaTypography.bodyLarge.copyWith(
+          style: DytavaTypography.bodyMedium.copyWith(
             color: DytavaColors.textSecondary,
             height: 1.45,
           ),
@@ -193,19 +312,21 @@ class _StartComparisonPanel extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: DytavaColors.softAmber,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Text(
-                  'Bản demo',
-                  style: DytavaTypography.labelSmall.copyWith(
-                    color: const Color(0xFF92400E),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: DytavaColors.softAmber,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Text(
+                    'Trên thiết bị',
+                    style: DytavaTypography.labelSmall.copyWith(
+                      color: const Color(0xFF92400E),
+                    ),
                   ),
                 ),
               ),
@@ -245,18 +366,32 @@ class _StartComparisonPanel extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: FilledButton.icon(
+            child: FilledButton(
               onPressed: onStartNewSession,
-              icon: const Icon(Icons.add_rounded, size: 22),
-              label: const Text('Bắt đầu so sánh'),
               style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                textStyle: DytavaTypography.labelLarge.copyWith(
+                backgroundColor: DytavaColors.limePrimary,
+                foregroundColor: DytavaColors.graphite,
+                minimumSize: const Size.fromHeight(52),
+                shape: const StadiumBorder(),
+                textStyle: const TextStyle(
+                  fontFamily: DytavaTypography.editorialFont,
+                  fontWeight: FontWeight.w800,
                   fontSize: 15,
                 ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Bắt đầu so sánh',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward_rounded, size: 20),
+                ],
               ),
             ),
           ),
@@ -286,7 +421,7 @@ class _StartComparisonPanel extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Chức năng chọn tệp thật chưa được tích hợp ở bản hiện tại.',
+            'Hỗ trợ XLSX, CSV, TSV, TXT và JSON.',
             textAlign: TextAlign.center,
             style: DytavaTypography.bodySmall.copyWith(
               color: DytavaColors.textSecondary,
@@ -375,14 +510,12 @@ class _PrivacyNotice extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Xử lý dữ liệu mẫu trên thiết bị',
-                  style: DytavaTypography.titleMedium.copyWith(
-                    fontSize: 13,
-                  ),
+                  'Xử lý dữ liệu trên thiết bị',
+                  style: DytavaTypography.titleMedium.copyWith(fontSize: 13),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Không tự tải dữ liệu demo lên máy chủ.',
+                  'Tệp được xử lý cục bộ, không tải lên máy chủ.',
                   style: DytavaTypography.bodySmall,
                 ),
               ],

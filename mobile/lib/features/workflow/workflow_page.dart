@@ -53,7 +53,7 @@ class _WorkflowPageState extends State<WorkflowPage>
   @override
   void initState() {
     super.initState();
-    flow = widget.controller ?? createDemoWorkflow();
+    flow = widget.controller ?? createMobileWorkflow();
     flow.addListener(_refresh);
     WidgetsBinding.instance.addObserver(this);
   }
@@ -225,6 +225,13 @@ class _WorkflowPageState extends State<WorkflowPage>
   }
 
   Future<void> _quickConfirmAllAndRun() async {
+    if (flow.config.mappings.isEmpty) {
+      if (flow.proposal != null) {
+        flow.applyProposal(run: false);
+      } else {
+        _autoMapFields();
+      }
+    }
     final cfg = flow.config;
     final alreadyApproved =
         cfg.mappingConfirmed &&
@@ -348,7 +355,7 @@ class _WorkflowPageState extends State<WorkflowPage>
               ),
             if (flow.screen != WorkflowScreen.home)
               IconButton(
-                tooltip: 'Đóng phiên và dọn dữ liệu mẫu',
+                tooltip: 'Đóng phiên và dọn dữ liệu phiên',
                 onPressed: flow.usable
                     ? () async {
                         await flow.closeSession();
@@ -504,6 +511,7 @@ class _WorkflowPageState extends State<WorkflowPage>
             onContinueToProposal: () {
               if (flow.inputsReady) {
                 flow.analyzeAndPropose();
+                flow.applyProposal(run: false);
                 _go(WorkflowScreen.policy);
               }
             },
@@ -558,6 +566,14 @@ class _WorkflowPageState extends State<WorkflowPage>
           ),
         ];
       case WorkflowScreen.policy:
+        if (flow.inputsReady && flow.proposal == null) {
+          flow.analyzeAndPropose();
+          flow.applyProposal(run: false);
+        } else if (flow.inputsReady &&
+            flow.config.mappings.isEmpty &&
+            flow.proposal != null) {
+          flow.applyProposal(run: false);
+        }
         return [
           PolicyScreenView(
             flow: flow,

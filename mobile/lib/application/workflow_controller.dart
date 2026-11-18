@@ -113,6 +113,7 @@ final class WorkflowController extends ChangeNotifier {
       _emit();
       return;
     }
+    final oldRef = slot(side).artifact?.privateRef;
     final old = _imports[side];
     old?.cancel.cancel();
     final next = SourceSlot(
@@ -132,10 +133,16 @@ final class WorkflowController extends ChangeNotifier {
     _emit();
     // Replacement is selectable immediately; new work waits for old cleanup.
     if (old != null) await old.stopped.future;
+    if (oldRef != null &&
+        !_slots.values.any((s) => s.artifact?.privateRef == oldRef) &&
+        input is InputCleanupPort) {
+      (input as InputCleanupPort).release(oldRef);
+    }
   }
 
   Future<void> resetSource(SourceSide side) async {
     if (!usable) return;
+    final oldRef = slot(side).artifact?.privateRef;
     final old = _imports[side];
     old?.cancel.cancel();
     _slots[side] = SourceSlot(
@@ -145,6 +152,11 @@ final class WorkflowController extends ChangeNotifier {
     _invalidate(source: true);
     _emit();
     if (old != null) await old.stopped.future;
+    if (oldRef != null &&
+        !_slots.values.any((s) => s.artifact?.privateRef == oldRef) &&
+        input is InputCleanupPort) {
+      (input as InputCleanupPort).release(oldRef);
+    }
   }
 
   Future<void> changeImportConfig(
@@ -794,6 +806,13 @@ final class WorkflowController extends ChangeNotifier {
     }
     _emit();
     await Future.wait(works.map((w) => w.stopped.future));
+    if (input case final InputCleanupPort cleanup) {
+      for (final source in _slots.values) {
+        if (source.artifact != null) {
+          cleanup.release(source.artifact!.privateRef);
+        }
+      }
+    }
     for (final side in SourceSide.values) {
       _slots[side] = SourceSlot(
         side: side,
@@ -849,6 +868,13 @@ final class WorkflowController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    if (input case final InputCleanupPort cleanup) {
+      for (final source in _slots.values) {
+        if (source.artifact != null) {
+          cleanup.release(source.artifact!.privateRef);
+        }
+      }
+    }
     for (final work in [..._imports.values, ?_comparison, ?_export]) {
       work.cancel.cancel();
     }

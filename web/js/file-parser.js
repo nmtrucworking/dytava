@@ -1,23 +1,35 @@
 import Papa from 'papaparse';
 import { unzipSync, zipSync, strFromU8, strToU8 } from 'fflate';
 
-export const MAX_FILE_BYTES = 10 * 1024 * 1024;
-export const MAX_ROWS = 20000;
-export const MAX_COLUMNS = 200;
-export const MAX_CELLS = 200000;
+export const MAX_FILE_BYTES = 500 * 1024 * 1024;
+export const MAX_ROWS = 1500000;
+export const MAX_COLUMNS = 500;
+export const MAX_CELLS = 25000000;
 
 export function validateTable(headers, rows) {
   headers = headers.map(v => String(v ?? '').replace(/^\uFEFF/, '').trim());
   if (!headers.length || headers.some(h => !h) || new Set(headers).size !== headers.length) throw new Error('Tiêu đề cột phải có tên, duy nhất và không để trống.');
-  if (headers.length > MAX_COLUMNS || rows.length > MAX_ROWS || rows.length * headers.length > MAX_CELLS) throw new Error('Tệp vượt giới hạn 20.000 dòng, 200 cột hoặc 200.000 ô.');
-  if (rows.some(row => !Array.isArray(row) || row.length > headers.length)) throw new Error('Có dòng chứa nhiều ô hơn tiêu đề cột.');
-  rows = rows.map(row => headers.map((_, i) => {
-    const value = row[i];
-    if (value !== null && typeof value === 'object') throw new Error('Ô dữ liệu JSON chỉ được chứa chuỗi, số, boolean hoặc null.');
-    const text = String(value ?? '');
-    if (text.length > 32767) throw new Error('Nội dung một ô vượt quá 32.767 ký tự.');
-    return text;
-  }));
+  if (headers.length > MAX_COLUMNS || rows.length > MAX_ROWS || rows.length * headers.length > MAX_CELLS) throw new Error('Tệp vượt giới hạn 1.500.000 dòng, 500 cột hoặc 25.000.000 ô.');
+  
+  const numCols = headers.length;
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r];
+    if (!Array.isArray(row) || row.length > numCols) throw new Error('Có dòng chứa nhiều ô hơn tiêu đề cột.');
+    for (let c = 0; c < numCols; c++) {
+      const value = row[c];
+      if (value !== null && typeof value === 'object') throw new Error('Ô dữ liệu JSON chỉ được chứa chuỗi, số, boolean hoặc null.');
+      if (typeof value !== 'string') {
+        const text = String(value ?? '');
+        if (text.length > 32767) throw new Error('Nội dung một ô vượt quá 32.767 ký tự.');
+        row[c] = text;
+      } else if (value.length > 32767) {
+        throw new Error('Nội dung một ô vượt quá 32.767 ký tự.');
+      }
+    }
+    while (row.length < numCols) {
+      row.push('');
+    }
+  }
   return { headers, rows };
 }
 
@@ -44,13 +56,13 @@ function inspectZip(buffer) {
     unzipSync(new Uint8Array(buffer), { filter(entry) {
       entries++;
       total += entry.originalSize;
-      if (entries > 2000 || total > 50 * 1024 * 1024 || entry.originalSize > 25 * 1024 * 1024 || /(^|\/)\.\.(\/|$)/.test(entry.name)) {
-        throw new Error('Workbook không an toàn hoặc vượt giới hạn giải nén 50 MB.');
+      if (entries > 20000 || total > 1500 * 1024 * 1024 || entry.originalSize > 500 * 1024 * 1024 || /(^|\/)\.\.(\/|$)/.test(entry.name)) {
+        throw new Error('Workbook không an toàn hoặc vượt giới hạn giải nén 1.5 GB.');
       }
       return false;
     } });
   } catch (err) {
-    if (err.message?.includes('50 MB')) throw err;
+    if (err.message?.includes('giải nén')) throw err;
     const bytes = new Uint8Array(buffer.slice(0, 8));
     if (bytes[0] === 0xD0 && bytes[1] === 0xCF && bytes[2] === 0x11 && bytes[3] === 0xE0) {
       throw new Error('Tệp thuộc định dạng Excel cũ (.xls). Vui lòng mở và lưu lại (Save As) dạng .xlsx hoặc .csv trong Excel rồi thử lại.');
@@ -78,7 +90,7 @@ function cleanOpenXml(buffer) {
 export async function parseFile(file, sheetName) {
   const format = file.name.split('.').pop().toLowerCase();
   if (!['csv', 'tsv', 'txt', 'json', 'xlsx'].includes(format)) throw new Error('Chỉ hỗ trợ XLSX, CSV, TSV, TXT và JSON.');
-  if (!file.size || file.size > MAX_FILE_BYTES) throw new Error('Tệp phải có dữ liệu và không vượt quá 10 MB.');
+  if (!file.size || file.size > MAX_FILE_BYTES) throw new Error('Tệp phải có dữ liệu và không vượt quá 500 MB.');
   if (format !== 'xlsx') return { name: file.name, format, ...parseText(await file.text(), format) };
   const buffer = await file.arrayBuffer();
   inspectZip(buffer);
@@ -100,10 +112,9 @@ export async function parseFile(file, sheetName) {
   const candidateSheets = fallbackSheets.length ? fallbackSheets : workbook.worksheets.filter(s => s);
   const sheet = sheetName ? candidateSheets.find(s => s.name === sheetName) : candidateSheets[0];
   if (!sheet) throw new Error('Workbook không có sheet dữ liệu hiển thị.');
-  const row1 = sheet.getRow(1);
-  const colCount = Math.max(sheet.columnCount || 0, sheet.actualColumnCount || 0, row1.cellCount || 0);
+  const colCount = Math.max(sheet.columnCount || 0, sheet.actualColumnCount || 0, 1);
   const rowCount = Math.max(sheet.rowCount || 0, sheet.actualRowCount || 0);
-  if (rowCount > MAX_ROWS + 1 || colCount > MAX_COLUMNS || rowCount * colCount > MAX_CELLS + MAX_COLUMNS) throw new Error('Sheet vượt giới hạn 20.000 dòng, 200 cột hoặc 200.000 ô.');
+  if (rowCount > MAX_ROWS + 1 || colCount > MAX_COLUMNS || rowCount * colCount > MAX_CELLS + MAX_COLUMNS) throw new Error('Sheet vượt giới hạn 1.500.000 dòng, 500 cột hoặc 25.000.000 ô.');
   const getText = cell => {
     if (cell.value instanceof Date) return cell.value.toISOString().slice(0, 10);
     if (cell.value && typeof cell.value === 'object') {
@@ -116,11 +127,66 @@ export async function parseFile(file, sheetName) {
     if (typeof cell.value === 'number' && (cell.numFmt || '').includes('%')) return `${cell.value * 100}%`;
     return cell.text || '';
   };
-  const headers = Array.from({ length: colCount }, (_, i) => getText(row1.getCell(i + 1)));
-  while (headers.length && !headers.at(-1)) headers.pop();
+
+  // Find the actual table header row (skipping banners, title legends or empty rows like row 1-2 in Gantt templates)
+  const maxSearchRow = Math.min(15, rowCount);
+  let headerRow = 1;
+  let headers = [];
+
+  for (let r = 1; r <= maxSearchRow; r++) {
+    const row = sheet.getRow(r);
+    const cellCount = Math.max(row.cellCount || 0, row.actualCellCount || 0);
+    if (cellCount === 0) continue;
+
+    const rawCells = [];
+    const limit = Math.max(cellCount, colCount);
+    for (let c = 1; c <= limit; c++) {
+      rawCells.push(getText(row.getCell(c)).trim());
+    }
+    while (rawCells.length && !rawCells.at(-1)) rawCells.pop();
+    if (!rawCells.length) continue;
+
+    const hasNoBlanks = !rawCells.some(h => !h);
+    const isUnique = new Set(rawCells).size === rawCells.length;
+    const hasDateOrPureNumber = rawCells.filter(v => /^\d{4}-\d{2}-\d{2}/.test(v) || /^-?\d+(\.\d+)?$/.test(v)).length;
+    const looksLikeData = hasDateOrPureNumber >= Math.ceil(rawCells.length / 2);
+
+    if (hasNoBlanks && isUnique && !looksLikeData) {
+      const nextRow = sheet.getRow(r + 1);
+      if (nextRow && nextRow.actualCellCount > 0) {
+        headerRow = r;
+        headers = rawCells;
+        break;
+      }
+    }
+  }
+
+  if (!headers.length) {
+    const row1 = sheet.getRow(1);
+    const firstRowColCount = Math.max(colCount, row1.cellCount || 0);
+    headers = Array.from({ length: firstRowColCount }, (_, i) => getText(row1.getCell(i + 1)).trim());
+    while (headers.length && !headers.at(-1)) headers.pop();
+  }
+
+  // Ensure header names are valid, non-empty, and unique so validateTable succeeds
+  const seenHeaders = new Map();
+  headers = headers.map((h, i) => {
+    let name = h || `Cột ${i + 1}`;
+    if (seenHeaders.has(name)) {
+      const count = seenHeaders.get(name) + 1;
+      seenHeaders.set(name, count);
+      return `${name} (${count})`;
+    }
+    seenHeaders.set(name, 1);
+    return name;
+  });
+
   const rows = [];
   sheet.eachRow((row, number) => {
-    if (number > 1) rows.push(Array.from({ length: headers.length }, (_, i) => getText(row.getCell(i + 1))));
+    if (number > headerRow) {
+      const rData = Array.from({ length: headers.length }, (_, i) => getText(row.getCell(i + 1)));
+      if (rData.some(c => c !== '')) rows.push(rData);
+    }
   });
   const visibleSheets = candidateSheets.length ? candidateSheets : [sheet];
   return { name: file.name, format, sheetName: sheet.name, sheets: visibleSheets.map(s => s.name), ...validateTable(headers, rows) };

@@ -182,6 +182,7 @@ class DytavaIcons {
 
   /// Trả về asset SVG biểu tượng định dạng tệp theo `SourceFormat`
   static String forFormat(SourceFormat format) => switch (format) {
+    SourceFormat.json => fileJson,
     SourceFormat.xlsx => fileXlsx,
     SourceFormat.csv => fileCsv,
     SourceFormat.tsv => fileTsv,

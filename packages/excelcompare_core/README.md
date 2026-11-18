@@ -28,3 +28,7 @@ Full semantic design: [Core spec](../../docs-dytava/project/EXCELCOMPARE_Android
 ## Scope thiết kế mở rộng
 
 [Quyết định 12/11/2026](../../docs-dytava/decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) yêu cầu **1 GB/source**, **PDF diff hợp nhất A/B** và **PDF template Dytava**; [Report spec](../../docs-dytava/specs/report/README.md) định nghĩa hai đầu ra. Đây là yêu cầu phải triển khai/kiểm thử, chưa là khả năng hiện tại. Core PoC chưa có file adapters, matching toàn bảng, disk-backed pipeline hoặc exporters.
+
+## Native port của web (18/11/2026)
+
+`WebCellEngine` và `WebComparisonPolicy` là API riêng được port từ engine web, hỗ trợ suy luận identifier/text/decimal/boolean/percentage/date, null/zero và normalized value/rule/explanation. `SemanticPolicyEngine` PoC bên trên giữ nguyên cách hoạt động. Matching toàn bảng, parser và isolates được nối trong mobile; xem [mobile web parity](../../docs-dytava/guides/MOBILE_WEB_PARITY.md). Chưa xác nhận pipeline 1 GB hoặc đầy đủ wire contracts.

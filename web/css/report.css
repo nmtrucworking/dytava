@@ -1,11 +1,11 @@
-:root { --report-ink:#142253; --report-muted:#64748B; --report-line:var(--brand-border,#E5E7EB); --report-blue:var(--brand-primary,#2563EB); --report-purple:var(--brand-purple,#8B5CF6); }
+:root { --report-ink:var(--brand-graphite, #0F1A1C); --report-muted:#5F6B6D; --report-line:var(--brand-border,#D8D5CC); --report-blue:var(--brand-lime-600,#86E63A); --report-lime:var(--brand-lime-primary,#C8FF4A); --report-purple:var(--brand-graphite,#0F1A1C); }
 * { box-sizing:border-box; }
-body { margin:0; color:var(--report-ink); background:#F3F4F6; font-family:'Be Vietnam Pro',sans-serif; font-size:10pt; line-height:1.65; }
-h1,h2,h3,h4 { font-family:'Plus Jakarta Sans','Be Vietnam Pro',sans-serif; margin:0; line-height:1.35; }
+body { margin:0; color:var(--report-ink); background:var(--brand-off-white, #F7F6F2); font-family:'Inter','Be Vietnam Pro',sans-serif; font-size:10pt; line-height:1.65; }
+h1,h2,h3,h4 { font-family:'Manrope','Plus Jakarta Sans',sans-serif; margin:0; line-height:1.35; }
 p { margin:0 0 10px; }
 img { max-width:100%; }
-.dytava-report { background:white; max-width:210mm; margin:24px auto; padding:18mm 16mm; }
-.report-cover { min-height:247mm; display:flex; flex-direction:column; border-top:5px solid var(--report-blue); padding-top:22px; }
+.dytava-report { background:white; max-width:210mm; margin:24px auto; padding:18mm 16mm; border-radius:12px; box-shadow:0 8px 24px rgba(15,26,28,0.06); }
+.report-cover { min-height:247mm; display:flex; flex-direction:column; border-top:6px solid var(--report-lime); padding-top:22px; }
 .cover-top,.cover-bottom { display:flex; align-items:center; justify-content:space-between; gap:20px; }
 .report-logo { width:135px; height:44px; object-fit:contain; }
 .report-edition { font-size:8pt; letter-spacing:1.4px; color:var(--report-muted); }

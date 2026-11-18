@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CompareEngine } from '../web/js/compare-engine.js';
 import { AdminPortal } from '../web/js/admin-portal.js';
-import { parseText, parseFile, validateTable } from '../web/js/file-parser.js';
+import { parseText, parseFile, validateTable, MAX_ROWS } from '../web/js/file-parser.js';
 import ExcelJS from 'exceljs';
 import Papa from 'papaparse';
 
@@ -51,7 +51,7 @@ test('JSON adapters validate flat cells and unique headers, enforcing limits', (
   assert.deepEqual(parseText('{"headers":["ID"],"rows":[["01"]]}', 'json').rows, [['01']]);
   assert.throws(() => parseText('[{"nested":{"secret":1}}]', 'json'), /chỉ được chứa/);
   assert.throws(() => validateTable(['ID', 'ID'], []), /duy nhất/);
-  assert.throws(() => validateTable(['ID'], Array(20001).fill(['1'])), /vượt giới hạn/);
+  assert.throws(() => validateTable(['ID'], Array(MAX_ROWS + 1).fill(['1'])), /vượt giới hạn/);
 });
 test('XLSX import handles sheets, formatted identifiers, cached formula results and rich text', async () => {
   const workbook = new ExcelJS.Workbook(); const sheet = workbook.addWorksheet('Primary');

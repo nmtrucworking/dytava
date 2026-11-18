@@ -1,0 +1,1019 @@
+{
+  "timestamp": "2026-11-18T14:02:48.655Z",
+  "commit": "5a167b868d731914d02b24ee3868ad07aef204ac",
+  "workingTree": "M docs-dytava/branding.md\n M docs-dytava/design/UI_UX_SPEC.md\n M mobile/lib/domain/workflow.dart\n M mobile/lib/features/workflow/screens/mapping_and_policy_view.dart\n M mobile/lib/features/workflow/workflow_page.dart\n M tests/engine.test.js\n M web/css/brand-tokens.css\n M web/css/style.css\n M web/help.html\n M web/index.html\n M web/js/app.js\n M web/js/compare-engine.js\n M web/js/compare-worker.js\n M web/js/file-parser.js\n?? docs-dytava/testing/WEB_PERFORMANCE_2026-11-18.json\n?? scripts/benchmark-web.mjs\n?? tests/alignment.test.js",
+  "environment": {
+    "cpu": "Apple M5",
+    "ramBytes": 17179869184,
+    "os": "darwin 25.5.0",
+    "browser": "156.0.8078.4",
+    "node": "v26.9.0"
+  },
+  "method": "Synthetic deterministic fixtures; 1 small worker warmup + 1 case warmup; 5 sequential samples per fresh page/worker. No CPU throttling. UI/API runs offline. workMs is production handler time before postMessage; roundtrip includes both clones; renderMs is synchronous renderDualGrid only. Long tasks >=50ms on main thread cover roundtrip + render. Not peak memory or RP-1 calibration.",
+  "cases": [
+    {
+      "name": "positional-exact-10k",
+      "rows": 10000,
+      "cols": 10,
+      "mode": "POSITIONAL",
+      "samples": [
+        {
+          "workMs": 14.399999991059303,
+          "roundtripMs": 59.099999994039536,
+          "sendMs": 5.299999997019768,
+          "renderMs": 4.600000008940697,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 100000,
+            "exact": 100000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 17.700000002980232,
+          "roundtripMs": 62.6000000089407,
+          "sendMs": 5.100000008940697,
+          "renderMs": 5.4000000059604645,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 100000,
+            "exact": 100000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 15.5,
+          "roundtripMs": 62.30000001192093,
+          "sendMs": 5.300000011920929,
+          "renderMs": 5.199999988079071,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 100000,
+            "exact": 100000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 16.099999994039536,
+          "roundtripMs": 71.79999999701977,
+          "sendMs": 5.799999997019768,
+          "renderMs": 5.299999997019768,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 100000,
+            "exact": 100000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 21.5,
+          "roundtripMs": 73.5,
+          "sendMs": 5.100000008940697,
+          "renderMs": 5.100000008940697,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 100000,
+            "exact": 100000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "positional-exact-100k",
+      "rows": 100000,
+      "cols": 10,
+      "mode": "POSITIONAL",
+      "samples": [
+        {
+          "workMs": 197.1000000089407,
+          "roundtripMs": 811.7999999970198,
+          "sendMs": 113.79999999701977,
+          "renderMs": 7,
+          "mainLongTasksMs": [
+            114,
+            289
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 231.79999999701977,
+          "roundtripMs": 801.5,
+          "sendMs": 101.59999999403954,
+          "renderMs": 6.899999991059303,
+          "mainLongTasksMs": [
+            101,
+            238
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 190.5,
+          "roundtripMs": 726.9000000059605,
+          "sendMs": 93,
+          "renderMs": 6.0999999940395355,
+          "mainLongTasksMs": [
+            93,
+            227
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 193.40000000596046,
+          "roundtripMs": 728.5999999940395,
+          "sendMs": 92.5,
+          "renderMs": 10.600000008940697,
+          "mainLongTasksMs": [
+            92,
+            231
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 214.59999999403954,
+          "roundtripMs": 739,
+          "sendMs": 83,
+          "renderMs": 6.100000008940697,
+          "mainLongTasksMs": [
+            83,
+            230
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "key-reversed-100k",
+      "rows": 100000,
+      "cols": 10,
+      "mode": "KEY",
+      "reverse": true,
+      "samples": [
+        {
+          "workMs": 238.6000000089407,
+          "roundtripMs": 772.0999999940395,
+          "sendMs": 85.59999999403954,
+          "renderMs": 6.799999997019768,
+          "mainLongTasksMs": [
+            85,
+            256
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 291.70000000298023,
+          "roundtripMs": 798.5,
+          "sendMs": 86.70000000298023,
+          "renderMs": 9.399999991059303,
+          "mainLongTasksMs": [
+            86,
+            228
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 320.79999999701977,
+          "roundtripMs": 864.5,
+          "sendMs": 88.40000000596046,
+          "renderMs": 9.200000002980232,
+          "mainLongTasksMs": [
+            88,
+            238
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 268.59999999403954,
+          "roundtripMs": 891.5999999940395,
+          "sendMs": 188.40000000596046,
+          "renderMs": 5.800000011920929,
+          "mainLongTasksMs": [
+            188,
+            228
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 258.40000000596046,
+          "roundtripMs": 825.1000000089407,
+          "sendMs": 85.29999999701977,
+          "renderMs": 11.5,
+          "mainLongTasksMs": [
+            85,
+            272
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "sequence-anchors-100k",
+      "rows": 100000,
+      "cols": 10,
+      "mode": "ORDERED_SEQUENCE",
+      "insert": true,
+      "samples": [
+        {
+          "workMs": 360,
+          "roundtripMs": 936.5,
+          "sendMs": 90.1000000089407,
+          "renderMs": 7.100000008940697,
+          "mainLongTasksMs": [
+            90,
+            273
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 1,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 336.09999999403954,
+          "roundtripMs": 911.5999999940395,
+          "sendMs": 90,
+          "renderMs": 12.5,
+          "mainLongTasksMs": [
+            90,
+            263
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 1,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 326.1000000089407,
+          "roundtripMs": 989.5999999940395,
+          "sendMs": 188.29999999701977,
+          "renderMs": 7.4000000059604645,
+          "mainLongTasksMs": [
+            188,
+            241
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 1,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 407.40000000596046,
+          "roundtripMs": 991.3000000119209,
+          "sendMs": 105,
+          "renderMs": 9.199999988079071,
+          "mainLongTasksMs": [
+            105,
+            257
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 1,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 414,
+          "roundtripMs": 987.7999999970198,
+          "sendMs": 82.5,
+          "renderMs": 6.299999997019768,
+          "mainLongTasksMs": [
+            82,
+            233
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 1,
+            "removed_rows": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "sequence-no-anchors-1000",
+      "rows": 1000,
+      "cols": 10,
+      "mode": "ORDERED_SEQUENCE",
+      "mutate": true,
+      "samples": [
+        {
+          "workMs": 751.5,
+          "roundtripMs": 758.5,
+          "sendMs": 0.5,
+          "renderMs": 5.299999997019768,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 10000,
+            "exact": 9000,
+            "equivalent": 0,
+            "different": 1000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 762.0999999940395,
+          "roundtripMs": 770.0999999940395,
+          "sendMs": 0.5999999940395355,
+          "renderMs": 5.100000008940697,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 10000,
+            "exact": 9000,
+            "equivalent": 0,
+            "different": 1000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 765.7999999970198,
+          "roundtripMs": 773.2999999970198,
+          "sendMs": 0.6000000089406967,
+          "renderMs": 5.4000000059604645,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 10000,
+            "exact": 9000,
+            "equivalent": 0,
+            "different": 1000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 763.2999999970198,
+          "roundtripMs": 771.2999999970198,
+          "sendMs": 0.5,
+          "renderMs": 5.0999999940395355,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 10000,
+            "exact": 9000,
+            "equivalent": 0,
+            "different": 1000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 755.0999999940395,
+          "roundtripMs": 762.2999999970198,
+          "sendMs": 0.5,
+          "renderMs": 5.4000000059604645,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 10000,
+            "exact": 9000,
+            "equivalent": 0,
+            "different": 1000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "sequence-no-anchors-2000",
+      "rows": 2000,
+      "cols": 10,
+      "mode": "ORDERED_SEQUENCE",
+      "mutate": true,
+      "samples": [
+        {
+          "workMs": 3088.7000000029802,
+          "roundtripMs": 3103.2999999970198,
+          "sendMs": 1,
+          "renderMs": 4.5,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 20000,
+            "exact": 18000,
+            "equivalent": 0,
+            "different": 2000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 3141.5,
+          "roundtripMs": 3156.7000000029802,
+          "sendMs": 1.1000000089406967,
+          "renderMs": 6.200000002980232,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 20000,
+            "exact": 18000,
+            "equivalent": 0,
+            "different": 2000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 3000.2000000029802,
+          "roundtripMs": 3013.5999999940395,
+          "sendMs": 1.0999999940395355,
+          "renderMs": 5.299999997019768,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 20000,
+            "exact": 18000,
+            "equivalent": 0,
+            "different": 2000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 3104.9000000059605,
+          "roundtripMs": 3118.8999999910593,
+          "sendMs": 1,
+          "renderMs": 4.9000000059604645,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 20000,
+            "exact": 18000,
+            "equivalent": 0,
+            "different": 2000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 3068.800000011921,
+          "roundtripMs": 3082.5,
+          "sendMs": 1,
+          "renderMs": 5,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 20000,
+            "exact": 18000,
+            "equivalent": 0,
+            "different": 2000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "sequence-no-anchors-2001",
+      "rows": 2001,
+      "cols": 10,
+      "mode": "ORDERED_SEQUENCE",
+      "mutate": true,
+      "samples": [
+        {
+          "workMs": 28.80000001192093,
+          "roundtripMs": 43.5,
+          "sendMs": 1.2000000029802322,
+          "renderMs": 4.5,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 20010,
+            "exact": 18009,
+            "equivalent": 0,
+            "different": 2001,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 25.399999991059303,
+          "roundtripMs": 40.3999999910593,
+          "sendMs": 1,
+          "renderMs": 6.600000008940697,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 20010,
+            "exact": 18009,
+            "equivalent": 0,
+            "different": 2001,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 25.799999997019768,
+          "roundtripMs": 39.599999994039536,
+          "sendMs": 1,
+          "renderMs": 4.799999997019768,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 20010,
+            "exact": 18009,
+            "equivalent": 0,
+            "different": 2001,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 24.5,
+          "roundtripMs": 38.1000000089407,
+          "sendMs": 1,
+          "renderMs": 4.899999991059303,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 20010,
+            "exact": 18009,
+            "equivalent": 0,
+            "different": 2001,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 24.599999994039536,
+          "roundtripMs": 38,
+          "sendMs": 0.8999999910593033,
+          "renderMs": 5,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 20010,
+            "exact": 18009,
+            "equivalent": 0,
+            "different": 2001,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "positional-wide-100-columns",
+      "rows": 10000,
+      "cols": 100,
+      "mode": "POSITIONAL",
+      "samples": [
+        {
+          "workMs": 133.30000001192093,
+          "roundtripMs": 482.70000000298023,
+          "sendMs": 48.29999999701977,
+          "renderMs": 53.19999998807907,
+          "mainLongTasksMs": [
+            198
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 194.70000000298023,
+          "roundtripMs": 585.7000000029802,
+          "sendMs": 81,
+          "renderMs": 52.5,
+          "mainLongTasksMs": [
+            81,
+            201
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 133.90000000596046,
+          "roundtripMs": 495.29999999701977,
+          "sendMs": 52.3999999910593,
+          "renderMs": 58.20000000298023,
+          "mainLongTasksMs": [
+            52,
+            206
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 153.59999999403954,
+          "roundtripMs": 513.0999999940395,
+          "sendMs": 49.5,
+          "renderMs": 53.20000000298023,
+          "mainLongTasksMs": [
+            196
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 139.70000000298023,
+          "roundtripMs": 476.1000000089407,
+          "sendMs": 38.6000000089407,
+          "renderMs": 52.5,
+          "mainLongTasksMs": [
+            197
+          ],
+          "summary": {
+            "total_cells_checked": 1000000,
+            "exact": 1000000,
+            "equivalent": 0,
+            "different": 0,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "positional-text-1000-chars",
+      "rows": 1000,
+      "cols": 2,
+      "mode": "POSITIONAL",
+      "longText": true,
+      "samples": [
+        {
+          "workMs": 2441.9000000059605,
+          "roundtripMs": 2463.2000000029802,
+          "sendMs": 1.4000000059604645,
+          "renderMs": 3.3999999910593033,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 2000,
+            "exact": 1000,
+            "equivalent": 0,
+            "different": 1000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 2639.2000000029802,
+          "roundtripMs": 2661.2999999970198,
+          "sendMs": 0.8999999910593033,
+          "renderMs": 3.300000011920929,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 2000,
+            "exact": 1000,
+            "equivalent": 0,
+            "different": 1000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 2500.2999999970198,
+          "roundtripMs": 2531.4000000059605,
+          "sendMs": 1,
+          "renderMs": 3.5,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 2000,
+            "exact": 1000,
+            "equivalent": 0,
+            "different": 1000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 2486.7999999970198,
+          "roundtripMs": 2504.5999999940395,
+          "sendMs": 0.8999999910593033,
+          "renderMs": 2.2999999970197678,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 2000,
+            "exact": 1000,
+            "equivalent": 0,
+            "different": 1000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        },
+        {
+          "workMs": 2491.1000000089407,
+          "roundtripMs": 2518.0999999940395,
+          "sendMs": 0.8999999910593033,
+          "renderMs": 3,
+          "mainLongTasksMs": [],
+          "summary": {
+            "total_cells_checked": 2000,
+            "exact": 1000,
+            "equivalent": 0,
+            "different": 1000,
+            "unresolved": 0,
+            "added_rows": 0,
+            "removed_rows": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "parse-csv-100k",
+      "rows": 100000,
+      "cols": 10,
+      "parse": "csv",
+      "fileBytes": 16988965,
+      "samples": [
+        {
+          "workMs": 87.8999999910593,
+          "roundtripMs": 144.3999999910593,
+          "sendMs": 0,
+          "renderMs": null,
+          "mainLongTasksMs": []
+        },
+        {
+          "workMs": 90.59999999403954,
+          "roundtripMs": 150.6000000089407,
+          "sendMs": 0.10000000894069672,
+          "renderMs": null,
+          "mainLongTasksMs": []
+        },
+        {
+          "workMs": 91.30000001192093,
+          "roundtripMs": 150.29999999701977,
+          "sendMs": 0,
+          "renderMs": null,
+          "mainLongTasksMs": []
+        },
+        {
+          "workMs": 98.20000000298023,
+          "roundtripMs": 167.6000000089407,
+          "sendMs": 0,
+          "renderMs": null,
+          "mainLongTasksMs": []
+        },
+        {
+          "workMs": 105.40000000596046,
+          "roundtripMs": 164.1000000089407,
+          "sendMs": 0,
+          "renderMs": null,
+          "mainLongTasksMs": []
+        }
+      ]
+    },
+    {
+      "name": "parse-xlsx-10k",
+      "rows": 10000,
+      "cols": 10,
+      "parse": "xlsx",
+      "fileBytes": 608139,
+      "samples": [
+        {
+          "workMs": 263.09999999403954,
+          "roundtripMs": 267.90000000596046,
+          "sendMs": 0.10000000894069672,
+          "renderMs": null,
+          "mainLongTasksMs": []
+        },
+        {
+          "workMs": 255.09999999403954,
+          "roundtripMs": 259.90000000596046,
+          "sendMs": 0,
+          "renderMs": null,
+          "mainLongTasksMs": []
+        },
+        {
+          "workMs": 297.09999999403954,
+          "roundtripMs": 302.29999999701977,
+          "sendMs": 0,
+          "renderMs": null,
+          "mainLongTasksMs": []
+        },
+        {
+          "workMs": 260.70000000298023,
+          "roundtripMs": 266.29999999701977,
+          "sendMs": 0.09999999403953552,
+          "renderMs": null,
+          "mainLongTasksMs": []
+        },
+        {
+          "workMs": 257.40000000596046,
+          "roundtripMs": 262.6000000089407,
+          "sendMs": 0,
+          "renderMs": null,
+          "mainLongTasksMs": []
+        }
+      ]
+    }
+  ],
+  "sourceSha256": {
+    "compare-engine.js": "63224c6c39c219444abe56672d8030cc4b3bd3be9f8e4a530011764903f6a88e",
+    "compare-worker.js": "cb24bc368a1fb88db7037be96579a7bee4118d4ab8f1e4be16413f08bf8eb980",
+    "worker-client.js": "6dcb3fb7a5f6962591524ac64b276ca98429bc69efbbec7739101467363ca88a",
+    "file-parser.js": "3c03c92876d8f4432f7541a8f86d684e441c957adc283429608821c0bf779e4b",
+    "app.js": "2eb3af0191a451f0583e377ccc088523f9ae6f6720882b1df8fe136d2cba1958"
+  },
+  "diagnostics": {
+    "alignment": [
+      {
+        "rows": 1999,
+        "expected": {
+          "added_rows": 1,
+          "different": 1999,
+          "exact": 1999
+        },
+        "observed": {
+          "total_cells_checked": 3998,
+          "exact": 1999,
+          "equivalent": 0,
+          "different": 1999,
+          "unresolved": 0,
+          "added_rows": 1,
+          "removed_rows": 0
+        },
+        "firstRationale": "Dòng chèn mới ở Nguồn B"
+      },
+      {
+        "rows": 2000,
+        "expected": {
+          "added_rows": 1,
+          "different": 2000,
+          "exact": 2000
+        },
+        "observed": {
+          "total_cells_checked": 4000,
+          "exact": 0,
+          "equivalent": 0,
+          "different": 4000,
+          "unresolved": 0,
+          "added_rows": 1,
+          "removed_rows": 0
+        },
+        "firstRationale": "Căn chỉnh đoạn lớn theo vị trí"
+      }
+    ],
+    "similarity": [
+      {
+        "length": 1000,
+        "expectedSimilarity": 0,
+        "observedSimilarity": 0,
+        "status": "DIFFERENT"
+      },
+      {
+        "length": 1001,
+        "expectedSimilarity": 0,
+        "observedSimilarity": 100,
+        "status": "DIFFERENT"
+      }
+    ]
+  }
+}

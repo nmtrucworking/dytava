@@ -1,3 +1,4 @@
+import 'package:dytava/app/workflow_composition.dart';
 import 'package:dytava/application/workflow_controller.dart';
 import 'package:dytava/design_system/design_system.dart';
 import 'package:dytava/domain/workflow.dart';
@@ -29,7 +30,9 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      await tester.pumpWidget(const ExcelCompareApp());
+      await tester.pumpWidget(
+        ExcelCompareApp(controller: createDemoWorkflow()),
+      );
       await tap(tester, 'Bắt đầu so sánh');
       final continueButton = find.widgetWithText(
         FilledButton,
@@ -65,8 +68,8 @@ void main() {
       await tap(tester, 'Xác nhận chế độ và khóa');
       await tap(tester, 'Xác nhận toàn bộ policy');
       await tap(tester, 'Xác nhận chiều so sánh');
-      await tap(tester, 'Chạy so sánh mẫu');
-      expect(find.text('COMPLETED · Kết quả bộ dữ liệu mẫu'), findsOneWidget);
+      await tap(tester, 'Chạy so sánh');
+      expect(find.text('COMPLETED · Kết quả so sánh'), findsOneWidget);
       expect(find.text('EXACT: 5'), findsOneWidget);
       await tap(tester, 'amount: EQUIVALENT');
       expect(find.text('Raw: 8.5'), findsOneWidget);
@@ -74,11 +77,8 @@ void main() {
       await tap(tester, 'Trở về kết quả');
       await tap(tester, 'Xuất / xem trước báo cáo');
       await tap(tester, 'Xác nhận định dạng và phạm vi preview');
-      await tap(tester, 'Tạo preview JSON mẫu');
-      expect(
-        find.text('Preview hoàn tất · Không có tệp được xuất.'),
-        findsOneWidget,
-      );
+      await tap(tester, 'Tạo bản xem trước');
+      expect(find.text('Bản xem trước đã sẵn sàng.'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -137,10 +137,12 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const ExcelCompareApp());
+      await tester.pumpWidget(
+        ExcelCompareApp(controller: createDemoWorkflow()),
+      );
       // 1-Tap Fast Run right from Home
       await tap(tester, 'Thử nhanh với dữ liệu mẫu');
-      expect(find.text('COMPLETED · Kết quả bộ dữ liệu mẫu'), findsOneWidget);
+      expect(find.text('COMPLETED · Kết quả so sánh'), findsOneWidget);
       expect(find.text('EXACT: 5'), findsOneWidget);
 
       // Filter chips quick selection
@@ -158,8 +160,8 @@ void main() {
       // Export preview
       await tap(tester, 'Xuất / xem trước báo cáo');
       await tap(tester, 'Xác nhận định dạng và phạm vi preview');
-      await tap(tester, 'Tạo preview JSON mẫu');
-      expect(find.text('Preview hoàn tất · Không có tệp được xuất.'), findsOneWidget);
+      await tap(tester, 'Tạo bản xem trước');
+      expect(find.text('Bản xem trước đã sẵn sàng.'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -172,7 +174,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const ExcelCompareApp());
+      await tester.pumpWidget(
+        ExcelCompareApp(controller: createDemoWorkflow()),
+      );
 
       // Open auxiliary Policy Presets & Learn view from Home overflow menu
       await tester.tap(find.byTooltip('Thêm tùy chọn'));
@@ -292,18 +296,12 @@ void main() {
 
       // Tapping fast confirm on unapproved config opens the confirmation summary sheet instead of silently running
       await tap(tester, 'Xem tóm tắt & Xác nhận cấu hình');
-      expect(
-        find.text('Xác nhận cấu hình đối chiếu tổng hợp'),
-        findsOneWidget,
-      );
+      expect(find.text('Xác nhận cấu hình đối chiếu tổng hợp'), findsOneWidget);
       expect(
         find.textContaining('1. Chế độ ghép hàng & Khóa định danh'),
         findsOneWidget,
       );
-      expect(
-        find.textContaining('2. Chính sách chuẩn hóa'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('2. Chính sách chuẩn hóa'), findsOneWidget);
       expect(find.textContaining('3. Chiều so sánh'), findsOneWidget);
 
       // Dismissing via "Chỉnh sửa lại" does not run comparison
@@ -367,7 +365,10 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.textContaining('3 hàng × 8 cột · ↔ Cuộn ngang'), findsOneWidget);
+      expect(
+        find.textContaining('3 hàng × 8 cột · ↔ Cuộn ngang'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     },
   );
@@ -390,7 +391,7 @@ void main() {
               size: viewport,
               textScaler: const TextScaler.linear(2.0),
             ),
-            child: const ExcelCompareApp(),
+            child: ExcelCompareApp(controller: createDemoWorkflow()),
           ),
         );
         await tester.pumpAndSettle();
@@ -404,7 +405,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: DytavaTheme.lightTheme,
-          home: const WorkflowPage(),
+          home: WorkflowPage(controller: createDemoWorkflow()),
         ),
       );
       await tap(tester, 'Thử nhanh với dữ liệu mẫu');
@@ -415,10 +416,7 @@ void main() {
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(
-        find.textContaining('Các khác biệt cần kiểm tra'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Các khác biệt cần kiểm tra'), findsOneWidget);
       expect(find.byType(DytavaPriorityDiffCard), findsWidgets);
 
       // Open quick inspection Bottom Sheet from Priority Diff Card
@@ -428,9 +426,7 @@ void main() {
       await tester.tap(quickSheetBtn);
       await tester.pumpAndSettle();
       expect(
-        find.text(
-          '1. Phân biệt Giá trị gốc (Raw) & Sau chuẩn hóa (Canonical)',
-        ),
+        find.text('1. Phân biệt Giá trị gốc (Raw) & Sau chuẩn hóa (Canonical)'),
         findsOneWidget,
       );
       expect(
@@ -454,7 +450,9 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       // 1. Verify state-driven BrandIllustration transitions across workflow
-      await tester.pumpWidget(const ExcelCompareApp());
+      await tester.pumpWidget(
+        ExcelCompareApp(controller: createDemoWorkflow()),
+      );
 
       // Go to Source Selection: unselected slots show emptyFiles illustration
       await tap(tester, 'Bắt đầu so sánh');
@@ -526,55 +524,40 @@ void main() {
       ];
       final recordsA = [
         for (var r = 0; r < 80; r++)
-          TableRecord(
-            'a-$r',
-            r,
-            {
-              'id': SourceCell(CellKind.text, rawLexeme: '${r + 1}'),
-              'name': SourceCell(CellKind.text, rawLexeme: 'User_${r + 1}'),
-              'dept': SourceCell(
-                CellKind.text,
-                rawLexeme: r == 2 ? 'Sales' : 'Eng',
-              ),
-              'salary': SourceCell(
-                CellKind.text,
-                rawLexeme: '${50000 + r * 100}',
-              ),
-            },
-            {},
-          ),
+          TableRecord('a-$r', r, {
+            'id': SourceCell(CellKind.text, rawLexeme: '${r + 1}'),
+            'name': SourceCell(CellKind.text, rawLexeme: 'User_${r + 1}'),
+            'dept': SourceCell(
+              CellKind.text,
+              rawLexeme: r == 2 ? 'Sales' : 'Eng',
+            ),
+            'salary': SourceCell(
+              CellKind.text,
+              rawLexeme: '${50000 + r * 100}',
+            ),
+          }, {}),
       ];
       final recordsB = [
         for (var r = 0; r < 80; r++)
           if (r != 4) // Row 5 is deleted on B
-            TableRecord(
-              'b-$r',
-              r,
-              {
-                'id': SourceCell(CellKind.text, rawLexeme: '${r + 1}'),
-                'name': SourceCell(CellKind.text, rawLexeme: 'User_${r + 1}'),
-                'dept': SourceCell(
-                  CellKind.text,
-                  rawLexeme: r == 2 ? 'Marketing' : 'Eng',
-                ),
-                'salary': SourceCell(
-                  CellKind.text,
-                  rawLexeme: r == 2 ? '55400' : '${50000 + r * 100}',
-                ),
-              },
-              {},
-            ),
-        TableRecord(
-          'b-80',
-          80,
-          {
-            'id': const SourceCell(CellKind.text, rawLexeme: '81'),
-            'name': const SourceCell(CellKind.text, rawLexeme: 'Added_User_81'),
-            'dept': const SourceCell(CellKind.text, rawLexeme: 'Ops'),
-            'salary': const SourceCell(CellKind.text, rawLexeme: '62000'),
-          },
-          {},
-        ),
+            TableRecord('b-$r', r, {
+              'id': SourceCell(CellKind.text, rawLexeme: '${r + 1}'),
+              'name': SourceCell(CellKind.text, rawLexeme: 'User_${r + 1}'),
+              'dept': SourceCell(
+                CellKind.text,
+                rawLexeme: r == 2 ? 'Marketing' : 'Eng',
+              ),
+              'salary': SourceCell(
+                CellKind.text,
+                rawLexeme: r == 2 ? '55400' : '${50000 + r * 100}',
+              ),
+            }, {}),
+        TableRecord('b-80', 80, {
+          'id': const SourceCell(CellKind.text, rawLexeme: '81'),
+          'name': const SourceCell(CellKind.text, rawLexeme: 'Added_User_81'),
+          'dept': const SourceCell(CellKind.text, rawLexeme: 'Ops'),
+          'salary': const SourceCell(CellKind.text, rawLexeme: '62000'),
+        }, {}),
       ];
 
       final snapA = InputSnapshot(

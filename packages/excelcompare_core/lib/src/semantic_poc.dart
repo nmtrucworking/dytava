@@ -121,12 +121,13 @@ final class NormalizationOutcome {
 
 final class ComparisonDecision {
   const ComparisonDecision({required this.status, required this.ruleId,
-    this.left, this.right, this.reason});
+    this.left, this.right, this.reason, this.explanation});
   final DecisionStatus status;
   final String ruleId;
   final CanonicalValue? left;
   final CanonicalValue? right;
   final ReasonCode? reason;
+  final String? explanation;
 }
 
 /// Strict, field-scoped parsing. Absence of an explicit text numeric profile

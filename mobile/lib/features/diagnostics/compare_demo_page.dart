@@ -131,7 +131,7 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
                 const SizedBox(height: 8),
                 const Text(
                   'Thử so sánh hai giá trị theo quy tắc ngữ nghĩa. '
-                  'Bản mobile hiện chưa đọc Excel/CSV hoặc xuất báo cáo.',
+                  'Dùng luồng chính để nhập tệp và xuất CSV/JSON.',
                   style: DytavaTypography.bodyMedium,
                 ),
                 const SizedBox(height: 20),

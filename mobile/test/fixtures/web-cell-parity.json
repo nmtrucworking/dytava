@@ -1,0 +1,1502 @@
+[
+  {
+    "a": "8.5",
+    "b": "8,5",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "8.5",
+    "normB": "8.5"
+  },
+  {
+    "a": "005",
+    "b": "5",
+    "policy": {},
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "005",
+    "normB": "5"
+  },
+  {
+    "a": "SV001",
+    "b": "sv001",
+    "policy": {},
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "SV001",
+    "normB": "sv001"
+  },
+  {
+    "a": "10%",
+    "b": "0.1",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "percentage/scaling",
+    "normA": "0.1",
+    "normB": "0.1"
+  },
+  {
+    "a": "true",
+    "b": "Có",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "true",
+    "normB": "true"
+  },
+  {
+    "a": "No",
+    "b": "false",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "false",
+    "normB": "false"
+  },
+  {
+    "a": "",
+    "b": "0",
+    "policy": {},
+    "status": "DIFFERENT",
+    "rule": "null/distinct_zero",
+    "normA": "<BLANK>",
+    "normB": "0"
+  },
+  {
+    "a": "NULL",
+    "b": "",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "null/equivalent",
+    "normA": "<BLANK>",
+    "normB": "<BLANK>"
+  },
+  {
+    "a": "1,234",
+    "b": "1.234",
+    "policy": {},
+    "status": "UNRESOLVED",
+    "rule": "numeric/unknown_locale",
+    "normA": "1,234",
+    "normB": "1.234"
+  },
+  {
+    "a": "07/10",
+    "b": "0.7",
+    "policy": {},
+    "status": "UNRESOLVED",
+    "rule": "decimal/ambiguous_fraction",
+    "normA": "07/10",
+    "normB": "0.7"
+  },
+  {
+    "a": "2026-11-18",
+    "b": "18/11/2026",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "date/iso_normalized",
+    "normA": "2026-11-18",
+    "normB": "2026-11-18"
+  },
+  {
+    "a": "01/02/26",
+    "b": "2026-02-01",
+    "policy": {},
+    "status": "UNRESOLVED",
+    "rule": "date/ambiguous_locale",
+    "normA": "01/02/26",
+    "normB": "2026-02-01"
+  },
+  {
+    "a": "Apple",
+    "b": "apple",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "text/case_fold",
+    "normA": "apple",
+    "normB": "apple"
+  },
+  {
+    "a": " x ",
+    "b": "x",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "text/trim",
+    "normA": "x",
+    "normB": "x"
+  },
+  {
+    "a": "a   b",
+    "b": "a b",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "text/whitespace_normalized",
+    "normA": "a b",
+    "normB": "a b"
+  },
+  {
+    "a": "a",
+    "b": "b",
+    "policy": {},
+    "status": "DIFFERENT",
+    "rule": "text/lexical_diff",
+    "normA": "a",
+    "normB": "b"
+  },
+  {
+    "a": "150,000,000",
+    "b": "150.000.000",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "150000000",
+    "normB": "150000000"
+  },
+  {
+    "a": "9007199254740993",
+    "b": "9007199254740992",
+    "policy": {},
+    "status": "UNRESOLVED",
+    "rule": "decimal/precision_limit",
+    "normA": "9007199254740993",
+    "normB": "9007199254740992"
+  },
+  {
+    "a": "007",
+    "b": "007",
+    "policy": {},
+    "status": "EXACT",
+    "rule": "exact/verbatim",
+    "normA": "007",
+    "normB": "007"
+  },
+  {
+    "a": "12.0",
+    "b": "12",
+    "policy": {},
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "12",
+    "normB": "12"
+  },
+  {
+    "a": "8.5",
+    "b": "8,5",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "8.5",
+    "normB": "8.5"
+  },
+  {
+    "a": "005",
+    "b": "5",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "005",
+    "normB": "5"
+  },
+  {
+    "a": "SV001",
+    "b": "sv001",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "SV001",
+    "normB": "sv001"
+  },
+  {
+    "a": "10%",
+    "b": "0.1",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EQUIVALENT",
+    "rule": "percentage/scaling",
+    "normA": "0.1",
+    "normB": "0.1"
+  },
+  {
+    "a": "true",
+    "b": "Có",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "true",
+    "normB": "true"
+  },
+  {
+    "a": "No",
+    "b": "false",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "false",
+    "normB": "false"
+  },
+  {
+    "a": "",
+    "b": "0",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "DIFFERENT",
+    "rule": "null/distinct_zero",
+    "normA": "<BLANK>",
+    "normB": "0"
+  },
+  {
+    "a": "NULL",
+    "b": "",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EQUIVALENT",
+    "rule": "null/equivalent",
+    "normA": "<BLANK>",
+    "normB": "<BLANK>"
+  },
+  {
+    "a": "1,234",
+    "b": "1.234",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "UNRESOLVED",
+    "rule": "numeric/unknown_locale",
+    "normA": "1,234",
+    "normB": "1.234"
+  },
+  {
+    "a": "07/10",
+    "b": "0.7",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/ambiguous_fraction",
+    "normA": "07/10",
+    "normB": "0.7"
+  },
+  {
+    "a": "2026-11-18",
+    "b": "18/11/2026",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EQUIVALENT",
+    "rule": "date/iso_normalized",
+    "normA": "2026-11-18",
+    "normB": "2026-11-18"
+  },
+  {
+    "a": "01/02/26",
+    "b": "2026-02-01",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "UNRESOLVED",
+    "rule": "date/ambiguous_locale",
+    "normA": "01/02/26",
+    "normB": "2026-02-01"
+  },
+  {
+    "a": "Apple",
+    "b": "apple",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "DIFFERENT",
+    "rule": "text/lexical_diff",
+    "normA": "Apple",
+    "normB": "apple"
+  },
+  {
+    "a": " x ",
+    "b": "x",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/trim",
+    "normA": "x",
+    "normB": "x"
+  },
+  {
+    "a": "a   b",
+    "b": "a b",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/whitespace_normalized",
+    "normA": "a b",
+    "normB": "a b"
+  },
+  {
+    "a": "a",
+    "b": "b",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "DIFFERENT",
+    "rule": "text/lexical_diff",
+    "normA": "a",
+    "normB": "b"
+  },
+  {
+    "a": "150,000,000",
+    "b": "150.000.000",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "150000000",
+    "normB": "150000000"
+  },
+  {
+    "a": "9007199254740993",
+    "b": "9007199254740992",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/precision_limit",
+    "normA": "9007199254740993",
+    "normB": "9007199254740992"
+  },
+  {
+    "a": "007",
+    "b": "007",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EXACT",
+    "rule": "exact/verbatim",
+    "normA": "007",
+    "normB": "007"
+  },
+  {
+    "a": "12.0",
+    "b": "12",
+    "policy": {
+      "case_sensitive_text": true
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "12",
+    "normB": "12"
+  },
+  {
+    "a": "8.5",
+    "b": "8,5",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "8.5",
+    "normB": "8.5"
+  },
+  {
+    "a": "005",
+    "b": "5",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "005",
+    "normB": "5"
+  },
+  {
+    "a": "SV001",
+    "b": "sv001",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "SV001",
+    "normB": "sv001"
+  },
+  {
+    "a": "10%",
+    "b": "0.1",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "percentage/scaling",
+    "normA": "0.1",
+    "normB": "0.1"
+  },
+  {
+    "a": "true",
+    "b": "Có",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "true",
+    "normB": "true"
+  },
+  {
+    "a": "No",
+    "b": "false",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "false",
+    "normB": "false"
+  },
+  {
+    "a": "",
+    "b": "0",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "DIFFERENT",
+    "rule": "null/distinct_zero",
+    "normA": "<BLANK>",
+    "normB": "0"
+  },
+  {
+    "a": "NULL",
+    "b": "",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "null/equivalent",
+    "normA": "<BLANK>",
+    "normB": "<BLANK>"
+  },
+  {
+    "a": "1,234",
+    "b": "1.234",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "numeric/unknown_locale",
+    "normA": "1,234",
+    "normB": "1.234"
+  },
+  {
+    "a": "07/10",
+    "b": "0.7",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/ambiguous_fraction",
+    "normA": "07/10",
+    "normB": "0.7"
+  },
+  {
+    "a": "2026-11-18",
+    "b": "18/11/2026",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "date/iso_normalized",
+    "normA": "2026-11-18",
+    "normB": "2026-11-18"
+  },
+  {
+    "a": "01/02/26",
+    "b": "2026-02-01",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "date/ambiguous_locale",
+    "normA": "01/02/26",
+    "normB": "2026-02-01"
+  },
+  {
+    "a": "Apple",
+    "b": "apple",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/case_fold",
+    "normA": "apple",
+    "normB": "apple"
+  },
+  {
+    "a": " x ",
+    "b": "x",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "DIFFERENT",
+    "rule": "text/lexical_diff",
+    "normA": " x ",
+    "normB": "x"
+  },
+  {
+    "a": "a   b",
+    "b": "a b",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "DIFFERENT",
+    "rule": "text/lexical_diff",
+    "normA": "a   b",
+    "normB": "a b"
+  },
+  {
+    "a": "a",
+    "b": "b",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "DIFFERENT",
+    "rule": "text/lexical_diff",
+    "normA": "a",
+    "normB": "b"
+  },
+  {
+    "a": "150,000,000",
+    "b": "150.000.000",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "150000000",
+    "normB": "150000000"
+  },
+  {
+    "a": "9007199254740993",
+    "b": "9007199254740992",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/precision_limit",
+    "normA": "9007199254740993",
+    "normB": "9007199254740992"
+  },
+  {
+    "a": "007",
+    "b": "007",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "EXACT",
+    "rule": "exact/verbatim",
+    "normA": "007",
+    "normB": "007"
+  },
+  {
+    "a": "12.0",
+    "b": "12",
+    "policy": {
+      "trim_text": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "12",
+    "normB": "12"
+  },
+  {
+    "a": "8.5",
+    "b": "8,5",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "8.5",
+    "normB": "8.5"
+  },
+  {
+    "a": "005",
+    "b": "5",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "identifier/policy",
+    "normA": "5",
+    "normB": "5"
+  },
+  {
+    "a": "SV001",
+    "b": "sv001",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "SV001",
+    "normB": "sv001"
+  },
+  {
+    "a": "10%",
+    "b": "0.1",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "percentage/scaling",
+    "normA": "0.1",
+    "normB": "0.1"
+  },
+  {
+    "a": "true",
+    "b": "Có",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "true",
+    "normB": "true"
+  },
+  {
+    "a": "No",
+    "b": "false",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "false",
+    "normB": "false"
+  },
+  {
+    "a": "",
+    "b": "0",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "DIFFERENT",
+    "rule": "null/distinct_zero",
+    "normA": "<BLANK>",
+    "normB": "0"
+  },
+  {
+    "a": "NULL",
+    "b": "",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "null/equivalent",
+    "normA": "<BLANK>",
+    "normB": "<BLANK>"
+  },
+  {
+    "a": "1,234",
+    "b": "1.234",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "numeric/unknown_locale",
+    "normA": "1,234",
+    "normB": "1.234"
+  },
+  {
+    "a": "07/10",
+    "b": "0.7",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/ambiguous_fraction",
+    "normA": "07/10",
+    "normB": "0.7"
+  },
+  {
+    "a": "2026-11-18",
+    "b": "18/11/2026",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "date/iso_normalized",
+    "normA": "2026-11-18",
+    "normB": "2026-11-18"
+  },
+  {
+    "a": "01/02/26",
+    "b": "2026-02-01",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "date/ambiguous_locale",
+    "normA": "01/02/26",
+    "normB": "2026-02-01"
+  },
+  {
+    "a": "Apple",
+    "b": "apple",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/case_fold",
+    "normA": "apple",
+    "normB": "apple"
+  },
+  {
+    "a": " x ",
+    "b": "x",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/trim",
+    "normA": "x",
+    "normB": "x"
+  },
+  {
+    "a": "a   b",
+    "b": "a b",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/whitespace_normalized",
+    "normA": "a b",
+    "normB": "a b"
+  },
+  {
+    "a": "a",
+    "b": "b",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "DIFFERENT",
+    "rule": "text/lexical_diff",
+    "normA": "a",
+    "normB": "b"
+  },
+  {
+    "a": "150,000,000",
+    "b": "150.000.000",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "150000000",
+    "normB": "150000000"
+  },
+  {
+    "a": "9007199254740993",
+    "b": "9007199254740992",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/precision_limit",
+    "normA": "9007199254740993",
+    "normB": "9007199254740992"
+  },
+  {
+    "a": "007",
+    "b": "007",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EXACT",
+    "rule": "exact/verbatim",
+    "normA": "007",
+    "normB": "007"
+  },
+  {
+    "a": "12.0",
+    "b": "12",
+    "policy": {
+      "preserve_leading_zeros": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "12",
+    "normB": "12"
+  },
+  {
+    "a": "8.5",
+    "b": "8,5",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "8.5",
+    "normB": "8.5"
+  },
+  {
+    "a": "005",
+    "b": "5",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "005",
+    "normB": "5"
+  },
+  {
+    "a": "SV001",
+    "b": "sv001",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "identifier/policy",
+    "normA": "sv001",
+    "normB": "sv001"
+  },
+  {
+    "a": "10%",
+    "b": "0.1",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "percentage/scaling",
+    "normA": "0.1",
+    "normB": "0.1"
+  },
+  {
+    "a": "true",
+    "b": "Có",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "true",
+    "normB": "true"
+  },
+  {
+    "a": "No",
+    "b": "false",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "false",
+    "normB": "false"
+  },
+  {
+    "a": "",
+    "b": "0",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "DIFFERENT",
+    "rule": "null/distinct_zero",
+    "normA": "<BLANK>",
+    "normB": "0"
+  },
+  {
+    "a": "NULL",
+    "b": "",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "null/equivalent",
+    "normA": "<BLANK>",
+    "normB": "<BLANK>"
+  },
+  {
+    "a": "1,234",
+    "b": "1.234",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "numeric/unknown_locale",
+    "normA": "1,234",
+    "normB": "1.234"
+  },
+  {
+    "a": "07/10",
+    "b": "0.7",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/ambiguous_fraction",
+    "normA": "07/10",
+    "normB": "0.7"
+  },
+  {
+    "a": "2026-11-18",
+    "b": "18/11/2026",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "date/iso_normalized",
+    "normA": "2026-11-18",
+    "normB": "2026-11-18"
+  },
+  {
+    "a": "01/02/26",
+    "b": "2026-02-01",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "date/ambiguous_locale",
+    "normA": "01/02/26",
+    "normB": "2026-02-01"
+  },
+  {
+    "a": "Apple",
+    "b": "apple",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/case_fold",
+    "normA": "apple",
+    "normB": "apple"
+  },
+  {
+    "a": " x ",
+    "b": "x",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/trim",
+    "normA": "x",
+    "normB": "x"
+  },
+  {
+    "a": "a   b",
+    "b": "a b",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/whitespace_normalized",
+    "normA": "a b",
+    "normB": "a b"
+  },
+  {
+    "a": "a",
+    "b": "b",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "DIFFERENT",
+    "rule": "text/lexical_diff",
+    "normA": "a",
+    "normB": "b"
+  },
+  {
+    "a": "150,000,000",
+    "b": "150.000.000",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "150000000",
+    "normB": "150000000"
+  },
+  {
+    "a": "9007199254740993",
+    "b": "9007199254740992",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/precision_limit",
+    "normA": "9007199254740993",
+    "normB": "9007199254740992"
+  },
+  {
+    "a": "007",
+    "b": "007",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EXACT",
+    "rule": "exact/verbatim",
+    "normA": "007",
+    "normB": "007"
+  },
+  {
+    "a": "12.0",
+    "b": "12",
+    "policy": {
+      "case_sensitive_identifier": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "12",
+    "normB": "12"
+  },
+  {
+    "a": "8.5",
+    "b": "8,5",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "8.5",
+    "normB": "8.5"
+  },
+  {
+    "a": "005",
+    "b": "5",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "005",
+    "normB": "5"
+  },
+  {
+    "a": "SV001",
+    "b": "sv001",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "SV001",
+    "normB": "sv001"
+  },
+  {
+    "a": "10%",
+    "b": "0.1",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "percentage/scaling",
+    "normA": "0.1",
+    "normB": "0.1"
+  },
+  {
+    "a": "true",
+    "b": "Có",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "true",
+    "normB": "true"
+  },
+  {
+    "a": "No",
+    "b": "false",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "false",
+    "normB": "false"
+  },
+  {
+    "a": "",
+    "b": "0",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "null/zero_equivalent",
+    "normA": "0",
+    "normB": "0"
+  },
+  {
+    "a": "NULL",
+    "b": "",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "null/equivalent",
+    "normA": "<BLANK>",
+    "normB": "<BLANK>"
+  },
+  {
+    "a": "1,234",
+    "b": "1.234",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "numeric/unknown_locale",
+    "normA": "1,234",
+    "normB": "1.234"
+  },
+  {
+    "a": "07/10",
+    "b": "0.7",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/ambiguous_fraction",
+    "normA": "07/10",
+    "normB": "0.7"
+  },
+  {
+    "a": "2026-11-18",
+    "b": "18/11/2026",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "date/iso_normalized",
+    "normA": "2026-11-18",
+    "normB": "2026-11-18"
+  },
+  {
+    "a": "01/02/26",
+    "b": "2026-02-01",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "date/ambiguous_locale",
+    "normA": "01/02/26",
+    "normB": "2026-02-01"
+  },
+  {
+    "a": "Apple",
+    "b": "apple",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/case_fold",
+    "normA": "apple",
+    "normB": "apple"
+  },
+  {
+    "a": " x ",
+    "b": "x",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/trim",
+    "normA": "x",
+    "normB": "x"
+  },
+  {
+    "a": "a   b",
+    "b": "a b",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/whitespace_normalized",
+    "normA": "a b",
+    "normB": "a b"
+  },
+  {
+    "a": "a",
+    "b": "b",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "DIFFERENT",
+    "rule": "text/lexical_diff",
+    "normA": "a",
+    "normB": "b"
+  },
+  {
+    "a": "150,000,000",
+    "b": "150.000.000",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "150000000",
+    "normB": "150000000"
+  },
+  {
+    "a": "9007199254740993",
+    "b": "9007199254740992",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/precision_limit",
+    "normA": "9007199254740993",
+    "normB": "9007199254740992"
+  },
+  {
+    "a": "007",
+    "b": "007",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EXACT",
+    "rule": "exact/verbatim",
+    "normA": "007",
+    "normB": "007"
+  },
+  {
+    "a": "12.0",
+    "b": "12",
+    "policy": {
+      "distinct_null_zero": false
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "12",
+    "normB": "12"
+  },
+  {
+    "a": "8.5",
+    "b": "8,5",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "8.5",
+    "normB": "8.5"
+  },
+  {
+    "a": "005",
+    "b": "5",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "005",
+    "normB": "5"
+  },
+  {
+    "a": "SV001",
+    "b": "sv001",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "DIFFERENT",
+    "rule": "identifier/policy",
+    "normA": "SV001",
+    "normB": "sv001"
+  },
+  {
+    "a": "10%",
+    "b": "0.1",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "percentage/scaling",
+    "normA": "0.1",
+    "normB": "0.1"
+  },
+  {
+    "a": "true",
+    "b": "Có",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "true",
+    "normB": "true"
+  },
+  {
+    "a": "No",
+    "b": "false",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "boolean/alias_mapping",
+    "normA": "false",
+    "normB": "false"
+  },
+  {
+    "a": "",
+    "b": "0",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "DIFFERENT",
+    "rule": "null/distinct_zero",
+    "normA": "<BLANK>",
+    "normB": "0"
+  },
+  {
+    "a": "NULL",
+    "b": "",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "null/equivalent",
+    "normA": "<BLANK>",
+    "normB": "<BLANK>"
+  },
+  {
+    "a": "1,234",
+    "b": "1.234",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "UNRESOLVED",
+    "rule": "numeric/unknown_locale",
+    "normA": "1,234",
+    "normB": "1.234"
+  },
+  {
+    "a": "07/10",
+    "b": "0.7",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/ambiguous_fraction",
+    "normA": "07/10",
+    "normB": "0.7"
+  },
+  {
+    "a": "2026-11-18",
+    "b": "18/11/2026",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "date/iso_normalized",
+    "normA": "2026-11-18",
+    "normB": "2026-11-18"
+  },
+  {
+    "a": "01/02/26",
+    "b": "2026-02-01",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "UNRESOLVED",
+    "rule": "date/ambiguous_locale",
+    "normA": "01/02/26",
+    "normB": "2026-02-01"
+  },
+  {
+    "a": "Apple",
+    "b": "apple",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/case_fold",
+    "normA": "apple",
+    "normB": "apple"
+  },
+  {
+    "a": " x ",
+    "b": "x",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/trim",
+    "normA": "x",
+    "normB": "x"
+  },
+  {
+    "a": "a   b",
+    "b": "a b",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "text/whitespace_normalized",
+    "normA": "a b",
+    "normB": "a b"
+  },
+  {
+    "a": "a",
+    "b": "b",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "DIFFERENT",
+    "rule": "text/lexical_diff",
+    "normA": "a",
+    "normB": "b"
+  },
+  {
+    "a": "150,000,000",
+    "b": "150.000.000",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "150000000",
+    "normB": "150000000"
+  },
+  {
+    "a": "9007199254740993",
+    "b": "9007199254740992",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "UNRESOLVED",
+    "rule": "decimal/precision_limit",
+    "normA": "9007199254740993",
+    "normB": "9007199254740992"
+  },
+  {
+    "a": "007",
+    "b": "007",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EXACT",
+    "rule": "exact/verbatim",
+    "normA": "007",
+    "normB": "007"
+  },
+  {
+    "a": "12.0",
+    "b": "12",
+    "policy": {
+      "tolerance_abs": 1
+    },
+    "status": "EQUIVALENT",
+    "rule": "decimal/vi-VN_tolerance",
+    "normA": "12",
+    "normB": "12"
+  }
+]

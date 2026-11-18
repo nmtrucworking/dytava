@@ -3,7 +3,7 @@ import 'package:excelcompare_core/excelcompare_core.dart';
 
 enum SourceSide { a, b }
 
-enum SourceFormat { csv, tsv, xlsx, png, jpeg }
+enum SourceFormat { csv, tsv, xlsx, png, jpeg, json }
 
 enum InputState {
   unselected,
@@ -43,15 +43,11 @@ enum ExportState {
 
 enum ResultValidity { current, stale, revoked }
 
-enum MatchingMode { positional, key }
+enum MatchingMode { positional, key, orderedSequence }
 
 enum ComparisonDirection { aToB, bToA }
 
-enum ComparisonTaskMode {
-  compareFiles,
-  compareColumns,
-  reconcile,
-}
+enum ComparisonTaskMode { compareFiles, compareColumns, reconcile }
 
 extension ComparisonTaskModeInfo on ComparisonTaskMode {
   String get label => switch (this) {
@@ -164,6 +160,8 @@ final class SourceArtifact {
 
   /// Only an access adapter may resolve this. Never serialize into reports.
   final String privateRef;
+
+  bool get isFixture => privateRef.startsWith('fixture:');
 }
 
 final class ImportBinding {
@@ -313,8 +311,10 @@ final class FieldRule {
     this.separatorA = '.',
     this.separatorB = ',',
     this.tolerance = '0',
+    this.webAuto = false,
   });
   final SemanticType type;
+  final bool webAuto;
   final bool trim;
   final String separatorA;
   final String separatorB;
@@ -338,6 +338,7 @@ final class ComparisonConfiguration {
     this.mode = MatchingMode.positional,
     Iterable<String> keys = const [],
     this.direction = ComparisonDirection.aToB,
+    this.webPolicy = const WebComparisonPolicy(),
     this.mappingConfirmed = false,
     this.modeConfirmed = false,
     this.policyConfirmed = false,
@@ -352,6 +353,7 @@ final class ComparisonConfiguration {
   /// Ordered A-side field IDs, resolved through the confirmed mapping.
   final List<String> keys;
   final ComparisonDirection direction;
+  final WebComparisonPolicy webPolicy;
   final bool mappingConfirmed;
   final bool modeConfirmed;
   final bool policyConfirmed;
@@ -406,6 +408,24 @@ final class RecordUnresolved {
   final List<String> recordsB;
 }
 
+final class AlignedTableRow {
+  const AlignedTableRow(
+    this.a,
+    this.b,
+    this.rationale,
+    this.cells, {
+    this.unresolved = false,
+  });
+  final TableRecord? a, b;
+  final String rationale;
+  final List<CellDifference> cells;
+  final bool unresolved;
+  DecisionStatus get status => cells.fold(
+    DecisionStatus.exact,
+    (s, c) => c.decision.status.index > s.index ? c.decision.status : s,
+  );
+}
+
 final class ComparisonResult {
   ComparisonResult({
     required this.id,
@@ -414,6 +434,8 @@ final class ComparisonResult {
     required Iterable<StructuralChange> structural,
     required Iterable<RecordUnresolved> unresolvedRecords,
     required this.matchedRecords,
+    this.alignedRows = const [],
+    this.durationMs = 0,
   }) : cells = List.unmodifiable(cells),
        structural = List.unmodifiable(structural),
        unresolvedRecords = List.unmodifiable(unresolvedRecords);
@@ -423,8 +445,18 @@ final class ComparisonResult {
   final List<StructuralChange> structural;
   final List<RecordUnresolved> unresolvedRecords;
   final int matchedRecords;
-  int count(DecisionStatus status) =>
-      cells.where((c) => c.decision.status == status).length;
+  final List<AlignedTableRow> alignedRows;
+  final int durationMs;
+  late final Map<DecisionStatus, int> _counts = _countCells();
+  Map<DecisionStatus, int> _countCells() {
+    final counts = {for (final s in DecisionStatus.values) s: 0};
+    for (final c in cells) {
+      counts[c.decision.status] = counts[c.decision.status]! + 1;
+    }
+    return counts;
+  }
+
+  int count(DecisionStatus status) => _counts[status]!;
   double? get exactRate =>
       cells.isEmpty ? null : count(DecisionStatus.exact) / cells.length;
   double? get agreementRate => cells.isEmpty
@@ -440,16 +472,27 @@ final class ExportRequest {
 }
 
 final class PreparedExport {
-  const PreparedExport(this.previewText, this.selectedCellCount);
+  const PreparedExport(
+    this.previewText,
+    this.selectedCellCount, {
+    this.fileName,
+  });
   final String previewText;
   final int selectedCellCount;
+  final String? fileName;
 }
 
 final class ExportReceipt {
-  const ExportReceipt(this.id, this.previewText, {required this.previewOnly});
+  const ExportReceipt(
+    this.id,
+    this.previewText, {
+    required this.previewOnly,
+    this.fileName,
+  });
   final String id;
   final String previewText;
   final bool previewOnly;
+  final String? fileName;
 }
 
 final class Cancellation {
@@ -466,6 +509,10 @@ final class WorkCancelled implements Exception {
 }
 
 /// Implementations own and close their attempt resources before returning.
+abstract interface class InputCleanupPort {
+  void release(String ref);
+}
+
 abstract interface class InputPort {
   Future<ImportOutcome> importSource(
     SourceArtifact artifact,
@@ -508,6 +555,7 @@ extension ComparisonConfigurationCopy on ComparisonConfiguration {
     MatchingMode? mode,
     Iterable<String>? keys,
     ComparisonDirection? direction,
+    WebComparisonPolicy? webPolicy,
     bool? mappingConfirmed,
     bool? modeConfirmed,
     bool? policyConfirmed,
@@ -518,6 +566,7 @@ extension ComparisonConfigurationCopy on ComparisonConfiguration {
     mode: mode ?? this.mode,
     keys: keys ?? this.keys,
     direction: direction ?? this.direction,
+    webPolicy: webPolicy ?? this.webPolicy,
     mappingConfirmed: mappingConfirmed ?? this.mappingConfirmed,
     modeConfirmed: modeConfirmed ?? this.modeConfirmed,
     policyConfirmed: policyConfirmed ?? this.policyConfirmed,

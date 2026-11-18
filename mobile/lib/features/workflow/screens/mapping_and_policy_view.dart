@@ -151,7 +151,10 @@ class MappingScreenView extends StatelessWidget {
                     ),
                   ),
                   items: [
-                    const DropdownMenuItem(value: '', child: Text('Không ghép')),
+                    const DropdownMenuItem(
+                      value: '',
+                      child: Text('Không ghép'),
+                    ),
                     for (final target in b.fields)
                       DropdownMenuItem(
                         value: target.id,
@@ -257,7 +260,8 @@ class PolicyScreenView extends StatelessWidget {
         config.policyConfirmed &&
         config.directionConfirmed;
 
-    final proposal = flow.proposal ??
+    final proposal =
+        flow.proposal ??
         (flow.inputsReady
             ? SmartProposalEngine.analyze(
                 flow.slot(SourceSide.a).snapshot!,
@@ -273,7 +277,9 @@ class PolicyScreenView extends StatelessWidget {
         WorkflowSectionCard(
           padding: const EdgeInsets.all(16),
           color: DytavaColors.white,
-          border: Border.all(color: DytavaColors.primary.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: DytavaColors.primary.withValues(alpha: 0.3),
+          ),
           children: [
             Row(
               children: [
@@ -398,7 +404,9 @@ class PolicyScreenView extends StatelessWidget {
                             proposal.mode == MatchingMode.key
                                 ? 'Phương pháp: Ghép theo mã ID (${proposal.keys.isEmpty ? 'Chưa chọn' : proposal.keys.join(', ')})'
                                 : 'Phương pháp: Ghép theo thứ tự hàng (Positional)',
-                            style: DytavaTypography.titleMedium.copyWith(fontSize: 13),
+                            style: DytavaTypography.titleMedium.copyWith(
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -441,10 +449,7 @@ class PolicyScreenView extends StatelessWidget {
                   icon: const BrandIcon(DytavaIcons.play, size: 20),
                   label: const Text(
                     'Tiến hành so sánh',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                   style: FilledButton.styleFrom(
                     backgroundColor: DytavaColors.primary,
@@ -579,8 +584,7 @@ class PolicyScreenView extends StatelessWidget {
             if (config.mode == MatchingMode.key) ...[
               const SizedBox(height: 10),
               const WorkflowInfoBanner(
-                text:
-                    'Chọn khóa theo thứ tự. Khóa phải là IDENTIFIER, không trim hoặc tolerance. Null/trùng được giữ unresolved, không tự ghép.',
+                text: 'Chọn khóa theo thứ tự. Khóa phải là IDENTIFIER, không trim hoặc tolerance. Null/trùng được giữ unresolved, không tự ghép.',
                 iconAsset: DytavaIcons.key,
               ),
               for (final m in config.mappings)
@@ -702,12 +706,28 @@ class PolicyScreenView extends StatelessWidget {
                     ),
                     if (config.rules[m.fieldA] case final FieldRule rule) ...[
                       WorkflowCheckTile(
+                        label: 'Tự suy luận kiểu như bản web',
+                        checked: rule.webAuto,
+                        onChanged: (checked) => _updateRule(
+                          m.fieldA,
+                          FieldRule(
+                            type: rule.type,
+                            trim: rule.trim,
+                            separatorA: rule.separatorA,
+                            separatorB: rule.separatorB,
+                            tolerance: rule.tolerance,
+                            webAuto: checked,
+                          ),
+                        ),
+                      ),
+                      WorkflowCheckTile(
                         label: 'Trim ${m.fieldA}',
                         checked: rule.trim,
                         onChanged: (checked) => _updateRule(
                           m.fieldA,
                           FieldRule(
                             type: rule.type,
+                            webAuto: rule.webAuto,
                             trim: checked,
                             separatorA: rule.separatorA,
                             separatorB: rule.separatorB,
@@ -747,6 +767,7 @@ class PolicyScreenView extends StatelessWidget {
                                     m.fieldA,
                                     FieldRule(
                                       type: rule.type,
+                                      webAuto: rule.webAuto,
                                       trim: rule.trim,
                                       tolerance: rule.tolerance,
                                       separatorA: side == SourceSide.a
@@ -771,6 +792,7 @@ class PolicyScreenView extends StatelessWidget {
                             m.fieldA,
                             FieldRule(
                               type: rule.type,
+                              webAuto: rule.webAuto,
                               trim: rule.trim,
                               separatorA: rule.separatorA,
                               separatorB: rule.separatorB,
@@ -785,6 +807,99 @@ class PolicyScreenView extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 8),
+            for (final item in <(String, bool, WebComparisonPolicy)>[
+              (
+                'Bỏ khoảng trắng đầu/cuối',
+                config.webPolicy.trimText,
+                WebComparisonPolicy(
+                  trimText: !config.webPolicy.trimText,
+                  caseSensitiveText: config.webPolicy.caseSensitiveText,
+                  preserveLeadingZeros: config.webPolicy.preserveLeadingZeros,
+                  caseSensitiveIdentifier:
+                      config.webPolicy.caseSensitiveIdentifier,
+                  distinctNullZero: config.webPolicy.distinctNullZero,
+                  treatOrdinalAsMetadata:
+                      config.webPolicy.treatOrdinalAsMetadata,
+                ),
+              ),
+              (
+                'Phân biệt hoa/thường trong văn bản',
+                config.webPolicy.caseSensitiveText,
+                WebComparisonPolicy(
+                  trimText: config.webPolicy.trimText,
+                  caseSensitiveText: !config.webPolicy.caseSensitiveText,
+                  preserveLeadingZeros: config.webPolicy.preserveLeadingZeros,
+                  caseSensitiveIdentifier:
+                      config.webPolicy.caseSensitiveIdentifier,
+                  distinctNullZero: config.webPolicy.distinctNullZero,
+                  treatOrdinalAsMetadata:
+                      config.webPolicy.treatOrdinalAsMetadata,
+                ),
+              ),
+              (
+                'Bảo toàn số 0 đầu mã',
+                config.webPolicy.preserveLeadingZeros,
+                WebComparisonPolicy(
+                  trimText: config.webPolicy.trimText,
+                  caseSensitiveText: config.webPolicy.caseSensitiveText,
+                  preserveLeadingZeros: !config.webPolicy.preserveLeadingZeros,
+                  caseSensitiveIdentifier:
+                      config.webPolicy.caseSensitiveIdentifier,
+                  distinctNullZero: config.webPolicy.distinctNullZero,
+                  treatOrdinalAsMetadata:
+                      config.webPolicy.treatOrdinalAsMetadata,
+                ),
+              ),
+              (
+                'Phân biệt hoa/thường trong mã',
+                config.webPolicy.caseSensitiveIdentifier,
+                WebComparisonPolicy(
+                  trimText: config.webPolicy.trimText,
+                  caseSensitiveText: config.webPolicy.caseSensitiveText,
+                  preserveLeadingZeros: config.webPolicy.preserveLeadingZeros,
+                  caseSensitiveIdentifier:
+                      !config.webPolicy.caseSensitiveIdentifier,
+                  distinctNullZero: config.webPolicy.distinctNullZero,
+                  treatOrdinalAsMetadata:
+                      config.webPolicy.treatOrdinalAsMetadata,
+                ),
+              ),
+              (
+                'Phân biệt ô trống và số 0',
+                config.webPolicy.distinctNullZero,
+                WebComparisonPolicy(
+                  trimText: config.webPolicy.trimText,
+                  caseSensitiveText: config.webPolicy.caseSensitiveText,
+                  preserveLeadingZeros: config.webPolicy.preserveLeadingZeros,
+                  caseSensitiveIdentifier:
+                      config.webPolicy.caseSensitiveIdentifier,
+                  distinctNullZero: !config.webPolicy.distinctNullZero,
+                  treatOrdinalAsMetadata:
+                      config.webPolicy.treatOrdinalAsMetadata,
+                ),
+              ),
+              (
+                'Coi STT / No. là thông tin thứ tự',
+                config.webPolicy.treatOrdinalAsMetadata,
+                WebComparisonPolicy(
+                  trimText: config.webPolicy.trimText,
+                  caseSensitiveText: config.webPolicy.caseSensitiveText,
+                  preserveLeadingZeros: config.webPolicy.preserveLeadingZeros,
+                  caseSensitiveIdentifier:
+                      config.webPolicy.caseSensitiveIdentifier,
+                  distinctNullZero: config.webPolicy.distinctNullZero,
+                  treatOrdinalAsMetadata:
+                      !config.webPolicy.treatOrdinalAsMetadata,
+                ),
+              ),
+            ])
+              WorkflowCheckTile(
+                label: item.$1,
+                checked: item.$2,
+                onChanged: (_) => flow.configure(
+                  config.copyWith(webPolicy: item.$3, policyConfirmed: false),
+                ),
+              ),
             WorkflowCheckTile(
               label: 'Xác nhận toàn bộ policy',
               checked: config.policyConfirmed,
@@ -858,15 +973,46 @@ class PolicyScreenView extends StatelessWidget {
         if (flow.startBlockers.isNotEmpty)
           WorkflowSectionCard(
             color: DytavaColors.softRed,
-            children: [WorkflowIssueList(issues: flow.startBlockers)],
+            children: [
+              WorkflowIssueList(issues: flow.startBlockers),
+              if (flow.startBlockers.any(
+                (b) => b.code == 'MAPPING_CONFIRMATION_REQUIRED',
+              )) ...[
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: DytavaColors.primary,
+                      minimumSize: const Size(48, 44),
+                    ),
+                    icon: const BrandIcon(DytavaIcons.mapping, size: 18),
+                    label: const Text('Tự động ghép cột & xác nhận (1 chạm)'),
+                    onPressed: () {
+                      flow.applyProposal(run: false);
+                    },
+                  ),
+                ),
+              ],
+            ],
           ),
         const SizedBox(height: 8),
         WorkflowPrimaryButton(
-          label: 'Chạy so sánh mẫu',
+          label: flow.slot(SourceSide.a).artifact?.isFixture == true
+              ? 'Chạy so sánh'
+              : 'Tiến hành so sánh',
           iconAsset: DytavaIcons.play,
-          onPressed: flow.startBlockers.isEmpty && !flow.busy
-              ? flow.runComparison
-              : null,
+          onPressed: flow.busy
+              ? null
+              : (flow.startBlockers.isEmpty
+                    ? flow.runComparison
+                    : (flow.startBlockers.every(
+                            (b) => b.code == 'MAPPING_CONFIRMATION_REQUIRED',
+                          )
+                          ? () {
+                              flow.applyProposal(run: true);
+                            }
+                          : null)),
         ),
       ],
     );

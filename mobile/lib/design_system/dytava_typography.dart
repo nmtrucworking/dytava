@@ -7,10 +7,33 @@ import 'dytava_colors.dart';
 class DytavaTypography {
   DytavaTypography._();
 
-  static const String displayFont = 'Plus Jakarta Sans';
-  static const String primaryFont = 'Be Vietnam Pro';
-  static const String dataFont = 'IBM Plex Mono';
-  static const String fallbackFont = 'Roboto';
+  static const String editorialFont = 'Manrope';
+  static const String displayFont = 'Manrope';
+  static const String primaryFont = 'Inter';
+  static const String dataFont = 'Inter';
+  static const String fallbackFont = 'Be Vietnam Pro';
+  static const String systemFont = 'Roboto';
+
+  // Precision Workspace typography
+  static const TextStyle workspaceHeader = TextStyle(
+    fontFamily: editorialFont,
+    fontFamilyFallback: [displayFont, fallbackFont, systemFont],
+    fontSize: 26,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.7,
+    color: DytavaColors.graphite,
+    height: 1.2,
+  );
+
+  static const TextStyle precisionTag = TextStyle(
+    fontFamily: dataFont,
+    fontFamilyFallback: ['IBM Plex Mono', fallbackFont, systemFont],
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.5,
+    fontFeatures: [FontFeature.tabularFigures()],
+    color: DytavaColors.precisionNeutral,
+  );
 
   static const TextStyle displayLarge = TextStyle(
     fontFamily: displayFont,
@@ -45,6 +68,15 @@ class DytavaTypography {
     fontFamily: displayFont,
     fontFamilyFallback: [primaryFont, fallbackFont],
     fontSize: 15,
+    fontWeight: FontWeight.w600,
+    color: DytavaColors.textPrimary,
+    height: 1.3,
+  );
+
+  static const TextStyle titleSmall = TextStyle(
+    fontFamily: displayFont,
+    fontFamilyFallback: [primaryFont, fallbackFont],
+    fontSize: 14,
     fontWeight: FontWeight.w600,
     color: DytavaColors.textPrimary,
     height: 1.3,

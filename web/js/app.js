@@ -192,22 +192,40 @@ class App {
   populateKeyColumnOptions() {
     const select = document.getElementById('opt-key-column');
     if (!this.fileA || !this.fileB) {
-      select.innerHTML = '<option value="">Căn chỉnh theo thứ tự dòng</option>';
+      select.innerHTML = '<option value="__ORDERED_SEQUENCE__">⚡ Tự động căn chỉnh chuỗi (Phát hiện chèn/xóa)</option><option value="__POSITIONAL__">⚠️ So sánh theo vị trí dòng (Positional)</option>';
       return;
     }
     const previous = select.value;
     const headers = this.fileA.headers.filter(h => this.fileB.headers.includes(h));
-    select.innerHTML = '<option value="">Căn chỉnh theo thứ tự dòng</option>' + headers.map(h => `<option value="${e(h)}">Cột khóa: ${e(h)}</option>`).join('');
-    const guess = headers.find(h => /mã|^id$|code|sku/i.test(h));
-    select.value = headers.includes(previous) ? previous : guess || '';
-    if (!this.isEnabled('FLAG_KEY_ALIGNMENT')) select.value = '';
+    const isIdCol = h => /mã|^id$|code|sku/i.test(h) && !/^(#|no\.?|stt|số thứ tự)$/i.test(h);
+    const guess = headers.find(isIdCol);
+
+    let html = '<option value="__ORDERED_SEQUENCE__">⚡ Tự động căn chỉnh chuỗi (Phát hiện chèn/xóa)</option>';
+    html += headers.map(h => `<option value="${e(h)}">🔑 Cột khóa: ${e(h)}</option>`).join('');
+    html += '<option value="__POSITIONAL__">⚠️ So sánh theo vị trí dòng (Positional)</option>';
+    select.innerHTML = html;
+
+    if (previous && (headers.includes(previous) || previous === '__ORDERED_SEQUENCE__' || previous === '__POSITIONAL__')) {
+      select.value = previous;
+    } else if (guess) {
+      select.value = guess;
+    } else {
+      select.value = '__ORDERED_SEQUENCE__';
+    }
+    if (!this.isEnabled('FLAG_KEY_ALIGNMENT')) select.value = '__ORDERED_SEQUENCE__';
   }
   setupComparisonControls() {
     document.getElementById('btn-run-compare').onclick = () => this.runComparison();
     document.getElementById('btn-export-pdf').onclick = () => this.openReportPreview();
     document.getElementById('btn-export-json').onclick = () => this.exportJsonReport();
     document.getElementById('btn-export-csv').onclick = () => this.exportCsvDiff();
-    for (const id of ['opt-key-column', 'opt-tolerance', 'opt-leading-zeros', 'opt-case-sensitive', 'opt-trim', 'opt-identifier-case', 'opt-null-zero']) document.getElementById(id).onchange = () => { document.getElementById('opt-policy').value = ''; this.runComparison(); };
+    for (const id of ['opt-key-column', 'opt-tolerance', 'opt-leading-zeros', 'opt-case-sensitive', 'opt-trim', 'opt-identifier-case', 'opt-null-zero']) document.getElementById(id).onchange = () => {
+      document.getElementById('opt-policy').value = '';
+      if (id === 'opt-key-column' && document.getElementById('opt-key-column').value === '__POSITIONAL__') {
+        this.showToast('Lưu ý: So sánh theo vị trí (Positional) có thể gây lệch dòng dây chuyền nếu có dòng chèn/xóa.', 'warning');
+      }
+      this.runComparison();
+    };
     document.getElementById('opt-policy').onchange = event => {
       const policy = this.config?.policies.find(p => p.id === event.target.value);
       if (policy) {
@@ -281,11 +299,25 @@ class App {
     };
     const policyId = document.getElementById('opt-policy').value || 'web-custom-policy';
     const fileA = this.fileA, fileB = this.fileB;
-    const keyColumn = this.isEnabled('FLAG_KEY_ALIGNMENT') ? document.getElementById('opt-key-column').value || null : null;
+    const keyColVal = this.isEnabled('FLAG_KEY_ALIGNMENT') ? (document.getElementById('opt-key-column').value || '__ORDERED_SEQUENCE__') : '__ORDERED_SEQUENCE__';
+    let keyColumn = null;
+    let alignmentMode = 'ORDERED_SEQUENCE';
+    if (keyColVal === '__POSITIONAL__') {
+      alignmentMode = 'POSITIONAL';
+      keyColumn = null;
+    } else if (keyColVal === '__ORDERED_SEQUENCE__') {
+      alignmentMode = 'ORDERED_SEQUENCE';
+      keyColumn = null;
+    } else {
+      alignmentMode = 'KEY';
+      keyColumn = keyColVal;
+    }
     this.currentComparisonResult = null; this.updateSaveButton();
     this.setBusy(1); const start = performance.now();
     try {
-      const result = await this.worker.call({ type: 'compare', fileA, fileB, policy: { ...policyConfig, policy_id: policyId }, keyColumn });
+      const result = await this.worker.call({
+        type: 'compare', fileA, fileB, policy: { ...policyConfig, policy_id: policyId }, keyColumn, alignmentMode
+      });
       if (revision !== this.runRevision) return;
       result.metadata = { clientId: crypto.randomUUID(), formatA: fileA.format, formatB: fileB.format, rowsA: fileA.rows.length, rowsB: fileB.rows.length, durationMs: Math.round((performance.now() - start) * 100) / 100, policyId, policyConfig, summary: result.summary };
       this.currentComparisonResult = result; this.gridPage = 0; this.updateSummaryCounters(); this.renderDualGrid();
@@ -315,14 +347,38 @@ class App {
     const rows = filtered.slice(this.gridPage * 100, (this.gridPage + 1) * 100);
     for (const side of ['A', 'B']) {
       const pane = document.getElementById(`table-container-${side.toLowerCase()}`);
-      pane.innerHTML = `<table class="diff-table"><thead><tr><th>#</th>${headers.map(h => `<th>${e(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((row, i) => `<tr class="${row.rowStatus === 'ADDED' ? 'row-added' : row.rowStatus === 'REMOVED' ? 'row-removed' : ''}"><td>${this.gridPage * 100 + i + 1}</td>${headers.map((h, field) => {
-        const value = row[`row${side}`]?.[this[`file${side}`].headers.indexOf(h)] ?? '';
-        const status = row.cellComparisons[h]?.status;
-        const classes = { EXACT: 'cell-exact', EQUIVALENT: 'cell-equiv', DIFFERENT: 'cell-diff', UNRESOLVED: 'cell-unres' };
-        return `<td class="${classes[status] || ''}" tabindex="0" data-row="${i}" data-field="${field}">${value === '' ? '<i class="empty-cell">—</i>' : e(value)}</td>`;
-      }).join('')}</tr>`).join('') || `<tr><td colspan="${headers.length + 1}" class="empty-state">${emptyState('empty-filter', 'Không có dòng phù hợp.')}</td></tr>`}</tbody></table>`;
+      pane.innerHTML = `<table class="diff-table"><thead><tr><th>#</th>${headers.map(h => `<th>${e(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((row, i) => {
+        const lineNum = this.gridPage * 100 + i + 1;
+        const lineHint = row.sourceLineA && row.sourceLineB && row.sourceLineA !== row.sourceLineB
+          ? ` title="Nguồn A: dòng ${row.sourceLineA} ↔ Nguồn B: dòng ${row.sourceLineB}${row.matchRationale ? ` (${e(row.matchRationale)})` : ''}"`
+          : (row.matchRationale ? ` title="${e(row.matchRationale)}"` : '');
+        return `<tr class="${row.rowStatus === 'ADDED' ? 'row-added' : row.rowStatus === 'REMOVED' ? 'row-removed' : ''}"${lineHint}><td${lineHint}>${lineNum}</td>${headers.map((h, field) => {
+          const value = row[`row${side}`]?.[this[`file${side}`].headers.indexOf(h)] ?? '';
+          const cmp = row.cellComparisons[h];
+          const status = cmp?.status;
+          const classes = { EXACT: 'cell-exact', EQUIVALENT: 'cell-equiv', DIFFERENT: 'cell-diff', UNRESOLVED: 'cell-unres' };
+          let content = value === '' ? '<i class="empty-cell">—</i>' : e(value);
+          if (status === 'DIFFERENT' && cmp) {
+            const diffHtml = side === 'A' ? cmp.diffHtmlA : cmp.diffHtmlB;
+            if (diffHtml) content = diffHtml;
+          }
+          return `<td class="${classes[status] || ''}" tabindex="0" data-row="${i}" data-field="${field}">${content}</td>`;
+        }).join('')}</tr>`;
+      }).join('') || `<tr><td colspan="${headers.length + 1}" class="empty-state">${emptyState('empty-filter', 'Không có dòng phù hợp.')}</td></tr>`}</tbody></table>`;
       pane.querySelectorAll('[data-row]').forEach(td => {
-        const inspect = () => { const row = rows[Number(td.dataset.row)]; const field = headers[Number(td.dataset.field)]; if (row.cellComparisons[field]) this.openInspectorModal(field, row.key, row.cellComparisons[field]); };
+        const inspect = () => {
+          const row = rows[Number(td.dataset.row)];
+          const field = headers[Number(td.dataset.field)];
+          let cmp = row.cellComparisons[field];
+          if (cmp) {
+            if (cmp.status === 'EXACT' && (!cmp.rawA || cmp.rawA === '')) {
+              const valA = row.rowA?.[this.fileA?.headers?.indexOf(field)] ?? '';
+              const valB = row.rowB?.[this.fileB?.headers?.indexOf(field)] ?? '';
+              cmp = { ...cmp, rawA: valA, rawB: valB, normA: valA, normB: valB };
+            }
+            this.openInspectorModal(field, row.key, cmp);
+          }
+        };
         td.onclick = inspect; td.onkeydown = event => { if (event.key === 'Enter') inspect(); };
       });
     }
@@ -337,6 +393,8 @@ class App {
   openInspectorModal(field, key, comparison) {
     const values = { 'insp-field-name': field, 'insp-row-key': `Khóa: ${key}`, 'insp-status-badge': comparison.status, 'insp-raw-a': comparison.rawA, 'insp-raw-b': comparison.rawB, 'insp-norm-a': comparison.normA, 'insp-norm-b': comparison.normB, 'insp-type': comparison.type, 'insp-rule-id': comparison.ruleId, 'insp-reason': comparison.reason };
     for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value ?? '(Trống)';
+    if (comparison.diffHtmlA) document.getElementById('insp-raw-a').innerHTML = comparison.diffHtmlA;
+    if (comparison.diffHtmlB) document.getElementById('insp-raw-b').innerHTML = comparison.diffHtmlB;
     document.getElementById('insp-status-badge').dataset.status = comparison.status;
     this.openModal('cell-inspector-modal');
   }

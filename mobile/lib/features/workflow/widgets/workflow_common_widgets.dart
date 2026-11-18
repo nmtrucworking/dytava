@@ -7,7 +7,7 @@ import '../../../domain/workflow.dart';
 
 /// Các hàm tiện ích và thành phần giao diện dùng chung cho tầng Presentation của Workflow.
 abstract final class WorkflowUiHelpers {
-  static String formatEnumName(Enum value) => value.name
+  static String formatEnumName(Enum value) => value == MatchingMode.orderedSequence ? 'Căn chỉnh chuỗi (chèn/xóa)' : value.name
       .replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]}')
       .toUpperCase();
 
@@ -361,11 +361,15 @@ class WorkflowPrimaryButton extends StatelessWidget {
         child: FilledButton(
           onPressed: onPressed,
           style: FilledButton.styleFrom(
-            backgroundColor: DytavaColors.primary,
-            foregroundColor: DytavaColors.white,
-            minimumSize: const Size(48, 48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+            backgroundColor: DytavaColors.limePrimary,
+            foregroundColor: DytavaColors.graphite,
+            minimumSize: const Size(48, 50),
+            shape: const StadiumBorder(),
+            elevation: 0,
+            textStyle: const TextStyle(
+              fontFamily: DytavaTypography.editorialFont,
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
             ),
           ),
           child: Row(

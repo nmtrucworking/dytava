@@ -16,6 +16,8 @@ typedef UserFileSnapshotData = ({
   SourceFormat format,
   List<TableField> fields,
   List<List<String>> values,
+  String? sheetName,
+  int headerRow,
 });
 
 final class DemoInputPort implements InputPort {
@@ -27,14 +29,21 @@ final class DemoInputPort implements InputPort {
     required SourceFormat format,
     required List<TableField> fields,
     required List<List<String>> values,
+    String? sheetName,
+    int headerRow = 1,
   }) {
     _userFiles[ref] = (
       fileName: fileName,
       format: format,
       fields: fields,
       values: values,
+      sheetName: sheetName,
+      headerRow: headerRow,
     );
   }
+
+  static UserFileSnapshotData? userFile(String ref) => _userFiles[ref];
+  static void forgetUserFile(String ref) => _userFiles.remove(ref);
 
   static void clearUserFiles() => _userFiles.clear();
 
@@ -67,13 +76,13 @@ final class DemoInputPort implements InputPort {
     final isUserFile = artifact.privateRef.startsWith('userfile:');
     if (!isUserFile &&
         (!const {
-          'fixture:a',
-          'fixture:b',
-          'fixture:image-a',
-        }.contains(artifact.privateRef) ||
-        (artifact.privateRef == 'fixture:image-a'
-            ? artifact.format != SourceFormat.png
-            : artifact.format != SourceFormat.csv))) {
+              'fixture:a',
+              'fixture:b',
+              'fixture:image-a',
+            }.contains(artifact.privateRef) ||
+            (artifact.privateRef == 'fixture:image-a'
+                ? artifact.format != SourceFormat.png
+                : artifact.format != SourceFormat.csv))) {
       throw const WorkflowIssue(
         'INPUT_CAPABILITY_DISABLED',
         'Bản flow chỉ đọc nguồn mẫu. Adapter tệp thật chưa được bật.',
@@ -106,13 +115,16 @@ final class DemoInputPort implements InputPort {
                   for (var c = 0; c < userData.fields.length; c++)
                     userData.fields[c].id: SourceCell(
                       CellKind.text,
-                      rawLexeme: c < userData.values[r].length ? userData.values[r][c] : '',
+                      rawLexeme: c < userData.values[r].length
+                          ? userData.values[r][c]
+                          : '',
                       ocrReviewed: true,
                     ),
                 },
                 {
                   for (final f in userData.fields)
-                    f.id: 'userfile/${artifact.id}/record-${r + 1}/${f.id}',
+                    f.id:
+                        '${userData.sheetName ?? artifact.label}!R${r + userData.headerRow + 1}/${f.id}',
                 },
               ),
           ],

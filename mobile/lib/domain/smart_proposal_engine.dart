@@ -1,4 +1,5 @@
 import 'package:excelcompare_core/excelcompare_core.dart';
+
 import 'workflow.dart';
 
 /// Bộ phân tích cấu trúc bảng thông minh (Smart Proposal Engine)
@@ -10,7 +11,6 @@ abstract final class SmartProposalEngine {
     'mã',
     'ma',
     'code',
-    'stt',
     'key',
     'sku',
     'uuid',
@@ -69,16 +69,11 @@ abstract final class SmartProposalEngine {
       // Ưu tiên các cột có tên trong _keyKeywords
       for (final m in candidateMappings) {
         final norm = _normalize(m.fieldA);
-        if (_keyKeywords.any((k) => norm == k || norm.startsWith('${k}_') || norm.endsWith('_$k'))) {
+        if (_keyKeywords.any(
+          (k) => norm == k || norm.startsWith('${k}_') || norm.endsWith('_$k'),
+        )) {
           detectedKey = m.fieldA;
           break;
-        }
-      }
-      // Nếu chưa có, kiểm tra cột đầu tiên nếu có vẻ là định danh
-      if (detectedKey == null && candidateMappings.isNotEmpty) {
-        final firstMapped = candidateMappings.first.fieldA;
-        if (fieldsA.isNotEmpty && fieldsA.first.id == firstMapped) {
-          detectedKey = firstMapped;
         }
       }
     }
@@ -96,10 +91,12 @@ abstract final class SmartProposalEngine {
         valuesA.add(val);
       }
 
-      final mappedB = candidateMappings.firstWhere(
-        (m) => m.fieldA == keyName,
-        orElse: () => FieldMapping(keyName, keyName),
-      ).fieldB;
+      final mappedB = candidateMappings
+          .firstWhere(
+            (m) => m.fieldA == keyName,
+            orElse: () => FieldMapping(keyName, keyName),
+          )
+          .fieldB;
 
       final valuesB = <String>{};
       for (final r in b.records) {
@@ -112,7 +109,8 @@ abstract final class SmartProposalEngine {
       }
     }
 
-    final hasSolidUniqueKey = detectedKey != null && keyUniquenessA && keyUniquenessB;
+    final hasSolidUniqueKey =
+        detectedKey != null && keyUniquenessA && keyUniquenessB;
 
     // 3. Suy luận quy tắc SemanticType cho các cột
     final inferredRules = <String, FieldRule>{};
@@ -131,25 +129,32 @@ abstract final class SmartProposalEngine {
     // 4. Xây dựng đề xuất theo từng chế độ tác vụ
     switch (taskMode) {
       case ComparisonTaskMode.compareFiles:
-        final allFieldsMatched = candidateMappings.length == fieldsA.length &&
+        final allFieldsMatched =
+            candidateMappings.length == fieldsA.length &&
             candidateMappings.length == fieldsB.length;
 
-        final chosenMode = hasSolidUniqueKey ? MatchingMode.key : MatchingMode.positional;
+        final chosenMode = hasSolidUniqueKey
+            ? MatchingMode.key
+            : MatchingMode.orderedSequence;
         final chosenKeys = hasSolidUniqueKey ? [detectedKey] : const <String>[];
 
         double score = 1.0;
-        String reason = 'Đề xuất tối ưu: cấu trúc hai bảng tương đồng, tự động nhận diện ánh xạ.';
+        String reason =
+            'Đề xuất tối ưu: cấu trúc hai bảng tương đồng, tự động nhận diện ánh xạ.';
         bool needsConfirm = false;
 
         if (!allFieldsMatched) {
           score = 0.75;
           final unmappedA = fieldsA.length - candidateMappings.length;
           final unmappedB = fieldsB.length - candidateMappings.length;
-          reason = 'Có $unmappedA cột ở Bảng A và $unmappedB cột ở Bảng B không có cột đối ứng.';
+          reason =
+              'Có $unmappedA cột ở Bảng A và $unmappedB cột ở Bảng B không có cột đối ứng.';
           needsConfirm = true;
-        } else if (detectedKey != null && (!keyUniquenessA || !keyUniquenessB)) {
+        } else if (detectedKey != null &&
+            (!keyUniquenessA || !keyUniquenessB)) {
           score = 0.8;
-          reason = 'Cột "$detectedKey" có giá trị trùng lặp hoặc trống, Dytava đề xuất ghép theo thứ tự hàng (Positional).';
+          reason =
+              'Cột "$detectedKey" có giá trị trùng lặp hoặc trống, Dytava đề xuất căn chỉnh chuỗi để phát hiện chèn/xóa.';
           needsConfirm = false;
         }
 
@@ -179,10 +184,16 @@ abstract final class SmartProposalEngine {
               break;
             }
           }
-          targetMapping ??= candidateMappings.isNotEmpty ? candidateMappings.first : null;
+          targetMapping ??= candidateMappings.isNotEmpty
+              ? candidateMappings.first
+              : null;
 
-          colA = targetMapping?.fieldA ?? (fieldsA.isNotEmpty ? fieldsA.first.id : '');
-          colB = targetMapping?.fieldB ?? (fieldsB.isNotEmpty ? fieldsB.first.id : '');
+          colA =
+              targetMapping?.fieldA ??
+              (fieldsA.isNotEmpty ? fieldsA.first.id : '');
+          colB =
+              targetMapping?.fieldB ??
+              (fieldsB.isNotEmpty ? fieldsB.first.id : '');
         }
 
         final singleMapping = colA.isNotEmpty && colB.isNotEmpty
@@ -191,7 +202,13 @@ abstract final class SmartProposalEngine {
 
         final singleRule = {
           if (colA.isNotEmpty)
-            colA: inferredRules[colA] ?? const FieldRule(type: SemanticType.freeText, trim: true),
+            colA:
+                inferredRules[colA] ??
+                const FieldRule(
+                  type: SemanticType.freeText,
+                  trim: true,
+                  webAuto: true,
+                ),
         };
 
         return SmartProposal(
@@ -211,11 +228,17 @@ abstract final class SmartProposalEngine {
 
       case ComparisonTaskMode.reconcile:
         // Khớp bản ghi theo ID và so sánh 1 cột giá trị (No VLOOKUP)
-        final keyCol = detectedKey ?? (fieldsA.isNotEmpty ? fieldsA.first.id : '');
-        final mappedKeyB = candidateMappings.firstWhere(
-          (m) => m.fieldA == keyCol,
-          orElse: () => FieldMapping(keyCol, fieldsB.isNotEmpty ? fieldsB.first.id : ''),
-        ).fieldB;
+        final keyCol =
+            detectedKey ?? (fieldsA.isNotEmpty ? fieldsA.first.id : '');
+        final mappedKeyB = candidateMappings
+            .firstWhere(
+              (m) => m.fieldA == keyCol,
+              orElse: () => FieldMapping(
+                keyCol,
+                fieldsB.isNotEmpty ? fieldsB.first.id : '',
+              ),
+            )
+            .fieldB;
 
         // Tìm cột giá trị cần đối soát (reconcile value)
         String valColA = reconcileValueColumn ?? '';
@@ -234,23 +257,32 @@ abstract final class SmartProposalEngine {
             valColB = fieldsB.length > 1 ? fieldsB[1].id : valColA;
           }
         } else {
-          valColB = candidateMappings.firstWhere(
-            (m) => m.fieldA == valColA,
-            orElse: () => FieldMapping(valColA, valColA),
-          ).fieldB;
+          valColB = candidateMappings
+              .firstWhere(
+                (m) => m.fieldA == valColA,
+                orElse: () => FieldMapping(valColA, valColA),
+              )
+              .fieldB;
         }
 
         final mappings = <FieldMapping>[
-          if (keyCol.isNotEmpty && mappedKeyB.isNotEmpty) FieldMapping(keyCol, mappedKeyB),
+          if (keyCol.isNotEmpty && mappedKeyB.isNotEmpty)
+            FieldMapping(keyCol, mappedKeyB),
           if (valColA.isNotEmpty && valColB.isNotEmpty && valColA != keyCol)
             FieldMapping(valColA, valColB),
         ];
 
         final rules = <String, FieldRule>{
           if (keyCol.isNotEmpty)
-            keyCol: const FieldRule(type: SemanticType.identifier, trim: false, tolerance: '0'),
+            keyCol: const FieldRule(
+              type: SemanticType.identifier,
+              trim: false,
+              tolerance: '0',
+            ),
           if (valColA.isNotEmpty && valColA != keyCol)
-            valColA: inferredRules[valColA] ?? const FieldRule(type: SemanticType.decimal, trim: true),
+            valColA:
+                inferredRules[valColA] ??
+                const FieldRule(type: SemanticType.decimal, trim: true),
         };
 
         final isKeyUnique = keyUniquenessA && keyUniquenessB;
@@ -316,12 +348,27 @@ abstract final class SmartProposalEngine {
     }
 
     if (totalNonEmpty > 0 && percentCount / totalNonEmpty >= 0.6) {
-      return const FieldRule(type: SemanticType.percentage, trim: true, tolerance: '0');
+      return const FieldRule(
+        type: SemanticType.percentage,
+        trim: true,
+        tolerance: '0',
+        webAuto: true,
+      );
     }
-    if (totalNonEmpty > 0 && (numericCount + percentCount) / totalNonEmpty >= 0.6) {
-      return const FieldRule(type: SemanticType.decimal, trim: true, tolerance: '0');
+    if (totalNonEmpty > 0 &&
+        (numericCount + percentCount) / totalNonEmpty >= 0.6) {
+      return const FieldRule(
+        type: SemanticType.decimal,
+        trim: true,
+        tolerance: '0',
+        webAuto: true,
+      );
     }
-    return const FieldRule(type: SemanticType.freeText, trim: true);
+    return const FieldRule(
+      type: SemanticType.freeText,
+      trim: true,
+      webAuto: true,
+    );
   }
 
   static String _normalize(String input) {
@@ -329,6 +376,11 @@ abstract final class SmartProposalEngine {
         .toLowerCase()
         .trim()
         .replaceAll(RegExp(r'[\s\-_]+'), '_')
-        .replaceAll(RegExp(r'[^a-z0-9_áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]'), '');
+        .replaceAll(
+          RegExp(
+            r'[^a-z0-9_áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]',
+          ),
+          '',
+        );
   }
 }

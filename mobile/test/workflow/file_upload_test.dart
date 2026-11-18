@@ -103,7 +103,7 @@ NV003,Lê Hoàng Nam,Kinh Doanh,12000000''';
 
     test('WorkflowController imports registered user file and reaches ready state', () async {
       const csvA = 'ID,Name,Score\n001,Alice,8.5\n002,Bob,9.0';
-      const csvB = 'ID,Name,Score\n001,Alice,8,5\n002,Bob,9.5';
+      const csvB = 'ID,Name,Score\n001,Alice,"8,5"\n002,Bob,9.5';
 
       final infoA = MobileFileUploadService.processFileBytes(
         side: SourceSide.a,
