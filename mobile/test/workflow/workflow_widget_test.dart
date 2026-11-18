@@ -165,7 +165,7 @@ void main() {
   );
 
   testWidgets(
-    'mobile bottom tabbar, UI components and 2-sheet diff view work seamlessly',
+    'Guided Mobile Workflow navigation, auxiliary views, session resume card and 2-sheet diff view work seamlessly',
     (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
@@ -173,19 +173,26 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const ExcelCompareApp());
-      expect(find.byType(DytavaBottomNavBar), findsOneWidget);
+      // Verify Home uses BrandIllustration.hero (heroGetStarted) and no 5-tab dashboard bar
+      expect(find.byType(BrandIllustration), findsWidgets);
+      expect(find.byType(BrandIcon), findsWidgets);
 
-      // Navigate across bottom tabs: Học tập & Quy tắc -> Cài đặt -> Trang chủ
-      await tester.tap(find.text('Học tập'));
-      await tester.pumpAndSettle();
+      // Open auxiliary Policy Presets & Learn view from Home secondary action
+      await tap(tester, 'Mẫu quy tắc');
       expect(find.text('academic-records-v1'), findsOneWidget);
       expect(find.byType(DytavaPolicyCard), findsWidgets);
 
-      await tester.tap(find.text('Cài đặt'));
+      // Return to Home via Back button
+      await tester.tap(find.byTooltip('Quay lại'));
       await tester.pumpAndSettle();
-      expect(find.text('Sheet Diff 2 Sheets (Hợp nhất & Song song)'), findsOneWidget);
 
-      await tester.tap(find.text('Trang chủ'));
+      // Open Settings & Privacy auxiliary view from Home secondary action
+      await tap(tester, 'Cài đặt & Bảo mật');
+      expect(
+        find.text('Sheet Diff 2 Sheets (Hợp nhất & Song song)'),
+        findsOneWidget,
+      );
+      await tester.tap(find.byTooltip('Quay lại'));
       await tester.pumpAndSettle();
 
       // Run 1-tap Sheet Diff 2 Sheets
@@ -211,11 +218,17 @@ void main() {
       expect(find.text('Cột id ↔ id'), findsOneWidget);
       expect(find.text('Cột amount ↔ amount'), findsOneWidget);
 
-      // Check History tab shows the completed 2-sheet session
-      await tester.tap(find.text('Lịch sử'));
+      // Return to Home via AppBar Home action and verify Session Resume Card ("Tiếp tục phiên so sánh")
+      await tester.tap(find.byTooltip('Về trang chủ'));
+      await tester.pumpAndSettle();
+      expect(find.byType(DytavaSessionResumeCard), findsOneWidget);
+      expect(find.text('Tiếp tục phiên so sánh'), findsOneWidget);
+      expect(find.byType(DytavaResultCard), findsOneWidget);
+
+      // Open current session history view from AppBar
+      await tester.tap(find.byTooltip('Phiên trong bộ nhớ'));
       await tester.pumpAndSettle();
       expect(find.byType(DytavaHistoryCard), findsOneWidget);
-      expect(find.byType(DytavaResultCard), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -423,6 +436,87 @@ void main() {
       await tester.ensureVisible(find.text('Đóng'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Đóng'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Automated Brand Asset QA: all 47 DytavaIllustrations and core DytavaIcons render and transition by business state',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      // 1. Verify state-driven BrandIllustration transitions across workflow
+      await tester.pumpWidget(const ExcelCompareApp());
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is BrandIllustration &&
+              w.asset == DytavaIllustrations.heroGetStarted,
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is BrandIllustration &&
+              w.asset == DytavaIllustrations.securityLocal,
+        ),
+        findsOneWidget,
+      );
+
+      // Go to Source Selection: unselected slots show emptyFiles illustration
+      await tap(tester, 'So sánh mới (dữ liệu mẫu)');
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is BrandIllustration &&
+              w.asset == DytavaIllustrations.emptyFiles,
+        ),
+        findsNWidgets(2),
+      );
+
+      // Selecting Source A replaces its emptyFiles illustration with fileCsv format BrandIcon
+      await tap(tester, 'Chọn bảng mẫu A');
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is BrandIllustration &&
+              w.asset == DytavaIllustrations.emptyFiles,
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is BrandIcon && w.asset == DytavaIcons.fileCsv,
+        ),
+        findsWidgets,
+      );
+
+      // 2. Render gallery of all 47 DytavaIllustrations and all core DytavaIcons to verify SVG asset integrity
+      expect(DytavaIllustrations.allAssets.length, 47);
+      expect(DytavaIcons.allCoreAssets.length, greaterThanOrEqualTo(75));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: DytavaTheme.lightTheme,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  for (final ill in DytavaIllustrations.allAssets)
+                    BrandIllustration(ill, size: 48),
+                  for (final ic in DytavaIcons.allCoreAssets)
+                    BrandIcon(ic, size: 20),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },

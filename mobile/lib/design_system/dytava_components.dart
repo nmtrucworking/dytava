@@ -13,7 +13,7 @@ import 'dytava_illustrations.dart';
 import 'dytava_typography.dart';
 
 /// Huy hiệu trạng thái so sánh chuẩn thương hiệu Dytava v2.0
-/// Bổ sung Semantics đầy đủ cho trình đọc màn hình (TalkBack / VoiceOver).
+/// Sử dụng `BrandIcon` SVG chính thức và bổ sung Semantics đầy đủ cho TalkBack / VoiceOver.
 class DytavaStatusBadge extends StatelessWidget {
   final String label;
   final Color color;
@@ -69,7 +69,7 @@ class DytavaStatusBadge extends StatelessWidget {
         label: label,
         color: DytavaColors.exact,
         backgroundColor: DytavaColors.exactBg,
-        iconData: Icons.add_circle_outline,
+        iconAsset: DytavaIcons.added,
         semanticLabel: 'Trạng thái cấu trúc: Hàng được thêm ($label)',
       );
 
@@ -78,7 +78,7 @@ class DytavaStatusBadge extends StatelessWidget {
         label: label,
         color: DytavaColors.different,
         backgroundColor: DytavaColors.differentBg,
-        iconData: Icons.remove_circle_outline,
+        iconAsset: DytavaIcons.removed,
         semanticLabel: 'Trạng thái cấu trúc: Hàng bị thiếu ($label)',
       );
 
@@ -98,7 +98,7 @@ class DytavaStatusBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (iconAsset != null) ...[
-              DytavaAsset(iconAsset!, size: 16),
+              BrandIcon(iconAsset!, size: 16),
               const SizedBox(width: 4),
             ] else if (iconData != null) ...[
               Icon(iconData, size: 14, color: color),
@@ -111,6 +111,276 @@ class DytavaStatusBadge extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Thẻ "Phiên hiện tại — Tiếp tục phiên so sánh" trên màn hình Trang chủ (`SCR-01`).
+/// Hiển thị khi đang có phiên làm việc hợp lệ trong bộ nhớ tạm để người dùng quay lại ngay.
+class DytavaSessionResumeCard extends StatelessWidget {
+  final String stageLabel;
+  final String sourceSummary;
+  final bool hasCompletedResult;
+  final VoidCallback onResume;
+  final VoidCallback? onCloseSession;
+
+  const DytavaSessionResumeCard({
+    super.key,
+    required this.stageLabel,
+    required this.sourceSummary,
+    required this.onResume,
+    this.hasCompletedResult = false,
+    this.onCloseSession,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      label:
+          'Phiên hiện tại: $stageLabel. $sourceSummary. Chạm Tiếp tục phiên so sánh để mở lại.',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: DytavaColors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: DytavaColors.primary.withValues(alpha: 0.35),
+            width: 1.2,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              offset: Offset(0, 2),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: DytavaColors.softBlue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: BrandIcon(
+                    hasCompletedResult
+                        ? DytavaIcons.success
+                        : DytavaIcons.compareProgress,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Phiên hiện tại',
+                        style: DytavaTypography.titleMedium,
+                      ),
+                      Text(
+                        stageLabel,
+                        style: DytavaTypography.bodySmall.copyWith(
+                          color: DytavaColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: hasCompletedResult
+                        ? DytavaColors.softGreen
+                        : DytavaColors.softBlue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    hasCompletedResult ? 'Đã có kết quả' : 'Đang mở',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: hasCompletedResult
+                          ? DytavaColors.exact
+                          : DytavaColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(sourceSummary, style: DytavaTypography.bodyMedium),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      backgroundColor: DytavaColors.softBlue,
+                      foregroundColor: DytavaColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: onResume,
+                    icon: const BrandIcon(DytavaIcons.forward, size: 18),
+                    label: const Text(
+                      'Tiếp tục phiên so sánh',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                if (onCloseSession != null) ...[
+                  const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: 'Đóng phiên hiện tại',
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
+                    onPressed: onCloseSession,
+                    icon: const BrandIcon(DytavaIcons.delete, size: 20),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Thanh hành động cố định ở cuối màn hình (Sticky Bottom Action Bar) cho Guided Mobile Workflow.
+/// Giữ thao tác chính (Primary CTA) luôn trong tầm ngón cái mà không phải cuộn hết danh sách dài.
+class DytavaStickyActionBar extends StatelessWidget {
+  final String primaryLabel;
+  final VoidCallback? onPrimaryPressed;
+  final String? primaryIconAsset;
+  final String? secondaryLabel;
+  final VoidCallback? onSecondaryPressed;
+  final String? helperText;
+
+  const DytavaStickyActionBar({
+    super.key,
+    required this.primaryLabel,
+    required this.onPrimaryPressed,
+    this.primaryIconAsset,
+    this.secondaryLabel,
+    this.onSecondaryPressed,
+    this.helperText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: DytavaColors.white,
+        border: Border(top: BorderSide(color: DytavaColors.border, width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x0A000000),
+            offset: Offset(0, -2),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (helperText != null) ...[
+                Text(
+                  helperText!,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: DytavaTypography.bodySmall.copyWith(
+                    color: DytavaColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
+              Row(
+                children: [
+                  if (secondaryLabel != null && onSecondaryPressed != null) ...[
+                    Expanded(
+                      flex: 2,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(48, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: onSecondaryPressed,
+                        child: Text(
+                          secondaryLabel!,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  Expanded(
+                    flex: 3,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: DytavaColors.primary,
+                        foregroundColor: DytavaColors.white,
+                        minimumSize: const Size(48, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: onPrimaryPressed,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (primaryIconAsset != null) ...[
+                            BrandIcon(primaryIconAsset!, size: 18),
+                            const SizedBox(width: 8),
+                          ],
+                          Flexible(
+                            child: Text(
+                              primaryLabel,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: DytavaTypography.labelLarge,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -180,10 +450,7 @@ class DytavaResultCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         alignment: Alignment.center,
-                        child: const DytavaAsset(
-                          DytavaIcons.fileXlsx,
-                          size: 24,
-                        ),
+                        child: const BrandIcon(DytavaIcons.fileXlsx, size: 24),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -214,7 +481,7 @@ class DytavaResultCard extends StatelessWidget {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            DytavaAsset(DytavaIcons.success, size: 16),
+                            BrandIcon(DytavaIcons.success, size: 16),
                             SizedBox(width: 4),
                             Text(
                               'Hoàn thành',
@@ -386,7 +653,7 @@ class _SecondaryMetricItem extends StatelessWidget {
   }
 }
 
-/// Thẻ "Các khác biệt cần kiểm tra" (Data-first UX & Progressive Disclosure — Mục 4)
+/// Thẻ "Các khác biệt cần kiểm tra" (Data-first UX & Progressive Disclosure)
 /// Giúp người dùng thấy ngay vấn đề, giá trị Nguồn A vs Nguồn B và nguyên nhân sai khác
 /// trước khi phải thao tác với toàn bộ lưới bảng tính.
 class DytavaPriorityDiffCard extends StatelessWidget {
@@ -463,9 +730,18 @@ class DytavaPriorityDiffCard extends StatelessWidget {
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text(
-                  'Hàng ${cell.rowA} · Cột ${cell.mapping.fieldA}',
-                  style: DytavaTypography.titleMedium,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    BrandIcon.decision(cell.decision.status, size: 18),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'Hàng ${cell.rowA} · Cột ${cell.mapping.fieldA}',
+                        style: DytavaTypography.titleMedium,
+                      ),
+                    ),
+                  ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -563,7 +839,7 @@ class DytavaPriorityDiffCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.manage_search, size: 18, color: statusColor),
+                  const BrandIcon(DytavaIcons.search, size: 18),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -587,7 +863,7 @@ class DytavaPriorityDiffCard extends StatelessWidget {
                     minimumSize: const Size(48, 48),
                   ),
                   onPressed: onQuickBottomSheet,
-                  icon: const Icon(Icons.layers_outlined, size: 18),
+                  icon: const BrandIcon(DytavaIcons.preview, size: 18),
                   label: const Text('Xem nhanh (Sheet)'),
                 ),
                 FilledButton.tonalIcon(
@@ -595,7 +871,7 @@ class DytavaPriorityDiffCard extends StatelessWidget {
                     minimumSize: const Size(48, 48),
                   ),
                   onPressed: onInspectDetail,
-                  icon: const Icon(Icons.open_in_new, size: 18),
+                  icon: const BrandIcon(DytavaIcons.openExternal, size: 18),
                   label: const Text('Xem chi tiết'),
                 ),
               ],
@@ -645,6 +921,8 @@ Future<void> showDytavaCellDetailBottomSheet({
               children: [
                 Row(
                   children: [
+                    BrandIllustration.verdict(cell.decision.status, size: 44),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Chi tiết ô · ${cell.mapping.fieldA} ↔ ${cell.mapping.fieldB}',
@@ -658,7 +936,7 @@ Future<void> showDytavaCellDetailBottomSheet({
                         minHeight: 48,
                       ),
                       onPressed: () => Navigator.of(sheetContext).pop(),
-                      icon: const Icon(Icons.close),
+                      icon: const BrandIcon(DytavaIcons.close, size: 20),
                     ),
                   ],
                 ),
@@ -678,7 +956,7 @@ Future<void> showDytavaCellDetailBottomSheet({
                   ],
                 ),
                 const Divider(height: 24),
-                Text(
+                const Text(
                   '1. Phân biệt Giá trị gốc (Raw) & Sau chuẩn hóa (Canonical)',
                   style: DytavaTypography.titleMedium,
                 ),
@@ -898,11 +1176,7 @@ Future<bool?> showDytavaConfigConfirmationSheet({
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      Icons.fact_check_outlined,
-                      color: DytavaColors.primary,
-                      size: 24,
-                    ),
+                    const BrandIcon(DytavaIcons.policy, size: 24),
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Text(
@@ -917,19 +1191,19 @@ Future<bool?> showDytavaConfigConfirmationSheet({
                         minHeight: 48,
                       ),
                       onPressed: () => Navigator.of(sheetContext).pop(false),
-                      icon: const Icon(Icons.close),
+                      icon: const BrandIcon(DytavaIcons.close, size: 20),
                     ),
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(
+                const Text(
                   'Vui lòng kiểm tra rõ khóa ghép, chính sách chuẩn hóa và chiều so sánh trước khi chạy đối chiếu.',
                   style: DytavaTypography.bodyMedium,
                 ),
                 const Divider(height: 24),
                 // 1. Khóa ghép & Chế độ
                 _ConfigSummaryItem(
-                  icon: Icons.vpn_key_outlined,
+                  iconAsset: DytavaIcons.key,
                   title: '1. Chế độ ghép hàng & Khóa định danh',
                   value: config.mode == MatchingMode.key
                       ? 'Ghép theo khóa (KEY) · Tuple khóa: ${resolvedKeys.isEmpty ? 'Chưa chọn' : resolvedKeys.join(' → ')}'
@@ -939,14 +1213,16 @@ Future<bool?> showDytavaConfigConfirmationSheet({
                 const SizedBox(height: 10),
                 // 2. Chính sách chuẩn hóa từng cột
                 _ConfigSummaryItem(
-                  icon: Icons.rule_folder_outlined,
+                  iconAsset: DytavaIcons.normalize,
                   title:
                       '2. Chính sách chuẩn hóa (${config.mappings.length} cột ánh xạ)',
                   value: [
                     for (final m in config.mappings)
                       () {
                         final r = config.rules[m.fieldA];
-                        if (r == null) return '${m.fieldA} ↔ ${m.fieldB}: mặc định';
+                        if (r == null) {
+                          return '${m.fieldA} ↔ ${m.fieldB}: mặc định';
+                        }
                         final extra =
                             (r.type == SemanticType.decimal ||
                                 r.type == SemanticType.percentage)
@@ -960,7 +1236,7 @@ Future<bool?> showDytavaConfigConfirmationSheet({
                 const SizedBox(height: 10),
                 // 3. Chiều so sánh
                 _ConfigSummaryItem(
-                  icon: Icons.swap_horiz,
+                  iconAsset: DytavaIcons.compareFiles,
                   title: '3. Chiều so sánh',
                   value: directionLabel,
                   confirmed: config.directionConfirmed,
@@ -985,7 +1261,7 @@ Future<bool?> showDytavaConfigConfirmationSheet({
                           minimumSize: const Size(48, 48),
                         ),
                         onPressed: () => Navigator.of(sheetContext).pop(true),
-                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        icon: const BrandIcon(DytavaIcons.check, size: 18),
                         label: const Text('Xác nhận lần này & Chạy'),
                       ),
                     ),
@@ -1001,13 +1277,13 @@ Future<bool?> showDytavaConfigConfirmationSheet({
 }
 
 class _ConfigSummaryItem extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String title;
   final String value;
   final bool confirmed;
 
   const _ConfigSummaryItem({
-    required this.icon,
+    required this.iconAsset,
     required this.title,
     required this.value,
     required this.confirmed,
@@ -1032,7 +1308,7 @@ class _ConfigSummaryItem extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: DytavaColors.primary),
+              BrandIcon(iconAsset, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(title, style: DytavaTypography.titleMedium),
@@ -1117,7 +1393,7 @@ class DytavaPolicyCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
-                    child: const DytavaAsset(DytavaIcons.saveRule, size: 22),
+                    child: const BrandIcon(DytavaIcons.saveRule, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1156,11 +1432,7 @@ class DytavaPolicyCard extends StatelessWidget {
                       ),
                     )
                   else
-                    const Icon(
-                      Icons.chevron_right,
-                      color: DytavaColors.textMuted,
-                      size: 20,
-                    ),
+                    const BrandIcon(DytavaIcons.forward, size: 18),
                 ],
               ),
             ),
@@ -1171,7 +1443,8 @@ class DytavaPolicyCard extends StatelessWidget {
   }
 }
 
-/// Thẻ tệp nguồn (File Card) chuẩn Brand Showcase Dytava
+/// Thẻ tệp nguồn (File Card) chuẩn Brand Showcase Dytava.
+/// Tích hợp trực tiếp `BrandIcon.format(format)` từ kho formats/svg.
 class DytavaFileCard extends StatelessWidget {
   final String fileName;
   final String metaText;
@@ -1190,15 +1463,11 @@ class DytavaFileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (badgeText, badgeBg, badgeFg) = switch (format) {
-      SourceFormat.xlsx => ('X', DytavaColors.softGreen, DytavaColors.exact),
-      SourceFormat.csv => ('CSV', DytavaColors.softBlue, DytavaColors.primary),
-      SourceFormat.tsv => ('TSV', DytavaColors.softCyan, DytavaColors.cyan),
-      SourceFormat.png || SourceFormat.jpeg => (
-        'OCR',
-        DytavaColors.softPurple,
-        DytavaColors.purple,
-      ),
+    final (badgeText, badgeBg) = switch (format) {
+      SourceFormat.xlsx => ('XLSX', DytavaColors.softGreen),
+      SourceFormat.csv => ('CSV', DytavaColors.softBlue),
+      SourceFormat.tsv => ('TSV', DytavaColors.softCyan),
+      SourceFormat.png || SourceFormat.jpeg => ('OCR', DytavaColors.softPurple),
     };
     return Semantics(
       button: onTap != null,
@@ -1225,21 +1494,14 @@ class DytavaFileCard extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
                       color: badgeBg,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
-                    child: Text(
-                      badgeText,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: badgeFg,
-                      ),
-                    ),
+                    child: BrandIcon.format(format, size: 24),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1257,18 +1519,10 @@ class DytavaFileCard extends StatelessWidget {
                     ),
                   ),
                   if (verified)
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: const BoxDecoration(
-                        color: DytavaColors.exact,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        size: 14,
-                        color: DytavaColors.white,
-                      ),
+                    const BrandIcon(
+                      DytavaIcons.success,
+                      size: 22,
+                      semanticLabel: 'Đã xác thực hợp lệ',
                     ),
                 ],
               ),
@@ -1319,7 +1573,7 @@ class DytavaHistoryCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
-                    child: const DytavaAsset(DytavaIcons.history, size: 22),
+                    child: const BrandIcon(DytavaIcons.history, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1351,7 +1605,7 @@ class DytavaHistoryCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right, color: DytavaColors.textMuted),
+                  const BrandIcon(DytavaIcons.forward, size: 18),
                 ],
               ),
             ),
@@ -1427,7 +1681,7 @@ class DytavaFeatureGrid extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         alignment: Alignment.center,
-                        child: DytavaAsset(item.iconAsset, size: 22),
+                        child: BrandIcon(item.iconAsset, size: 22),
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -1526,8 +1780,9 @@ class DytavaFilterTabs extends StatelessWidget {
   }
 }
 
-/// Thanh điều hướng dưới cùng (Bottom Navigation Bar 5 Tabs) chuẩn Brand Showcase
-/// Đảm bảo vùng chạm tối thiểu ≥ 48×48dp và Semantics cho TalkBack.
+/// Thanh điều hướng dưới cùng (Bottom Navigation Bar) chuẩn Dytava Branding v2.0.
+/// Sử dụng trực tiếp SVG `BrandIcon` (`navHome`, `navCompare`, `navHistory`, `navLearn`, `navSettings`)
+/// thay cho Material Icons, đảm bảo vùng chạm ≥ 48×48dp và Semantics cho TalkBack.
 class DytavaBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -1539,11 +1794,11 @@ class DytavaBottomNavBar extends StatelessWidget {
   });
 
   static const _items = [
-    ('Trang chủ', Icons.home_outlined, Icons.home),
-    ('So sánh', Icons.table_chart_outlined, Icons.table_chart),
-    ('Lịch sử', Icons.history_outlined, Icons.history),
-    ('Học tập', Icons.school_outlined, Icons.school),
-    ('Cài đặt', Icons.settings_outlined, Icons.settings),
+    ('Trang chủ', DytavaIcons.navHome),
+    ('So sánh', DytavaIcons.navCompare),
+    ('Lịch sử', DytavaIcons.navHistory),
+    ('Học tập', DytavaIcons.navLearn),
+    ('Cài đặt', DytavaIcons.navSettings),
   ];
 
   @override
@@ -1592,13 +1847,7 @@ class DytavaBottomNavBar extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              currentIndex == i ? _items[i].$3 : _items[i].$2,
-                              size: 20,
-                              color: currentIndex == i
-                                  ? DytavaColors.primary
-                                  : DytavaColors.textSecondary,
-                            ),
+                            BrandIcon(_items[i].$2, size: 20),
                             const SizedBox(height: 3),
                             Text(
                               _items[i].$1,
@@ -1701,6 +1950,8 @@ class _DytavaSheetPreviewTableState extends State<DytavaSheetPreviewTable> {
               children: [
                 Row(
                   children: [
+                    const BrandIcon(DytavaIcons.rows, size: 22),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         '${widget.sheetTitle} · Hàng #${row.ordinal + 1}',
@@ -1713,7 +1964,7 @@ class _DytavaSheetPreviewTableState extends State<DytavaSheetPreviewTable> {
                         minHeight: 48,
                       ),
                       onPressed: () => Navigator.of(sheetCtx).pop(),
-                      icon: const Icon(Icons.close),
+                      icon: const BrandIcon(DytavaIcons.close, size: 20),
                     ),
                   ],
                 ),
@@ -1799,11 +2050,7 @@ class _DytavaSheetPreviewTableState extends State<DytavaSheetPreviewTable> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.grid_on,
-                          size: 16,
-                          color: DytavaColors.primary,
-                        ),
+                        const BrandIcon(DytavaIcons.workbook, size: 18),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -1991,8 +2238,7 @@ enum SheetDiffLayoutMode {
   sideBySide2Sheets,
 }
 
-/// Component trung tâm: Bảng đối chiếu 2 Sheets (Sheet Diff 2 Sheets — P0)
-/// Đã nâng cấp toàn diện:
+/// Component nâng cao: Bảng đối chiếu 2 Sheets (`DytavaSheetDiffView`)
 /// - Cố định cột định danh hàng & khóa (`Hàng / Khóa`) bên trái
 /// - Cuộn ngang đồng bộ (`SingleChildScrollView(scrollDirection: Axis.horizontal)`) cho bảng rộng nhiều cột
 /// - Chiều rộng cột có giới hạn (`172dp–240dp`), không bao giờ bị bóp nghẹt khi số cột tăng
@@ -2103,11 +2349,7 @@ class _DytavaSheetDiffViewState extends State<DytavaSheetDiffView> {
             children: [
               Row(
                 children: [
-                  const Icon(
-                    Icons.compare,
-                    size: 18,
-                    color: DytavaColors.primary,
-                  ),
+                  const BrandIcon(DytavaIcons.compareTable, size: 18),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -2132,7 +2374,7 @@ class _DytavaSheetDiffViewState extends State<DytavaSheetDiffView> {
                   Expanded(
                     child: _modeButton(
                       label: 'Bảng hợp nhất (A ↔ B)',
-                      icon: Icons.table_rows_outlined,
+                      iconAsset: DytavaIcons.rows,
                       selected: _mode == SheetDiffLayoutMode.unified2Sheets,
                       onTap: () => setState(
                         () => _mode = SheetDiffLayoutMode.unified2Sheets,
@@ -2143,7 +2385,7 @@ class _DytavaSheetDiffViewState extends State<DytavaSheetDiffView> {
                   Expanded(
                     child: _modeButton(
                       label: 'Song song 2 Sheets (A | B)',
-                      icon: Icons.view_column_outlined,
+                      iconAsset: DytavaIcons.columns,
                       selected: _mode == SheetDiffLayoutMode.sideBySide2Sheets,
                       onTap: () => setState(
                         () => _mode = SheetDiffLayoutMode.sideBySide2Sheets,
@@ -2190,7 +2432,7 @@ class _DytavaSheetDiffViewState extends State<DytavaSheetDiffView> {
 
   Widget _modeButton({
     required String label,
-    required IconData icon,
+    required String iconAsset,
     required bool selected,
     required VoidCallback onTap,
   }) {
@@ -2215,13 +2457,7 @@ class _DytavaSheetDiffViewState extends State<DytavaSheetDiffView> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  icon,
-                  size: 16,
-                  color: selected
-                      ? DytavaColors.white
-                      : DytavaColors.textSecondary,
-                ),
+                BrandIcon(iconAsset, size: 16),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
@@ -2517,14 +2753,11 @@ class _DytavaSheetDiffViewState extends State<DytavaSheetDiffView> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          BrandIcon(
                             s.kind.contains('ADDED')
-                                ? Icons.add_box_outlined
-                                : Icons.indeterminate_check_box_outlined,
+                                ? DytavaIcons.added
+                                : DytavaIcons.removed,
                             size: 16,
-                            color: s.kind.contains('ADDED')
-                                ? DytavaColors.exact
-                                : DytavaColors.different,
                           ),
                           const SizedBox(width: 6),
                           Flexible(
@@ -2610,12 +2843,11 @@ class _DytavaSheetDiffViewState extends State<DytavaSheetDiffView> {
                           onOpenFullDetail: () => widget.onSelectCell(cell.id),
                         ),
                         borderRadius: BorderRadius.circular(6),
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.layers_outlined,
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: BrandIcon(
+                            DytavaIcons.preview,
                             size: 16,
-                            color: fg,
                             semanticLabel: 'Mở chi tiết nhanh bằng Bottom Sheet',
                           ),
                         ),
@@ -2806,10 +3038,11 @@ class _DytavaSheetDiffViewState extends State<DytavaSheetDiffView> {
 }
 
 /// Trạng thái rỗng chuẩn thương hiệu (Empty State — P1)
-/// Hỗ trợ tiêu đề, hướng dẫn ngữ cảnh và các nút hành động khắc phục cụ thể.
+/// Sử dụng `BrandIllustration` và `BrandIcon` theo ngữ cảnh.
 class DytavaEmptyState extends StatelessWidget {
   final String title;
   final String message;
+  final String illustrationAsset;
   final String? actionLabel;
   final VoidCallback? onImport;
   final VoidCallback? onOcr;
@@ -2818,6 +3051,7 @@ class DytavaEmptyState extends StatelessWidget {
     super.key,
     this.title = 'Sẵn sàng đối chiếu',
     this.message = 'Nhập hai giá trị ở trên rồi bấm So sánh để xem kết quả.',
+    this.illustrationAsset = DytavaIllustrations.emptyComparisons,
     this.actionLabel,
     this.onImport,
     this.onOcr,
@@ -2831,7 +3065,7 @@ class DytavaEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const DytavaAsset(DytavaIllustrations.emptyComparisons, size: 128),
+            BrandIllustration(illustrationAsset, size: 120),
             const SizedBox(height: 16),
             Text(
               title,
@@ -2858,7 +3092,7 @@ class DytavaEmptyState extends StatelessWidget {
                         minimumSize: const Size(48, 48),
                       ),
                       onPressed: onImport,
-                      icon: const Icon(Icons.upload_file, size: 18),
+                      icon: const BrandIcon(DytavaIcons.upload, size: 18),
                       label: Text(actionLabel ?? 'Chọn nguồn dữ liệu'),
                     ),
                   if (onOcr != null)
@@ -2867,10 +3101,7 @@ class DytavaEmptyState extends StatelessWidget {
                         minimumSize: const Size(48, 48),
                       ),
                       onPressed: onOcr,
-                      icon: const Icon(
-                        Icons.document_scanner_outlined,
-                        size: 18,
-                      ),
+                      icon: const BrandIcon(DytavaIcons.ocr, size: 18),
                       label: const Text('Quét OCR mẫu'),
                     ),
                 ],

@@ -214,28 +214,34 @@ avdmanager list device
 avdmanager list avd
 ```
 
-Nếu `Dytava_API35` chưa tồn tại:
+Sử dụng cấu hình **Google Pixel 6a tối ưu hiệu năng (`720×1600` HD+ @ `280dpi`, 4 nhân CPU, 3 GB RAM, tăng tốc phần cứng GPU Apple Silicon `hw.gpu.mode=host`)** để giữ nguyên tỷ lệ khung hình chuẩn `20:9` (`411×914 dp`), hiển thị sắc nét nhưng giảm 55% tải điểm ảnh và loại bỏ hiện tượng giật lag do render phần mềm (`SwiftShader`). Nếu `Pixel_6a` chưa tồn tại:
 
 ```bash
 avdmanager create avd \
-  -n Dytava_API35 \
-  -k "system-images;android-35;google_apis;arm64-v8a"
+  -n Pixel_6a \
+  -k "system-images;android-35;google_apis;arm64-v8a" \
+  -d "pixel_6a"
 ```
 
-Nếu được hỏi có tạo `custom hardware profile` hay không, có thể nhấn Enter để dùng mặc định. Xác nhận:
+Cấu hình tối ưu trong `~/.android/avd/Pixel_6a.avd/config.ini`:
+- `hw.gpu.enabled=yes` và `hw.gpu.mode=host` (kích hoạt GPU Metal trên chip Apple Silicon thay vì CPU `SwiftShader`)
+- `hw.cpu.ncore=4`, `hw.ramSize=3072`, `vm.heapSize=384`
+- `hw.lcd.width=720`, `hw.lcd.height=1600`, `hw.lcd.density=280`, `showDeviceFrame=no`
+
+Xác nhận:
 
 ```bash
 emulator -list-avds
 ```
 
-Kết quả dự kiến có tên `Dytava_API35`. Không cần điện thoại thật hoặc USB debugging.
+Kết quả dự kiến có tên `Pixel_6a`. Không cần điện thoại thật hoặc USB debugging.
 
 ### 4.6. Khởi động Emulator và kiểm tra ADB
 
 Mở **Terminal 1**:
 
 ```bash
-emulator -avd Dytava_API35
+emulator -avd Pixel_6a -gpu host
 ```
 
 Giữ cửa sổ emulator và tiến trình này mở. Khi Android khởi động, trong **Terminal 2**:
@@ -251,7 +257,7 @@ Kỳ vọng `adb devices` hiển thị `emulator-5554   device` (ID có thể kh
 Nếu màn hình treo/đen và muốn khởi động không tải snapshot (không xóa dữ liệu người dùng):
 
 ```bash
-emulator -avd Dytava_API35 -no-snapshot-load
+emulator -avd Pixel_6a -no-snapshot-load
 ```
 
 Chỉ chạy lệnh đó sau khi đã dừng instance emulator cũ.
@@ -312,7 +318,7 @@ Không cần cài SDK hay tạo AVD lại:
 
 ```bash
 # Terminal 1
-emulator -avd Dytava_API35
+emulator -avd Pixel_6a
 
 # Terminal 2 — khi emulator đã boot
 cd /duong-dan-thuc-te/toi/dytava/mobile
@@ -433,7 +439,7 @@ npm run test:e2e
 - [ ] `command -v sdkmanager` trỏ tới `~/Library/Android/sdk/cmdline-tools/latest/bin/sdkmanager`.
 - [ ] `sdkmanager --version`, `adb version`, `emulator -version` chạy được.
 - [ ] `flutter doctor -v` không còn lỗi Android toolchain/licensing; cảnh báo không cài Android Studio được phân loại riêng.
-- [ ] `emulator -list-avds` có `Dytava_API35`; `adb devices` có thiết bị trạng thái `device`.
+- [ ] `emulator -list-avds` có `Pixel_6a`; `adb devices` có thiết bị trạng thái `device`.
 - [ ] `flutter pub get`, `flutter analyze`, `flutter test` chạy từ `mobile/`.
 - [ ] `flutter run` mở được **Dytava flow/activity** trên Android ảo.
 - [ ] `flutter build apk --debug` tạo APK; lưu log/ảnh kết quả thực tế.
@@ -453,8 +459,8 @@ npm run test:e2e
 | Dart SDK không tương thích | `mobile/pubspec.yaml` yêu cầu `^3.13.7` | Nâng Flutter phù hợp, xác minh `flutter --version` |
 | `flutter pub get` không tìm được `excelcompare_core` | Chỉ copy `mobile/` | Clone toàn bộ monorepo, giữ `packages/excelcompare_core/` cạnh `mobile/` |
 | `avdmanager` hoặc `emulator` không tìm thấy | Thiếu `cmdline-tools`/`emulator` package hoặc PATH | Chạy `sdkmanager --list`, cài `emulator`, kiểm tra `$ANDROID_HOME/emulator` |
-| `No devices found` | Emulator chưa boot hoặc ADB chưa nhận | `emulator -list-avds`, `emulator -avd Dytava_API35`, `adb devices` |
-| Emulator màn hình đen | Snapshot/renderer hoặc tăng tốc phần cứng | Đóng emulator cũ rồi thử `emulator -avd Dytava_API35 -no-snapshot-load`; đọc log |
+| `No devices found` | Emulator chưa boot hoặc ADB chưa nhận | `emulator -list-avds`, `emulator -avd Pixel_6a`, `adb devices` |
+| Emulator màn hình đen | Snapshot/renderer hoặc tăng tốc phần cứng | Đóng emulator cũ rồi thử `emulator -avd Pixel_6a -no-snapshot-load`; đọc log |
 | Android/Gradle build fail | JDK, AGP, Gradle, SDK/NDK xung đột | Ghi log `flutter build apk -v`, kiểm tra JDK Gradle, `flutter doctor -v`; không thay version tùy tiện |
 | `flutter doctor` báo Android Studio not installed | IDE không cài theo chủ đích | Chấp nhận cảnh báo IDE **nếu** Android toolchain và licenses đầy đủ |
 | `npm` báo `EBADENGINE` | Node.js thấp hơn `>=24` | Nâng Node.js 24+ |

@@ -1,17 +1,17 @@
 ---
 document_id: DYT-MOBILE-IMPL-001
-version: 0.2.0
+version: 0.3.0
 status: DRAFT
 implementation_state: IN_PROGRESS
 owner: TBD
 reviewer: TBD
 updated: 2026-11-18
-release_baseline: Android P0; functional activity foundation + Mobile UX fast-track
+release_baseline: Android P0; Guided Mobile Workflow + Brand Asset Integration v2.0
 ---
 
 # Mobile — nền tảng flow và activity
 
-Bản triển khai ngày 18/11/2026 ưu tiên **hành vi, điều phối và tối ưu hóa trải nghiệm người dùng di động (Mobile UX)**, bám sát Design System Dytava v2.0 và 8 Activity cốt lõi. Hỗ trợ luồng chuẩn 10 màn hình và luồng thao tác tinh gọn (Fast-Track 1-Tap Actions), nhưng **chưa là ứng dụng nhập/so sánh/xuất tệp production**. Không thay yêu cầu PRD/SRS, không enable capability từ branding hoặc từ test fixture.
+Bản triển khai ngày 18/11/2026 ưu tiên **kiến trúc Guided Mobile Workflow, phân tách mô-đun tầng Presentation và tích hợp toàn diện hệ thống nhận diện Dytava v2.0 (`BrandIcon` & `BrandIllustration`)**, bám sát 8 Activity cốt lõi. Hỗ trợ luồng chuẩn 10 màn hình và luồng thao tác tinh gọn (Fast-Track 1-Tap Actions), nhưng **chưa là ứng dụng nhập/so sánh/xuất tệp production**. Không thay yêu cầu PRD/SRS, không enable capability từ branding hoặc từ test fixture.
 
 Nguồn thiết kế: [PRD §5](../product/PRD.md#5-user-journey-p0-và-tiêu-chí-trải-nghiệm), [UI/UX](../design/UI_UX_SPEC.md), [8 activity](../diagrams/MOBILE_ACTIVITIES.md), [3 state machines](../diagrams/MOBILE_STATES.md), [INP-008](../specs/input/08_import_state_machine.md), [EP-1](../specs/engine/01_execution_plan.md), [ER-1/WP-1](../specs/engine/04_result_runtime.md), [EX-1](../specs/report/STREAMING_EXPORT_CONTRACT.md), [RP-1](../requirements/RESOURCE_PROFILES.md).
 
@@ -21,7 +21,7 @@ Nguồn thiết kế: [PRD §5](../product/PRD.md#5-user-journey-p0-và-tiêu-ch
 
 | Phần | Đã triển khai | Chưa có / gate còn thiếu |
 | --- | --- | --- |
-| Presentation SCR-01..10 | Guided flow 4 giai đoạn, Bottom Navigation 5 Tab (Trang chủ, So sánh, Lịch sử, Học tập, Cài đặt), bộ UI Components chuẩn v2.0, **Sheet Diff 2 Sheets** (Hợp nhất A↔B & Song song A\|B), Fast-Track 1-tap flow, 41 mobile tests pass | UX sign-off, TalkBack/device evidence trên thiết bị vật lý |
+| Presentation SCR-01..10 | **Guided Mobile Workflow** 4 giai đoạn (`Nguồn → Cấu hình → So sánh → Kết quả`), loại bỏ thanh 5 tab trang trí cố định và lưới dashboard trên Home; bổ sung `DytavaSessionResumeCard` ("Tiếp tục phiên so sánh"), tích hợp `BrandIcon` + `BrandIllustration` theo trạng thái nghiệp vụ, **Sheet Diff 2 Sheets** (Hợp nhất A↔B & Song song A\|B), 45 mobile tests pass | UX sign-off, TalkBack/device evidence trên thiết bị vật lý |
 | ACT-02 / Input | Hai slot độc lập, attempt binding, review scope/header, snapshot đầy đủ của fixture, hỗ trợ nạp/xác thực nhanh inline | SAF/file picker, content sniffing, UTF-8/dialect, parser XLSX/CSV/TSV, EOF/hash thật, streaming/private spill |
 | ACT-03 / OCR | Một slot ảnh, review **từng** cell mẫu, revision mới xóa review, stale confirmation bị bỏ | Camera/gallery, ảnh gốc/geometry/crop, recognizer bundled, corrections/receipts Input0.2 và schema migration |
 | ACT-04 / Plan | Mapping bằng Field IDs 1:1, tự động ghép cột cùng tên, KEY/POSITIONAL, ordered keys, typed policy, source separators, tolerance, direction và confirmations | EP-1/CE-1 wire/digest/compiled policy đầy đủ, structural-only mode, enabled device profiles/capability registry |
@@ -42,7 +42,11 @@ Tất cả models tại `domain/workflow.dart` là **internal application models
 | [`app/workflow_composition.dart`](../../mobile/lib/app/workflow_composition.dart) | Composition rõ ràng cho harness fixture; nơi thay adapters sau admission |
 | [`domain/workflow.dart`](../../mobile/lib/domain/workflow.dart) | Immutable artifacts/bindings/snapshots/config/plan/result, cancellation và port interfaces; không import Flutter |
 | [`application/workflow_controller.dart`](../../mobile/lib/application/workflow_controller.dart) | State transitions, readiness/route guards, invalidation, retries, orchestration; dùng ChangeNotifier để cập nhật view |
-| [`features/workflow/workflow_page.dart`](../../mobile/lib/features/workflow/workflow_page.dart) | 10 màn hình chức năng; chỉ gửi commands, render state và giữ input UI cục bộ |
+| [`design_system/dytava_asset.dart`](../../mobile/lib/design_system/dytava_asset.dart) | `BrandIcon` và `BrandIllustration` tập trung, phân giải SVG theo trạng thái nghiệp vụ, co giãn responsive và kiểm soát Semantics |
+| [`design_system/dytava_components.dart`](../../mobile/lib/design_system/dytava_components.dart) | Bộ Mobile UI Patterns: `DytavaStatusBadge`, `DytavaSessionResumeCard`, `DytavaStickyActionBar`, `DytavaResultCard`, `DytavaPriorityDiffCard`, `DytavaSheetPreviewTable`, `DytavaSheetDiffView`, `showDytavaCellDetailBottomSheet`, `showDytavaConfigConfirmationSheet` |
+| [`features/workflow/workflow_page.dart`](../../mobile/lib/features/workflow/workflow_page.dart) | Coordinator Scaffold (~350 dòng), quản lý vòng đời, điều hướng Guided Mobile Workflow, bố cục thích ứng (`320dp`–`tablet`) và kết nối các màn hình con |
+| [`features/workflow/screens/*.dart`](../../mobile/lib/features/workflow/screens/) | 6 tệp màn hình độc lập: `home_screen_view.dart` (`SCR-01`), `source_selection_view.dart` (`SCR-02`), `preview_and_ocr_view.dart` (`SCR-03..04`), `mapping_and_policy_view.dart` (`SCR-05..06`), `progress_view.dart` (`SCR-07`), `results_and_detail_view.dart` (`SCR-08..10`) |
+| [`features/workflow/widgets/workflow_common_widgets.dart`](../../mobile/lib/features/workflow/widgets/workflow_common_widgets.dart) | `DytavaGuidedStepHeader`, `WorkflowIssueList`, `WorkflowInfoBanner`, `WorkflowInputStateBadge` và các view tiện ích phụ trợ (Phiên tạm, Mẫu quy tắc, Cài đặt) |
 | [`infrastructure/demo/demo_workflow_ports.dart`](../../mobile/lib/infrastructure/demo/demo_workflow_ports.dart) | Input/KEY/POSITIONAL/JSON preview fixture-only; không resolve đường dẫn người dùng |
 | [`features/diagnostics/compare_demo_page.dart`](../../mobile/lib/features/diagnostics/compare_demo_page.dart) | Diagnostic 2 giá trị cũ, vẫn truy cập từ Home và giữ regression tests |
 
@@ -136,3 +140,19 @@ B: nguyen␠van⟦∅⟧a
 Không thay Core policy hoặc acceptance registry production. Evidence cho thay đổi này được ghi riêng ở [text-difference-evidence.json](../testing/text-difference-evidence.json); summary 33 tests/APK ở §7 giữ làm bằng chứng lần chạy nền tảng trước đó.
 
 Kiểm tra bản bổ sung: `flutter analyze` **PASS**, `flutter test` **39 tests PASS**, `flutter build apk --debug` **PASS**.
+
+## 9. Tái cấu trúc Guided Mobile Workflow & Tích hợp hệ thống Branding v2.0 — 18/11/2026
+
+1. **Tách điều hướng ứng dụng khỏi các bước workflow (P0):**
+   - Loại bỏ thanh 5 tab trang trí cố định trong luồng đối chiếu và lưới dashboard 8 module trên Home.
+   - Trang chủ (`SCR-01`) tập trung vào nhiệm vụ khởi tạo phiên mới và thẻ **Phiên hiện tại — Tiếp tục phiên so sánh** (`DytavaSessionResumeCard`) khi đang có phiên hợp lệ.
+   - Các tiện ích phụ (Mẫu quy tắc, Phiên trong bộ nhớ, Cài đặt & Bảo mật, Công cụ thử nghiệm 2 giá trị) được truy cập qua thanh tác vụ thứ cấp gọn nhẹ trên Home và AppBar, không cạnh tranh với nhiệm vụ đối chiếu.
+2. **Tích hợp `BrandIcon` & `BrandIllustration` theo trạng thái nghiệp vụ (P0 & P1):**
+   - Xây dựng `BrandIcon` và `BrandIllustration` trong [`dytava_asset.dart`](../../mobile/lib/design_system/dytava_asset.dart), mở rộng [`dytava_icons.dart`](../../mobile/lib/design_system/dytava_icons.dart) (hơn 75 hằng số SVG core/format/dtype) và [`dytava_illustrations.dart`](../../mobile/lib/design_system/dytava_illustrations.dart) (đầy đủ 47 illustrations).
+   - Áp dụng chuyển đổi tài nguyên theo trạng thái: `emptyFiles` khi chưa chọn nguồn → chuyển sang `BrandIcon.format(format)` khi đã chọn nguồn; `emptyMapping` khi chưa ghép cột; `processingImport` / `processingOcr` / `processingCompare` / `processingReport` kèm `LinearProgressIndicator` thực; `successImport` / `successCompare`; `emptyFilter` khi bộ lọc trống; `BrandIllustration.verdict(status)` trong Difference Detail & Bottom Sheet.
+3. **Chia mô-đun tầng Presentation & Bố cục thích ứng (P1):**
+   - Tách `workflow_page.dart` (từ 2.950 dòng) thành Coordinator (~350 dòng) và 6 tệp màn hình độc lập trong `mobile/lib/features/workflow/screens/` cùng `workflow_common_widgets.dart`.
+   - Bố cục thích ứng theo chiều rộng thiết bị (`320dp`, `360dp`, `390dp`, `768dp`) và tỷ lệ chữ `200%` mà không tràn khung hình.
+4. **Kiểm chứng tự động:**
+   - `cd mobile && flutter analyze`: **PASS (No issues found)**.
+   - `cd mobile && flutter test`: **PASS, 45 tests** (bao gồm bài kiểm thử Automated Brand Asset QA xác minh toàn bộ 47 `DytavaIllustrations` và các `DytavaIcons`).

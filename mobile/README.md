@@ -12,12 +12,12 @@ Flow chạy được: chọn A/B độc lập → review scope/header (hoặc re
 
 **Hướng dẫn chính thức của repository:** [RUN_PROJECT.md — macOS + VS Code + Android Emulator CLI](../docs-dytava/guides/RUN_PROJECT.md#4-chạy-flutter-mobile-bằng-vs-code--android-emulator-không-android-studio).
 
-Không cần điện thoại vật lý. Cài Android SDK **Command-line Tools cho Mac ARM**, Android Emulator và system image ARM64. Chỉ dẫn dưới đây áp dụng **sau khi đã cài và tạo AVD `Dytava_API35`** theo hướng dẫn đầy đủ.
+Không cần điện thoại vật lý. Cài Android SDK **Command-line Tools cho Mac ARM**, Android Emulator và system image ARM64. Chỉ dẫn dưới đây áp dụng **sau khi đã cài và tối ưu AVD `Pixel_6a`** (`720×1600` HD+ @ `280dpi`, GPU `host` Metal) theo hướng dẫn đầy đủ.
 
-**Terminal 1 — mở Android Emulator:**
+**Terminal 1 — mở Android Emulator (`Pixel_6a`):**
 
 ```bash
-emulator -avd Dytava_API35
+emulator -avd Pixel_6a -gpu host
 ```
 
 **Terminal 2 — tại thư mục `mobile/`:**

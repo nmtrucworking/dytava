@@ -90,3 +90,4 @@ Font được đóng gói cục bộ cho Web và Flutter. Bộ font UI không th
 
 - **Brand Showcase chính thức:** Mở tệp `branding/index.html` trên trình duyệt để xem toàn diện bảng màu, kiểu chữ, logo và các linh kiện UI trực quan có thể tương tác.
 - **Icon Vault 4K:** Mở `branding/catalog/index.html` để tìm kiếm và tải về 116+ icons và 18 định dạng tệp.
+- **Tích hợp Flutter (`BrandIcon` & `BrandIllustration`):** Xem đặc tả phân bổ tài nguyên theo màn hình và trạng thái nghiệp vụ tại [UI/UX Spec §5.3](design/UI_UX_SPEC.md#53-brand-asset-usage-specification-tích-hợp-hệ-thống-branding-v20) và mã nguồn [`mobile/lib/design_system/`](../mobile/lib/design_system/).

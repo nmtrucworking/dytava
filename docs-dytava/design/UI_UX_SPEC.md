@@ -1,19 +1,19 @@
 ---
 document_id: DYT-UX-001
-version: 0.1.1
+version: 0.2.0
 status: DRAFT
 owner: TBD
 reviewer: TBD
 updated: 2026-11-18
 release_baseline: Flutter / Android P0 expanded; iOS P1
-scope: IA, user flow, screen contracts, visual system, interaction states, UX acceptance
+scope: IA, user flow, screen contracts, visual system, brand asset specification, interaction states, UX acceptance
 ---
 
 # Dytava — UI/UX Interaction & Screen Specification
 
 > **Mục tiêu:** chuyển yêu cầu PRD/SRS thành hành vi giao diện có thể thiết kế, lập trình và kiểm thử trên Flutter Android. Đây là **bản thiết kế mục tiêu**, không phải ảnh chụp chức năng đang chạy.
 >
-> **Implementation evidence (18/11/2026):** đã có màn hình chức năng tối thiểu SCR-01..10 và coordinator trên **fixture**, gồm OCR review giả lập và JSON preview. [Implementation guide](../guides/MOBILE_IMPLEMENTATION.md) ghi rõ code/test/gaps; **chưa đạt Definition of Done production** cho bất kỳ screen nào. `CompareDemoPage` cũ giữ làm diagnostic. Visual, adapters thật và Android/device/accessibility evidence còn thiếu.
+> **Implementation evidence (18/11/2026):** đã tái cấu trúc tầng Presentation theo mô hình **Guided Mobile Workflow** (tách thành 6 module màn hình độc lập dưới `mobile/lib/features/workflow/screens/`), loại bỏ thanh 5 tab trang trí cố định và lưới dashboard 8 module trên Home, đồng thời tích hợp đồng bộ `BrandIcon` + `BrandIllustration` theo trạng thái nghiệp vụ. [Implementation guide](../guides/MOBILE_IMPLEMENTATION.md) ghi rõ code/test/gaps; **chưa đạt Definition of Done production** cho bất kỳ screen nào vì adapters vẫn chạy trên fixture. `CompareDemoPage` giữ làm diagnostic. Visual trên thiết bị vật lý, adapters thật và Android/device/accessibility evidence còn thiếu.
 
 ## 1. Nguồn điều khiển và phạm vi
 
@@ -228,6 +228,38 @@ Không sử dụng một `DataTable` hiển thị đồng thời toàn bộ bả
 
 **Copy principles:** nội dung có tác vụ/giải pháp cụ thể. Ví dụ: “Nguồn B chưa hoàn tất kiểm tra. Chọn **Xem vấn đề** để xử lý.” Không dùng câu “Hai bảng giống nhau 100%” nếu vẫn có UNRESOLVED, unmatched, filtered scope hoặc thiếu bằng chứng.
 
+### 5.3. Brand Asset Usage Specification (Tích hợp hệ thống Branding v2.0)
+
+Thay vì nhúng thủ công `Icon(Icons.xxx)` hoặc đặt illustration trang trí dàn trải, tầng Presentation sử dụng hai thành phần chuẩn hóa trong [`dytava_asset.dart`](../../mobile/lib/design_system/dytava_asset.dart):
+
+- **`BrandIcon`**: hiển thị Functional Icons (`116` icon trong `assets/dytava/icons/svg/`), File Format Icons (`18` định dạng trong `assets/dytava/formats/svg/`) và Status/Semantic Icons (`dtype-*`, `exact`, `equivalent`, `different`, `unresolved`). Cung cấp các factory ngữ nghĩa: `BrandIcon.format(SourceFormat)`, `BrandIcon.decision(DecisionStatus)`, `BrandIcon.semanticType(SemanticType)`, `BrandIcon.inputState(InputState)`.
+- **`BrandIllustration`**: hiển thị Illustration Library (`47` SVG trong `assets/dytava/illustrations/svg/square/` và `/wide/`) theo trạng thái nghiệp vụ. Tự động điều chỉnh kích thước và tỷ lệ (`1:1` hoặc `16:9`) theo không gian màn hình (`320dp` / `360dp` / `412dp` / `tablet`) và tỷ lệ phóng chữ (`200%`) để không lấn át thao tác chính.
+
+#### Quy tắc phân vai 3 lớp tài nguyên
+
+| Lớp tài nguyên | Thành phần Flutter | Quy tắc sử dụng & Accessibility |
+| --- | --- | --- |
+| **Functional Icons** | `BrandIcon` (`DytavaIcons.*`) | Dùng cho điều hướng, nút bấm, định dạng tệp, kiểu dữ liệu (`dtype-*`) và trạng thái ô. Icon đi kèm nhãn chữ đặt `semanticLabel = null` (`excludeFromSemantics: true`); icon độc lập bắt buộc có `semanticLabel`. |
+| **Contextual Illustrations** | `BrandIllustration` (`DytavaIllustrations.*`) | Dùng cho onboarding, empty state, trạng thái xử lý (`processing*`), hoàn tất (`success*`) và cảnh báo/lỗi (`status*`). Tối đa **1 illustration chính** trên vùng nhìn đầu tiên; mặc định loại khỏi thứ tự đọc TalkBack trừ khi mang thông tin trạng thái độc lập. |
+| **Brand Identity** | `DytavaIcons.symbol` / `horizontal`, `DytavaColors`, `DytavaTypography` | Nhất quán nhận diện thương hiệu; không đổi màu logo để báo lỗi hay trạng thái dữ liệu. |
+
+#### Ma trận phân bổ Asset theo màn hình và trạng thái (`SCR-01..10`)
+
+| Màn hình | Trạng thái nghiệp vụ | Component chứa | Functional Icons (`BrandIcon`) | Illustration (`BrandIllustration`) | Kích thước & Thay thế |
+| --- | --- | --- | --- | --- | --- |
+| **SCR-01 Home** | Chưa có phiên / Đang có phiên | `HomeScreenView`, `DytavaSessionResumeCard` | `symbol`, `importData`, `play`, `fileXlsx`, `fileCsv`, `filePng`, `saveRule`, `settings` | `heroGetStarted` (chưa có phiên) hoặc `heroEmptyWorkspace` (đang có phiên); `securityLocal` ở thẻ bảo mật | Hero `maxHeight: 108dp` (co `0.82x` ở `<350dp`); `securityLocal` `42dp` |
+| **SCR-02 Source Selection** | `UNSELECTED` → `SELECTED` / `PREVIEW_READY` | `SourceSelectionView`, `DytavaFileCard` | `play`, `check`, `fileCsv`, `ocr`, `preview`, `delete`, `cancel`, `mapping` | Đầu trang: `onboardingImport`. Trong từng thẻ A/B khi `UNSELECTED`: `emptyFiles` | Khi đã chọn tệp (`artifact != null`), **ẩn** `emptyFiles` và thay bằng `BrandIcon.format(format)` (`24dp`) |
+| **SCR-03 Preflight & Preview** | `PREFLIGHTING` / `PARSING` / `PREVIEW_READY` / `FAILED` / `CANCELLED` | `PreviewScreenView`, `DytavaSheetPreviewTable` | `rows`, `columns`, `workbook`, `play`, `check`, `ocr`, `refresh`, `back` | Đang nạp: `processingImport`; Hợp lệ: `successImport`; Hủy: `statusCancelled`; Lỗi: `BrandIllustration.issue(...)` (`statusFileCorrupt`, `statusNoPermission`, `statusUnsupportedFormat`) | `processingImport` `72dp` kèm `LinearProgressIndicator` thực; `successImport` `48dp` |
+| **SCR-04 OCR Review** | `NEEDS_REVIEW` (nhánh nguồn ảnh) | `OcrReviewScreenView` | `ocr`, `cells`, `check`, `crop` | `processingOcr` ở banner kiểm duyệt từng ô nhận dạng | `52dp`; khóa CTA xác nhận cho tới khi duyệt đủ 100% ô |
+| **SCR-05 Field Mapping** | Chưa ghép cột (`mappings.isEmpty`) / Đã ghép cột | `MappingScreenView` | `mapping`, `columns`, `link`, `check`, `empty`, `policy` | Đầu trang: `onboardingMapping`; Khi chưa ghép cột nào: `emptyMapping` | Khi `mappings.isNotEmpty`, ẩn `emptyMapping` và hiển thị danh sách cặp cột 1:1 |
+| **SCR-06 Matching & Policy** | Cấu hình khóa, quy tắc từng cột & chiều đối chiếu | `PolicyScreenView`, `showDytavaConfigConfirmationSheet` | `policy`, `key`, `normalize`, `compareFiles`, `BrandIcon.semanticType(type)` (`dtypeIdentifier`, `dtypeDecimal`, `dtypeString`, `dtypeBoolean`, `dtypePercentage`) | `onboardingPolicy` trên thẻ tóm tắt cấu hình | `onboardingPolicy` `maxHeight: 48dp`; mỗi cột hiển thị icon `dtype-*` `22dp` |
+| **SCR-07 Comparison Progress** | `VALIDATING` / `RUNNING` / `CANCELLING` / `CANCELLED` / `FAILED` | `ProgressScreenView` | `cancel`, `back`, `refresh` | Đang chạy: `processingCompare`; Đã hủy: `statusCancelled`; Lỗi: `statusError` | `84dp`; bắt buộc đi kèm `LinearProgressIndicator` thực, không dùng hình động giả |
+| **SCR-08 Results Overview** | `COMPLETED` / Lọc danh sách ô / Bảng `Sheet Diff` | `ResultsScreenView`, `DytavaPriorityDiffCard`, `DytavaSheetDiffView` | `exact`, `equivalent`, `different`, `unresolved`, `differences`, `added`, `removed`, `duplicate`, `compareTable`, `filter`, `preview`, `openExternal`, `export` | Header hoàn thành: `successCompare`; Khi bộ lọc có 0 kết quả: `emptyFilter` | `successCompare` `48dp`; ưu tiên hiển thị số liệu và `DytavaPriorityDiffCard` trước lưới bảng |
+| **SCR-09 Difference Detail** | Kiểm tra bằng chứng 1 cặp ô (`EXACT` / `EQUIVALENT` / `DIFFERENT` / `UNRESOLVED`) | `DifferenceDetailScreenView`, `showDytavaCellDetailBottomSheet` | `back`, `forward`, `differences`, `policy`, `close` | `BrandIllustration.verdict(status)`: `statusExact`, `statusEquivalent`, `statusDifferent`, `statusUnresolved` | `52dp` ở thẻ tiêu đề kết luận; hai khối giá trị A/B xếp dọc trên điện thoại (`<680dp`) |
+| **SCR-10 Export & Preview** | Cấu hình / Đang tạo preview / Hoàn tất preview RAM | `ExportScreenView` | `report`, `filter`, `fileJson`, `cancel`, `back` | Thẻ bảo mật: `securityLocal`; Thẻ cấu hình: `onboardingReport`; Đang dựng: `processingReport` | **Không** dùng `successExport` hoặc `processingCloud` khi mới chỉ tạo JSON preview trong bộ nhớ tạm |
+
+> **Giới hạn phạm vi bắt buộc:** Tài nguyên tồn tại trong kho (`processingCloud`, `successExport`, `emptyFavorites`, `emptyNotifications`) không được đưa vào luồng thực thi khi tính năng tương ứng chưa được triển khai và kiểm chứng.
+
 ## 6. State/feedback contracts và quản lý lỗi
 
 ### 6.1. Import state thể hiện trên UI
@@ -299,22 +331,33 @@ Các state nguồn được **tham chiếu nguyên nghĩa** từ `INP-008`: `UNS
 
 **Tách domain khỏi UI:** route guard đọc từ các source/job/result state machines; không duplicate business logic trong widget. Screen chỉ gửi event `Select`, `Confirm`, `Run`, `Cancel`, `Export` tới use case; asynchronous callback stale phải được chặn ở application/input layer theo INP-008. Reactivity của Flutter không thể thay validator, source snapshots hoặc rule engine.
 
-**Đề xuất tổ chức màn hình** (chưa phải cấu trúc repo đã có):
+**Cấu trúc tầng Presentation thực tế trong repository (`mobile/lib/`):**
 
 ```text
 mobile/lib/
+  design_system/
+    design_system.dart          # Barrel export toàn bộ Design System v2.0
+    dytava_asset.dart           # BrandIcon, BrandIllustration, DytavaAsset
+    dytava_colors.dart          # Bảng màu ngữ nghĩa chính thức
+    dytava_components.dart      # Mobile UI Patterns: StatusBadge, SessionResumeCard, StickyActionBar,
+                                # ResultCard, PriorityDiffCard, SheetPreviewTable, SheetDiffView,
+                                # CellDetailBottomSheet, ConfigConfirmationSheet, EmptyState
+    dytava_icons.dart           # 100+ hằng số SVG icons/formats & resolvers theo trạng thái
+    dytava_illustrations.dart   # 47 hằng số SVG illustrations & resolvers verdict/issue
+    dytava_theme.dart           # Material 3 ThemeData
+    dytava_typography.dart      # Plus Jakarta Sans, Be Vietnam Pro, IBM Plex Mono
   features/
-    home/presentation/
-    sources/presentation/
-    preview/presentation/
-    ocr_review/presentation/
-    field_mapping/presentation/
-    comparison_config/presentation/
-    comparison_progress/presentation/
-    results/presentation/
-    difference_detail/presentation/
-    export/presentation/
-  design_system/      # Đã có: nên tái sử dụng, không fork tokens
+    workflow/
+      workflow_page.dart        # Coordinator Scaffold, AppBar, Adaptive Layout & điều phối 4 bước
+      screens/
+        home_screen_view.dart           # SCR-01: Guided Home, Hero Illustration, Session Resume
+        source_selection_view.dart      # SCR-02: Adaptive A/B Cards, emptyFiles → Format Icon
+        preview_and_ocr_view.dart       # SCR-03 & SCR-04: Summary, SheetPreviewTable & OCR Review
+        mapping_and_policy_view.dart    # SCR-05 & SCR-06: 1:1 Mapping, Policy Groups & dtype Icons
+        progress_view.dart              # SCR-07: State-driven Illustration + LinearProgressIndicator
+        results_and_detail_view.dart    # SCR-08, SCR-09 & SCR-10: Results, Vertical A/B Detail & Export
+      widgets/
+        workflow_common_widgets.dart    # GuidedStepHeader, IssueList, InfoBanner & Auxiliary Views
 ```
 
 ## 10. Các điểm chưa chốt và rủi ro UX
