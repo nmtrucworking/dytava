@@ -15,8 +15,8 @@ class App {
     this.worker = new ComparisonWorker();
     this.activeFilter = 'ALL'; this.gridPage = 0; this.busy = 0; this.runRevision = 0;
     this.user = null; this.allowRegistration = true; this.retentionDays = 30;
-    this.fileA = structuredClone(SAMPLE_DATASETS.academic.fileA);
-    this.fileB = structuredClone(SAMPLE_DATASETS.academic.fileB);
+    this.fileA = null;
+    this.fileB = null;
     this.localFiles = {}; this.parseRevisions = { A: 0, B: 0 };
     this.init();
   }
@@ -33,7 +33,11 @@ class App {
       document.getElementById('connection-status').hidden = false;
     }
     this.ready = true; this.updateAccount(); this.route();
-    await this.runComparison();
+    if (this.fileA && this.fileB) {
+      await this.runComparison();
+    } else {
+      this.renderInitialEmptyState();
+    }
     this.renderPublicReleases();
   }
   setupTheme() {
@@ -48,8 +52,8 @@ class App {
     };
   }
   setupNavigation() {
-    document.getElementById('nav-view-showcase').onclick = () => { location.hash = '#/'; };
-    document.getElementById('nav-view-admin').onclick = () => { location.hash = '#/admin/overview'; };
+    document.getElementById('nav-view-showcase')?.addEventListener('click', () => { location.hash = '#/'; });
+    document.getElementById('nav-view-admin')?.addEventListener('click', () => { location.hash = '#/admin/overview'; });
     window.addEventListener('hashchange', () => { if (this.ready) this.route(); });
     document.getElementById('access-login').onclick = () => this.account.openAuth();
     document.getElementById('btn-retry-connection').onclick = () => location.reload();
@@ -65,8 +69,8 @@ class App {
     }
     this.currentView = view;
     for (const name of ['showcase', 'admin', 'history', 'access']) document.getElementById(`view-${name}`).style.display = name === view ? 'block' : 'none';
-    document.getElementById('nav-view-showcase').classList.toggle('active', view === 'showcase');
-    document.getElementById('nav-view-admin').classList.toggle('active', view === 'admin');
+    document.getElementById('nav-view-showcase')?.classList.toggle('active', view === 'showcase');
+    document.getElementById('nav-view-admin')?.classList.toggle('active', view === 'admin');
     if (view === 'admin') { this.currentAdminTab = hash.split('/')[2] || 'overview'; this.admin.render(this.currentAdminTab); }
     if (view === 'history') this.account.renderHistory();
     if (view === 'showcase' && hash && !hash.startsWith('#/')) document.getElementById(hash.slice(1))?.scrollIntoView();
@@ -132,7 +136,15 @@ class App {
       document.getElementById(`sheet-${side}`).onchange = event => this.loadFile(this.localFiles[side.toUpperCase()], side.toUpperCase(), event.target.value);
     }
     document.getElementById('sample-dataset-select').onchange = event => {
-      const sample = SAMPLE_DATASETS[event.target.value]; if (!sample) return;
+      const key = event.target.value;
+      if (!key) {
+        this.fileA = null; this.fileB = null; this.localFiles = {};
+        this.currentComparisonResult = null;
+        this.updateFileBadges(); this.populateKeyColumnOptions();
+        this.renderInitialEmptyState();
+        return;
+      }
+      const sample = SAMPLE_DATASETS[key]; if (!sample) return;
       this.parseRevisions.A++; this.parseRevisions.B++;
       this.fileA = structuredClone(sample.fileA); this.fileB = structuredClone(sample.fileB); this.localFiles = {};
       this.updateFileBadges(); this.populateKeyColumnOptions(); this.runComparison();
@@ -145,22 +157,45 @@ class App {
       const result = await this.worker.call({ type: 'parse', file, sheetName });
       if (revision !== this.parseRevisions[side]) return;
       this[`file${side}`] = result; this.localFiles[side] = file;
-      this.updateFileBadges(); this.populateKeyColumnOptions(); await this.runComparison();
-      this.showToast(`Đã đọc ${file.name}: ${result.rows.length} dòng.`);
+      this.updateFileBadges(); this.populateKeyColumnOptions();
+      if (this.fileA && this.fileB) {
+        await this.runComparison();
+        this.showToast(`Đã đọc ${file.name}: ${result.rows.length} dòng. Hoàn tất đối chiếu.`);
+      } else {
+        this.renderInitialEmptyState();
+        this.showToast(`Đã đọc ${file.name}: ${result.rows.length} dòng. Vui lòng tải tiếp ${side === 'A' ? 'Nguồn B' : 'Nguồn A'} để đối chiếu.`);
+      }
     } catch (error) { if (revision === this.parseRevisions[side]) this.showToast(error.message, 'error'); }
     finally { this.setBusy(-1); }
   }
   updateFileBadges() {
     for (const side of ['A', 'B']) {
       const file = this[`file${side}`];
-      document.getElementById(`file-badge-${side.toLowerCase()}`).textContent = `${file.name} (${file.rows.length} hàng)`;
-      document.getElementById(`label-table-${side.toLowerCase()}`).textContent = file.sheetName || file.name;
-      const sheet = document.getElementById(`sheet-${side.toLowerCase()}`); sheet.hidden = !file.sheets || file.sheets.length < 2;
-      sheet.innerHTML = (file.sheets || []).map(name => `<option value="${e(name)}">${e(name)}</option>`).join(''); sheet.value = file.sheetName || '';
+      const badge = document.getElementById(`file-badge-${side.toLowerCase()}`);
+      const label = document.getElementById(`label-table-${side.toLowerCase()}`);
+      const sheet = document.getElementById(`sheet-${side.toLowerCase()}`);
+      if (file) {
+        badge.hidden = false;
+        badge.textContent = `${file.name} (${file.rows.length} hàng)`;
+        label.textContent = file.sheetName || file.name;
+        sheet.hidden = !file.sheets || file.sheets.length < 2;
+        sheet.innerHTML = (file.sheets || []).map(name => `<option value="${e(name)}">${e(name)}</option>`).join('');
+        sheet.value = file.sheetName || '';
+      } else {
+        badge.hidden = true;
+        badge.textContent = '';
+        label.textContent = `Chưa nạp tệp (Nguồn ${side})`;
+        sheet.hidden = true;
+      }
     }
   }
   populateKeyColumnOptions() {
-    const select = document.getElementById('opt-key-column'); const previous = select.value;
+    const select = document.getElementById('opt-key-column');
+    if (!this.fileA || !this.fileB) {
+      select.innerHTML = '<option value="">Căn chỉnh theo thứ tự dòng</option>';
+      return;
+    }
+    const previous = select.value;
     const headers = this.fileA.headers.filter(h => this.fileB.headers.includes(h));
     select.innerHTML = '<option value="">Căn chỉnh theo thứ tự dòng</option>' + headers.map(h => `<option value="${e(h)}">Cột khóa: ${e(h)}</option>`).join('');
     const guess = headers.find(h => /mã|^id$|code|sku/i.test(h));
@@ -202,7 +237,39 @@ class App {
     button.disabled = Boolean(this.busy) || !this.currentComparisonResult || saved || !this.isEnabled('FLAG_HISTORY');
     button.textContent = saved ? '✓ Đã lưu thống kê' : 'Lưu thống kê phiên';
   }
+  renderInitialEmptyState() {
+    for (const id of ['cnt-total', 'cnt-exact', 'cnt-equiv', 'cnt-diff', 'cnt-unres', 'cnt-added-removed']) {
+      document.getElementById(id).textContent = '—';
+    }
+    document.getElementById('grid-page-label').textContent = '';
+    for (const side of ['a', 'b']) {
+      const pane = document.getElementById(`table-container-${side}`);
+      const otherSide = side === 'a' ? 'B' : 'A';
+      const thisFile = this[`file${side.toUpperCase()}`];
+      if (thisFile) {
+        const headers = thisFile.headers || [];
+        const rows = (thisFile.rows || []).slice(0, 100);
+        pane.innerHTML = `
+          <div style="padding: 0.5rem 1rem; background: var(--surface-alt); font-size: 0.8rem; color: var(--muted); border-bottom: 1px solid var(--outline-light); display: flex; justify-content: space-between;">
+            <span>Đã nạp <strong>${e(thisFile.name)}</strong> (${thisFile.rows.length} hàng)</span>
+            <span>Đang chờ Nguồn ${otherSide} để so sánh</span>
+          </div>
+          <table class="diff-table">
+            <thead><tr><th>#</th>${headers.map(h => `<th>${e(h)}</th>`).join('')}</tr></thead>
+            <tbody>${rows.map((r, idx) => `<tr><td>${idx + 1}</td>${r.map(c => `<td>${c === '' ? '<i class="empty-cell">—</i>' : e(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table>
+        `;
+      } else {
+        pane.innerHTML = `<div class="empty-state" style="padding: 3rem 1.5rem; text-align: center;"><img class="brand-icon" src="assets/dytava/icons/svg/color/import.svg" width="36" height="36" alt="" aria-hidden="true" style="margin-bottom:0.5rem"><p style="font-weight: 600; color: var(--text)">Chưa có tệp Nguồn ${side.toUpperCase()}</p><p style="color: var(--muted); font-size: 0.875rem; margin-top:0.25rem">Kéo thả tệp CSV / XLSX vào hộp phía trên hoặc bấm vào hộp để chọn tệp từ máy tính.</p></div>`;
+      }
+    }
+  }
   async runComparison() {
+    if (!this.fileA || !this.fileB) {
+      this.showToast('Vui lòng tải lên cả Nguồn A và Nguồn B để bắt đầu đối chiếu.', 'warning');
+      this.renderInitialEmptyState();
+      return;
+    }
     const revision = ++this.runRevision;
     const tolerance = Number(document.getElementById('opt-tolerance').value);
     if (!Number.isFinite(tolerance) || tolerance < 0 || tolerance > 1e9) return this.showToast('Dung sai phải từ 0 đến 1.000.000.000.', 'error');

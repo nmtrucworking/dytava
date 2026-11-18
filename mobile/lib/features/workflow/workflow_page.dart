@@ -313,20 +313,22 @@ class _WorkflowPageState extends State<WorkflowPage>
                   PopupMenuItem(
                     value: _AuxiliaryView.presets,
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.tune_rounded, size: 20),
                         SizedBox(width: 12),
-                        Text('Mẫu quy tắc'),
+                        Expanded(child: Text('Mẫu quy tắc')),
                       ],
                     ),
                   ),
                   PopupMenuItem(
                     value: _AuxiliaryView.settings,
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.settings_outlined, size: 20),
                         SizedBox(width: 12),
-                        Text('Cài đặt & bảo mật'),
+                        Expanded(child: Text('Cài đặt & bảo mật')),
                       ],
                     ),
                   ),
@@ -499,6 +501,12 @@ class _WorkflowPageState extends State<WorkflowPage>
             onQuickPrepareBoth: _quickPrepareBoth,
             onOpenPreview: (side) => _go(WorkflowScreen.preview, side: side),
             onContinueMapping: () => _go(WorkflowScreen.mapping),
+            onContinueToProposal: () {
+              if (flow.inputsReady) {
+                flow.analyzeAndPropose();
+                _go(WorkflowScreen.policy);
+              }
+            },
           ),
         ];
       case WorkflowScreen.preview:

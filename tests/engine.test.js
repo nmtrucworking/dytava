@@ -61,6 +61,28 @@ test('XLSX import handles sheets, formatted identifiers, cached formula results 
   const first = await parseFile(file); assert.equal(first.rows[0][0], '00123'); assert.equal(first.rows[0][1], '2'); assert.equal(first.rows[0][2], 'Hello world'); assert.deepEqual(first.sheets, ['Primary', 'Second']);
   const second = await parseFile(file, 'Second'); assert.equal(second.rows[0][0], '002');
 });
+
+test('XLSX parser normalizes XML namespace prefixes without throwing reading sheets error', async () => {
+  const { unzipSync, zipSync, strFromU8, strToU8 } = await import('fflate');
+  const wb = new ExcelJS.Workbook();
+  wb.addWorksheet('Sheet1').addRows([['ID', 'Val'], ['1', 'test']]);
+  const buf = await wb.xlsx.writeBuffer();
+  const entries = unzipSync(new Uint8Array(buf));
+  let xml = strFromU8(entries['xl/workbook.xml']);
+  xml = xml.replace(/<workbook\b/g, '<x:workbook xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main"')
+           .replace(/<\/workbook>/g, '</x:workbook>')
+           .replace(/<sheets>/g, '<x:sheets>')
+           .replace(/<\/sheets>/g, '</x:sheets>')
+           .replace(/<sheet\b/g, '<x:sheet')
+           .replace(/<\/sheet>/g, '</x:sheet>');
+  entries['xl/workbook.xml'] = strToU8(xml);
+  const badZip = zipSync(entries);
+  const file = new File([badZip], 'prefixed.xlsx');
+  const result = await parseFile(file);
+  assert.equal(result.sheetName, 'Sheet1');
+  assert.deepEqual(result.headers, ['ID', 'Val']);
+  assert.deepEqual(result.rows, [['1', 'test']]);
+});
 test('unsupported or malformed files are rejected; CSV export neutralizes formulas including leading whitespace', async () => {
   await assert.rejects(parseFile(new File(['a'], 'macro.xlsm')), /Chỉ hỗ trợ/);
   await assert.rejects(parseFile(new File(['broken'], 'broken.xlsx')));

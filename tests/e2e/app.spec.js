@@ -16,8 +16,15 @@ async function loginAdmin(page) {
   await page.goto('/#/admin/overview'); await expect(page.locator('#tab-panel-overview h2')).toHaveText('Trung tâm quản trị');
 }
 
+test('initial page load starts in empty state before files are uploaded', async ({ page }) => {
+  await expect(page.locator('#cnt-total')).toHaveText('—');
+  await expect(page.locator('#table-container-a')).toContainText('Chưa có tệp Nguồn A');
+  await expect(page.locator('#table-container-b')).toContainText('Chưa có tệp Nguồn B');
+});
+
 test('guest comparison uses a worker; admin routes require login; no automatic history transmission', async ({ page }) => {
   const writes = []; page.on('request', req => { if (req.url().includes('/api/comparisons') && req.method() === 'POST') writes.push(req); });
+  await page.locator('#sample-dataset-select').selectOption('academic');
   await expect(page.locator('#table-container-a tbody tr')).not.toHaveCount(0);
   await page.locator('[data-filter="UNRESOLVED"]').click();
   const rows = await page.locator('#table-container-a tbody tr').count(); expect(rows).toBeGreaterThan(0);
@@ -28,6 +35,7 @@ test('guest comparison uses a worker; admin routes require login; no automatic h
 });
 
 test('register, save metadata only, reload, view and delete private history', async ({ page }) => {
+  await page.locator('#sample-dataset-select').selectOption('academic');
   await page.locator('#btn-account').click(); await page.locator('#auth-mode-toggle').click();
   await page.locator('#auth-name').fill('Browser User'); await page.locator('#auth-email').fill(`browser-${Date.now()}@example.com`); await page.locator('#auth-password').fill('browser-test-password');
   await page.locator('#auth-submit').click(); await expect(page.locator('#btn-account')).toHaveText('Browser User');
@@ -122,6 +130,7 @@ test('approved branding assets load in light/dark themes and narrow layouts', as
 test('Dytava report preview stays local, renders branding and discloses legacy metadata', async ({ page }) => {
   const writes = [];
   page.on('request', req => { if (req.method() === 'POST') writes.push(req.url()); });
+  await page.locator('#sample-dataset-select').selectOption('academic');
   const opened = page.waitForEvent('popup');
   await page.locator('#btn-export-pdf').click();
   const preview = await opened;

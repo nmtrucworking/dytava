@@ -259,6 +259,100 @@ class ResultsScreenView extends StatelessWidget {
           ],
         ),
 
+        // Thẻ kết quả chuyên biệt theo mục tiêu tác vụ (Compare Files / Columns / Reconcile)
+        if (flow.taskMode == ComparisonTaskMode.compareColumns)
+          WorkflowSectionCard(
+            color: DytavaColors.softBlue,
+            border: Border.all(color: DytavaColors.primary.withValues(alpha: 0.3)),
+            children: [
+              Row(
+                children: [
+                  const BrandIcon(DytavaIcons.columns, size: 22),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Kết quả so sánh 2 cột (Compare Columns)',
+                      style: DytavaTypography.titleLarge.copyWith(
+                        color: DytavaColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Phát hiện trùng lặp & giá trị chỉ xuất hiện ở một phía giữa 2 cột.',
+                style: DytavaTypography.bodySmall,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _metricBox(
+                    'Trùng khớp: ${result.count(DecisionStatus.exact) + result.count(DecisionStatus.equivalent)}',
+                    'Xuất hiện ở cả 2 cột',
+                    DytavaColors.exact,
+                    DytavaColors.softGreen,
+                    DytavaIcons.success,
+                  ),
+                  const SizedBox(width: 8),
+                  _metricBox(
+                    'Khác biệt: ${result.count(DecisionStatus.different)}',
+                    'Giá trị không trùng',
+                    DytavaColors.different,
+                    DytavaColors.differentBg,
+                    DytavaIcons.different,
+                  ),
+                ],
+              ),
+            ],
+          )
+        else if (flow.taskMode == ComparisonTaskMode.reconcile)
+          WorkflowSectionCard(
+            color: DytavaColors.softBlue,
+            border: Border.all(color: DytavaColors.primary.withValues(alpha: 0.3)),
+            children: [
+              Row(
+                children: [
+                  const BrandIcon(DytavaIcons.key, size: 22),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Kết quả đối soát theo ID (Reconcile by ID)',
+                      style: DytavaTypography.titleLarge.copyWith(
+                        color: DytavaColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'So khớp theo mã định danh không phụ thuộc thứ tự hàng (No VLOOKUP).',
+                style: DytavaTypography.bodySmall,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _metricBox(
+                    'Ghép theo ID: ${result.matchedRecords}',
+                    'Bản ghi tìm thấy cả 2 phía',
+                    DytavaColors.primary,
+                    DytavaColors.softBlue,
+                    DytavaIcons.link,
+                  ),
+                  const SizedBox(width: 8),
+                  _metricBox(
+                    'Lệch giá trị: ${result.count(DecisionStatus.different)}',
+                    'Cần kiểm tra đối soát',
+                    DytavaColors.different,
+                    DytavaColors.differentBg,
+                    DytavaIcons.different,
+                  ),
+                ],
+              ),
+            ],
+          ),
+
         // 2. Danh sách sai khác theo mức độ cần xử lý (Priority Diff Cards)
         if (priorityCells.isNotEmpty)
           WorkflowSectionCard(
@@ -457,6 +551,13 @@ class ResultsScreenView extends StatelessWidget {
                 result: result,
                 visibleCells: flow.visibleCells,
                 onSelectCell: onOpenDetail,
+                sourceALabel: labelA,
+                sourceBLabel: labelB,
+                sourceAFormat:
+                    flow.slot(SourceSide.a).artifact?.format ?? SourceFormat.csv,
+                sourceBFormat:
+                    flow.slot(SourceSide.b).artifact?.format ?? SourceFormat.csv,
+                onExport: onOpenExport,
               )
             else
               for (final cell in flow.visibleCells)
@@ -532,6 +633,21 @@ class ResultsScreenView extends StatelessWidget {
           label: 'Xuất / xem trước báo cáo',
           iconAsset: DytavaIcons.export,
           onPressed: onOpenExport,
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(48, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const BrandIcon(DytavaIcons.play, size: 18),
+            label: const Text('Bắt đầu phiên so sánh mới'),
+            onPressed: () => flow.navigate(WorkflowScreen.sources),
+          ),
         ),
       ],
     );

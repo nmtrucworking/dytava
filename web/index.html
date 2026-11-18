@@ -23,12 +23,6 @@
         <img class="brand-logo brand-logo-dark" src="assets/dytava/brand/svg/dytava-horizontal-white.svg" width="154" height="44" alt="Dytava">
       </a>
 
-      <!-- Center Portal Switcher -->
-      <div class="portal-switcher">
-        <button id="nav-view-showcase" class="portal-btn active"><img class="brand-icon" src="assets/dytava/icons/svg/color/compare.svg" width="22" height="22" alt="" aria-hidden="true"> So sánh bảng tính</button>
-        <button id="nav-view-admin" class="portal-btn"><img class="brand-icon" src="assets/dytava/icons/svg/color/settings.svg" width="22" height="22" alt="" aria-hidden="true"> Quản Trị Sản Phẩm</button>
-      </div>
-
       <!-- Actions -->
       <div class="header-actions">
         <button aria-label="Chuyển chế độ sáng/tối" id="btn-theme-toggle" class="btn btn-ghost btn-sm" title="Chuyển chế độ sáng/tối"><img class="brand-icon" src="assets/dytava/icons/svg/color/variants.svg" width="22" height="22" alt="" aria-hidden="true"></button>
@@ -63,7 +57,6 @@
 
       <div class="hero-cta">
         <a href="#live-compare-section" class="btn btn-primary btn-lg">Trải Nghiệm So Sánh Trực Tuyến</a>
-        <a href="#/admin/overview" class="btn btn-outline btn-lg">Khám Phá Trang Quản Trị</a>
         <a href="#downloads" class="btn btn-ghost btn-lg">Bản phát hành</a>
       </div>
 
@@ -85,7 +78,8 @@
           <div class="dataset-select-group">
             <label for="sample-dataset-select"><img class="brand-icon" src="assets/dytava/icons/svg/color/files.svg" width="22" height="22" alt="" aria-hidden="true"> Chọn tập dữ liệu mẫu:</label>
             <select id="sample-dataset-select" class="form-select">
-              <option value="academic" selected>Bảng điểm & Hồ sơ học tập (Academic Records)</option>
+              <option value="" selected>— Chưa chọn (Tự tải tệp bên dưới) —</option>
+              <option value="academic">Bảng điểm & Hồ sơ học tập (Academic Records)</option>
               <option value="finance">Báo cáo Doanh thu & Đối soát tài chính (Finance & P&L)</option>
               <option value="inventory">Kiểm kê Kho vận & SKU Vật tư (Supply Chain)</option>
             </select>
@@ -143,14 +137,14 @@
             <input type="file" id="file-input-a" accept=".csv,.tsv,.txt,.json,.xlsx" style="display:none">
             <div class="upload-title"><img class="brand-icon" src="assets/dytava/icons/svg/color/import.svg" width="22" height="22" alt="" aria-hidden="true"> Nguồn dữ liệu A (File gốc)</div>
             <div class="upload-sub">Kéo thả tệp CSV / XLSX hoặc bấm để chọn tệp</div>
-            <div class="file-badge-loaded" id="file-badge-a">BangDiem_PhongDaoTao_A.xlsx (7 hàng)</div>
+            <div class="file-badge-loaded" id="file-badge-a" hidden></div>
           </div>
 
           <div class="upload-box" id="dropzone-b">
             <input type="file" id="file-input-b" accept=".csv,.tsv,.txt,.json,.xlsx" style="display:none">
             <div class="upload-title"><img class="brand-icon" src="assets/dytava/icons/svg/color/compare-files.svg" width="22" height="22" alt="" aria-hidden="true"> Nguồn dữ liệu B (File đối chiếu)</div>
             <div class="upload-sub">Kéo thả tệp CSV / XLSX hoặc bấm để chọn tệp</div>
-            <div class="file-badge-loaded" id="file-badge-b">BangDiem_HeThong_B.csv (7 hàng)</div>
+            <div class="file-badge-loaded" id="file-badge-b" hidden></div>
           </div>
         </div>
 
@@ -161,27 +155,27 @@
         <!-- Status Summary Counters Bar -->
         <div class="summary-bar">
           <div class="stat-cell active-filter" data-filter="ALL" title="Hiển thị toàn bộ bản ghi">
-            <div class="stat-num" id="cnt-total">42</div>
+            <div class="stat-num" id="cnt-total">—</div>
             <div class="stat-label">Tổng số ô</div>
           </div>
           <div class="stat-cell" data-filter="EXACT" title="Ô giống tuyệt đối">
-            <div class="stat-num stat-exact" id="cnt-exact">35</div>
+            <div class="stat-num stat-exact" id="cnt-exact">—</div>
             <div class="stat-label"><img class="brand-icon" src="assets/dytava/icons/svg/color/exact.svg" width="22" height="22" alt="" aria-hidden="true">Khớp tuyệt đối (Exact)</div>
           </div>
           <div class="stat-cell" data-filter="EQUIVALENT" title="Ô khác định dạng nhưng tương đương ngữ nghĩa">
-            <div class="stat-num stat-equiv" id="cnt-equiv">2</div>
+            <div class="stat-num stat-equiv" id="cnt-equiv">—</div>
             <div class="stat-label"><img class="brand-icon" src="assets/dytava/icons/svg/color/equivalent.svg" width="22" height="22" alt="" aria-hidden="true">Tương đương (Equivalent)</div>
           </div>
           <div class="stat-cell" data-filter="DIFFERENT" title="Ô khác biệt nghiệp vụ thực tế">
-            <div class="stat-num stat-diff" id="cnt-diff">2</div>
+            <div class="stat-num stat-diff" id="cnt-diff">—</div>
             <div class="stat-label"><img class="brand-icon" src="assets/dytava/icons/svg/color/different.svg" width="22" height="22" alt="" aria-hidden="true">Khác biệt (Different)</div>
           </div>
           <div class="stat-cell" data-filter="UNRESOLVED" title="Ô mơ hồ cần người dùng xác minh">
-            <div class="stat-num stat-unres" id="cnt-unres">1</div>
+            <div class="stat-num stat-unres" id="cnt-unres">—</div>
             <div class="stat-label"><img class="brand-icon" src="assets/dytava/icons/svg/color/unresolved.svg" width="22" height="22" alt="" aria-hidden="true">Chờ duyệt (Unresolved)</div>
           </div>
           <div class="stat-cell" data-filter="ROWS" title="Dòng thêm mới và dòng bị xóa">
-            <div class="stat-num" id="cnt-added-removed" style="color:var(--text)">+1 / -1</div>
+            <div class="stat-num" id="cnt-added-removed" style="color:var(--text)">—</div>
             <div class="stat-label">Dòng Thêm / Xóa</div>
           </div>
         </div>
@@ -192,7 +186,7 @@
           <div class="grid-pane" id="pane-left">
             <div class="pane-header-title">
               <span>BẢNG NGUỒN A</span>
-              <span id="label-table-a" style="font-size:0.75rem; opacity:0.85">Phòng Đào Tạo</span>
+              <span id="label-table-a" style="font-size:0.75rem; opacity:0.85">Chưa nạp tệp (Nguồn A)</span>
             </div>
             <div id="table-container-a">
               <!-- Dynamically rendered table A -->
@@ -203,7 +197,7 @@
           <div class="grid-pane" id="pane-right">
             <div class="pane-header-title">
               <span>BẢNG ĐỐI CHIẾU B</span>
-              <span id="label-table-b" style="font-size:0.75rem; opacity:0.85">Hệ Thống Trực Tuyến</span>
+              <span id="label-table-b" style="font-size:0.75rem; opacity:0.85">Chưa nạp tệp (Nguồn B)</span>
             </div>
             <div id="table-container-b">
               <!-- Dynamically rendered table B -->
@@ -651,8 +645,6 @@
         <ul>
           <li><a href="#live-compare-section">Công Cụ So Sánh Web</a></li>
           <li><a href="#downloads">Các bản phát hành</a></li>
-          <li><a href="#/admin/overview">Trang Quản Trị Admin</a></li>
-          <li><a href="#/admin/acceptance">Acceptance Test Cases</a></li>
         </ul>
       </div>
 

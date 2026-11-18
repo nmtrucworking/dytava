@@ -30,7 +30,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(const ExcelCompareApp());
-      await tap(tester, 'So sánh mới (dữ liệu mẫu)');
+      await tap(tester, 'Bắt đầu so sánh');
       final continueButton = find.widgetWithText(
         FilledButton,
         'Tiếp tục ánh xạ cột',
@@ -139,7 +139,7 @@ void main() {
 
       await tester.pumpWidget(const ExcelCompareApp());
       // 1-Tap Fast Run right from Home
-      await tap(tester, 'Trải nghiệm nhanh (1 chạm)');
+      await tap(tester, 'Thử nhanh với dữ liệu mẫu');
       expect(find.text('COMPLETED · Kết quả bộ dữ liệu mẫu'), findsOneWidget);
       expect(find.text('EXACT: 5'), findsOneWidget);
 
@@ -173,11 +173,10 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const ExcelCompareApp());
-      // Verify Home uses BrandIllustration.hero (heroGetStarted) and no 5-tab dashboard bar
-      expect(find.byType(BrandIllustration), findsWidgets);
-      expect(find.byType(BrandIcon), findsWidgets);
 
-      // Open auxiliary Policy Presets & Learn view from Home secondary action
+      // Open auxiliary Policy Presets & Learn view from Home overflow menu
+      await tester.tap(find.byTooltip('Thêm tùy chọn'));
+      await tester.pumpAndSettle();
       await tap(tester, 'Mẫu quy tắc');
       expect(find.text('academic-records-v1'), findsOneWidget);
       expect(find.byType(DytavaPolicyCard), findsWidgets);
@@ -186,8 +185,10 @@ void main() {
       await tester.tap(find.byTooltip('Quay lại'));
       await tester.pumpAndSettle();
 
-      // Open Settings & Privacy auxiliary view from Home secondary action
-      await tap(tester, 'Cài đặt & Bảo mật');
+      // Open Settings & Privacy auxiliary view from Home overflow menu
+      await tester.tap(find.byTooltip('Thêm tùy chọn'));
+      await tester.pumpAndSettle();
+      await tap(tester, 'Cài đặt & bảo mật');
       expect(
         find.text('Sheet Diff 2 Sheets (Hợp nhất & Song song)'),
         findsOneWidget,
@@ -195,34 +196,37 @@ void main() {
       await tester.tap(find.byTooltip('Quay lại'));
       await tester.pumpAndSettle();
 
-      // Run 1-tap Sheet Diff 2 Sheets
-      await tap(tester, 'Trải nghiệm nhanh (1 chạm)');
+      // Run 1-tap Sheet Diff 2 Sheets (ExcelCompare.org Dual Grid Table Diff)
+      await tap(tester, 'Thử nhanh với dữ liệu mẫu');
       await tester.scrollUntilVisible(
-        find.text('Sheet Diff: Sheet A (4 hàng) ↔ Sheet B (5 hàng)'),
+        find.byType(DytavaSheetDiffView),
         250,
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.byType(DytavaSheetDiffView), findsOneWidget);
-      expect(
-        find.text('Sheet Diff: Sheet A (4 hàng) ↔ Sheet B (5 hàng)'),
-        findsOneWidget,
-      );
+      expect(find.text('All'), findsOneWidget);
+      expect(find.text('Added'), findsOneWidget);
+      expect(find.text('Deleted'), findsOneWidget);
+      expect(find.text('Unchanged'), findsOneWidget);
+      expect(find.text('Modified'), findsOneWidget);
+      expect(find.textContaining('Sheet A ·'), findsOneWidget);
+      expect(find.textContaining('Sheet B ·'), findsOneWidget);
 
-      // Switch Sheet Diff layout to Side-by-Side 2 Sheets (A | B)
-      await tap(tester, 'Song song 2 Sheets (A | B)');
-      expect(find.text('SHEET A ( gốc )'), findsOneWidget);
-      expect(find.text('SHEET B ( đối chiếu )'), findsOneWidget);
+      // Filter by Added, Modified, Unchanged and return to All on the ExcelCompare.org ribbon
+      await tap(tester, 'Added');
+      expect(find.text('005'), findsOneWidget);
+      await tap(tester, 'Modified');
+      expect(find.text('8.5'), findsOneWidget);
+      expect(find.text('8,5'), findsOneWidget);
+      await tap(tester, 'All');
+      expect(find.text('id (Mã)'), findsWidgets);
+      expect(find.text('amount (Giá trị)'), findsWidgets);
 
-      // Switch back to Unified 2-Sheet Diff
-      await tap(tester, 'Bảng hợp nhất (A ↔ B)');
-      expect(find.text('Cột id ↔ id'), findsOneWidget);
-      expect(find.text('Cột amount ↔ amount'), findsOneWidget);
-
-      // Return to Home via AppBar Home action and verify Session Resume Card ("Tiếp tục phiên so sánh")
+      // Return to Home via AppBar Home action and verify Session Resume Card ("Tiếp tục phiên của bạn")
       await tester.tap(find.byTooltip('Về trang chủ'));
       await tester.pumpAndSettle();
       expect(find.byType(DytavaSessionResumeCard), findsOneWidget);
-      expect(find.text('Tiếp tục phiên so sánh'), findsOneWidget);
+      expect(find.text('Tiếp tục phiên của bạn'), findsOneWidget);
       expect(find.byType(DytavaResultCard), findsOneWidget);
 
       // Open current session history view from AppBar
@@ -403,7 +407,7 @@ void main() {
           home: const WorkflowPage(),
         ),
       );
-      await tap(tester, 'Trải nghiệm nhanh (1 chạm)');
+      await tap(tester, 'Thử nhanh với dữ liệu mẫu');
 
       // Priority diff section is shown above the spreadsheet grid
       await tester.scrollUntilVisible(
@@ -451,25 +455,9 @@ void main() {
 
       // 1. Verify state-driven BrandIllustration transitions across workflow
       await tester.pumpWidget(const ExcelCompareApp());
-      expect(
-        find.byWidgetPredicate(
-          (w) =>
-              w is BrandIllustration &&
-              w.asset == DytavaIllustrations.heroGetStarted,
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.byWidgetPredicate(
-          (w) =>
-              w is BrandIllustration &&
-              w.asset == DytavaIllustrations.securityLocal,
-        ),
-        findsOneWidget,
-      );
 
       // Go to Source Selection: unselected slots show emptyFiles illustration
-      await tap(tester, 'So sánh mới (dữ liệu mẫu)');
+      await tap(tester, 'Bắt đầu so sánh');
       expect(
         find.byWidgetPredicate(
           (w) =>
@@ -518,6 +506,177 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'ExcelCompare.org dual-grid Table Diff virtualizes large tables, syncs scrolling/selection and opens fullscreen view',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      const fields = [
+        TableField('id', 'ID'),
+        TableField('name', 'Name'),
+        TableField('dept', 'Dept'),
+        TableField('salary', 'Salary'),
+      ];
+      final recordsA = [
+        for (var r = 0; r < 80; r++)
+          TableRecord(
+            'a-$r',
+            r,
+            {
+              'id': SourceCell(CellKind.text, rawLexeme: '${r + 1}'),
+              'name': SourceCell(CellKind.text, rawLexeme: 'User_${r + 1}'),
+              'dept': SourceCell(
+                CellKind.text,
+                rawLexeme: r == 2 ? 'Sales' : 'Eng',
+              ),
+              'salary': SourceCell(
+                CellKind.text,
+                rawLexeme: '${50000 + r * 100}',
+              ),
+            },
+            {},
+          ),
+      ];
+      final recordsB = [
+        for (var r = 0; r < 80; r++)
+          if (r != 4) // Row 5 is deleted on B
+            TableRecord(
+              'b-$r',
+              r,
+              {
+                'id': SourceCell(CellKind.text, rawLexeme: '${r + 1}'),
+                'name': SourceCell(CellKind.text, rawLexeme: 'User_${r + 1}'),
+                'dept': SourceCell(
+                  CellKind.text,
+                  rawLexeme: r == 2 ? 'Marketing' : 'Eng',
+                ),
+                'salary': SourceCell(
+                  CellKind.text,
+                  rawLexeme: r == 2 ? '55400' : '${50000 + r * 100}',
+                ),
+              },
+              {},
+            ),
+        TableRecord(
+          'b-80',
+          80,
+          {
+            'id': const SourceCell(CellKind.text, rawLexeme: '81'),
+            'name': const SourceCell(CellKind.text, rawLexeme: 'Added_User_81'),
+            'dept': const SourceCell(CellKind.text, rawLexeme: 'Ops'),
+            'salary': const SourceCell(CellKind.text, rawLexeme: '62000'),
+          },
+          {},
+        ),
+      ];
+
+      final snapA = InputSnapshot(
+        id: 'snap-a',
+        binding: const ImportBinding('a', 1, 1, 1),
+        fields: fields,
+        records: recordsA,
+        fullValidation: true,
+        ocrReviewed: false,
+      );
+      final snapB = InputSnapshot(
+        id: 'snap-b',
+        binding: const ImportBinding('b', 1, 1, 1),
+        fields: fields,
+        records: recordsB,
+        fullValidation: true,
+        ocrReviewed: false,
+      );
+      final config = ComparisonConfiguration(
+        mappings: const [
+          FieldMapping('id', 'id'),
+          FieldMapping('name', 'name'),
+          FieldMapping('dept', 'dept'),
+          FieldMapping('salary', 'salary'),
+        ],
+        rules: const {
+          'id': FieldRule(type: SemanticType.identifier),
+          'name': FieldRule(type: SemanticType.identifier),
+          'dept': FieldRule(type: SemanticType.identifier),
+          'salary': FieldRule(type: SemanticType.decimal),
+        },
+        mode: MatchingMode.key,
+        keys: const ['id'],
+        mappingConfirmed: true,
+        modeConfirmed: true,
+        policyConfirmed: true,
+        directionConfirmed: true,
+      );
+      late final ComparisonResult result;
+      await tester.runAsync(() async {
+        result = await DemoComparisonPort().compare(
+          FrozenPlan('perf-plan', 1, snapA, snapB, config),
+          Cancellation(),
+          (_, _, _) {},
+        );
+      });
+
+      String? selectedCellId;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: DytavaTheme.lightTheme,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: DytavaSheetDiffView(
+                result: result,
+                visibleCells: result.cells.take(12).toList(),
+                onSelectCell: (id) => selectedCellId = id,
+                sourceALabel: 'left_large.csv',
+                sourceBLabel: 'right_samecols.csv',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify virtualization: row 1 (User_1) is mounted, while offscreen row 75 (User_75) is not mounted in DOM/tree
+      expect(find.text('User_1'), findsNWidgets(2));
+      expect(find.text('User_75'), findsNothing);
+
+      // Verify Modified cell values ('Sales' on Left, 'Marketing' on Right) are rendered side-by-side
+      expect(find.text('Sales'), findsOneWidget);
+      expect(find.text('Marketing'), findsOneWidget);
+
+      // Filter by Deleted rows -> shows row 5 (User_5) on Left with hatched placeholder on Right
+      await tester.tap(find.text('Deleted'));
+      await tester.pumpAndSettle();
+      expect(find.text('User_5'), findsOneWidget);
+
+      // Filter by Added rows -> shows row 81 (Added_User_81) on Right with hatched placeholder on Left
+      await tester.tap(find.text('Added'));
+      await tester.pumpAndSettle();
+      expect(find.text('Added_User_81'), findsOneWidget);
+
+      // Return to All and open Fullscreen Table Diff modal
+      await tester.tap(find.text('All'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Fullscreen'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Fullscreen'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Table Diff · left_large.csv ↔ right_samecols.csv'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Thu nhỏ'));
+      await tester.pumpAndSettle();
+
+      // Tap 'Chi tiết ô' on the active cell inspector bar
+      await tester.tap(find.text('Chi tiết ô'));
+      await tester.pumpAndSettle();
+      expect(selectedCellId, isNotNull);
       expect(tester.takeException(), isNull);
     },
   );

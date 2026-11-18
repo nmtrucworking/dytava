@@ -11,7 +11,33 @@ Future<void> _checkpoint(Cancellation cancel) async {
   cancel.check();
 }
 
+typedef UserFileSnapshotData = ({
+  String fileName,
+  SourceFormat format,
+  List<TableField> fields,
+  List<List<String>> values,
+});
+
 final class DemoInputPort implements InputPort {
+  static final Map<String, UserFileSnapshotData> _userFiles = {};
+
+  static void registerUserFile(
+    String ref, {
+    required String fileName,
+    required SourceFormat format,
+    required List<TableField> fields,
+    required List<List<String>> values,
+  }) {
+    _userFiles[ref] = (
+      fileName: fileName,
+      format: format,
+      fields: fields,
+      values: values,
+    );
+  }
+
+  static void clearUserFiles() => _userFiles.clear();
+
   static const fields = [
     TableField('id', 'Mã'),
     TableField('amount', 'Giá trị'),
@@ -38,17 +64,59 @@ final class DemoInputPort implements InputPort {
     void Function() onParsing,
   ) async {
     await _checkpoint(cancel);
-    if (!const {
+    final isUserFile = artifact.privateRef.startsWith('userfile:');
+    if (!isUserFile &&
+        (!const {
           'fixture:a',
           'fixture:b',
           'fixture:image-a',
         }.contains(artifact.privateRef) ||
         (artifact.privateRef == 'fixture:image-a'
             ? artifact.format != SourceFormat.png
-            : artifact.format != SourceFormat.csv)) {
+            : artifact.format != SourceFormat.csv))) {
       throw const WorkflowIssue(
         'INPUT_CAPABILITY_DISABLED',
         'Bản flow chỉ đọc nguồn mẫu. Adapter tệp thật chưa được bật.',
+      );
+    }
+
+    if (isUserFile) {
+      final userData = _userFiles[artifact.privateRef];
+      if (userData == null) {
+        throw const WorkflowIssue(
+          'FILE_NOT_FOUND',
+          'Không tìm thấy dữ liệu tệp tải lên.',
+        );
+      }
+      onParsing();
+      await _checkpoint(cancel);
+      return ImportOutcome.ready(
+        InputSnapshot(
+          id: '${artifact.id}-snapshot-${binding.revision}-${binding.attempt}',
+          binding: binding,
+          fields: userData.fields,
+          fullValidation: true,
+          ocrReviewed: false,
+          records: [
+            for (var r = 0; r < userData.values.length; r++)
+              TableRecord(
+                '${artifact.id}-row-$r',
+                r,
+                {
+                  for (var c = 0; c < userData.fields.length; c++)
+                    userData.fields[c].id: SourceCell(
+                      CellKind.text,
+                      rawLexeme: c < userData.values[r].length ? userData.values[r][c] : '',
+                      ocrReviewed: true,
+                    ),
+                },
+                {
+                  for (final f in userData.fields)
+                    f.id: 'userfile/${artifact.id}/record-${r + 1}/${f.id}',
+                },
+              ),
+          ],
+        ),
       );
     }
     final isA = artifact.privateRef != 'fixture:b';
@@ -119,7 +187,7 @@ final class DemoInputPort implements InputPort {
 final class DemoComparisonPort implements ComparisonPort {
   @override
   List<WorkflowIssue> get startBlockers => const [];
-  static const maxFixtureRecords = 100;
+  static const maxFixtureRecords = 10000;
   @override
   Future<ComparisonResult> compare(
     FrozenPlan plan,

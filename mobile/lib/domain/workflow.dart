@@ -47,6 +47,64 @@ enum MatchingMode { positional, key }
 
 enum ComparisonDirection { aToB, bToA }
 
+enum ComparisonTaskMode {
+  compareFiles,
+  compareColumns,
+  reconcile,
+}
+
+extension ComparisonTaskModeInfo on ComparisonTaskMode {
+  String get label => switch (this) {
+    ComparisonTaskMode.compareFiles => 'So sánh hai tệp',
+    ComparisonTaskMode.compareColumns => 'So sánh hai cột',
+    ComparisonTaskMode.reconcile => 'Đối soát theo ID',
+  };
+
+  String get shortDescription => switch (this) {
+    ComparisonTaskMode.compareFiles =>
+      'Xem các ô khác nhau và hàng thêm/xóa trên toàn bộ bảng.',
+    ComparisonTaskMode.compareColumns =>
+      'Tìm giá trị trùng và giá trị chỉ xuất hiện ở một phía.',
+    ComparisonTaskMode.reconcile =>
+      'So khớp bản ghi theo mã định danh (ID), không cần VLOOKUP.',
+  };
+}
+
+final class SmartProposal {
+  const SmartProposal({
+    required this.taskMode,
+    required this.mode,
+    required this.keys,
+    required this.mappings,
+    required this.rules,
+    required this.confidenceScore,
+    required this.confidenceReason,
+    required this.requiresExplicitConfirmation,
+    this.suggestedKey,
+    this.columnA,
+    this.columnB,
+    this.reconcileKeyColumn,
+    this.reconcileValueColumn,
+  });
+
+  final ComparisonTaskMode taskMode;
+  final MatchingMode mode;
+  final List<String> keys;
+  final List<FieldMapping> mappings;
+  final Map<String, FieldRule> rules;
+  final double confidenceScore;
+  final String confidenceReason;
+  final bool requiresExplicitConfirmation;
+  final String? suggestedKey;
+  final String? columnA;
+  final String? columnB;
+  final String? reconcileKeyColumn;
+  final String? reconcileValueColumn;
+
+  bool get isHighConfidence =>
+      confidenceScore >= 0.85 && !requiresExplicitConfirmation;
+}
+
 enum ExportKind { csvDiff, jsonReport, mergedDiffPdf, dytavaReportPdf }
 
 enum ExportSelection { fullComparison, differencesOnly }

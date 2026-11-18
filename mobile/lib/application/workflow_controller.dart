@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:flutter/foundation.dart';
 
+import '../domain/smart_proposal_engine.dart';
 import '../domain/workflow.dart';
 
 final class _Work {
@@ -43,6 +44,8 @@ final class WorkflowController extends ChangeNotifier {
   int _exportAttempts = 0;
   WorkflowScreen screen = WorkflowScreen.home;
   SourceSide activeSide = SourceSide.a;
+  ComparisonTaskMode taskMode = ComparisonTaskMode.compareFiles;
+  SmartProposal? proposal;
   ComparisonConfiguration config = ComparisonConfiguration();
   JobState jobState = JobState.created;
   ExportState? exportState;
@@ -88,7 +91,10 @@ final class WorkflowController extends ChangeNotifier {
     _export?.cancel.cancel();
     if (_comparison != null) jobState = JobState.cancelling;
     if (_export != null) exportState = ExportState.cancelling;
-    if (source) config = ComparisonConfiguration();
+    if (source) {
+      config = ComparisonConfiguration();
+      proposal = null;
+    }
   }
 
   Future<void> selectSource(
@@ -260,7 +266,11 @@ final class WorkflowController extends ChangeNotifier {
     } finally {
       if (identical(_imports[side], work)) _imports.remove(side);
       work.stopped.complete();
-      _emit();
+      if (inputsReady) {
+        analyzeAndPropose();
+      } else {
+        _emit();
+      }
     }
   }
 
@@ -362,6 +372,56 @@ final class WorkflowController extends ChangeNotifier {
     _invalidate();
     issue = null;
     _emit();
+  }
+
+  void setTaskMode(ComparisonTaskMode mode) {
+    if (!usable) return;
+    taskMode = mode;
+    if (inputsReady) {
+      analyzeAndPropose();
+    } else {
+      _emit();
+    }
+  }
+
+  void analyzeAndPropose({
+    String? preferredKey,
+    String? columnA,
+    String? columnB,
+    String? reconcileValueColumn,
+  }) {
+    if (!usable || !inputsReady) return;
+    final a = slot(SourceSide.a).snapshot!;
+    final b = slot(SourceSide.b).snapshot!;
+    proposal = SmartProposalEngine.analyze(
+      a,
+      b,
+      taskMode: taskMode,
+      preferredKey: preferredKey,
+      columnA: columnA,
+      columnB: columnB,
+      reconcileValueColumn: reconcileValueColumn,
+    );
+    _emit();
+  }
+
+  void applyProposal({bool run = false}) {
+    if (!usable || !inputsReady) return;
+    if (proposal == null) {
+      analyzeAndPropose();
+    }
+    if (proposal != null) {
+      config = SmartProposalEngine.toConfiguration(
+        proposal!,
+        direction: config.direction,
+      );
+      _invalidate();
+      issue = null;
+      _emit();
+      if (run && startBlockers.isEmpty && !busy) {
+        runComparison();
+      }
+    }
   }
 
   List<WorkflowIssue> get startBlockers {
@@ -741,6 +801,8 @@ final class WorkflowController extends ChangeNotifier {
       );
     }
     config = ComparisonConfiguration();
+    taskMode = ComparisonTaskMode.compareFiles;
+    proposal = null;
     result = null;
     receipt = null;
     issue = null;

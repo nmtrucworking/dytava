@@ -38,6 +38,11 @@ dependencies:
   excelcompare_core:
     path: ../packages/excelcompare_core
   flutter_svg: ^2.3.3
+  file_picker: ^13.4.0
+  csv: ^8.0.0
+  excel: ^4.0.6
+  archive: ^3.6.1
+  xml: ^6.5.0
 
 dev_dependencies:
   flutter_test:

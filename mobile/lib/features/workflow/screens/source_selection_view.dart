@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
+import '../../../infrastructure/file_upload_service.dart';
 import '../widgets/workflow_common_widgets.dart';
 
 /// Màn hình Chọn nguồn dữ liệu (`SCR-02`):
@@ -15,6 +16,7 @@ class SourceSelectionView extends StatelessWidget {
   final VoidCallback onQuickPrepareBoth;
   final void Function(SourceSide side) onOpenPreview;
   final VoidCallback onContinueMapping;
+  final VoidCallback? onContinueToProposal;
 
   const SourceSelectionView({
     super.key,
@@ -23,6 +25,7 @@ class SourceSelectionView extends StatelessWidget {
     required this.onQuickPrepareBoth,
     required this.onOpenPreview,
     required this.onContinueMapping,
+    this.onContinueToProposal,
   });
 
   Widget _buildSideCard(BuildContext context, SourceSide side) {
@@ -84,37 +87,48 @@ class SourceSelectionView extends StatelessWidget {
         // - Khi chưa chọn nguồn (`artifact == null`): hiển thị `BrandIllustration.emptySource()` (`emptyFiles`)
         // - Khi đã có tệp (`artifact != null`): chuyển sang `DytavaFileCard` với `BrandIcon.format(...)`
         if (slot.artifact == null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            decoration: BoxDecoration(
-              color: DytavaColors.background,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: DytavaColors.border),
-            ),
-            child: Row(
-              children: [
-                BrandIllustration.emptySource(size: 56),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Chưa chọn · ${WorkflowUiHelpers.formatEnumName(slot.state)}',
-                        style: DytavaTypography.titleMedium.copyWith(
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Chọn tệp bảng tính (Excel/CSV) hoặc ảnh bảng (OCR) cho Nguồn $sideUpper.',
-                        style: DytavaTypography.bodySmall,
-                      ),
-                    ],
-                  ),
+          InkWell(
+            onTap: slot.busy ? null : () => _handleFileUpload(context, side),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+              decoration: BoxDecoration(
+                color: DytavaColors.softBlue.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: DytavaColors.primary.withValues(alpha: 0.4),
+                  width: 1.5,
                 ),
-              ],
+              ),
+              child: Row(
+                children: [
+                  BrandIllustration.emptySource(size: 56),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Chưa chọn · ${WorkflowUiHelpers.formatEnumName(slot.state)}',
+                          style: DytavaTypography.titleMedium.copyWith(
+                            fontSize: 14,
+                            color: DytavaColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Chạm vào đây hoặc bấm nút để chọn tệp Excel (.xlsx) / CSV từ thiết bị cho Nguồn $sideUpper.',
+                          style: DytavaTypography.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const BrandIcon(DytavaIcons.upload, size: 20),
+                ],
+              ),
             ),
           )
         else ...[
@@ -180,6 +194,17 @@ class SourceSelectionView extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
+            FilledButton.tonalIcon(
+              style: FilledButton.styleFrom(minimumSize: const Size(48, 44)),
+              icon: const BrandIcon(DytavaIcons.upload, size: 16),
+              onPressed:
+                  slot.busy ? null : () => _handleFileUpload(context, side),
+              label: Text(
+                slot.artifact == null
+                    ? 'Tải tệp $sideUpper từ thiết bị'
+                    : 'Đổi tệp $sideUpper từ thiết bị',
+              ),
+            ),
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(minimumSize: const Size(48, 44)),
               icon: const BrandIcon(DytavaIcons.fileCsv, size: 16),
@@ -258,6 +283,100 @@ class SourceSelectionView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Màn hình 1 — Chọn dữ liệu: Header & Bộ chọn tác vụ theo mục tiêu người dùng
+        WorkflowSectionCard(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: DytavaColors.softBlue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: const BrandIcon(DytavaIcons.compareTable, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'So sánh dữ liệu',
+                        style: DytavaTypography.titleLarge.copyWith(
+                          color: DytavaColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Chọn hai bảng tính để tìm các giá trị thay đổi.',
+                        style: DytavaTypography.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Chọn mục tiêu tác vụ:',
+              style: DytavaTypography.labelLarge.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                for (final mode in ComparisonTaskMode.values)
+                  ChoiceChip(
+                    selected: flow.taskMode == mode,
+                    avatar: BrandIcon(
+                      switch (mode) {
+                        ComparisonTaskMode.compareFiles => DytavaIcons.compareTable,
+                        ComparisonTaskMode.compareColumns => DytavaIcons.columns,
+                        ComparisonTaskMode.reconcile => DytavaIcons.key,
+                      },
+                      size: 16,
+                    ),
+                    label: Text(mode.label),
+                    selectedColor: DytavaColors.softBlue,
+                    backgroundColor: DytavaColors.white,
+                    side: BorderSide(
+                      color: flow.taskMode == mode
+                          ? DytavaColors.primary
+                          : DytavaColors.border,
+                      width: flow.taskMode == mode ? 1.5 : 1,
+                    ),
+                    labelStyle: TextStyle(
+                      fontSize: 12,
+                      fontWeight: flow.taskMode == mode
+                          ? FontWeight.bold
+                          : FontWeight.w500,
+                      color: flow.taskMode == mode
+                          ? DytavaColors.primary
+                          : DytavaColors.textPrimary,
+                    ),
+                    onSelected: (selected) {
+                      if (selected) flow.setTaskMode(mode);
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              flow.taskMode.shortDescription,
+              style: DytavaTypography.bodySmall.copyWith(
+                color: DytavaColors.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+
         WorkflowSectionCard(
           padding: const EdgeInsets.all(14),
           color: DytavaColors.softBlue,
@@ -338,7 +457,110 @@ class SourceSelectionView extends StatelessWidget {
           },
         ),
 
-        const SizedBox(height: 6),
+        // Tùy chọn nâng cao (Expandable)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Material(
+            color: DytavaColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: const BorderSide(color: DytavaColors.border),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                leading: const BrandIcon(DytavaIcons.settings, size: 20),
+                title: const Text(
+                  'Tùy chọn nâng cao',
+                  style: DytavaTypography.titleMedium,
+                ),
+                subtitle: Text(
+                  'Chiều so sánh (${flow.config.direction == ComparisonDirection.aToB ? 'A → B' : 'B → A'}), chuẩn hóa số & khoảng trắng',
+                  style: DytavaTypography.bodySmall,
+                ),
+                childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                children: [
+                  DropdownButtonFormField<ComparisonDirection>(
+                    initialValue: flow.config.direction,
+                    decoration: const InputDecoration(
+                      labelText: 'Chiều so sánh',
+                      isDense: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: ComparisonDirection.aToB,
+                        child: Text('A → B (Thêm ở B / Thiếu ở A) - Mặc định'),
+                      ),
+                      DropdownMenuItem(
+                        value: ComparisonDirection.bToA,
+                        child: Text('B → A (Thêm ở A / Thiếu ở B)'),
+                      ),
+                    ],
+                    onChanged: (dir) {
+                      if (dir != null) {
+                        flow.configure(flow.config.copyWith(
+                          direction: dir,
+                          directionConfirmed: true,
+                        ));
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Dytava tự động phân tích cấu trúc, nhận diện định dạng số và loại bỏ khoảng trắng thừa theo ngữ nghĩa.',
+                    style: DytavaTypography.bodySmall.copyWith(
+                      color: DytavaColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Thẻ CTA chính khi 2 nguồn đã sẵn sàng: Chuyển sang Màn hình 2 - Kiểm tra đề xuất
+        if (flow.inputsReady) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: DytavaColors.softGreen,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: DytavaColors.exact.withValues(alpha: 0.4),
+              ),
+            ),
+            child: Row(
+              children: [
+                const BrandIcon(DytavaIcons.success, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Đã nạp đủ 2 nguồn · Sẵn sàng kiểm tra đề xuất (${flow.taskMode.label})',
+                    style: DytavaTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: DytavaColors.exact,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          WorkflowPrimaryButton(
+            label: 'Kiểm tra đề xuất',
+            iconAsset: DytavaIcons.check,
+            onPressed: () {
+              if (onContinueToProposal != null) {
+                onContinueToProposal!();
+              } else {
+                flow.navigate(WorkflowScreen.policy);
+              }
+            },
+          ),
+          const SizedBox(height: 8),
+        ],
+
         WorkflowPrimaryButton(
           label: 'Tiếp tục ánh xạ cột',
           iconAsset: DytavaIcons.mapping,
@@ -356,5 +578,42 @@ class SourceSelectionView extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  Future<void> _handleFileUpload(BuildContext context, SourceSide side) async {
+    try {
+      final info = await MobileFileUploadService.pickAndProcessFile(side);
+      if (info == null) return;
+      await flow.selectSource(
+        side,
+        info.format,
+        info.privateRef,
+        info.fileName,
+      );
+      await flow.importSource(side);
+      final slotNow = flow.slot(side);
+      if (slotNow.state == InputState.needsReview) {
+        await flow.confirmImport(side, expectedBinding: slotNow.binding);
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Đã tải ${info.fileName}: ${info.rowCount} hàng × ${info.columnCount} cột.',
+            ),
+            backgroundColor: DytavaColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi tải tệp: $e'),
+            backgroundColor: DytavaColors.different,
+          ),
+        );
+      }
+    }
   }
 }

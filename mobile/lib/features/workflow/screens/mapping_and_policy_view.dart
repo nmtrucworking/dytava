@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
+import '../../../domain/smart_proposal_engine.dart';
 import '../../../domain/workflow.dart';
 import '../widgets/workflow_common_widgets.dart';
 
@@ -256,10 +257,214 @@ class PolicyScreenView extends StatelessWidget {
         config.policyConfirmed &&
         config.directionConfirmed;
 
+    final proposal = flow.proposal ??
+        (flow.inputsReady
+            ? SmartProposalEngine.analyze(
+                flow.slot(SourceSide.a).snapshot!,
+                flow.slot(SourceSide.b).snapshot!,
+                taskMode: flow.taskMode,
+              )
+            : null);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Thẻ tóm tắt cấu hình & xác nhận nhanh
+        // Màn hình 2 — Kiểm tra đề xuất đối chiếu (Smart Proposal Review)
+        WorkflowSectionCard(
+          padding: const EdgeInsets.all(16),
+          color: DytavaColors.white,
+          border: Border.all(color: DytavaColors.primary.withValues(alpha: 0.3)),
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: DytavaColors.softBlue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: const BrandIcon(DytavaIcons.policy, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Kiểm tra đề xuất đối chiếu',
+                        style: DytavaTypography.titleLarge.copyWith(
+                          color: DytavaColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Dytava tự động phân tích cấu trúc, gợi ý khóa/cột và phương pháp ghép.',
+                        style: DytavaTypography.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                WorkflowStatusPill(
+                  label: flow.taskMode.label,
+                  color: DytavaColors.primary,
+                  bg: DytavaColors.softBlue,
+                  iconAsset: DytavaIcons.check,
+                ),
+              ],
+            ),
+            const Divider(height: 20),
+
+            // Đánh giá mức độ tin cậy
+            if (proposal != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: proposal.isHighConfidence
+                      ? DytavaColors.softGreen
+                      : DytavaColors.softAmber,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: proposal.isHighConfidence
+                        ? DytavaColors.exact.withValues(alpha: 0.4)
+                        : DytavaColors.unresolved.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    BrandIcon(
+                      proposal.isHighConfidence
+                          ? DytavaIcons.success
+                          : DytavaIcons.warning,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            proposal.isHighConfidence
+                                ? 'Đề xuất tối ưu (Tin cậy cao)'
+                                : 'Cần lưu ý & xác nhận',
+                            style: DytavaTypography.titleMedium.copyWith(
+                              color: proposal.isHighConfidence
+                                  ? DytavaColors.exact
+                                  : DytavaColors.unresolved,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            proposal.confidenceReason,
+                            style: DytavaTypography.bodySmall,
+                          ),
+                          if (proposal.requiresExplicitConfirmation) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Khi chưa đủ căn cứ chọn khóa hoặc chuẩn hóa, Dytava yêu cầu bạn xác nhận trước khi tiếp tục.',
+                              style: DytavaTypography.bodySmall.copyWith(
+                                color: DytavaColors.unresolved,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Bản tóm tắt đề xuất
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: DytavaColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: DytavaColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const BrandIcon(DytavaIcons.key, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            proposal.mode == MatchingMode.key
+                                ? 'Phương pháp: Ghép theo mã ID (${proposal.keys.isEmpty ? 'Chưa chọn' : proposal.keys.join(', ')})'
+                                : 'Phương pháp: Ghép theo thứ tự hàng (Positional)',
+                            style: DytavaTypography.titleMedium.copyWith(fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const BrandIcon(DytavaIcons.columns, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Ánh xạ: Đã tự động ghép ${proposal.mappings.length} cặp cột (${proposal.mappings.map((m) => '${m.fieldA} ↔ ${m.fieldB}').join(', ')})',
+                            style: DytavaTypography.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const BrandIcon(DytavaIcons.normalize, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Chuẩn hóa: Tự động nhận diện định dạng số, tiền tệ, ngày tháng.',
+                            style: DytavaTypography.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Nút CTA to 1 chạm: Tiến hành so sánh
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: const BrandIcon(DytavaIcons.play, size: 20),
+                  label: const Text(
+                    'Tiến hành so sánh',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: DytavaColors.primary,
+                    minimumSize: const Size(48, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: flow.busy
+                      ? null
+                      : () {
+                          flow.applyProposal(run: true);
+                        },
+                ),
+              ),
+            ],
+          ],
+        ),
+
+        // Thẻ tóm tắt cấu hình & xác nhận nhanh (Chi tiết nâng cao)
         WorkflowSectionCard(
           color: DytavaColors.softBlue,
           border: Border.all(
