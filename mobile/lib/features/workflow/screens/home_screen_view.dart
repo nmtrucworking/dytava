@@ -275,7 +275,7 @@ class _StartComparisonPanel extends StatelessWidget {
               label: Text(
                 quickProcessing
                     ? 'Đang chạy dữ liệu mẫu…'
-                    : 'Chạy thử tự động bằng dữ liệu mẫu',
+                    : 'Thử nhanh với dữ liệu mẫu',
               ),
               style: TextButton.styleFrom(
                 minimumSize: const Size.fromHeight(46),
