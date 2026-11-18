@@ -42,21 +42,19 @@ class SourceSelectionView extends StatelessWidget {
         Row(
           children: [
             Container(
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: side == SourceSide.a
-                    ? DytavaColors.primary
-                    : DytavaColors.secondary,
-                borderRadius: BorderRadius.circular(10),
+                color: DytavaColors.graphite,
+                borderRadius: BorderRadius.circular(8),
               ),
               alignment: Alignment.center,
               child: Text(
                 sideUpper,
                 style: const TextStyle(
-                  color: DytavaColors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  color: DytavaColors.limePrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
                 ),
               ),
             ),
@@ -67,8 +65,9 @@ class SourceSelectionView extends StatelessWidget {
                 children: [
                   Text(
                     'Nguồn $sideUpper',
-                    style: DytavaTypography.titleLarge.copyWith(
+                    style: DytavaTypography.titleMedium.copyWith(
                       color: DytavaColors.textPrimary,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
@@ -83,52 +82,59 @@ class SourceSelectionView extends StatelessWidget {
             WorkflowInputStateBadge(state: slot.state),
           ],
         ),
-        const Divider(height: 20),
+        const Divider(height: 18),
 
-        // Quy tắc Branding:
-        // - Khi chưa chọn nguồn (`artifact == null`): hiển thị `BrandIllustration.emptySource()` (`emptyFiles`)
-        // - Khi đã có tệp (`artifact != null`): chuyển sang `DytavaFileCard` với `BrandIcon.format(...)`
+        // Khi chưa chọn nguồn: Upload Dropzone Card chuẩn Precision Workspace v3.2
         if (slot.artifact == null)
           InkWell(
             onTap: slot.busy ? null : () => _handleFileUpload(context, side),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
               decoration: BoxDecoration(
-                color: DytavaColors.softBlue.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(12),
+                color: DytavaColors.warmSurface,
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: DytavaColors.primary.withValues(alpha: 0.4),
-                  width: 1.5,
+                  color: DytavaColors.subtleBorder,
+                  width: 1.2,
                 ),
               ),
               child: Row(
                 children: [
-                  BrandIllustration.emptySource(size: 56),
-                  const SizedBox(width: 12),
+                  BrandIllustration.emptySource(size: 38),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Chưa chọn · ${WorkflowUiHelpers.formatEnumName(slot.state)}',
-                          style: DytavaTypography.titleMedium.copyWith(
-                            fontSize: 14,
-                            color: DytavaColors.primary,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
+                            color: DytavaColors.graphite,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Chạm vào đây hoặc bấm nút để chọn tệp Excel (.xlsx) / CSV từ thiết bị cho Nguồn $sideUpper.',
-                          style: DytavaTypography.bodySmall,
+                          'Chạm để chọn tệp Excel (.xlsx, .xls) hoặc CSV từ thiết bị cho Nguồn $sideUpper.',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 11,
+                            color: DytavaColors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const BrandIcon(DytavaIcons.upload, size: 20),
+                  const Icon(
+                    Icons.upload_file_rounded,
+                    size: 20,
+                    color: DytavaColors.graphite,
+                  ),
                 ],
               ),
             ),
@@ -163,53 +169,48 @@ class SourceSelectionView extends StatelessWidget {
         ],
         const SizedBox(height: 12),
 
-        // Tác vụ nhanh theo trạng thái nguồn
-        if (slot.state == InputState.selected)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonalIcon(
-                style: FilledButton.styleFrom(minimumSize: const Size(48, 46)),
-                icon: const BrandIcon(DytavaIcons.play, size: 16),
-                label: Text('Kiểm tra nhanh $sideUpper (1 chạm)'),
-                onPressed: slot.busy ? null : () => flow.importSource(side),
+        // Nút hành động chọn tệp: Thiết kế responsive flex tối ưu không gian (3-4 thành phần)
+        Builder(
+          builder: (context) {
+            final btnUpload = FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: DytavaColors.limePrimary,
+                foregroundColor: DytavaColors.graphite,
+                minimumSize: const Size(48, 42),
+                shape: const StadiumBorder(),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                textStyle: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.5,
+                ),
               ),
-            ),
-          ),
-        if (slot.state == InputState.needsReview && slot.review!.cells.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonalIcon(
-                style: FilledButton.styleFrom(minimumSize: const Size(48, 46)),
-                icon: const BrandIcon(DytavaIcons.check, size: 16),
-                label: Text('Xác nhận nhanh phạm vi $sideUpper (1 chạm)'),
-                onPressed: () =>
-                    flow.confirmImport(side, expectedBinding: slot.binding),
-              ),
-            ),
-          ),
-
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            FilledButton.tonalIcon(
-              style: FilledButton.styleFrom(minimumSize: const Size(48, 44)),
-              icon: const BrandIcon(DytavaIcons.upload, size: 16),
-              onPressed: slot.busy
-                  ? null
-                  : () => _handleFileUpload(context, side),
+              icon: const Icon(Icons.upload_file_rounded, size: 16, color: DytavaColors.graphite),
+              onPressed: slot.busy ? null : () => _handleFileUpload(context, side),
               label: Text(
                 slot.artifact == null
                     ? 'Tải tệp $sideUpper từ thiết bị'
                     : 'Đổi tệp $sideUpper từ thiết bị',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(minimumSize: const Size(48, 44)),
+            );
+
+            final btnSample = OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: DytavaColors.white,
+                foregroundColor: DytavaColors.graphite,
+                side: const BorderSide(color: DytavaColors.subtleBorder, width: 1.2),
+                minimumSize: const Size(48, 42),
+                shape: const StadiumBorder(),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                textStyle: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.5,
+                ),
+              ),
               icon: const BrandIcon(DytavaIcons.fileCsv, size: 16),
               onPressed: slot.busy
                   ? null
@@ -223,10 +224,25 @@ class SourceSelectionView extends StatelessWidget {
                 slot.artifact == null
                     ? 'Chọn bảng mẫu $sideUpper'
                     : 'Thay bảng mẫu $sideUpper',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(minimumSize: const Size(48, 44)),
+            );
+
+            final btnOcr = OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: DytavaColors.white,
+                foregroundColor: DytavaColors.graphite,
+                side: const BorderSide(color: DytavaColors.subtleBorder, width: 1.2),
+                minimumSize: const Size(48, 42),
+                shape: const StadiumBorder(),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                textStyle: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.5,
+                ),
+              ),
               icon: const BrandIcon(DytavaIcons.ocr, size: 16),
               onPressed: slot.busy || otherIsImage
                   ? null
@@ -236,28 +252,71 @@ class SourceSelectionView extends StatelessWidget {
                       'fixture:image-a',
                       'sample-image.png',
                     ),
-              label: Text('Chọn OCR giả lập $sideUpper'),
-            ),
-            if (slot.artifact != null)
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(48, 44),
-                ),
-                icon: const BrandIcon(DytavaIcons.preview, size: 16),
-                onPressed: slot.busy ? null : () => onOpenPreview(side),
-                label: Text('Kiểm tra $sideUpper'),
+              label: Text(
+                'Chọn OCR giả lập $sideUpper',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            if (slot.artifact != null)
-              TextButton.icon(
-                style: TextButton.styleFrom(minimumSize: const Size(48, 44)),
-                icon: const BrandIcon(DytavaIcons.delete, size: 16),
-                onPressed: () => flow.resetSource(side),
-                label: Text(
-                  'Xóa $sideUpper',
-                  style: const TextStyle(color: DytavaColors.different),
-                ),
+            );
+
+            if (slot.artifact == null) {
+              return DytavaResponsiveGroup(
+                breakpoint: 480,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  btnUpload,
+                  btnSample,
+                  btnOcr,
+                ],
+              );
+            }
+
+            final btnInspect = OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: DytavaColors.white,
+                foregroundColor: DytavaColors.graphite,
+                side: const BorderSide(color: DytavaColors.subtleBorder, width: 1.2),
+                minimumSize: const Size(48, 42),
+                shape: const StadiumBorder(),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
-          ],
+              icon: const BrandIcon(DytavaIcons.preview, size: 16),
+              onPressed: slot.busy ? null : () => onOpenPreview(side),
+              label: Text('Kiểm tra $sideUpper'),
+            );
+
+            final btnDelete = TextButton.icon(
+              style: TextButton.styleFrom(minimumSize: const Size(48, 42)),
+              icon: const BrandIcon(DytavaIcons.delete, size: 16),
+              onPressed: () => flow.resetSource(side),
+              label: Text(
+                'Xóa $sideUpper',
+                style: const TextStyle(color: DytavaColors.different),
+              ),
+            );
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: btnUpload),
+                    const SizedBox(width: 8),
+                    Expanded(child: btnInspect),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(child: btnSample),
+                    const SizedBox(width: 8),
+                    Expanded(child: btnDelete),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
         if (otherIsImage && slot.artifact?.format.isImage != true)
           Padding(
@@ -271,7 +330,7 @@ class SourceSelectionView extends StatelessWidget {
           ),
         if (slot.busy) ...[
           const SizedBox(height: 8),
-          WorkflowPrimaryButton(
+          WorkflowSecondaryButton(
             label: 'Hủy nhập $sideUpper',
             iconAsset: DytavaIcons.cancel,
             onPressed: slot.cancelling ? null : () => flow.cancelImport(side),
@@ -380,22 +439,20 @@ class SourceSelectionView extends StatelessWidget {
                       ComparisonTaskMode.reconcile => DytavaIcons.key,
                     }, size: 16),
                     label: Text(mode.label),
-                    selectedColor: DytavaColors.softBlue,
+                    selectedColor: DytavaColors.limePrimary,
                     backgroundColor: DytavaColors.white,
                     side: BorderSide(
                       color: flow.taskMode == mode
-                          ? DytavaColors.primary
-                          : DytavaColors.border,
-                      width: flow.taskMode == mode ? 1.5 : 1,
+                          ? DytavaColors.graphite
+                          : DytavaColors.subtleBorder,
+                      width: flow.taskMode == mode ? 1.4 : 1,
                     ),
                     labelStyle: TextStyle(
                       fontSize: 12,
                       fontWeight: flow.taskMode == mode
                           ? FontWeight.bold
                           : FontWeight.w500,
-                      color: flow.taskMode == mode
-                          ? DytavaColors.primary
-                          : DytavaColors.textPrimary,
+                      color: DytavaColors.graphite,
                     ),
                     onSelected: (selected) {
                       if (selected) flow.setTaskMode(mode);
@@ -416,23 +473,25 @@ class SourceSelectionView extends StatelessWidget {
 
         WorkflowSectionCard(
           padding: const EdgeInsets.all(14),
-          color: DytavaColors.softBlue,
+          color: DytavaColors.warmSurface,
           border: Border.all(
-            color: DytavaColors.primary.withValues(alpha: 0.3),
+            color: DytavaColors.subtleBorder,
+            width: 1.2,
           ),
           children: [
             Row(
               children: [
                 BrandIllustration.onboarding(
                   DytavaIllustrations.onboardingImport,
-                  maxHeight: 54,
+                  maxHeight: 44,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Mỗi nguồn có trạng thái riêng. Thay nguồn làm mất hiệu lực ánh xạ và kết quả liên quan.',
                     style: DytavaTypography.bodyMedium.copyWith(
-                      color: DytavaColors.textPrimary,
+                      color: DytavaColors.graphite,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -448,24 +507,27 @@ class SourceSelectionView extends StatelessWidget {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: DytavaColors.graphite,
+                      ),
                     )
                   : const BrandIcon(DytavaIcons.play, size: 18),
               label: const Text(
                 'Tự động chuẩn bị nhanh cả 2 nguồn (1 chạm)',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: DytavaColors.primary,
+                  color: DytavaColors.graphite,
+                  fontSize: 13,
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                backgroundColor: DytavaColors.softBlue,
-                side: const BorderSide(color: DytavaColors.primary),
-                minimumSize: const Size(48, 48),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                backgroundColor: DytavaColors.warmSurface,
+                foregroundColor: DytavaColors.graphite,
+                side: const BorderSide(color: DytavaColors.subtleBorder, width: 1.2),
+                minimumSize: const Size(double.infinity, 44),
+                shape: const StadiumBorder(),
+                elevation: 0,
               ),
               onPressed: quickProcessing ? null : onQuickPrepareBoth,
             ),
@@ -478,17 +540,33 @@ class SourceSelectionView extends StatelessWidget {
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: _buildSideCard(context, SourceSide.a)),
+                  Expanded(
+                    child: DytavaFadeSlide(
+                      delay: const Duration(milliseconds: 40),
+                      child: _buildSideCard(context, SourceSide.a),
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildSideCard(context, SourceSide.b)),
+                  Expanded(
+                    child: DytavaFadeSlide(
+                      delay: const Duration(milliseconds: 90),
+                      child: _buildSideCard(context, SourceSide.b),
+                    ),
+                  ),
                 ],
               );
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildSideCard(context, SourceSide.a),
-                _buildSideCard(context, SourceSide.b),
+                DytavaFadeSlide(
+                  delay: const Duration(milliseconds: 40),
+                  child: _buildSideCard(context, SourceSide.a),
+                ),
+                DytavaFadeSlide(
+                  delay: const Duration(milliseconds: 90),
+                  child: _buildSideCard(context, SourceSide.b),
+                ),
               ],
             );
           },
@@ -665,22 +743,18 @@ class SourceSelectionView extends StatelessWidget {
         await flow.confirmImport(side, expectedBinding: slotNow.binding);
       }
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Đã tải ${info.fileName}: ${info.rowCount} hàng × ${info.columnCount} cột.',
-            ),
-            backgroundColor: DytavaColors.primary,
-          ),
+        DytavaToast.success(
+          context,
+          'Đã tải ${info.fileName}: ${info.rowCount} hàng × ${info.columnCount} cột.',
+          title: 'Tải tệp thành công',
         );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi tải tệp: $e'),
-            backgroundColor: DytavaColors.different,
-          ),
+        DytavaToast.error(
+          context,
+          'Lỗi tải tệp: $e',
+          title: 'Không thể nạp tệp',
         );
       }
     } finally {

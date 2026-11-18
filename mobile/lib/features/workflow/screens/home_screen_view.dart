@@ -39,7 +39,7 @@ class HomeScreenView extends StatelessWidget {
     if (flow.inputsReady) {
       return flow.config.mappingConfirmed
           ? 'Bước 2/4 · Sẵn sàng xác nhận quy tắc & chạy'
-          : 'Bước 2/4 · Đang chờ ghép cột A ↔ B';
+          : 'Bước 2/4 · Đang chờ ghép cột A → B';
     }
     return 'Bước 1/4 · Đang chuẩn bị Nguồn A & Nguồn B';
   }
@@ -50,7 +50,7 @@ class HomeScreenView extends StatelessWidget {
     if (flow.resultCurrent && flow.result != null) {
       final diffCount = flow.result!.count(DecisionStatus.different);
       final unresolvedCount = flow.result!.count(DecisionStatus.unresolved);
-      return '$labelA ↔ $labelB · $diffCount ô khác biệt · $unresolvedCount ô chưa kết luận';
+      return '$labelA → $labelB · $diffCount ô khác biệt · $unresolvedCount ô chưa kết luận';
     }
     return 'Nguồn A: $labelA · Nguồn B: $labelB';
   }
@@ -332,38 +332,9 @@ class _StartComparisonPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Row(
-            children: [
-              Expanded(
-                child: _SourceTile(
-                  tag: 'A',
-                  title: 'Bảng tham chiếu',
-                  icon: Icons.description_outlined,
-                  accentColor: DytavaColors.primary,
-                  backgroundColor: DytavaColors.softBlue,
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 7),
-                child: Icon(
-                  Icons.sync_alt_rounded,
-                  size: 22,
-                  color: DytavaColors.textSecondary,
-                ),
-              ),
-              Expanded(
-                child: _SourceTile(
-                  tag: 'B',
-                  title: 'Bảng đối chiếu',
-                  icon: Icons.table_chart_outlined,
-                  accentColor: Color(0xFF047857),
-                  backgroundColor: DytavaColors.softGreen,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+
+          // Nút CTA chính nổi bật ngay đầu panel
           SizedBox(
             width: double.infinity,
             child: FilledButton(
@@ -395,7 +366,110 @@ class _StartComparisonPanel extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 14),
+
+          const Row(
+            children: [
+              Expanded(
+                child: _SourceTile(
+                  tag: 'A',
+                  title: 'Bảng tham chiếu',
+                  icon: Icons.description_outlined,
+                  accentColor: DytavaColors.primary,
+                  backgroundColor: DytavaColors.softBlue,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 7),
+                child: Icon(
+                  Icons.sync_alt_rounded,
+                  size: 22,
+                  color: DytavaColors.textSecondary,
+                ),
+              ),
+              Expanded(
+                child: _SourceTile(
+                  tag: 'B',
+                  title: 'Bảng đối chiếu',
+                  icon: Icons.table_chart_outlined,
+                  accentColor: Color(0xFF047857),
+                  backgroundColor: DytavaColors.softGreen,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // 3 Thẻ lựa chọn lớn chuẩn Mockup Board 01 (Màn hình 2)
+          _ActionSelectionCard(
+            icon: Icons.file_upload_outlined,
+            iconBg: DytavaColors.limePrimary,
+            iconColor: DytavaColors.graphite,
+            title: 'Tải tệp từ thiết bị',
+            subtitle: 'Chọn 2 tệp Excel (.xlsx, .xls)',
+            onTap: onStartNewSession,
+          ),
+          const SizedBox(height: 10),
+          _ActionSelectionCard(
+            icon: Icons.camera_alt_outlined,
+            iconBg: DytavaColors.warmSurface,
+            iconColor: DytavaColors.graphite,
+            title: 'Quét từ ảnh (OCR)',
+            subtitle: 'Trích xuất bảng từ ảnh chụp',
+            onTap: onStartNewSession,
+          ),
+          const SizedBox(height: 10),
+          _ActionSelectionCard(
+            icon: Icons.layers_outlined,
+            iconBg: DytavaColors.warmSurface,
+            iconColor: DytavaColors.graphite,
+            title: 'Dùng dữ liệu mẫu',
+            subtitle: 'Thử nhanh với bộ dữ liệu có sẵn',
+            onTap: onQuickRun,
+          ),
+          const SizedBox(height: 14),
+
+          // Hỗ trợ định dạng Info Box theo Mockup Board 01
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: DytavaColors.warmSurface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: DytavaColors.subtleBorder),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.info_outline_rounded,
+                  size: 18,
+                  color: DytavaColors.textSecondary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: DytavaTypography.bodySmall.copyWith(
+                        color: DytavaColors.textSecondary,
+                        fontSize: 11.5,
+                      ),
+                      children: const [
+                        TextSpan(
+                          text: 'Hỗ trợ định dạng: ',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        TextSpan(
+                          text:
+                              'Excel (.xlsx, .xls). Mỗi tệp nên có cấu trúc bảng rõ ràng với tiêu đề cột.',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
             child: TextButton.icon(
@@ -602,6 +676,86 @@ class _WorkflowSteps extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionSelectionCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ActionSelectionCard({
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: DytavaColors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: DytavaColors.subtleBorder, width: 1),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: DytavaColors.subtleBorder, width: 0.8),
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: DytavaTypography.titleMedium.copyWith(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                        color: DytavaColors.graphite,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: DytavaTypography.bodySmall.copyWith(
+                        fontSize: 11.5,
+                        color: DytavaColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                size: 18,
+                color: DytavaColors.precisionNeutral,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

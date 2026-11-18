@@ -285,127 +285,222 @@ class _WorkflowPageState extends State<WorkflowPage>
     final isRootHome =
         flow.screen == WorkflowScreen.home && _auxView == _AuxiliaryView.none;
 
-    return PopScope(
-      canPop: isRootHome && !flow.busy,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) unawaited(_back());
-      },
-      child: Scaffold(
-        backgroundColor: DytavaColors.background,
-        appBar: AppBar(
-          title: Text(_appBarTitle(), style: DytavaTypography.titleLarge),
-          backgroundColor: DytavaColors.white,
-          elevation: 0,
-          leading: isRootHome
-              ? null
-              : IconButton(
-                  tooltip: 'Quay lại',
-                  onPressed: flow.busy ? null : _back,
-                  icon: const BrandIcon(DytavaIcons.back, size: 20),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Tự động nhận diện màn hình lớn (Desktop / Web / Tablet >= 600dp)
+        final isLargeScreen = constraints.maxWidth >= 600;
+        final maxAppWidth = isLargeScreen ? 480.0 : double.infinity;
+
+        final scaffold = Scaffold(
+          backgroundColor: DytavaColors.background,
+          appBar: AppBar(
+            title: Text(_appBarTitle(), style: DytavaTypography.titleLarge),
+            backgroundColor: DytavaColors.white,
+            elevation: 0,
+            leading: isRootHome
+                ? null
+                : IconButton(
+                    tooltip: 'Quay lại',
+                    onPressed: flow.busy ? null : _back,
+                    icon: const BrandIcon(DytavaIcons.back, size: 20),
+                  ),
+            actions: [
+              if (isRootHome) ...[
+                IconButton(
+                  tooltip: 'Phiên trong bộ nhớ',
+                  onPressed: () =>
+                      setState(() => _auxView = _AuxiliaryView.history),
+                  icon: const Icon(Icons.history_rounded),
                 ),
-          actions: [
-            if (isRootHome) ...[
-              IconButton(
-                tooltip: 'Phiên trong bộ nhớ',
-                onPressed: () =>
-                    setState(() => _auxView = _AuxiliaryView.history),
-                icon: const Icon(Icons.history_rounded),
-              ),
-              PopupMenuButton<_AuxiliaryView>(
-                tooltip: 'Thêm tùy chọn',
-                icon: const Icon(Icons.more_vert_rounded),
-                onSelected: (view) =>
-                    setState(() => _auxView = view),
-                itemBuilder: (context) => const [
-                  PopupMenuItem(
-                    value: _AuxiliaryView.presets,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.tune_rounded, size: 20),
-                        SizedBox(width: 12),
-                        Expanded(child: Text('Mẫu quy tắc')),
-                      ],
+                PopupMenuButton<_AuxiliaryView>(
+                  tooltip: 'Thêm tùy chọn',
+                  icon: const Icon(Icons.more_vert_rounded),
+                  onSelected: (view) =>
+                      setState(() => _auxView = view),
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: _AuxiliaryView.presets,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.tune_rounded, size: 20),
+                          SizedBox(width: 12),
+                          Expanded(child: Text('Mẫu quy tắc')),
+                        ],
+                      ),
                     ),
-                  ),
-                  PopupMenuItem(
-                    value: _AuxiliaryView.settings,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.settings_outlined, size: 20),
-                        SizedBox(width: 12),
-                        Expanded(child: Text('Cài đặt & bảo mật')),
-                      ],
+                    PopupMenuItem(
+                      value: _AuxiliaryView.settings,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.settings_outlined, size: 20),
+                          SizedBox(width: 12),
+                          Expanded(child: Text('Cài đặt & bảo mật')),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+              ],
+              if (!isRootHome)
+                IconButton(
+                  tooltip: 'Về trang chủ',
+                  onPressed: flow.busy
+                      ? null
+                      : () {
+                          setState(() => _auxView = _AuxiliaryView.none);
+                          flow.navigate(WorkflowScreen.home);
+                        },
+                  icon: const BrandIcon(DytavaIcons.navHome, size: 20),
+                ),
+              if (flow.screen != WorkflowScreen.home)
+                IconButton(
+                  tooltip: 'Đóng phiên và dọn dữ liệu phiên',
+                  onPressed: flow.usable
+                      ? () async {
+                          await flow.closeSession();
+                          if (mounted) {
+                            setState(() => _auxView = _AuxiliaryView.none);
+                          }
+                        }
+                      : null,
+                  icon: const BrandIcon(DytavaIcons.close, size: 20),
+                ),
+            ],
+          ),
+          body: SafeArea(
+            bottom: false,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              switchInCurve: Curves.easeOutQuad,
+              switchOutCurve: Curves.easeInQuad,
+              layoutBuilder: (currentChild, previousChildren) {
+                return Stack(
+                  alignment: Alignment.topCenter,
+                  children: <Widget>[
+                    ...previousChildren,
+                    ?currentChild,
+                  ],
+                );
+              },
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
+              },
+              child: ListView(
+                key: ValueKey('${flow.screen.name}-aux-${_auxView.name}'),
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                padding: EdgeInsets.fromLTRB(
+                  isLargeScreen ? 16.0 : (constraints.maxWidth < 350 ? 12.0 : 16.0),
+                  16,
+                  isLargeScreen ? 16.0 : (constraints.maxWidth < 350 ? 12.0 : 16.0),
+                  64 + MediaQuery.of(context).padding.bottom,
+                ),
+                children: [
+                  if (_auxView == _AuxiliaryView.none &&
+                      flow.screen != WorkflowScreen.home &&
+                      flow.screen != WorkflowScreen.results &&
+                      flow.screen != WorkflowScreen.progress)
+                    DytavaGuidedStepHeader(screen: flow.screen),
+                  if (flow.issue != null && _auxView == _AuxiliaryView.none)
+                    Semantics(
+                      liveRegion: true,
+                      child: WorkflowIssueList(issues: [flow.issue!]),
+                    ),
+                  ..._buildActiveContent(),
                 ],
               ),
-            ],
-            if (!isRootHome)
-              IconButton(
-                tooltip: 'Về trang chủ',
-                onPressed: flow.busy
-                    ? null
-                    : () {
-                        setState(() => _auxView = _AuxiliaryView.none);
-                        flow.navigate(WorkflowScreen.home);
-                      },
-                icon: const BrandIcon(DytavaIcons.navHome, size: 20),
-              ),
-            if (flow.screen != WorkflowScreen.home)
-              IconButton(
-                tooltip: 'Đóng phiên và dọn dữ liệu phiên',
-                onPressed: flow.usable
-                    ? () async {
-                        await flow.closeSession();
-                        if (mounted) {
-                          setState(() => _auxView = _AuxiliaryView.none);
-                        }
-                      }
-                    : null,
-                icon: const BrandIcon(DytavaIcons.close, size: 20),
-              ),
-          ],
-        ),
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Bố cục thích ứng theo kích thước thiết bị (320dp / 360dp / 412dp / tablet >= 600dp)
-              final width = constraints.maxWidth;
-              final horizontalPadding = width < 350
-                  ? 12.0
-                  : (width >= 600 ? 24.0 : 16.0);
-              final maxContentWidth = width >= 680 ? 960.0 : 640.0;
-
-              return Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxContentWidth),
-                  child: ListView(
-                    key: ValueKey('${flow.screen.name}-aux-${_auxView.name}'),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: horizontalPadding,
-                      vertical: 16,
+            ),
+          ),
+          bottomNavigationBar: flow.screen == WorkflowScreen.home
+              ? NavigationBar(
+                  selectedIndex: switch (_auxView) {
+                    _AuxiliaryView.none => 0,
+                    _AuxiliaryView.history => 1,
+                    _AuxiliaryView.settings || _AuxiliaryView.presets => 2,
+                  },
+                  onDestinationSelected: (idx) {
+                    setState(() {
+                      _auxView = switch (idx) {
+                        0 => _AuxiliaryView.none,
+                        1 => _AuxiliaryView.history,
+                        2 => _AuxiliaryView.settings,
+                        _ => _AuxiliaryView.none,
+                      };
+                    });
+                  },
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home_rounded),
+                      label: 'Trang chủ',
                     ),
-                    children: [
-                      if (_auxView == _AuxiliaryView.none &&
-                          flow.screen != WorkflowScreen.home)
-                        DytavaGuidedStepHeader(screen: flow.screen),
-                      if (flow.issue != null && _auxView == _AuxiliaryView.none)
-                        Semantics(
-                          liveRegion: true,
-                          child: WorkflowIssueList(issues: [flow.issue!]),
-                        ),
-                      ..._buildActiveContent(),
+                    NavigationDestination(
+                      icon: Icon(Icons.history_rounded),
+                      selectedIcon: Icon(Icons.history_rounded),
+                      label: 'Lịch sử',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.settings_outlined),
+                      selectedIcon: Icon(Icons.settings_rounded),
+                      label: 'Cài đặt',
+                    ),
+                  ],
+                )
+              : null,
+        );
+
+        Widget page = scaffold;
+
+        // Căn giữa chuẩn flex-center trên Desktop / Web / Tablet (giữ nguyên tỉ lệ 9:16 mobile)
+        if (isLargeScreen) {
+          page = Container(
+            color: DytavaColors.warmSurface,
+            alignment: Alignment.center,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: maxAppWidth,
+                  maxHeight: constraints.maxHeight,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: DytavaColors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: DytavaColors.subtleBorder,
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 24,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 8),
+                      ),
                     ],
                   ),
+                  clipBehavior: Clip.antiAlias,
+                  child: scaffold,
                 ),
-              );
-            },
-          ),
-        ),
-      ),
+              ),
+            ),
+          );
+        }
+
+        return PopScope(
+          canPop: isRootHome && !flow.busy,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) unawaited(_back());
+          },
+          child: page,
+        );
+      },
     );
   }
 
@@ -449,7 +544,7 @@ class _WorkflowPageState extends State<WorkflowPage>
               bgColor: DytavaColors.softAmber,
             ),
             const SizedBox(height: 12),
-            WorkflowPrimaryButton(
+            WorkflowSecondaryButton(
               label: 'Về nguồn A/B',
               iconAsset: DytavaIcons.back,
               onPressed: () => _go(WorkflowScreen.sources),
@@ -475,7 +570,7 @@ class _WorkflowPageState extends State<WorkflowPage>
               bgColor: DytavaColors.softRed,
             ),
             const SizedBox(height: 12),
-            WorkflowPrimaryButton(
+            WorkflowSecondaryButton(
               label: 'Về nguồn A/B',
               iconAsset: DytavaIcons.back,
               onPressed: () => _go(WorkflowScreen.sources),

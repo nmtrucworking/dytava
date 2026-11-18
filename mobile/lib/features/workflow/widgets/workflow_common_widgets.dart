@@ -54,13 +54,18 @@ class WorkflowSectionCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(16),
-        border: border ?? Border.all(color: DytavaColors.border, width: 1),
+        borderRadius: BorderRadius.circular(20),
+        border: border ?? Border.all(color: DytavaColors.subtleBorder, width: 1),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
-            offset: Offset(0, 2),
-            blurRadius: 8,
+            color: Color(0x080F1A1C),
+            offset: Offset(0, 4),
+            blurRadius: 16,
+          ),
+          BoxShadow(
+            color: Color(0x040F1A1C),
+            offset: Offset(0, 1),
+            blurRadius: 4,
           ),
         ],
       ),
@@ -359,7 +364,12 @@ class WorkflowPrimaryButton extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         child: FilledButton(
-          onPressed: onPressed,
+          onPressed: onPressed == null
+              ? null
+              : () {
+                  DytavaAudioFeedback.playClick();
+                  onPressed!();
+                },
           style: FilledButton.styleFrom(
             backgroundColor: DytavaColors.limePrimary,
             foregroundColor: DytavaColors.graphite,
@@ -380,7 +390,87 @@ class WorkflowPrimaryButton extends StatelessWidget {
                 BrandIcon(iconAsset!, size: 18),
                 const SizedBox(width: 8),
               ],
-              Flexible(child: Text(label, style: DytavaTypography.labelLarge)),
+              Flexible(
+                child: Text(
+                  label,
+                  style: DytavaTypography.labelLarge.copyWith(
+                    color: DytavaColors.graphite,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Nút bấm phụ (Secondary Action: Trở về, Quay lại, Hủy, Thao tác bổ trợ)
+class WorkflowSecondaryButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final String? iconAsset;
+  final IconData? icon;
+
+  const WorkflowSecondaryButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.iconAsset,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: onPressed == null
+              ? null
+              : () {
+                  DytavaAudioFeedback.playClick();
+                  onPressed!();
+                },
+          style: OutlinedButton.styleFrom(
+            backgroundColor: DytavaColors.warmSurface,
+            foregroundColor: DytavaColors.graphite,
+            side: const BorderSide(
+              color: DytavaColors.subtleBorder,
+              width: 1.2,
+            ),
+            minimumSize: const Size(48, 48),
+            shape: const StadiumBorder(),
+            elevation: 0,
+            textStyle: const TextStyle(
+              fontFamily: DytavaTypography.editorialFont,
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 18, color: DytavaColors.graphite),
+                const SizedBox(width: 8),
+              ] else if (iconAsset != null) ...[
+                BrandIcon(iconAsset!, size: 18),
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: DytavaColors.graphite,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -455,10 +545,10 @@ class DytavaGuidedStepHeader extends StatelessWidget {
                   if (i > 0)
                     Expanded(
                       child: Container(
-                        height: 2,
+                        height: 2.5,
                         color: currentStep > steps[i].$1 - 1
-                            ? DytavaColors.primary
-                            : DytavaColors.border,
+                            ? DytavaColors.lime600
+                            : DytavaColors.subtleBorder,
                       ),
                     ),
                   Flexible(
@@ -466,21 +556,21 @@ class DytavaGuidedStepHeader extends StatelessWidget {
                     child: Column(
                       children: [
                         Container(
-                          width: 30,
-                          height: 30,
+                          width: 32,
+                          height: 32,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: currentStep == steps[i].$1
-                                ? DytavaColors.softBlue
+                                ? DytavaColors.limePrimary
                                 : (currentStep > steps[i].$1
-                                      ? DytavaColors.softGreen
-                                      : DytavaColors.background),
+                                      ? const Color(0xFFE8F5E9)
+                                      : DytavaColors.warmSurface),
                             border: Border.all(
                               color: currentStep > steps[i].$1
-                                  ? DytavaColors.exact
+                                  ? const Color(0xFF10B981)
                                   : (currentStep == steps[i].$1
-                                        ? DytavaColors.primary
-                                        : DytavaColors.border),
+                                        ? DytavaColors.lime600
+                                        : DytavaColors.subtleBorder),
                               width: 1.5,
                             ),
                           ),
@@ -499,12 +589,13 @@ class DytavaGuidedStepHeader extends StatelessWidget {
                             steps[i].$2,
                             maxLines: 1,
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 10.5,
+                              fontFamily: DytavaTypography.editorialFont,
                               fontWeight: currentStep == steps[i].$1
-                                  ? FontWeight.bold
+                                  ? FontWeight.w800
                                   : FontWeight.w500,
                               color: currentStep == steps[i].$1
-                                  ? DytavaColors.primary
+                                  ? DytavaColors.graphite
                                   : DytavaColors.textSecondary,
                             ),
                           ),
@@ -515,23 +606,25 @@ class DytavaGuidedStepHeader extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: DytavaColors.softBlue,
-                borderRadius: BorderRadius.circular(12),
+                color: DytavaColors.warmSurface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: DytavaColors.subtleBorder, width: 0.8),
               ),
               child: Text(
-                'DYTAVA / PHIÊN SO SÁNH · $stepDetailTitle',
+                stepDetailTitle,
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: DytavaColors.primary,
+                  fontFamily: DytavaTypography.editorialFont,
+                  fontWeight: FontWeight.w700,
+                  color: DytavaColors.graphite,
                 ),
               ),
             ),
@@ -585,7 +678,7 @@ class WorkflowSessionHistoryView extends StatelessWidget {
             if (flow.resultCurrent && flow.result != null) ...[
               DytavaHistoryCard(
                 title:
-                    '${flow.slot(SourceSide.a).artifact?.label ?? 'Sheet A'} ↔ ${flow.slot(SourceSide.b).artifact?.label ?? 'Sheet B'}',
+                    '${flow.slot(SourceSide.a).artifact?.label ?? 'Sheet A'} → ${flow.slot(SourceSide.b).artifact?.label ?? 'Sheet B'}',
                 subtitle:
                     '${flow.result!.matchedRecords} hàng ghép • ${flow.result!.cells.length} cặp ô • ${flow.result!.count(DecisionStatus.different)} khác biệt',
                 badgeText: 'HIỆN HÀNH',

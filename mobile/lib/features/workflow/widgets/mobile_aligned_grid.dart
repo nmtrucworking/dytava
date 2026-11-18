@@ -305,25 +305,40 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
               _pane(SourceSide.b, visible, cellsByRow),
             ],
           ),
-        Row(
-          children: [
-            TextButton(
-              onPressed: page > 0 ? () => setState(() => page--) : null,
-              child: const Text('Trang trước'),
-            ),
-            Expanded(
-              child: Text(
-                '${rows.isEmpty ? 0 : page * 100 + 1}–${(page * 100 + 100).clamp(0, rows.length)} / ${rows.length} dòng',
-                textAlign: TextAlign.center,
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 36),
+                ),
+                onPressed: page > 0 ? () => setState(() => page--) : null,
+                child: const Text('Trang trước', style: TextStyle(fontSize: 12)),
               ),
-            ),
-            TextButton(
-              onPressed: (page + 1) * 100 < rows.length
-                  ? () => setState(() => page++)
-                  : null,
-              child: const Text('Trang sau'),
-            ),
-          ],
+              Expanded(
+                child: Text(
+                  '${rows.isEmpty ? 0 : page * 100 + 1}–${(page * 100 + 100).clamp(0, rows.length)} / ${rows.length} dòng',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 36),
+                ),
+                onPressed: (page + 1) * 100 < rows.length
+                    ? () => setState(() => page++)
+                    : null,
+                child: const Text('Trang sau', style: TextStyle(fontSize: 12)),
+              ),
+            ],
+          ),
         ),
         const Text(
           'Chạm ô để xem giá trị gốc, chuẩn hóa và quy tắc; chạm số dòng để xem lý do căn chỉnh.',

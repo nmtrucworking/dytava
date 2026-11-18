@@ -478,7 +478,7 @@ class DytavaResultCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '$fileA ↔ $fileB',
+                              '$fileA → $fileB',
                               style: DytavaTypography.bodyMedium,
                             ),
                           ],
@@ -941,7 +941,7 @@ Future<void> showDytavaCellDetailBottomSheet({
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Chi tiết ô · ${cell.mapping.fieldA} ↔ ${cell.mapping.fieldB}',
+                        'Chi tiết ô · ${cell.mapping.fieldA} → ${cell.mapping.fieldB}',
                         style: DytavaTypography.titleLarge,
                       ),
                     ),
@@ -964,7 +964,7 @@ Future<void> showDytavaCellDetailBottomSheet({
                   children: [
                     statusBadge,
                     Text(
-                      'Hàng ${cell.rowA} ↔ ${cell.rowB}',
+                      'Hàng ${cell.rowA} → ${cell.rowB}',
                       style: DytavaTypography.dataSmall.copyWith(
                         color: DytavaColors.textSecondary,
                       ),
@@ -1237,14 +1237,14 @@ Future<bool?> showDytavaConfigConfirmationSheet({
                       () {
                         final r = config.rules[m.fieldA];
                         if (r == null) {
-                          return '${m.fieldA} ↔ ${m.fieldB}: mặc định';
+                          return '${m.fieldA} → ${m.fieldB}: mặc định';
                         }
                         final extra =
                             (r.type == SemanticType.decimal ||
                                 r.type == SemanticType.percentage)
                             ? ' (A:${r.separatorA} / B:${r.separatorB}, sai số: ${r.tolerance})'
                             : '';
-                        return '• ${m.fieldA} ↔ ${m.fieldB}: ${r.type.name}${r.trim ? ', trim' : ''}$extra';
+                        return '• ${m.fieldA} → ${m.fieldB}: ${r.type.name}${r.trim ? ', trim' : ''}$extra';
                       }(),
                   ].join('\n'),
                   confirmed: config.policyConfirmed,
@@ -3857,7 +3857,7 @@ class _DytavaSheetDiffViewState extends State<DytavaSheetDiffView> {
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  'A: $rawA  ↔  B: $rawB',
+                  'A: $rawA  →  B: $rawB',
                   style: DytavaTypography.dataSmall.copyWith(
                     fontWeight: FontWeight.w700,
                     color: DytavaColors.textPrimary,

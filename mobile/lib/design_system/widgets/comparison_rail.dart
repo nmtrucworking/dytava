@@ -126,7 +126,7 @@ class ComparisonRail extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.swap_vert_rounded, size: 18),
                       color: DytavaColors.precisionNeutral,
-                      tooltip: 'Đảo vai trò A ↔ B',
+                      tooltip: 'Đảo vai trò A và B',
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                       onPressed: onSwap,

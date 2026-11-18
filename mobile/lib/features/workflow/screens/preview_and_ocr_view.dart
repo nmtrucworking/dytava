@@ -253,7 +253,7 @@ class PreviewScreenView extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 6),
-        WorkflowPrimaryButton(
+        WorkflowSecondaryButton(
           label: 'Trở về nguồn A/B',
           iconAsset: DytavaIcons.back,
           onPressed: source.busy ? null : onBackToSources,

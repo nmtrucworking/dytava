@@ -87,6 +87,32 @@ class DytavaTheme {
           ),
         ),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: DytavaColors.graphite,
+          textStyle: const TextStyle(
+            fontFamily: DytavaTypography.editorialFont,
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
+      ),
+      chipTheme: const ChipThemeData(
+        backgroundColor: DytavaColors.white,
+        selectedColor: DytavaColors.limePrimary,
+        labelStyle: TextStyle(
+          color: DytavaColors.graphite,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+        secondaryLabelStyle: TextStyle(
+          color: DytavaColors.graphite,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+        side: BorderSide(color: DytavaColors.subtleBorder, width: 1),
+        shape: StadiumBorder(),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: DytavaColors.white,

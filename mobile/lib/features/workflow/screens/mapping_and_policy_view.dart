@@ -90,7 +90,7 @@ class MappingScreenView extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Ánh xạ các cột (Sheet A ↔ Sheet B)',
+                    'Ánh xạ các cột (Sheet A → Sheet B)',
                     style: DytavaTypography.titleLarge.copyWith(
                       color: DytavaColors.textPrimary,
                     ),
@@ -418,7 +418,7 @@ class PolicyScreenView extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Ánh xạ: Đã tự động ghép ${proposal.mappings.length} cặp cột (${proposal.mappings.map((m) => '${m.fieldA} ↔ ${m.fieldB}').join(', ')})',
+                            'Ánh xạ: Đã tự động ghép ${proposal.mappings.length} cặp cột (${proposal.mappings.map((m) => '${m.fieldA} → ${m.fieldB}').join(', ')})',
                             style: DytavaTypography.bodySmall,
                           ),
                         ),
@@ -442,28 +442,15 @@ class PolicyScreenView extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              // Nút CTA to 1 chạm: Tiến hành so sánh
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  icon: const BrandIcon(DytavaIcons.play, size: 20),
-                  label: const Text(
-                    'Tiến hành so sánh',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: DytavaColors.primary,
-                    minimumSize: const Size(48, 52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: flow.busy
-                      ? null
-                      : () {
-                          flow.applyProposal(run: true);
-                        },
-                ),
+              // Nút CTA chính chuẩn Precision Workspace: Tiến hành so sánh
+              WorkflowPrimaryButton(
+                label: 'Tiến hành so sánh',
+                iconAsset: DytavaIcons.play,
+                onPressed: flow.busy
+                    ? null
+                    : () {
+                        flow.applyProposal(run: true);
+                      },
               ),
             ],
           ],
@@ -471,23 +458,25 @@ class PolicyScreenView extends StatelessWidget {
 
         // Thẻ tóm tắt cấu hình & xác nhận nhanh (Chi tiết nâng cao)
         WorkflowSectionCard(
-          color: DytavaColors.softBlue,
+          color: DytavaColors.warmSurface,
           border: Border.all(
-            color: DytavaColors.primary.withValues(alpha: 0.35),
+            color: DytavaColors.subtleBorder,
+            width: 1.2,
           ),
           children: [
             Row(
               children: [
                 BrandIllustration.onboarding(
                   DytavaIllustrations.onboardingPolicy,
-                  maxHeight: 48,
+                  maxHeight: 44,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Tóm tắt cấu hình đối chiếu',
                     style: DytavaTypography.titleMedium.copyWith(
-                      color: DytavaColors.primary,
+                      color: DytavaColors.graphite,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
@@ -513,32 +502,12 @@ class PolicyScreenView extends StatelessWidget {
               style: DytavaTypography.bodyMedium,
             ),
             const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                icon: BrandIcon(
-                  allConfirmed ? DytavaIcons.play : DytavaIcons.policy,
-                  size: 18,
-                ),
-                label: Text(
-                  allConfirmed
-                      ? 'Chạy nhanh với cấu hình đã duyệt'
-                      : 'Xem tóm tắt & Xác nhận cấu hình',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: DytavaColors.primary,
-                  minimumSize: const Size(48, 48),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: onQuickConfirmAndRun,
-              ),
+            WorkflowSecondaryButton(
+              label: allConfirmed
+                  ? 'Chạy nhanh với cấu hình đã duyệt'
+                  : 'Xem tóm tắt & Xác nhận cấu hình',
+              iconAsset: allConfirmed ? DytavaIcons.play : DytavaIcons.policy,
+              onPressed: onQuickConfirmAndRun,
             ),
           ],
         ),
@@ -669,7 +638,7 @@ class PolicyScreenView extends StatelessWidget {
                         ],
                         Expanded(
                           child: Text(
-                            'Cột ${m.fieldA} ↔ ${m.fieldB} · kiểu ban đầu là gợi ý',
+                            'Cột ${m.fieldA} → ${m.fieldB} · kiểu ban đầu là gợi ý',
                             style: DytavaTypography.titleMedium,
                           ),
                         ),
