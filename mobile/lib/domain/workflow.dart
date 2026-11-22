@@ -485,6 +485,39 @@ final class ComparisonResult {
       ? null
       : (count(DecisionStatus.exact) + count(DecisionStatus.equivalent)) /
             cells.length;
+
+  late final Map<String, FrozenPlan> _cellPlans = () {
+    if (sheetResults.isEmpty) {
+      return {for (final c in cells) c.id: plan};
+    }
+    final map = <String, FrozenPlan>{};
+    for (final s in sheetResults) {
+      for (final c in s.cells) {
+        map[c.id] = s.plan;
+      }
+    }
+    return map;
+  }();
+
+  FrozenPlan planForCell(CellDifference cell) => _cellPlans[cell.id] ?? plan;
+
+  late final Map<String, (String?, int)> _recordOrdinalMap = () {
+    final map = <String, (String?, int)>{};
+    final plans =
+        sheetResults.isEmpty ? [plan] : sheetResults.map((r) => r.plan);
+    for (final p in plans) {
+      for (final r in p.a.records) {
+        map['${SourceSide.a.name}:${r.id}'] = (p.a.sheetName, r.ordinal);
+      }
+      for (final r in p.b.records) {
+        map['${SourceSide.b.name}:${r.id}'] = (p.b.sheetName, r.ordinal);
+      }
+    }
+    return map;
+  }();
+
+  (String?, int)? recordInfo(SourceSide side, String recordId) =>
+      _recordOrdinalMap['${side.name}:$recordId'];
 }
 
 final class ExportRequest {

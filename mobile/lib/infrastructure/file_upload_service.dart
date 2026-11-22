@@ -130,7 +130,15 @@ abstract final class MobileFileUploadService {
     required String fileName,
     required Uint8List bytes,
   }) => _register(side, _parse(fileName, bytes));
+  static final _digitsOnly = RegExp(r'\d');
+  static final _zerosOnly = RegExp(r'^0+$');
+  static final _dateLetterPattern = RegExp(r'[dy]', caseSensitive: false);
+  static final _quotedPattern = RegExp(r'"[^"]*"');
+  static final _sheetNamePattern = RegExp(r'^xl/worksheets/sheet\d+\.xml$');
+
   static UploadedFileInfo _register(SourceSide side, _ParsedFile parsed) {
+    _files.removeWhere((k, _) => k.endsWith('_${side.name}'));
+    _selected.removeWhere((k, _) => k.endsWith('_${side.name}'));
     final ref =
         'userfile:${DateTime.now().microsecondsSinceEpoch}_${side.name}';
     _files[ref] = parsed;
@@ -487,12 +495,24 @@ abstract final class MobileFileUploadService {
         : elements(xfs, 'xf')
               .map((e) => int.tryParse(e.getAttribute('numFmtId') ?? '') ?? 0)
               .toList();
+    XmlElement? directChild(XmlElement parent, String localName) {
+      for (final child in parent.childElements) {
+        if (child.name.local == localName) return child;
+      }
+      return null;
+    }
+
+    final relDoc = doc('xl/_rels/workbook.xml.rels');
+    final relList = elements(relDoc, 'Relationship').toList();
     final rels = <String, String>{
-      for (final r in elements(
-        doc('xl/_rels/workbook.xml.rels'),
-        'Relationship',
-      ))
+      for (final r in relList)
         r.getAttribute('Id') ?? '': r.getAttribute('Target') ?? '',
+    };
+    final worksheetRelIds = <String>{
+      for (final r in relList)
+        if ((r.getAttribute('Type') ?? '').isEmpty ||
+            (r.getAttribute('Type') ?? '').endsWith('/worksheet'))
+          r.getAttribute('Id') ?? '',
     };
     final workbook = doc('xl/workbook.xml');
     final date1904 =
@@ -507,12 +527,7 @@ abstract final class MobileFileUploadService {
           .where((a) => a.name.local == 'id')
           .firstOrNull
           ?.value;
-      if (!elements(doc('xl/_rels/workbook.xml.rels'), 'Relationship').any(
-        (r) =>
-            r.getAttribute('Id') == id &&
-            ((r.getAttribute('Type') ?? '').isEmpty ||
-                (r.getAttribute('Type') ?? '').endsWith('/worksheet')),
-      )) {
+      if (id == null || !worksheetRelIds.contains(id)) {
         continue;
       }
       var path = rels[id];
@@ -525,7 +540,7 @@ abstract final class MobileFileUploadService {
     }
     if (sheets.isEmpty && workbook == null) {
       for (final f in archive.files.where(
-        (f) => RegExp(r'^xl/worksheets/sheet\d+\.xml$').hasMatch(f.name),
+        (f) => _sheetNamePattern.hasMatch(f.name),
       )) {
         sheets['Sheet ${sheets.length + 1}'] = f.name;
       }
@@ -550,10 +565,8 @@ abstract final class MobileFileUploadService {
         }
         final values = <int, String>{};
         for (final c in row.childElements.where((e) => e.name.local == 'c')) {
-          final letters = (c.getAttribute('r') ?? '').replaceAll(
-            RegExp(r'\d'),
-            '',
-          );
+          final letters =
+              (c.getAttribute('r') ?? '').replaceAll(_digitsOnly, '');
           var col = 0;
           for (final code in letters.toUpperCase().codeUnits) {
             col = col * 26 + code - 64;
@@ -562,7 +575,9 @@ abstract final class MobileFileUploadService {
           if (col >= maxColumns) {
             throw const FormatException('Sheet vượt giới hạn cột.');
           }
-          final t = c.getAttribute('t'), v = text(c, 'v');
+          final t = c.getAttribute('t');
+          final vElem = directChild(c, 'v');
+          final v = vElem?.innerText ?? '';
           var value = v;
           if (t == 's') {
             final i = int.tryParse(v);
@@ -571,34 +586,38 @@ abstract final class MobileFileUploadService {
             }
             value = strings[i];
           } else if (t == 'inlineStr') {
-            value = text(c, 't');
+            final isElem = directChild(c, 'is');
+            final tElem =
+                isElem != null ? directChild(isElem, 't') : directChild(c, 't');
+            value = tElem?.innerText ?? text(c, 't');
           } else if (t == 'b') {
             value = v == '1' ? 'true' : 'false';
-          } else if (elements(c, 'f').isNotEmpty && v.isEmpty) {
-            value = '=${text(c, 'f')}';
-          } else if (t == null || t == 'n') {
-            final s = int.tryParse(c.getAttribute('s') ?? '') ?? -1;
-            final fmt = s >= 0 && s < styleIds.length ? styleIds[s] : 0,
-                number = double.tryParse(v);
-            final code = formats[fmt] ?? '';
-            if (number != null) {
-              if (RegExp(r'^0+$').hasMatch(code)) {
-                value = number.toInt().toString().padLeft(code.length, '0');
-              } else if (code.contains('%') || fmt == 9 || fmt == 10) {
-                final percent = number * 100;
-                value =
-                    '${percent == percent.truncateToDouble() ? percent.toInt() : percent}%';
-              } else if ((fmt >= 14 && fmt <= 22) ||
-                  RegExp(
-                    r'[dy]',
-                    caseSensitive: false,
-                  ).hasMatch(code.replaceAll(RegExp(r'"[^"]*"'), 'null'))) {
-                final date = DateTime.utc(
-                  date1904 ? 1904 : 1899,
-                  date1904 ? 1 : 12,
-                  date1904 ? 1 : 30,
-                ).add(Duration(milliseconds: (number * 86400000).round()));
-                value = date.toIso8601String().substring(0, 10);
+          } else {
+            final fElem = directChild(c, 'f');
+            if (fElem != null && v.isEmpty) {
+              value = '=${fElem.innerText}';
+            } else if (t == null || t == 'n') {
+              final s = int.tryParse(c.getAttribute('s') ?? '') ?? -1;
+              final fmt = s >= 0 && s < styleIds.length ? styleIds[s] : 0,
+                  number = double.tryParse(v);
+              final code = formats[fmt] ?? '';
+              if (number != null) {
+                if (_zerosOnly.hasMatch(code)) {
+                  value = number.toInt().toString().padLeft(code.length, '0');
+                } else if (code.contains('%') || fmt == 9 || fmt == 10) {
+                  final percent = number * 100;
+                  value =
+                      '${percent == percent.truncateToDouble() ? percent.toInt() : percent}%';
+                } else if ((fmt >= 14 && fmt <= 22) ||
+                    _dateLetterPattern
+                        .hasMatch(code.replaceAll(_quotedPattern, 'null'))) {
+                  final date = DateTime.utc(
+                    date1904 ? 1904 : 1899,
+                    date1904 ? 1 : 12,
+                    date1904 ? 1 : 30,
+                  ).add(Duration(milliseconds: (number * 86400000).round()));
+                  value = date.toIso8601String().substring(0, 10);
+                }
               }
             }
           }

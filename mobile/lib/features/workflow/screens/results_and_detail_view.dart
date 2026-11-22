@@ -500,16 +500,11 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
 
   String _structuralLabel(StructuralChange change) {
     if (!change.kind.startsWith('ROW_')) return change.recordId;
-    final snapshots = flow.displayedResult!.sheetResults.isEmpty
-        ? [flow.displayedResult!.plan]
-        : flow.displayedResult!.sheetResults.map((r) => r.plan);
-    for (final plan in snapshots) {
-      final source = change.side == SourceSide.a ? plan.a : plan.b;
-      for (final record in source.records) {
-        if (record.id == change.recordId) {
-          return '${source.sheetName ?? 'Sheet'} · Row ${record.ordinal + 2}';
-        }
-      }
+    final info =
+        flow.displayedResult?.recordInfo(change.side, change.recordId) ??
+        flow.result?.recordInfo(change.side, change.recordId);
+    if (info != null) {
+      return '${info.$1 ?? 'Sheet'} · Row ${info.$2 + 2}';
     }
     return 'Unpaired row';
   }
@@ -543,19 +538,18 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
   }
 }
 
+final _refPattern = RegExp(r'^(.*)!R(\d+)/');
+final _recordRowPattern = RegExp(r'/record-(\d+)/');
+
 String _cellLocation(
   WorkflowController flow,
   CellDifference cell,
   SourceSide side,
 ) {
   final location = side == SourceSide.a ? cell.locationA : cell.locationB;
-  var plan = flow.displayedResult?.plan ?? flow.result!.plan;
-  for (final sheet in flow.result!.sheetResults) {
-    if (sheet.cells.any((candidate) => candidate.id == cell.id)) {
-      plan = sheet.plan;
-      break;
-    }
-  }
+  final plan = flow.displayedResult?.planForCell(cell) ??
+      flow.result?.planForCell(cell) ??
+      flow.result!.plan;
   final source = side == SourceSide.a ? plan.a : plan.b;
   final field = side == SourceSide.a
       ? cell.mapping.fieldA
@@ -567,9 +561,7 @@ String _cellLocation(
     letters = String.fromCharCode(65 + column % 26) + letters;
     column ~/= 26;
   }
-  final reference = location == null
-      ? null
-      : RegExp(r'^(.*)!R(\d+)/').firstMatch(location);
+  final reference = location == null ? null : _refPattern.firstMatch(location);
   if (reference != null) {
     return '${reference.group(1)} · $letters${reference.group(2)}';
   }
@@ -578,7 +570,7 @@ String _cellLocation(
   }
   final row = location == null
       ? null
-      : RegExp(r'/record-(\d+)/').firstMatch(location)?.group(1);
+      : _recordRowPattern.firstMatch(location)?.group(1);
   return row == null
       ? field
       : '${source.sheetName ?? 'Sample'} · $letters${int.parse(row) + 1}';

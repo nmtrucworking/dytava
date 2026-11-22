@@ -2,6 +2,11 @@ import 'package:excelcompare_core/excelcompare_core.dart';
 
 import 'workflow.dart';
 
+final _datePattern = RegExp(r'^\d{4}-\d\d-\d\d');
+final _boolPattern = RegExp(r'^(true|false)$', caseSensitive: false);
+final _idPattern = RegExp(r'^0\d+$');
+final _numPattern = RegExp(r'^[+-]?\d+(?:[.,]\d+)?%?$');
+
 List<InputSnapshot> workbookTables(InputSnapshot source) =>
     source.workbookSheets.isEmpty ? [source] : source.workbookSheets;
 SheetDescriptor describeSnapshot(InputSnapshot table) {
@@ -15,13 +20,13 @@ SheetDescriptor describeSnapshot(InputSnapshot table) {
           ? 'image'
           : cell?.kind == CellKind.unsupported
           ? 'unsupported'
-          : RegExp(r'^\d{4}-\d\d-\d\d').hasMatch(v)
+          : _datePattern.hasMatch(v)
           ? 'date'
-          : RegExp(r'^(true|false)$', caseSensitive: false).hasMatch(v)
+          : _boolPattern.hasMatch(v)
           ? 'boolean'
-          : RegExp(r'^0\d+$').hasMatch(v)
+          : _idPattern.hasMatch(v)
           ? 'identifier'
-          : RegExp(r'^[+-]?\d+(?:[.,]\d+)?%?$').hasMatch(v)
+          : _numPattern.hasMatch(v)
           ? 'number'
           : 'text';
       counts[type] = (counts[type] ?? 0) + 1;

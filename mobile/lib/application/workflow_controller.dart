@@ -62,16 +62,17 @@ final class WorkflowController extends ChangeNotifier {
   String? detailId;
   String? selectedSheetPairId;
   final List<(String?, String?)> sheetOverrides = [];
+  SheetMappingPlan? _cachedSheetMapping;
   bool get hasWorkbook => SourceSide.values.any(
     (s) => slot(s).snapshot?.workbookSheets.isNotEmpty == true,
   );
   SheetMappingPlan? get sheetMapping => !inputsReady || !hasWorkbook
       ? null
-      : mapWorkbookSnapshots(
+      : (_cachedSheetMapping ??= mapWorkbookSnapshots(
           slot(SourceSide.a).snapshot!,
           slot(SourceSide.b).snapshot!,
           overrides: sheetOverrides,
-        );
+        ));
   bool get structuralWorkbookOnly {
     final mapping = sheetMapping;
     if (mapping == null || !mapping.complete) return false;
@@ -110,6 +111,7 @@ final class WorkflowController extends ChangeNotifier {
       overrides: [...sheetOverrides, (a, b)],
     );
     sheetOverrides.add((a, b));
+    _cachedSheetMapping = null;
     _invalidate();
     _alignWorkbookPreviews();
     analyzeAndPropose();
@@ -143,6 +145,7 @@ final class WorkflowController extends ChangeNotifier {
     _exportAttempts = 0;
     validity = revoked ? ResultValidity.revoked : ResultValidity.stale;
     receipt = null;
+    _cachedSheetMapping = null;
     _comparison?.cancel.cancel();
     _export?.cancel.cancel();
     if (_comparison != null) jobState = JobState.cancelling;
@@ -366,20 +369,17 @@ final class WorkflowController extends ChangeNotifier {
         tb = workbookTables(slot(SourceSide.b).snapshot!);
     int value(SheetPair p) {
       final a = ta[p.a!], b = tb[p.b!];
+      final bLabels =
+          b.fields.map((fb) => normalizeSheetLabel(fb.label)).toSet();
       final shared = a.fields
-          .where(
-            (fa) => b.fields.any(
-              (fb) =>
-                  normalizeSheetLabel(fa.label) ==
-                  normalizeSheetLabel(fb.label),
-            ),
-          )
+          .where((fa) => bLabels.contains(normalizeSheetLabel(fa.label)))
           .length;
       return shared * 2 +
           (a.records.isNotEmpty && b.records.isNotEmpty ? 1 : 0);
     }
 
-    candidates.sort((a, b) => value(b).compareTo(value(a)));
+    final scores = {for (final p in candidates) p.id: value(p)};
+    candidates.sort((a, b) => scores[b.id]!.compareTo(scores[a.id]!));
     final pair = preferredName == null
         ? candidates.firstOrNull
         : candidates

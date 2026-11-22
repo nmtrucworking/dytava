@@ -575,7 +575,7 @@ List<_Pair> _sequence(FrozenPlan plan, Set<String> ordinals) {
     }
     // Work budget counts columns too, cumulatively across all anchor segments.
     final work = m * n * math.max(1, fields.length);
-    if (states + work > 4000000) {
+    if (states + work > 400000) {
       for (var i = startA; i < endA; i++) {
         result.add((
           a[i],

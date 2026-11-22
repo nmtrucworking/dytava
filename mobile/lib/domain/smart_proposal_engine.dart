@@ -325,12 +325,17 @@ abstract final class SmartProposalEngine {
     );
   }
 
+  static final _whitespacePattern = RegExp(r'[\s\-_]+');
+  static final _stripPattern = RegExp(
+    r'[^a-z0-9_áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]',
+  );
+
   static FieldRule _inferRuleForColumn(String fieldId, InputSnapshot snapshot) {
     var numericCount = 0;
     var percentCount = 0;
     var totalNonEmpty = 0;
 
-    for (final r in snapshot.records) {
+    for (final r in snapshot.records.take(200)) {
       final cell = r.cells[fieldId];
       if (cell == null) continue;
       final raw = cell.rawLexeme?.trim() ?? '';
@@ -375,12 +380,7 @@ abstract final class SmartProposalEngine {
     return input
         .toLowerCase()
         .trim()
-        .replaceAll(RegExp(r'[\s\-_]+'), '_')
-        .replaceAll(
-          RegExp(
-            r'[^a-z0-9_áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]',
-          ),
-          '',
-        );
+        .replaceAll(_whitespacePattern, '_')
+        .replaceAll(_stripPattern, '');
   }
 }
