@@ -11,7 +11,7 @@ Updated: 13/11/2026
 
 ## Phạm vi và trạng thái
 
-Đây là điểm vào chuẩn cho việc biên soạn Input Contract: hệ thống tiếp nhận gì, diễn giải cấu trúc thế nào, giữ bằng chứng nào, từ chối trường hợp nào và khi nào được giao dữ liệu sang Core. Có 11 đặc tả chuyên đề, 5 JSON Schema0.1.0 và fixtures; bộ này chưa APPROVED. Các quy tắc MUST/không được trong tài liệu là yêu cầu thiết kế đề xuất, không phải chứng cứ đã triển khai.
+Đây là điểm vào chuẩn cho việc biên soạn Input Contract: hệ thống tiếp nhận gì, diễn giải cấu trúc thế nào, giữ bằng chứng nào, từ chối trường hợp nào và khi nào được giao dữ liệu sang Core. Có 12 đặc tả chuyên đề, 5 JSON Schema0.1.0 và fixtures; bộ này chưa APPROVED. Các quy tắc MUST/không được trong tài liệu là yêu cầu thiết kế đề xuất, không phải chứng cứ đã triển khai.
 
 Baseline sản phẩm: Flutter/Dart, Android P0 và iOS P1 theo 9 ADR/PRD hiện hành. Package `packages/excelcompare_core/` hiện là semantic PoC, chưa có đầy đủ adapter/provenance. Web có implementation riêng; kết quả Web không tự chứng minh contract Flutter đã đạt. Icon/branding không chứng minh định dạng đã được hỗ trợ.
 
@@ -32,6 +32,7 @@ Baseline sản phẩm: Flutter/Dart, Android P0 và iOS P1 theo 9 ADR/PRD hiện
 | [INP-009 — Acceptance](09_acceptance_tests.md) | Registry INP-TC-001–040 và bằng chứng; INP-RULE-040 |
 | [INP-010 — OCR](10_ocr_image_input.md) | OCR **Android P0 tối thiểu**, review/geometry; INP-RULE-037–039; executable schema migration pending |
 | [INP-011 — Streaming/snapshot/OCR target0.2](11_streaming_snapshot_contract.md) | ISC-1 source access, immutable spools, multi-pass parse, snapshot/cursors và target0.2 migration/receipts; đã SPECIFIED |
+| [INP-012 — Module OCR độc lập](12_ocr_module_plan.md) | Trạng thái OCR (**NOT_IMPLEMENTED**, chỉ UI mẫu), pipeline 6 bước, text ≠ cấu trúc bảng, cổng tích hợp G0–G7; OCR-RULE-001–007 |
 
 Thứ tự đọc: Scope → Artifacts → Formats → Structure → Types → Configuration → Validation → State → Tests; đọc OCR khi đánh giá yêu cầu ảnh.
 

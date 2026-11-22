@@ -7,6 +7,8 @@ Platform: Flutter/Dart — Android P0 / iOS P1\
 Owner: TBD\
 Updated: 13/11/2026
 
+> **Cập nhật 22/11/2026:** OCR **chưa triển khai** trong mobile; chỉ có UI review mẫu. Ưu tiên hiện hành là Excel/CSV; OCR được quản lý như module độc lập với cổng tích hợp tại [INP-012](12_ocr_module_plan.md). Việc xếp OCR vào P0 của INP-ADR-002 cần ADR sửa đổi.
+
 ## 1. Mục đích và phạm vi
 
 Theo [INP-ADR-002 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md), Android P0 nhận tối đa một nguồn ảnh PNG/JPEG trong hai nguồn A/B (một ảnh, một bảng), dùng model nhận dạng chữ bundled on-device, và yêu cầu manual table/text review trước handoff. **PDF input**, multi-page, cloud OCR, ảnh-ảnh và bố cục bảng phức tạp không thuộc P0. Quyết định chưa chứng minh đã có adapter/SDK chạy; mức OCR tối thiểu còn cần giảng viên xác nhận.

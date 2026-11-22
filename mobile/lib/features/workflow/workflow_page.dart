@@ -847,6 +847,11 @@ class _WorkflowPageState extends State<WorkflowPage>
               _go(WorkflowScreen.preview, side: source.side);
             }
           },
+          onFinalizedSession: () {
+            if (mounted) {
+              _go(WorkflowScreen.sources, side: source.side);
+            }
+          },
         );
       case WorkflowScreen.mapping:
         content = MappingScreenView(

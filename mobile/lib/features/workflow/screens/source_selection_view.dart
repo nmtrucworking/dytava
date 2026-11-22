@@ -6,6 +6,7 @@ import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
 import '../../../infrastructure/file_upload_service.dart';
+import '../../../ocr/infrastructure/ocr_capture_service.dart';
 import '../widgets/workflow_common_widgets.dart';
 import '../widgets/sheet_mapping_review.dart';
 
@@ -127,14 +128,84 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
             ),
           ),
           const SizedBox(width: 8),
-          // Action button (Replace / Add / Loading)
+          // Action buttons (OCR Image Capture/Review + File Select/Replace)
           if (slot.busy)
             const SizedBox(
               width: 22,
               height: 22,
               child: CircularProgressIndicator(strokeWidth: 2.2),
             )
-          else
+          else ...[
+            if (slot.state == InputState.needsReview &&
+                slot.review?.cells.isNotEmpty == true)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Material(
+                  color: DytavaColors.modifiedBg,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    key: ValueKey('open-ocr-review-${side.name}'),
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: widget.flow.busy
+                        ? null
+                        : () => widget.flow.navigate(
+                            WorkflowScreen.ocrReview,
+                            side: side,
+                          ),
+                    child: Tooltip(
+                      message: 'Duyệt OCR nguồn $tag',
+                      child: Container(
+                        height: 36,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        alignment: Alignment.center,
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.fact_check_outlined,
+                              color: DytavaColors.modified,
+                              size: 17,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Duyệt OCR',
+                              style: TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: DytavaColors.modified,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Material(
+                color: DytavaColors.softPurple,
+                borderRadius: BorderRadius.circular(10),
+                child: InkWell(
+                  key: ValueKey('ocr-source-button-${side.name}'),
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: widget.flow.busy
+                      ? null
+                      : () => _openOcrSourceSheet(context, side),
+                  child: Tooltip(
+                    message: 'Quét OCR bảng tính $tag',
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      child: const BrandIcon(DytavaIcons.ocr, size: 19),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             Material(
               color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(10),
@@ -162,6 +233,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -552,6 +624,118 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
       }
     } finally {
       if (dialog.isActive) navigator.removeRoute(dialog);
+    }
+  }
+
+  Future<void> _openOcrSourceSheet(
+    BuildContext context,
+    SourceSide side,
+  ) async {
+    final tag = side.name.toUpperCase();
+    final kind = await showModalBottomSheet<OcrImageSourceKind>(
+      context: context,
+      useSafeArea: true,
+      backgroundColor: DytavaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const BrandIcon(DytavaIcons.ocr, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Quét OCR bảng tính · Nguồn $tag',
+                    style: DytavaTypography.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Module OCR độc lập (Tiếng Việt NFC): Tiền xử lý ảnh → Nhận dạng ký tự → Tái cấu trúc hàng/cột → Kiểm tra & hiệu chỉnh → Chuẩn hóa.',
+              style: DytavaTypography.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            WorkflowSecondaryButton(
+              key: const ValueKey('ocr-pick-camera'),
+              label: 'Chụp ảnh bảng tính / tài liệu',
+              iconAsset: DytavaIcons.camera,
+              onPressed: () =>
+                  Navigator.pop(sheetContext, OcrImageSourceKind.camera),
+            ),
+            WorkflowSecondaryButton(
+              key: const ValueKey('ocr-pick-gallery'),
+              label: 'Chọn ảnh PNG / JPEG từ thiết bị',
+              iconAsset: DytavaIcons.upload,
+              onPressed: () =>
+                  Navigator.pop(sheetContext, OcrImageSourceKind.gallery),
+            ),
+            WorkflowPrimaryButton(
+              key: const ValueKey('ocr-pick-vietnamese-sample'),
+              label: 'Nạp ảnh bảng tiếng Việt có dấu (Mẫu kiểm thử)',
+              iconAsset: DytavaIcons.ocr,
+              onPressed: () => Navigator.pop(
+                sheetContext,
+                OcrImageSourceKind.vietnameseSample,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (kind == null || !context.mounted) return;
+    await _handleOcrCapture(context, side, kind);
+  }
+
+  Future<void> _handleOcrCapture(
+    BuildContext context,
+    SourceSide side,
+    OcrImageSourceKind kind,
+  ) async {
+    final flow = widget.flow;
+    final generation = flow.slot(side).generation;
+    try {
+      final acquired = await OcrCaptureService.acquireImage(
+        side: side,
+        sourceKind: kind,
+      );
+      if (acquired == null) return;
+      if (!context.mounted ||
+          !flow.usable ||
+          flow.slot(side).generation != generation) {
+        OcrCaptureService.release(acquired.privateRef);
+        return;
+      }
+      await flow.selectSource(
+        side,
+        acquired.format,
+        acquired.privateRef,
+        acquired.fileName,
+      );
+      if (flow.slot(side).artifact?.privateRef != acquired.privateRef) {
+        OcrCaptureService.release(acquired.privateRef);
+        return;
+      }
+      await flow.importSource(side);
+      if (context.mounted &&
+          flow.slot(side).state == InputState.needsReview) {
+        flow.navigate(WorkflowScreen.ocrReview, side: side);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        DytavaToast.error(
+          context,
+          'Lỗi nạp ảnh OCR: $e',
+          title: 'Không thể khởi tạo OCR',
+        );
+      }
     }
   }
 }

@@ -3,6 +3,7 @@ import 'dart:isolate';
 import 'package:excelcompare_core/excelcompare_core.dart';
 
 import '../domain/workflow.dart';
+import '../ocr/infrastructure/ocr_capture_service.dart';
 import 'demo/demo_workflow_ports.dart';
 import 'file_upload_service.dart';
 
@@ -22,6 +23,14 @@ final class MobileInputPort implements InputPort, InputCleanupPort {
         config,
         cancel,
         onParsing,
+      );
+    }
+    if (OcrCaptureService.isOcrRef(artifact.privateRef)) {
+      cancel.check();
+      onParsing();
+      return OcrCaptureService.outcomeFor(
+        artifact: artifact,
+        binding: binding,
       );
     }
     cancel.check();
@@ -51,7 +60,13 @@ final class MobileInputPort implements InputPort, InputCleanupPort {
   }
 
   @override
-  void release(String ref) => MobileFileUploadService.release(ref);
+  void release(String ref) {
+    if (OcrCaptureService.isOcrRef(ref)) {
+      OcrCaptureService.release(ref);
+      return;
+    }
+    MobileFileUploadService.release(ref);
+  }
 }
 
 InputSnapshot _snapshot(
