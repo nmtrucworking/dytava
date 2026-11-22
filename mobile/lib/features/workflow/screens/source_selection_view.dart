@@ -9,11 +9,12 @@ import '../../../infrastructure/file_upload_service.dart';
 import '../widgets/workflow_common_widgets.dart';
 import '../widgets/sheet_mapping_review.dart';
 
-/// Màn hình Chọn nguồn dữ liệu (`SCR-02`):
-/// - Hai thẻ A/B rõ ràng, thích ứng dọc trên điện thoại và 2 cột trên màn hình rộng.
-/// - Áp dụng đúng quy tắc Branding: khi chưa chọn nguồn hiển thị `BrandIllustration.emptySource()`,
-///   khi đã chọn nguồn chuyển sang `DytavaFileCard` với `BrandIcon.format(...)` (XLSX/CSV/PNG).
-class SourceSelectionView extends StatelessWidget {
+/// Màn hình Nhập tệp (`SCR-02` / `Import files`):
+/// - Thẻ A/B tinh gọn với mã nguồn A/B và nút đổi tệp (Swap) màu xanh.
+/// - Thẻ thiết lập so khớp (Matching settings) với biểu tượng bánh răng.
+/// - Thẻ cảnh báo đối chiếu sheet (Review sheet matches) với nền cam nhạt khi chưa xác định cặp sheet.
+/// - Thanh tác vụ cố định (Sticky Bottom Bar) ở đáy màn hình.
+class SourceSelectionView extends StatefulWidget {
   final WorkflowController flow;
   final bool quickProcessing;
   final VoidCallback? onQuickPrepareBoth;
@@ -31,250 +32,410 @@ class SourceSelectionView extends StatelessWidget {
     this.onContinueToProposal,
   });
 
+  @override
+  State<SourceSelectionView> createState() => _SourceSelectionViewState();
+}
+
+class _SourceSelectionViewState extends State<SourceSelectionView> {
+  bool _showMappingReview = false;
+
   Widget _buildSideCard(BuildContext context, SourceSide side) {
-    final slot = flow.slot(side);
+    final slot = widget.flow.slot(side);
     final artifact = slot.artifact;
     final tag = side.name.toUpperCase();
+    final isA = side == SourceSide.a;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: DytavaColors.white,
-        border: Border.all(color: DytavaColors.border),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: Column(
-          children: [
-            ListTile(
-              dense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 2,
+      child: Row(
+        children: [
+          // Tag badge A or B
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              tag,
+              style: const TextStyle(
+                fontFamily: DytavaTypography.primaryFont,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: DytavaColors.primary,
               ),
-              leading: Container(
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: DytavaColors.primaryLight,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  tag,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // File Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isA ? 'ORIGINAL FILE' : 'UPDATED FILE',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontFamily: DytavaTypography.primaryFont,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: DytavaColors.primary,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.3,
                   ),
                 ),
-              ),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    side == SourceSide.a ? 'ORIGINAL FILE' : 'UPDATED FILE',
-                    style: DytavaTypography.labelSmall.copyWith(
-                      fontSize: 10,
-                      color: DytavaColors.textSecondary,
-                      letterSpacing: 0,
-                    ),
+                const SizedBox(height: 2),
+                Text(
+                  artifact?.label ?? 'Choose file $tag',
+                  style: const TextStyle(
+                    fontFamily: DytavaTypography.primaryFont,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E293B),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    artifact?.label ?? 'Choose file $tag',
-                    style: DytavaTypography.titleSmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
                   artifact == null
                       ? 'XLSX, CSV, TSV, TXT, JSON'
-                      : '${artifact.format.name.toUpperCase()}  ·  ${slot.snapshot == null ? 'Needs review' : '${slot.snapshot!.records.length} rows · ${slot.snapshot!.fields.length} columns'}',
-                  style: DytavaTypography.bodySmall.copyWith(fontSize: 11),
+                      : '${artifact.format.name.toUpperCase()}  ·  ${slot.snapshot == null ? 'Needs review' : '${slot.snapshot!.records.length} rows  ·  ${slot.snapshot!.fields.length} columns'}',
+                  style: const TextStyle(
+                    fontFamily: DytavaTypography.primaryFont,
+                    fontSize: 11.5,
+                    color: Color(0xFF64748B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Action button (Replace / Add / Loading)
+          if (slot.busy)
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.2),
+            )
+          else
+            Material(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(10),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: widget.flow.busy
+                    ? null
+                    : () => _handleFileUpload(context, side),
+                child: Tooltip(
+                  message: artifact == null
+                      ? 'Select file $tag'
+                      : 'Replace file $tag',
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      artifact == null
+                          ? Icons.add_rounded
+                          : Icons.swap_horiz_rounded,
+                      color: DytavaColors.primary,
+                      size: 20,
+                    ),
+                  ),
                 ),
               ),
-              trailing: slot.busy
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (artifact != null)
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            tooltip: 'Remove file $tag',
-                            onPressed: () => flow.resetSource(side),
-                            icon: const Icon(
-                              Icons.close,
-                              size: 18,
-                              color: DytavaColors.textSecondary,
-                            ),
-                          ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          tooltip: artifact == null
-                              ? 'Select file $tag'
-                              : 'Replace file $tag',
-                          onPressed: flow.busy
-                              ? null
-                              : () => _handleFileUpload(context, side),
-                          icon: Icon(
-                            artifact == null ? Icons.add : Icons.refresh,
-                            color: DytavaColors.primary,
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-              onTap: slot.busy
-                  ? null
-                  : () => artifact == null
-                        ? _handleFileUpload(context, side)
-                        : onOpenPreview(side),
             ),
-            if (artifact != null && !slot.ready && !slot.busy)
-              TextButton(
-                onPressed: () => onOpenPreview(side),
-                child: Text('Review file $tag ›'),
-              ),
-            if (slot.busy)
-              TextButton(
-                onPressed: slot.cancelling
-                    ? null
-                    : () => flow.cancelImport(side),
-                child: Text('Cancel import $tag'),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final flow = widget.flow;
     final count = SourceSide.values
         .where((s) => flow.slot(s).artifact != null)
         .length;
+    final isUncertain = flow.sheetMapping?.complete == false;
+
+    final snapA = flow.slot(SourceSide.a).snapshot;
+    final snapB = flow.slot(SourceSide.b).snapshot;
+    final sheetsA = snapA?.workbookSheets.isNotEmpty == true
+        ? snapA!.workbookSheets.length
+        : (snapA != null ? 1 : 0);
+    final sheetsB = snapB?.workbookSheets.isNotEmpty == true
+        ? snapB!.workbookSheets.length
+        : (snapB != null ? 1 : 0);
+    final totalSheetPairs = flow.sheetMapping?.pairs.length ?? 0;
+
     return WorkflowScreenLayout(
       contentPadding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 4),
-          const Text(
-            'Two files. One comparison.',
-            style: DytavaTypography.titleLarge,
-          ),
-          const SizedBox(height: 2),
-          const Text(
-            'Add both files. Dytava detects matching data.',
-            style: DytavaTypography.bodySmall,
-          ),
-          const SizedBox(height: 8),
-          for (final side in SourceSide.values) _buildSideCard(context, side),
-          Material(
-            color: DytavaColors.primaryLight,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: flow.inputsReady ? onContinueMapping : null,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Auto match · Exact values',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: DytavaColors.primary,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'Advanced ›',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: DytavaColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+          // NEW COMPARISON badge
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'NEW COMPARISON',
+                style: TextStyle(
+                  fontFamily: DytavaTypography.primaryFont,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: DytavaColors.primary,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: DytavaColors.primaryLight,
-                  borderRadius: BorderRadius.circular(20),
+          const Text(
+            'Compare spreadsheets',
+            style: TextStyle(
+              fontFamily: DytavaTypography.primaryFont,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1E293B),
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Choose the original and updated versions.',
+            style: TextStyle(
+              fontFamily: DytavaTypography.primaryFont,
+              fontSize: 13,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // File Card A and Card B
+          for (final side in SourceSide.values) _buildSideCard(context, side),
+
+          // Matching settings card
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x06000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
                 ),
-                child: Text(
-                  '$count files',
-                  style: DytavaTypography.labelSmall.copyWith(
-                    color: DytavaColors.primary,
+              ],
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: flow.inputsReady ? widget.onContinueMapping : null,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.settings_outlined,
+                          color: DytavaColors.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Matching settings',
+                              style: TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Auto match · Exact values',
+                              style: TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Color(0xFF94A3B8),
+                        size: 22,
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  flow.inputsReady
-                      ? 'Both workbooks are ready.'
-                      : 'Choose an original and an updated file.',
-                  style: DytavaTypography.bodySmall,
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 8),
-          WorkflowSectionCard(
-            padding: const EdgeInsets.all(12),
-            color: DytavaColors.primaryLight,
-            border: Border.all(color: Colors.transparent),
-            children: [
-              Text(
-                'AUTOMATIC ANALYSIS',
-                style: DytavaTypography.labelSmall.copyWith(
-                  color: DytavaColors.primary,
-                ),
+
+          // Review sheet matches warning card (shown when pairings are uncertain)
+          if (isUncertain) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFFEDD5)),
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'No mapping steps required',
-                style: DytavaTypography.titleSmall,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Color(0xFFD97706),
+                        size: 32,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Review ${totalSheetPairs > 0 ? totalSheetPairs : 4} sheet matches',
+                              style: const TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '$sheetsA sheets in original  ·  $sheetsB in updated',
+                              style: const TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Some sheet pairings are uncertain. Confirm them to continue.',
+                              style: TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 12.5,
+                                color: Color(0xFF475569),
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    height: 46,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _showMappingReview = !_showMappingReview;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: DytavaColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _showMappingReview
+                                ? 'Hide sheet matches'
+                                : 'Review matches',
+                            style: const TextStyle(
+                              fontFamily: DytavaTypography.primaryFont,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            _showMappingReview
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.arrow_forward_rounded,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'Dytava checks sheets, columns and row keys. You review only ambiguous matches.',
-                style: DytavaTypography.bodySmall,
+            ),
+            if (_showMappingReview)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: SheetMappingReview(flow: widget.flow),
               ),
-            ],
-          ),
-          if (flow.sheetMapping?.complete == false)
-            SheetMappingReview(flow: flow),
+          ],
+
+          // Quick sample link when no files are chosen
           if (count == 0)
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton(
-                onPressed: quickProcessing ? null : onQuickPrepareBoth,
+                onPressed:
+                    widget.quickProcessing ? null : widget.onQuickPrepareBoth,
                 child: Text(
-                  quickProcessing ? 'Preparing sample…' : 'Use sample files ›',
+                  widget.quickProcessing
+                      ? 'Preparing sample…'
+                      : 'Use sample files ›',
                 ),
               ),
             ),
@@ -287,20 +448,41 @@ class SourceSelectionView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Confirm file order: original A, updated B.',
-              style: DytavaTypography.bodySmall,
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: isUncertain
+                      ? const Color(0xFF0F766E)
+                      : const Color(0xFF64748B),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    isUncertain
+                        ? 'Confirm sheet matches to continue'
+                        : 'Confirm file order: original A, updated B.',
+                    style: const TextStyle(
+                      fontFamily: DytavaTypography.primaryFont,
+                      fontSize: 12,
+                      color: Color(0xFF334155),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             WorkflowPrimaryButton(
               label: 'Compare files',
               iconAsset: DytavaIcons.forward,
               onPressed:
                   flow.inputsReady &&
-                      !flow.busy &&
-                      flow.sheetMapping?.complete != false
-                  ? onContinueToProposal
-                  : null,
+                          !flow.busy &&
+                          flow.sheetMapping?.complete != false
+                      ? widget.onContinueToProposal
+                      : null,
             ),
           ],
         ),
@@ -309,6 +491,7 @@ class SourceSelectionView extends StatelessWidget {
   }
 
   Future<void> _handleFileUpload(BuildContext context, SourceSide side) async {
+    final flow = widget.flow;
     final generation = flow.slot(side).generation;
     final navigator = Navigator.of(context);
     final dialog = DialogRoute<void>(

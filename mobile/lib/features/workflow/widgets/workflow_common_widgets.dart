@@ -141,23 +141,23 @@ class WorkflowIssueList extends StatelessWidget {
       children: [
         for (var i = 0; i < issueList.length; i++)
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.symmetric(vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: DytavaColors.softRed,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: DytavaColors.different.withValues(alpha: 0.45),
+                color: DytavaColors.different.withValues(alpha: 0.35),
               ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (showIllustration && i == 0) ...[
-                  BrandIllustration.issue(issueList[i], size: 44),
-                  const SizedBox(width: 10),
+                  BrandIllustration.issue(issueList[i], size: 24),
+                  const SizedBox(width: 8),
                 ] else ...[
-                  const BrandIcon(DytavaIcons.error, size: 18),
+                  const BrandIcon(DytavaIcons.error, size: 16),
                   const SizedBox(width: 8),
                 ],
                 Expanded(
@@ -169,13 +169,15 @@ class WorkflowIssueList extends StatelessWidget {
                         style: DytavaTypography.bodySmall.copyWith(
                           color: DytavaColors.different,
                           fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         WorkflowUiHelpers.remediationForIssue(issueList[i]),
                         style: DytavaTypography.bodySmall.copyWith(
                           color: DytavaColors.textPrimary,
+                          fontSize: 11,
                         ),
                       ),
                     ],
@@ -465,6 +467,8 @@ class WorkflowPrimaryButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: DytavaColors.primary,
             foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFFE2E8F0),
+            disabledForegroundColor: const Color(0xFF64748B),
             minimumSize: const Size(48, 52),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),

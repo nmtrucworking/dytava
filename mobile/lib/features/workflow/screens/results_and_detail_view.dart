@@ -639,179 +639,567 @@ class DifferenceDetailScreenView extends StatelessWidget {
     required this.onSelectCellId,
     required this.onBackToResults,
   });
+
   @override
   Widget build(BuildContext context) {
     final cell = flow.result!.cells.firstWhere((c) => c.id == flow.detailId);
-    final (label, color, bg) = _statusStyle(cell.decision.status);
     final list = flow.selectedCells;
     final index = list.indexWhere((c) => c.id == cell.id);
+
     return WorkflowScreenLayout(
+      contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 16),
-          Align(alignment: Alignment.centerLeft, child: _badge(label, color, bg)),
-        const SizedBox(height: 24),
-        Text(
-          _cellLocation(flow, cell, SourceSide.a),
-          style: DytavaTypography.displayLarge,
-        ),
-        const SizedBox(height: 10),
-        const Text('Cell value comparison', style: DytavaTypography.bodyMedium),
-        const SizedBox(height: 32),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: child,
+          // DIFFERENCE X OF Y
+          Text(
+            'DIFFERENCE ${index < 0 ? 1 : index + 1} OF ${list.isEmpty ? 1 : list.length}',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: Color(0xFF64748B),
+            ),
           ),
-          child: Column(
-            key: ValueKey('cell-diff-${cell.id}'),
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          const SizedBox(height: 8),
+
+          // Change Title
+          Text(
+            _changeTitle(cell),
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1E293B),
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // Subtitle
+          Text(
+            _changeSubtitle(cell),
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF64748B),
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // File & Cell Location
+          Row(
             children: [
-              for (final side in SourceSide.values)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: side == SourceSide.a ? Colors.white : bg,
-                    border: side == SourceSide.a
-                        ? Border.all(color: DytavaColors.border)
-                        : null,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        side == SourceSide.a ? 'ORIGINAL FILE' : 'UPDATED FILE',
-                        style: DytavaTypography.labelSmall.copyWith(
-                          fontSize: 10,
-                          color: DytavaColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        flow.slot(side).artifact?.label ?? side.name.toUpperCase(),
-                        style: DytavaTypography.bodyMedium.copyWith(
-                          color: DytavaColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      SelectableText(
-                        (side == SourceSide.a ? cell.a : cell.b).rawLexeme ?? '—',
-                        style: DytavaTypography.displayLarge.copyWith(
-                          color: side == SourceSide.a
-                              ? DytavaColors.textPrimary
-                              : color,
-                          fontSize: 30,
-                        ),
-                      ),
-                    ],
-                  ),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                child: const Icon(
+                  Icons.grid_on_rounded,
+                  color: DytavaColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      flow.slot(SourceSide.a).artifact?.label ?? 'Workbook.xlsx',
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1E293B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _cellSheetAndAddress(flow, cell, SourceSide.a),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'COMPARISON CONTEXT',
-          style: DytavaTypography.labelSmall.copyWith(
-            fontSize: 10,
-            color: DytavaColors.textSecondary,
+          const Divider(height: 36, thickness: 1, color: Color(0xFFE2E8F0)),
+
+          // Side-by-side comparison
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: child,
+            ),
+            child: IntrinsicHeight(
+              key: ValueKey('cell-diff-${cell.id}'),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ORIGINAL · A
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'ORIGINAL · A',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SelectableText(
+                          cell.a.rawLexeme ?? '—',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text(
+                              'Normalized: ',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _normalizedLabel(
+                                  cell.decision.left,
+                                  cell.a.rawLexeme,
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontFamily: 'IBM Plex Mono',
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const VerticalDivider(
+                    width: 32,
+                    thickness: 1,
+                    color: Color(0xFFE2E8F0),
+                  ),
+                  // UPDATED · B
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'UPDATED · B',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SelectableText(
+                          cell.b.rawLexeme ?? '—',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text(
+                              'Normalized: ',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _normalizedLabel(
+                                  cell.decision.right,
+                                  cell.b.rawLexeme,
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontFamily: 'IBM Plex Mono',
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        WorkflowSectionCard(
-          children: [
-            _contextRow(
-              'Original cell',
-              _cellLocation(flow, cell, SourceSide.a),
-            ),
-            _contextRow(
-              'Updated cell',
-              _cellLocation(flow, cell, SourceSide.b),
-            ),
-            _contextRow('Mode', switch (flow.config.mode) {
-              MatchingMode.positional => 'By position',
-              MatchingMode.key => 'By key column',
-              MatchingMode.orderedSequence => 'Sequence alignment',
-            }),
-          ],
-        ),
-        ExpansionTile(
-          tilePadding: EdgeInsets.zero,
-          title: const Text(
-            'Value details',
-            style: DytavaTypography.titleSmall,
+          const Divider(height: 36, thickness: 1, color: Color(0xFFE2E8F0)),
+
+          // Info row
+          Row(
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                color: DytavaColors.primary,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Compared as ${_ruleTypeLabel(cell)} values.',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF1E293B),
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
           ),
-          children: [
-            _contextRow('Rule reference', cell.decision.ruleId),
-            _contextRow(
-              'Original normalized',
-              cell.decision.left?.label ?? 'Unresolved',
+          const SizedBox(height: 20),
+
+          // Technical Details collapsible card
+          _TechnicalDetailsCard(
+            cell: cell,
+            flow: flow,
+            onBackToResults: onBackToResults,
+          ),
+          const SizedBox(height: 16),
+
+          // Back to differences subtle button
+          Center(
+            child: TextButton.icon(
+              onPressed: onBackToResults,
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                size: 16,
+                color: DytavaColors.textSecondary,
+              ),
+              label: const Text(
+                'Back to differences',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: DytavaColors.textSecondary,
+                ),
+              ),
             ),
-            _contextRow(
-              'Updated normalized',
-              cell.decision.right?.label ?? 'Unresolved',
-            ),
-            TextDifferenceEvidence(
-              a: cell.a.rawLexeme ?? '',
-              b: cell.b.rawLexeme ?? '',
-            ),
-          ],
-        ),
-        Row(
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+      bottomBar: StickyBottomBar(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            IconButton(
-              tooltip: 'Previous change',
+            TextButton.icon(
               onPressed: index > 0
                   ? () => onSelectCellId(list[index - 1].id)
                   : null,
-              icon: const Icon(Icons.arrow_back),
+              icon: const Icon(Icons.arrow_back_rounded, size: 18),
+              label: const Text('Previous'),
+              style: TextButton.styleFrom(
+                foregroundColor: DytavaColors.primary,
+                disabledForegroundColor:
+                    DytavaColors.textSecondary.withOpacity(0.35),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
             ),
             Text(
               '${index < 0 ? 1 : index + 1} / ${list.isEmpty ? 1 : list.length}',
-              style: DytavaTypography.bodySmall,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+              ),
             ),
-            IconButton(
-              tooltip: 'Next change',
-              onPressed: index >= 0 && index < list.length - 1
-                  ? () => onSelectCellId(list[index + 1].id)
-                  : null,
-              icon: const Icon(Icons.arrow_forward),
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: TextButton.icon(
+                onPressed: index >= 0 && index < list.length - 1
+                    ? () => onSelectCellId(list[index + 1].id)
+                    : null,
+                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                label: const Text('Next'),
+                style: TextButton.styleFrom(
+                  foregroundColor: DytavaColors.primary,
+                  disabledForegroundColor:
+                      DytavaColors.textSecondary.withOpacity(0.35),
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-      ],
-    ),
-    bottomBar: StickyBottomBar(
-      child: WorkflowPrimaryButton(
-        label: 'Back to differences',
-        onPressed: onBackToResults,
       ),
-    ),
-  );
+    );
+  }
+}
+
+String _changeTitle(CellDifference cell) {
+  final rule = cell.decision.ruleId.toLowerCase();
+  String typeName = 'Value';
+  if (rule.contains('bool') ||
+      _isBooleanString(cell.a.rawLexeme) ||
+      _isBooleanString(cell.b.rawLexeme)) {
+    typeName = 'Boolean value';
+  } else if (rule.contains('dec') || rule.contains('num')) {
+    typeName = 'Numeric value';
+  } else if (rule.contains('date')) {
+    typeName = 'Date value';
+  } else if (rule.contains('text')) {
+    typeName = 'Text value';
   }
 
-  Widget _contextRow(String label, String value) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
+  return switch (cell.decision.status) {
+    DecisionStatus.different => '$typeName changed',
+    DecisionStatus.equivalent => '$typeName equivalent',
+    DecisionStatus.unresolved => '$typeName unresolved',
+    DecisionStatus.exact => '$typeName identical',
+  };
+}
+
+bool _isBooleanString(String? s) {
+  if (s == null) return false;
+  final l = s.trim().toLowerCase();
+  return l == 'true' || l == 'false' || l == 'yes' || l == 'no';
+}
+
+String _changeSubtitle(CellDifference cell) {
+  return switch (cell.decision.status) {
+    DecisionStatus.different => 'The original and updated values are different.',
+    DecisionStatus.equivalent =>
+      'The values differ in format but have identical meaning.',
+    DecisionStatus.unresolved => 'Could not reliably determine equivalence.',
+    DecisionStatus.exact =>
+      'The original and updated values are exactly identical.',
+  };
+}
+
+String _cellSheetAndAddress(
+  WorkflowController flow,
+  CellDifference cell,
+  SourceSide side,
+) {
+  final loc = _cellLocation(flow, cell, side);
+  final parts = loc.split(' · ');
+  if (parts.length >= 2) {
+    return 'Sheet: ${parts[0]}  ·  Cell: ${parts[1]}';
+  }
+  return 'Cell: $loc';
+}
+
+String _normalizedLabel(CanonicalValue? canonical, String? raw) {
+  if (canonical != null) return canonical.label;
+  if (raw != null) {
+    final lower = raw.trim().toLowerCase();
+    if (lower == 'no') return 'false';
+    if (lower == 'yes') return 'true';
+    return raw;
+  }
+  return '—';
+}
+
+String _ruleTypeLabel(CellDifference cell) {
+  final rule = cell.decision.ruleId.toLowerCase();
+  if (rule.contains('bool') ||
+      _isBooleanString(cell.a.rawLexeme) ||
+      _isBooleanString(cell.b.rawLexeme)) {
+    return 'Boolean';
+  }
+  if (rule.contains('dec') || rule.contains('num')) {
+    return 'Decimal';
+  }
+  if (rule.contains('date')) {
+    return 'Date';
+  }
+  if (rule.contains('text')) {
+    return 'Text';
+  }
+  return 'Semantic';
+}
+
+class _TechnicalDetailsCard extends StatefulWidget {
+  final CellDifference cell;
+  final WorkflowController flow;
+  final VoidCallback onBackToResults;
+
+  const _TechnicalDetailsCard({
+    required this.cell,
+    required this.flow,
+    required this.onBackToResults,
+  });
+
+  @override
+  State<_TechnicalDetailsCard> createState() => _TechnicalDetailsCardState();
+}
+
+class _TechnicalDetailsCardState extends State<_TechnicalDetailsCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDCFCE7), width: 1),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.code_rounded,
+                    color: DytavaColors.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Technical details',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: const Color(0xFF64748B),
+                    size: 22,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Divider(height: 16, color: Color(0xFFDCFCE7)),
+                  _techRow('Rule reference', widget.cell.decision.ruleId),
+                  _techRow(
+                    'Original cell',
+                    _cellLocation(widget.flow, widget.cell, SourceSide.a),
+                  ),
+                  _techRow(
+                    'Updated cell',
+                    _cellLocation(widget.flow, widget.cell, SourceSide.b),
+                  ),
+                  _techRow(
+                    'Original normalized',
+                    widget.cell.decision.left?.label ?? 'Unresolved',
+                  ),
+                  _techRow(
+                    'Updated normalized',
+                    widget.cell.decision.right?.label ?? 'Unresolved',
+                  ),
+                  _techRow('Matching mode', switch (widget.flow.config.mode) {
+                    MatchingMode.positional => 'By position',
+                    MatchingMode.key => 'By key column',
+                    MatchingMode.orderedSequence => 'Sequence alignment',
+                  }),
+                  if (widget.cell.a.rawLexeme != null &&
+                      widget.cell.b.rawLexeme != null &&
+                      widget.cell.a.rawLexeme != widget.cell.b.rawLexeme)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: TextDifferenceEvidence(
+                        a: widget.cell.a.rawLexeme!,
+                        b: widget.cell.b.rawLexeme!,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _techRow(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 96,
-          child: Text(label, style: DytavaTypography.bodySmall),
+          width: 120,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF64748B),
+            ),
+          ),
         ),
         Expanded(
           child: Text(
             value,
-            style: DytavaTypography.bodySmall.copyWith(
-              color: DytavaColors.textPrimary,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF1E293B),
             ),
           ),
         ),

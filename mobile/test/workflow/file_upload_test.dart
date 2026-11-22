@@ -171,7 +171,7 @@ NV003,Lê Hoàng Nam,Kinh Doanh,12000000''';
       expect(find.text('Choose file B'), findsOneWidget);
       expect(find.byTooltip('Select file A'), findsOneWidget);
       expect(find.byTooltip('Select file B'), findsOneWidget);
-      expect(find.text('Two files. One comparison.'), findsOneWidget);
+      expect(find.text('Compare spreadsheets'), findsOneWidget);
 
     });
   });

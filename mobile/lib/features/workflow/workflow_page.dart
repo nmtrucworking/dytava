@@ -381,8 +381,8 @@ class _WorkflowPageState extends State<WorkflowPage>
         final scaffold = Scaffold(
           backgroundColor: DytavaColors.background,
           appBar: AppBar(
-            toolbarHeight: isRootHome ? 72 : 56,
-            titleSpacing: isRootHome ? 24 : 14,
+            toolbarHeight: isRootHome ? 72 : 48,
+            titleSpacing: isRootHome ? 24 : 8,
             title: isRootHome
                 ? Row(
                     children: [
@@ -402,7 +402,7 @@ class _WorkflowPageState extends State<WorkflowPage>
                               Text(
                                 'Dytava',
                                 style: DytavaTypography.titleLarge.copyWith(
-                                  fontSize: 26,
+                                    fontSize: 26,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -421,17 +421,17 @@ class _WorkflowPageState extends State<WorkflowPage>
                 : Text(
                     _appBarTitle(),
                     style: DytavaTypography.titleLarge.copyWith(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
             backgroundColor: DytavaColors.background,
             elevation: 0,
-            leadingWidth: 56,
+            leadingWidth: 50,
             leading: isRootHome || flow.screen == WorkflowScreen.progress
                 ? null
                 : Padding(
-                    padding: const EdgeInsets.only(left: 16),
+                    padding: const EdgeInsets.only(left: 14),
                     child: Center(
                       child: IconButton(
                         tooltip: 'Back',
@@ -439,20 +439,20 @@ class _WorkflowPageState extends State<WorkflowPage>
                         style: IconButton.styleFrom(
                           backgroundColor: DytavaColors.white,
                           padding: EdgeInsets.zero,
-                          fixedSize: const Size(38, 38),
+                          fixedSize: const Size(34, 34),
                         ),
                         icon: SizedBox(
-                          width: 38,
-                          height: 38,
+                          width: 34,
+                          height: 34,
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
                               SvgPicture.asset(
                                 'assets/dytava/figma/back.svg',
-                                width: 38,
-                                height: 38,
+                                width: 34,
+                                height: 34,
                               ),
-                              const Icon(Icons.arrow_back, size: 20),
+                              const Icon(Icons.arrow_back, size: 18),
                             ],
                           ),
                         ),
