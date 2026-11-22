@@ -57,12 +57,20 @@ abstract final class OcrImagePreprocessor {
     }
 
     final turns = settings.quarterTurns % 4;
-    final rotated = switch (turns) {
+    var rotated = switch (turns) {
       1 => img.copyRotate(oriented, angle: 90),
       2 => img.copyRotate(oriented, angle: 180),
       3 => img.copyRotate(oriented, angle: 270),
       _ => oriented,
     };
+
+    if (settings.flipHorizontal && settings.flipVertical) {
+      rotated = img.flip(rotated, direction: img.FlipDirection.both);
+    } else if (settings.flipHorizontal) {
+      rotated = img.flip(rotated, direction: img.FlipDirection.horizontal);
+    } else if (settings.flipVertical) {
+      rotated = img.flip(rotated, direction: img.FlipDirection.vertical);
+    }
 
     final rw = rotated.width.toDouble();
     final rh = rotated.height.toDouble();
@@ -113,6 +121,8 @@ abstract final class OcrImagePreprocessor {
       orientedWidth: orientedWidth,
       orientedHeight: orientedHeight,
       quarterTurns: turns,
+      flipHorizontal: settings.flipHorizontal,
+      flipVertical: settings.flipVertical,
       corners: corners,
       outputWidth: working.width,
       outputHeight: working.height,

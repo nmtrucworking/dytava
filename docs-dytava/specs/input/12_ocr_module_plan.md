@@ -31,7 +31,7 @@ Khi mâu thuẫn, INP-010/011 giữ ngữ nghĩa dữ liệu; tài liệu này g
 | Chuẩn hóa tiếng Việt có dấu (Unicode NFC + kiểm tra bất thường dấu thanh) | IMPLEMENTED | `lib/ocr/domain/vietnamese_text.dart`, `lib/ocr/domain/latin_nfc_tables.g.dart` |
 | Tiền xử lý ảnh (crop/phối cảnh 4 góc `copyRectify`, xoay 90°, tăng tương phản, ánh xạ tọa độ nghịch đảo) | IMPLEMENTED | `lib/ocr/infrastructure/ocr_image_preprocessor.dart`, `OcrGeometry` |
 | Tái cấu trúc hàng, cột, ô + cảnh báo rủi ro cấu trúc | IMPLEMENTED | `lib/ocr/domain/ocr_table_reconstructor.dart` (`OcrRisk`) |
-| Màn hình review OCR 3 giai đoạn (Tiền xử lý → Xác nhận lưới trước → Duyệt từng ô & cấp receipt) | IMPLEMENTED | `lib/features/workflow/screens/preview_and_ocr_view.dart`, `lib/ocr/domain/ocr_session.dart` |
+| Màn hình review OCR 3 giai đoạn (Native task-oriented UI: 4 trạng thái phát hiện `noTextDetected` / `textWithoutTable` / `tableDetected` / `processingFailed`, chỉ báo `Bước X/3`, chỉnh sửa qua bottom sheet) | IMPLEMENTED | `lib/features/workflow/screens/preview_and_ocr_view.dart`, `lib/ocr/domain/ocr_session.dart` |
 | Cầu nối chuẩn hóa sang Comparison Engine (`InputSnapshot` + `CellKind.ocrText`) | IMPLEMENTED | `lib/ocr/infrastructure/ocr_capture_service.dart`, `lib/infrastructure/mobile_input_port.dart` |
 | Kiểm thử đơn vị & tích hợp (OCR-TC-001..008) | IMPLEMENTED | `test/ocr/ocr_module_test.dart` |
 

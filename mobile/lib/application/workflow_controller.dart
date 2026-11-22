@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import '../domain/smart_proposal_engine.dart';
 import '../domain/workflow.dart';
 import '../domain/workbook_comparison.dart';
+import '../infrastructure/file_upload_service.dart';
+import '../ocr/infrastructure/ocr_capture_service.dart';
 
 final class _Work {
   final cancel = Cancellation();
@@ -66,6 +68,29 @@ final class WorkflowController extends ChangeNotifier {
   bool get hasWorkbook => SourceSide.values.any(
     (s) => slot(s).snapshot?.workbookSheets.isNotEmpty == true,
   );
+  SourceSide? _duplicateSlotSide;
+  SourceSide? get duplicateSlotSide =>
+      duplicateSourceFiles ? (_duplicateSlotSide ?? SourceSide.b) : null;
+
+  String? _digestOf(SourceSlot s) {
+    final ref = s.artifact?.privateRef;
+    if (ref == null) return null;
+    return MobileFileUploadService.sha256Of(ref) ??
+        OcrCaptureService.sha256Of(ref);
+  }
+
+  bool get duplicateSourceFiles {
+    final a = slot(SourceSide.a);
+    final b = slot(SourceSide.b);
+    if (a.artifact == null || b.artifact == null) return false;
+    final hashA = _digestOf(a);
+    final hashB = _digestOf(b);
+    if (hashA != null && hashB != null) {
+      return hashA == hashB;
+    }
+    return false;
+  }
+
   SheetMappingPlan? get sheetMapping => !inputsReady || !hasWorkbook
       ? null
       : (_cachedSheetMapping ??= mapWorkbookSnapshots(
@@ -166,7 +191,12 @@ final class WorkflowController extends ChangeNotifier {
   ) async {
     if (!usable) return;
     final other = slot(side == SourceSide.a ? SourceSide.b : SourceSide.a);
-    if (format.isImage && other.artifact?.format.isImage == true) {
+    final isFixtureImagePair =
+        privateRef.startsWith('fixture:') &&
+        (other.artifact?.privateRef.startsWith('fixture:') ?? false) &&
+        format.isImage &&
+        other.artifact?.format.isImage == true;
+    if (isFixtureImagePair) {
       issue = const WorkflowIssue(
         'IMAGE_PAIR_UNSUPPORTED',
         'P0 chỉ cho phép một nguồn ảnh; phía còn lại phải là bảng.',
@@ -188,8 +218,16 @@ final class WorkflowController extends ChangeNotifier {
       ),
       generation: slot(side).generation + 1,
     );
+    final otherHash = _digestOf(other);
+    final nextHash =
+        MobileFileUploadService.sha256Of(privateRef) ??
+        OcrCaptureService.sha256Of(privateRef);
     _slots[side] = next;
     _invalidate(source: true);
+    _duplicateSlotSide =
+        (otherHash != null && nextHash != null && otherHash == nextHash)
+            ? side
+            : null;
     issue = null;
     _emit();
     // Replacement is selectable immediately; new work waits for old cleanup.
@@ -210,6 +248,7 @@ final class WorkflowController extends ChangeNotifier {
       side: side,
       generation: slot(side).generation + 1,
     );
+    _duplicateSlotSide = null;
     _invalidate(source: true);
     _emit();
     if (old != null) await old.stopped.future;

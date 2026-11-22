@@ -33,9 +33,12 @@ abstract final class OcrTableReconstructor {
       return OcrGrid(const [], hasHeader: hasHeader ?? false);
     }
 
-    final segmentsPerRow = [
+    final rawSegmentsPerRow = [
       for (final row in rowGroups) _mergeRowSegments(row),
     ];
+
+    final prunedRows = _pruneBannerAndSuperHeaderRows(rawSegmentsPerRow);
+    final segmentsPerRow = prunedRows.isEmpty ? rawSegmentsPerRow : prunedRows;
 
     final columns = _inferColumns(
       segmentsPerRow,
@@ -311,15 +314,35 @@ abstract final class OcrTableReconstructor {
       return _buildFixedColumns(rows, targetColumns);
     }
 
-    final anchorRows = [...rows]
-      ..sort((a, b) => b.length.compareTo(a.length));
-    final bands = <_ColumnBand>[];
-    for (final seg in anchorRows.first) {
-      bands.add(_ColumnBand(seg.box.left, seg.box.right));
+    // Prefer a bottom-MOST data/leaf-header row with the highest segment count
+    // where segments are narrow leaf cells (not spanning multi-column banners).
+    var maxSegCount = 0;
+    for (final r in rows) {
+      if (r.length > maxSegCount) maxSegCount = r.length;
     }
+    final candidateAnchors = rows
+        .where((r) => r.length >= math.max(1, maxSegCount - 1))
+        .toList();
+    candidateAnchors.sort((a, b) {
+      final lenCmp = b.length.compareTo(a.length);
+      if (lenCmp != 0) return lenCmp;
+      // Tie-break: prefer row with smaller maximum segment width (leaf columns)
+      final maxWa = a.fold<double>(0, (m, s) => math.max(m, s.box.width));
+      final maxWb = b.fold<double>(0, (m, s) => math.max(m, s.box.width));
+      return maxWa.compareTo(maxWb);
+    });
+    final seedRow = candidateAnchors.first;
+    final bands = <_ColumnBand>[
+      for (final seg in seedRow) _ColumnBand(seg.box.left, seg.box.right),
+    ];
+    final medianBandW = _medianWidth(bands);
 
     for (final row in rows) {
       for (final seg in row) {
+        // Ignore wide multi-column banner segments when expanding column bands
+        if (bands.length >= 3 && seg.box.width > medianBandW * 2.1) {
+          continue;
+        }
         var best = -1;
         var bestOverlap = 0.0;
         for (var i = 0; i < bands.length; i++) {
@@ -329,10 +352,11 @@ abstract final class OcrTableReconstructor {
             best = i;
           }
         }
-        if (best >= 0 && bestOverlap >= math.min(seg.box.width, bands[best].width) * 0.25) {
+        if (best >= 0 &&
+            bestOverlap >=
+                math.min(seg.box.width, bands[best].width) * 0.25) {
           bands[best] = bands[best].expand(seg.box.left, seg.box.right);
         } else {
-          // Check center proximity
           var nearest = -1;
           var nearestDist = double.infinity;
           final cx = (seg.box.left + seg.box.right) / 2;
@@ -343,7 +367,8 @@ abstract final class OcrTableReconstructor {
               nearest = i;
             }
           }
-          if (nearest >= 0 && nearestDist <= math.max(24.0, bands[nearest].width * 0.6)) {
+          if (nearest >= 0 &&
+              nearestDist <= math.max(20.0, bands[nearest].width * 0.55)) {
             bands[nearest] = bands[nearest].expand(seg.box.left, seg.box.right);
           } else {
             bands.add(_ColumnBand(seg.box.left, seg.box.right));
@@ -353,12 +378,12 @@ abstract final class OcrTableReconstructor {
     }
 
     bands.sort((a, b) => a.center.compareTo(b.center));
-    // Merge heavily overlapping bands
     final merged = <_ColumnBand>[bands.first];
     for (var i = 1; i < bands.length; i++) {
       final prev = merged.last;
       final next = bands[i];
-      final overlap = math.min(prev.right, next.right) - math.max(prev.left, next.left);
+      final overlap =
+          math.min(prev.right, next.right) - math.max(prev.left, next.left);
       final minW = math.max(1.0, math.min(prev.width, next.width));
       if (overlap / minW > 0.45) {
         merged[merged.length - 1] = prev.expand(next.left, next.right);
@@ -367,6 +392,58 @@ abstract final class OcrTableReconstructor {
       }
     }
     return merged;
+  }
+
+  static double _medianWidth(List<_ColumnBand> bands) {
+    if (bands.isEmpty) return 40.0;
+    final widths = bands.map((b) => b.width).toList()..sort();
+    return widths[widths.length ~/ 2];
+  }
+
+  /// Strips standalone title banners, multi-column super-header rows above the
+  /// leaf column header row, and trailing footnotes (e.g. `Coefficients^a`,
+  /// `Unstandardized Coefficients`, `a. Dependent Variable: HL` in academic /
+  /// SPSS tables) when the table body clearly has >= 3 columns.
+  static List<List<_RowSegment>> _pruneBannerAndSuperHeaderRows(
+    List<List<_RowSegment>> rows,
+  ) {
+    if (rows.length < 3) return rows;
+    final counts = [for (final r in rows) r.length];
+    final maxCols = counts.reduce(math.max);
+    final modalCols = _modePositive(counts, fallback: maxCols);
+    final bodyCols = math.max(modalCols, maxCols - 1);
+    if (bodyCols < 3) return rows;
+
+    // 1. Identify where the actual leaf-header or data rows begin
+    var start = 0;
+    while (start < rows.length - 2) {
+      final row = rows[start];
+      final nextRow = rows[start + 1];
+      final isSparseHeaderOrTitle = row.length <= math.max(2, bodyCols ~/ 2);
+      final nextIsMuchWider = nextRow.length >= bodyCols - 1 ||
+          (start + 2 < rows.length && rows[start + 2].length >= bodyCols - 1);
+      final isAllText = row.every((s) => !_looksNumeric(s.joinedText));
+      if (isSparseHeaderOrTitle && isAllText && nextIsMuchWider) {
+        start++;
+      } else {
+        break;
+      }
+    }
+
+    // 2. Strip trailing 1-segment footnote lines at the bottom (e.g. "a. Dependent Variable: HL")
+    var end = rows.length;
+    while (end - start > 2) {
+      final last = rows[end - 1];
+      final isSingleFootnote =
+          last.length == 1 && !_looksNumeric(last.first.joinedText);
+      if (isSingleFootnote) {
+        end--;
+      } else {
+        break;
+      }
+    }
+
+    return rows.sublist(start, end);
   }
 
   static List<_ColumnBand> _buildFixedColumns(
@@ -384,9 +461,15 @@ abstract final class OcrTableReconstructor {
       return [_ColumnBand(minX.isFinite ? minX : 0, maxX.isFinite ? maxX : 100)];
     }
 
-    // Seed evenly or from a row that already has `count` segments
-    final exactRow = rows.where((r) => r.length == count).firstOrNull;
-    if (exactRow != null) {
+    // Seed from the leaf/data row that already has `count` narrow segments
+    final exactCandidates = rows.where((r) => r.length == count).toList();
+    if (exactCandidates.isNotEmpty) {
+      exactCandidates.sort((a, b) {
+        final maxWa = a.fold<double>(0, (m, s) => math.max(m, s.box.width));
+        final maxWb = b.fold<double>(0, (m, s) => math.max(m, s.box.width));
+        return maxWa.compareTo(maxWb);
+      });
+      final exactRow = exactCandidates.first;
       return [
         for (final s in exactRow) _ColumnBand(s.box.left, s.box.right),
       ];
@@ -454,7 +537,7 @@ abstract final class OcrTableReconstructor {
   }
 
   static final _numericPattern = RegExp(
-    r'^[+-]?\s*(?:[$€£¥₫]|VND|USD)?\s*\d[\d.,\s]*%?$',
+    r'^[+-]?\s*(?:[$€£¥₫]|VND|USD)?\s*(?:\d[\d.,\s]*|[.,]\d+)%?$',
     caseSensitive: false,
   );
 
@@ -489,6 +572,8 @@ final class _RowSegment {
   const _RowSegment(this.tokens, this.box);
   final List<OcrToken> tokens;
   final OcrBox box;
+  String get joinedText =>
+      tokens.map((t) => t.text.trim()).where((s) => s.isNotEmpty).join(' ');
 }
 
 final class _ColumnBand {

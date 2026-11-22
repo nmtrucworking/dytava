@@ -10,6 +10,8 @@ import '../../application/workflow_controller.dart';
 import '../../design_system/design_system.dart';
 import '../../domain/workflow.dart';
 import '../../infrastructure/file_upload_service.dart';
+import '../../ocr/domain/ocr_session.dart';
+import '../../ocr/infrastructure/ocr_capture_service.dart';
 import 'screens/home_screen_view.dart';
 import 'screens/mapping_and_policy_view.dart';
 import 'screens/preview_and_ocr_view.dart';
@@ -122,7 +124,18 @@ class _WorkflowPageState extends State<WorkflowPage>
         return;
       case WorkflowScreen.sources:
         flow.navigate(WorkflowScreen.home);
-      case WorkflowScreen.preview || WorkflowScreen.ocrReview:
+      case WorkflowScreen.preview:
+        _go(WorkflowScreen.sources);
+      case WorkflowScreen.ocrReview:
+        final ref = flow.slot(flow.activeSide).artifact?.privateRef ?? '';
+        final ocrSession = OcrCaptureService.session(ref);
+        if (ocrSession != null &&
+            (ocrSession.stage == OcrPipelineStage.gridStructure ||
+                ocrSession.stage == OcrPipelineStage.cellReview)) {
+          ocrSession.returnToPreprocess();
+          setState(() {});
+          return;
+        }
         _go(WorkflowScreen.sources);
       case WorkflowScreen.mapping:
         _go(WorkflowScreen.sources);
@@ -353,6 +366,20 @@ class _WorkflowPageState extends State<WorkflowPage>
     if (_auxView == _AuxiliaryView.history) return 'Recent comparisons';
     if (_auxView == _AuxiliaryView.presets) return 'Mẫu quy tắc';
     if (_auxView == _AuxiliaryView.settings) return 'App settings';
+    if (flow.screen == WorkflowScreen.ocrReview) {
+      final ref = flow.slot(flow.activeSide).artifact?.privateRef ?? '';
+      final ocrSession = OcrCaptureService.session(ref);
+      if (ocrSession != null) {
+        return switch (ocrSession.stage) {
+          OcrPipelineStage.preprocess => 'Chọn vùng bảng',
+          OcrPipelineStage.recognizing => 'Đang quét bảng',
+          OcrPipelineStage.gridStructure ||
+          OcrPipelineStage.cellReview =>
+            'Kiểm tra bảng',
+        };
+      }
+      return 'OCR review';
+    }
     const titles = [
       'Dytava',
       'Import files',
@@ -375,13 +402,18 @@ class _WorkflowPageState extends State<WorkflowPage>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Tự động nhận diện màn hình lớn (Desktop / Web / Tablet >= 600dp)
-        final isLargeScreen = constraints.maxWidth >= 600;
+        // Tự động nhận diện màn hình lớn (Desktop / Web / Tablet >= 600dp), nhưng không bóp khung 9:16 khi thiết bị xoay ngang (landscape)
+        final isLandscape = constraints.maxWidth > constraints.maxHeight;
+        final isLargeScreen = constraints.maxWidth >= 600 && !isLandscape;
+
+        final isOcrScreen =
+            flow.screen == WorkflowScreen.ocrReview &&
+            _auxView == _AuxiliaryView.none;
 
         final scaffold = Scaffold(
           backgroundColor: DytavaColors.background,
           appBar: AppBar(
-            toolbarHeight: isRootHome ? 72 : 48,
+            toolbarHeight: isRootHome ? 72 : (isOcrScreen ? 56 : 48),
             titleSpacing: isRootHome ? 24 : 8,
             title: isRootHome
                 ? Row(
@@ -475,6 +507,7 @@ class _WorkflowPageState extends State<WorkflowPage>
                   ),
                 ),
               if (!isRootHome &&
+                  !isOcrScreen &&
                   flow.screen != WorkflowScreen.progress &&
                   _auxView == _AuxiliaryView.none)
                 PopupMenuButton<String>(
@@ -852,6 +885,14 @@ class _WorkflowPageState extends State<WorkflowPage>
               _go(WorkflowScreen.sources, side: source.side);
             }
           },
+          onSelectAnotherImage: () {
+            if (mounted) {
+              _go(WorkflowScreen.sources, side: source.side);
+            }
+          },
+          onStageChanged: () {
+            if (mounted) setState(() {});
+          },
         );
       case WorkflowScreen.mapping:
         content = MappingScreenView(
@@ -936,7 +977,10 @@ class _WorkflowPageState extends State<WorkflowPage>
       );
     }
 
-    if (flow.issue != null && _auxView == _AuxiliaryView.none && !isRootHome) {
+    if (flow.issue != null &&
+        _auxView == _AuxiliaryView.none &&
+        !isRootHome &&
+        flow.screen != WorkflowScreen.ocrReview) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

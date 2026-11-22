@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -68,9 +66,7 @@ abstract final class OcrCaptureService {
 
     final port =
         customPort ??
-        (sourceKind == OcrImageSourceKind.vietnameseSample ||
-                kIsWeb ||
-                (!Platform.isAndroid && !Platform.isIOS)
+        (sourceKind == OcrImageSourceKind.vietnameseSample
             ? const SampleVietnameseOcrRecognitionAdapter()
             : MlKitOcrRecognitionAdapter());
 
@@ -106,6 +102,9 @@ abstract final class OcrCaptureService {
   static bool isOcrRef(String privateRef) => privateRef.startsWith('ocr:');
 
   static OcrSession? session(String privateRef) => _sessions[privateRef];
+
+  static String? sha256Of(String privateRef) =>
+      _sessions[privateRef]?.artifactSha256;
 
   static OcrReviewedTable? finalizedTable(String privateRef) =>
       _finalized[privateRef];

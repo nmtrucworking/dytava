@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:xml/xml.dart';
@@ -22,10 +23,12 @@ final class UploadedFileInfo {
     required this.privateRef,
     required this.rowCount,
     required this.columnCount,
+    this.sha256Digest,
     this.sheets = const [],
     this.sheetName,
   });
   final String fileName, privateRef;
+  final String? sha256Digest;
   final SourceFormat format;
   final int rowCount, columnCount;
   final List<String> sheets;
@@ -50,10 +53,11 @@ final class _ParsedTable {
 }
 
 final class _ParsedFile {
-  const _ParsedFile(this.name, this.format, this.tables);
+  const _ParsedFile(this.name, this.format, this.tables, {this.sha256Digest});
   final String name;
   final SourceFormat format;
   final Map<String, _ParsedTable> tables;
+  final String? sha256Digest;
 }
 
 abstract final class MobileFileUploadService {
@@ -169,12 +173,15 @@ abstract final class MobileFileUploadService {
       privateRef: ref,
       rowCount: table.rows.length,
       columnCount: table.headers.length,
+      sha256Digest: file.sha256Digest,
       sheets: file.format == SourceFormat.xlsx
           ? file.tables.keys.toList()
           : const [],
       sheetName: file.format == SourceFormat.xlsx ? name : null,
     );
   }
+
+  static String? sha256Of(String ref) => _files[ref]?.sha256Digest;
 
   static UploadedFileInfo selectSheet(String ref, String name) {
     if (ref == 'fixture:a' || ref == 'fixture:b') {
@@ -324,6 +331,94 @@ abstract final class MobileFileUploadService {
     return out;
   }
 
+  static final _cellAddressPattern = RegExp(
+    r'^(\$?)([A-Za-z]{1,3})(\$?)(\d+)$',
+  );
+
+  static ({int row, int col})? _parseCellAddress(String raw) {
+    final m = _cellAddressPattern.firstMatch(raw.trim());
+    if (m == null) return null;
+    var col = 0;
+    for (final code in m.group(2)!.toUpperCase().codeUnits) {
+      col = col * 26 + code - 64;
+    }
+    final row = int.tryParse(m.group(4)!);
+    if (row == null || row <= 0 || col <= 0) return null;
+    return (row: row, col: col - 1);
+  }
+
+  static ({int startRow, int startCol, int endRow, int endCol})?
+  _parseCellRange(String? ref) {
+    if (ref == null || !ref.contains(':')) return null;
+    final parts = ref.split(':');
+    if (parts.length != 2) return null;
+    final a = _parseCellAddress(parts[0]);
+    final b = _parseCellAddress(parts[1]);
+    if (a == null || b == null) return null;
+    return (
+      startRow: a.row < b.row ? a.row : b.row,
+      startCol: a.col < b.col ? a.col : b.col,
+      endRow: a.row > b.row ? a.row : b.row,
+      endCol: a.col > b.col ? a.col : b.col,
+    );
+  }
+
+  /// Normalizes formula syntax (strip leading `=`, strip `_xlfn.`/`_xlws.`
+  /// prefixes, normalize semicolon `;` argument separators outside string
+  /// literals to `,` so `=SUM(A1;B2)` and `=SUM(A1,B2)` normalize consistently).
+  static String _normalizeFormula(String formula) {
+    var cleaned = formula.trim();
+    if (cleaned.startsWith('=')) {
+      cleaned = cleaned.substring(1).trim();
+    }
+    cleaned = cleaned.replaceAll(
+      RegExp(r'\b(?:_xlfn|_xlws)\.', caseSensitive: false),
+      '',
+    );
+    final buf = StringBuffer();
+    var inQuotes = false;
+    for (var i = 0; i < cleaned.length; i++) {
+      final ch = cleaned[i];
+      if (ch == '"') {
+        inQuotes = !inQuotes;
+        buf.write(ch);
+      } else if (ch == ';' && !inQuotes) {
+        buf.write(',');
+      } else {
+        buf.write(ch);
+      }
+    }
+    return buf.toString();
+  }
+
+  /// Shifts relative A1 cell references in a master shared formula by
+  /// ([rowDelta], [colDelta]).
+  static String _shiftSharedFormula(
+    String masterFormula,
+    int rowDelta,
+    int colDelta,
+  ) {
+    if (rowDelta == 0 && colDelta == 0) return masterFormula;
+    return masterFormula.replaceAllMapped(
+      RegExp(r'(\$?)([A-Za-z]{1,3})(\$?)(\d+)(?!\s*\()'),
+      (m) {
+        final lockCol = m.group(1) == r'$';
+        final colLetters = m.group(2)!.toUpperCase();
+        final lockRow = m.group(3) == r'$';
+        final rowNum = int.tryParse(m.group(4)!);
+        if (rowNum == null) return m.group(0)!;
+        var col = 0;
+        for (final code in colLetters.codeUnits) {
+          col = col * 26 + code - 64;
+        }
+        final nextCol = lockCol ? col : (col + colDelta).clamp(1, maxColumns);
+        final nextRow = lockRow ? rowNum : (rowNum + rowDelta).clamp(1, maxRows);
+        return '${lockCol ? r'$' : ''}${_columnLetters(nextCol)}'
+            '${lockRow ? r'$' : ''}$nextRow';
+      },
+    );
+  }
+
   static void release(String ref) {
     _files.remove(ref);
     _selected.remove(ref);
@@ -340,6 +435,17 @@ abstract final class MobileFileUploadService {
     if (bytes.isEmpty || bytes.length > maxFileBytes) {
       throw const FormatException('Tệp phải có dữ liệu và không vượt 500 MB.');
     }
+    final digest = sha256.convert(bytes).toString();
+    final parsed = _parseBody(name, bytes);
+    return _ParsedFile(
+      parsed.name,
+      parsed.format,
+      parsed.tables,
+      sha256Digest: digest,
+    );
+  }
+
+  static _ParsedFile _parseBody(String name, Uint8List bytes) {
     final ext = name.split('.').last.toLowerCase();
     if (!{'csv', 'tsv', 'txt', 'json', 'xlsx'}.contains(ext)) {
       throw const FormatException(
@@ -553,6 +659,21 @@ abstract final class MobileFileUploadService {
           'Thiếu worksheet được workbook tham chiếu.',
         );
       }
+      final mergedNonAnchors = <(int, int)>{};
+      for (final mc in elements(sheet, 'mergeCell')) {
+        final ref = mc.getAttribute('ref');
+        final range = _parseCellRange(ref);
+        if (range != null) {
+          for (var r = range.startRow; r <= range.endRow; r++) {
+            for (var c = range.startCol; c <= range.endCol; c++) {
+              if (r != range.startRow || c != range.startCol) {
+                mergedNonAnchors.add((r, c));
+              }
+            }
+          }
+        }
+      }
+      final sharedFormulas = <String, ({int baseRow, int baseCol, String formula})>{};
       final specialContent = content[entry.key];
       final sparse = <int, Map<int, String>>{};
       final sparseSpecial = <String, SourceCell>{};
@@ -575,6 +696,38 @@ abstract final class MobileFileUploadService {
           if (col >= maxColumns) {
             throw const FormatException('Sheet vượt giới hạn cột.');
           }
+          final fElem = directChild(c, 'f');
+          String? formulaText;
+          if (fElem != null) {
+            final fType = fElem.getAttribute('t');
+            final si = fElem.getAttribute('si');
+            final rawFormula = fElem.innerText.trim();
+            if (fType == 'shared' && si != null) {
+              if (rawFormula.isNotEmpty) {
+                sharedFormulas[si] = (
+                  baseRow: ri,
+                  baseCol: col,
+                  formula: rawFormula,
+                );
+                formulaText = rawFormula;
+              } else {
+                final master = sharedFormulas[si];
+                if (master != null) {
+                  formulaText = _shiftSharedFormula(
+                    master.formula,
+                    ri - master.baseRow,
+                    col - master.baseCol,
+                  );
+                }
+              }
+            } else if (rawFormula.isNotEmpty) {
+              formulaText = rawFormula;
+            }
+          }
+          if (mergedNonAnchors.contains((ri, col))) {
+            if (col + 1 > width) width = col + 1;
+            continue;
+          }
           final t = c.getAttribute('t');
           final vElem = directChild(c, 'v');
           final v = vElem?.innerText ?? '';
@@ -592,10 +745,13 @@ abstract final class MobileFileUploadService {
             value = tElem?.innerText ?? text(c, 't');
           } else if (t == 'b') {
             value = v == '1' ? 'true' : 'false';
+          } else if (t == 'str' || t == 'e') {
+            value = v.isNotEmpty
+                ? v
+                : (formulaText != null ? '=${_normalizeFormula(formulaText)}' : '');
           } else {
-            final fElem = directChild(c, 'f');
-            if (fElem != null && v.isEmpty) {
-              value = '=${fElem.innerText}';
+            if (formulaText != null && v.isEmpty) {
+              value = '=${_normalizeFormula(formulaText)}';
             } else if (t == null || t == 'n') {
               final s = int.tryParse(c.getAttribute('s') ?? '') ?? -1;
               final fmt = s >= 0 && s < styleIds.length ? styleIds[s] : 0,

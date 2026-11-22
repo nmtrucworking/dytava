@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' show Rect;
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -46,14 +47,11 @@ enum OcrPipelineStage {
 /// 5. User inspection & correction (grid confirmation FIRST, then per-cell receipts)
 /// 6. Normalization → `OcrReviewedTable` ready for the Comparison Engine
 ///
-/// Enforces:
-/// - **INP-RULE-037 / OCR-RULE-004**: High confidence never bypasses review.
-/// - **INP-RULE-038 / OCR-RULE-005**: Changing image, crop, perspective or grid
-///   structure invalidates affected cell receipts; grid must be confirmed before
-///   cells can be confirmed.
-/// - **INP-RULE-039 / OCR-RULE-007**: Leading zeros (`00123`) stay text;
-///   missing detections entered by the user are traced as `userEntered` with
-///   `recognizedText == null`.
+/// Supports four explicit detection states:
+/// - [OcrDetectionState.noTextDetected]
+/// - [OcrDetectionState.textWithoutTable]
+/// - [OcrDetectionState.tableDetected]
+/// - [OcrDetectionState.processingFailed]
 final class OcrSession extends ChangeNotifier {
   OcrSession({
     required this.port,
@@ -70,6 +68,12 @@ final class OcrSession extends ChangeNotifier {
 
   OcrPipelineStage _stage = OcrPipelineStage.preprocess;
   OcrPipelineStage get stage => _stage;
+
+  OcrDetectionState _detectionState = OcrDetectionState.noTextDetected;
+  OcrDetectionState get detectionState => _detectionState;
+
+  bool _tableRegionConfirmed = false;
+  bool get tableRegionConfirmed => _tableRegionConfirmed;
 
   OcrPreprocessSettings _settings;
   OcrPreprocessSettings get settings => _settings;
@@ -121,17 +125,82 @@ final class OcrSession extends ChangeNotifier {
       _stage = OcrPipelineStage.preprocess;
     } catch (e) {
       _error = e.toString();
+      _detectionState = OcrDetectionState.processingFailed;
     } finally {
       _busy = false;
       notifyListeners();
     }
   }
 
+  /// Confirms the selected table bounding box (normalized `[0, 1]` left, top,
+  /// right, bottom on the currently rotated/flipped image) and immediately runs
+  /// preprocessing + OCR recognition on that cropped region.
+  Future<void> confirmTableBboxAndRecognize({
+    Rect? normalizedBbox,
+    int? quarterTurns,
+    bool? flipHorizontal,
+    bool? flipVertical,
+  }) async {
+    _busy = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final turnsChanged =
+          quarterTurns != null && quarterTurns != _settings.quarterTurns;
+      final flipHChanged =
+          flipHorizontal != null && flipHorizontal != _settings.flipHorizontal;
+      final flipVChanged =
+          flipVertical != null && flipVertical != _settings.flipVertical;
+      if (turnsChanged || flipHChanged || flipVChanged) {
+        _settings = _settings.copyWith(
+          quarterTurns: (quarterTurns ?? _settings.quarterTurns) % 4,
+          flipHorizontal: flipHorizontal ?? _settings.flipHorizontal,
+          flipVertical: flipVertical ?? _settings.flipVertical,
+          clearCorners: true,
+        );
+        _processed = null;
+      }
+      _processed ??= await port.preprocess(
+        rawBytes,
+        _settings.copyWith(clearCorners: true),
+      );
+      if (normalizedBbox != null) {
+        final geom = _processed!.geometry;
+        final rw = (geom.rotatedWidth - 1).clamp(1, 100000).toDouble();
+        final rh = (geom.rotatedHeight - 1).clamp(1, 100000).toDouble();
+        final l = (normalizedBbox.left.clamp(0.0, 0.95) * rw);
+        final t = (normalizedBbox.top.clamp(0.0, 0.95) * rh);
+        final r = (normalizedBbox.right.clamp(0.05, 1.0) * rw);
+        final b = (normalizedBbox.bottom.clamp(0.05, 1.0) * rh);
+        _settings = _settings.copyWith(
+          corners: [
+            OcrPoint(l, t),
+            OcrPoint(r, t),
+            OcrPoint(r, b),
+            OcrPoint(l, b),
+          ],
+        );
+        _processed = await port.preprocess(rawBytes, _settings);
+      }
+      _tableRegionConfirmed = true;
+    } catch (e) {
+      _error = e.toString();
+      _detectionState = OcrDetectionState.processingFailed;
+      _busy = false;
+      notifyListeners();
+      return;
+    }
+    await runRecognition();
+  }
+
   /// Runs Step 2 (if needed), Step 3 (OCR) and Step 4 (table reconstruction),
-  /// then advances to Step 5a (grid structure confirmation).
+  /// evaluates the [OcrDetectionState] (`noTextDetected`, `textWithoutTable`,
+  /// `tableDetected`, `processingFailed`), and advances to the unified table
+  /// review stage (`gridStructure`).
   Future<void> runRecognition({int? targetColumns}) async {
     _busy = true;
     _error = null;
+    _tableRegionConfirmed = true;
     _stage = OcrPipelineStage.recognizing;
     notifyListeners();
     try {
@@ -147,34 +216,134 @@ final class OcrSession extends ChangeNotifier {
       _gridConfirmed = false;
       _editedTexts.clear();
       _receipts.clear();
+      _detectionState = _evaluateDetectionState(_tokens, _grid);
       _stage = OcrPipelineStage.gridStructure;
     } catch (e) {
       _error = e.toString();
-      _stage = OcrPipelineStage.preprocess;
+      _detectionState = OcrDetectionState.processingFailed;
+      _stage = OcrPipelineStage.gridStructure;
     } finally {
       _busy = false;
       notifyListeners();
     }
   }
 
+  /// One-tap approval from the unified table review view: confirms the grid
+  /// structure and issues review receipts for all cells in the table so the
+  /// user is not forced to click through 78+ individual cells.
+  void approveTableForImport() {
+    confirmGridStructure(autoConfirmCleanCells: true);
+    if (_gridConfirmed) {
+      confirmAllCells();
+    }
+  }
+
+  static OcrDetectionState _evaluateDetectionState(
+    List<OcrToken> tokens,
+    OcrGrid grid,
+  ) {
+    final nonBlankTokens = tokens
+        .where((t) => t.text.trim().isNotEmpty)
+        .toList();
+    if (nonBlankTokens.isEmpty || grid.cellCount == 0) {
+      return OcrDetectionState.noTextDetected;
+    }
+    // Check whether the tokens actually form a tabular structure (at least
+    // 2 columns OR at least 2 rows). A single isolated line/block with 1x1 is
+    // free text without table structure.
+    final isStructuredTable =
+        (grid.rowCount >= 2 && grid.columnCount >= 1) &&
+        (grid.columnCount >= 2 || grid.rowCount >= 3);
+    if (!isStructuredTable) {
+      return OcrDetectionState.textWithoutTable;
+    }
+    return OcrDetectionState.tableDetected;
+  }
+
   void returnToPreprocess() {
+    _tableRegionConfirmed = false;
     _stage = OcrPipelineStage.preprocess;
     notifyListeners();
   }
 
   // ===========================================================================
-  // Step 4 & 5a: Table Structure Inspection & Adjustment
+  // Step 4 & 5a: Table Structure Inspection, Manual Table Creation & Adjustment
   // ===========================================================================
+
+  /// Creates a manual table skeleton when automatic detection produced
+  /// `noTextDetected` or `textWithoutTable` ("Tạo bảng thủ công").
+  ///
+  /// Any recognized tokens are placed sequentially into the first rows/columns
+  /// so the user does not lose recognized text.
+  void createManualTable({
+    int rows = 3,
+    int columns = 2,
+    bool hasHeader = true,
+  }) {
+    final rCount = rows.clamp(2, 50);
+    final cCount = columns.clamp(1, 16);
+    final nonEmptyTokens = _tokens
+        .where((t) => t.text.trim().isNotEmpty)
+        .toList();
+
+    final builtRows = <List<OcrCell>>[];
+    var tokenCursor = 0;
+    for (var r = 0; r < rCount; r++) {
+      final row = <OcrCell>[];
+      for (var c = 0; c < cCount; c++) {
+        if (r == 0 && hasHeader && nonEmptyTokens.isEmpty) {
+          row.add(
+            OcrCell(
+              recognizedText: c == 0
+                  ? 'Mã'
+                  : (c == 1 ? 'Giá trị' : 'Cột ${c + 1}'),
+              confidence: 1.0,
+            ),
+          );
+        } else if (tokenCursor < nonEmptyTokens.length) {
+          final tok = nonEmptyTokens[tokenCursor++];
+          row.add(
+            OcrCell(
+              recognizedText: tok.text.trim(),
+              confidence: tok.confidence,
+              box: tok.box,
+              tokenCount: 1,
+            ),
+          );
+        } else {
+          row.add(const OcrCell(risks: {OcrRisk.blank}));
+        }
+      }
+      builtRows.add(row);
+    }
+
+    _grid = OcrTableReconstructor.recomputeRisks(
+      OcrGrid(builtRows, hasHeader: hasHeader),
+    );
+    _detectionState = OcrDetectionState.tableDetected;
+    _error = null;
+    _bumpGridRevision();
+    _stage = OcrPipelineStage.gridStructure;
+  }
 
   /// Re-clusters tokens with an explicit column count and invalidates all
   /// previous cell receipts.
   void reclusterColumns(int columnCount) {
     if (columnCount < 1 || columnCount > 32) return;
+    if (_tokens.isEmpty) {
+      createManualTable(
+        rows: _grid.rowCount >= 2 ? _grid.rowCount : 3,
+        columns: columnCount,
+        hasHeader: _grid.hasHeader,
+      );
+      return;
+    }
     _grid = OcrTableReconstructor.reconstruct(
       _tokens,
       targetColumns: columnCount,
       hasHeader: _grid.hasHeader,
     );
+    _detectionState = OcrDetectionState.tableDetected;
     _bumpGridRevision();
   }
 
@@ -187,7 +356,10 @@ final class OcrSession extends ChangeNotifier {
   }
 
   void insertRow(int index) {
-    if (_grid.columnCount == 0) return;
+    if (_grid.columnCount == 0) {
+      createManualTable(rows: 3, columns: 2);
+      return;
+    }
     final clamped = index.clamp(0, _grid.rowCount);
     final rows = [
       for (final r in _grid.cells) [...r],
@@ -202,6 +374,7 @@ final class OcrSession extends ChangeNotifier {
     _grid = OcrTableReconstructor.recomputeRisks(
       OcrGrid(rows, hasHeader: _grid.hasHeader),
     );
+    _detectionState = OcrDetectionState.tableDetected;
     _bumpGridRevision();
   }
 
@@ -218,7 +391,10 @@ final class OcrSession extends ChangeNotifier {
   }
 
   void insertColumn(int index) {
-    if (_grid.rowCount == 0) return;
+    if (_grid.rowCount == 0) {
+      createManualTable(rows: 3, columns: 2);
+      return;
+    }
     final clamped = index.clamp(0, _grid.columnCount);
     final rows = <List<OcrCell>>[];
     for (final r in _grid.cells) {
@@ -229,6 +405,7 @@ final class OcrSession extends ChangeNotifier {
     _grid = OcrTableReconstructor.recomputeRisks(
       OcrGrid(rows, hasHeader: _grid.hasHeader),
     );
+    _detectionState = OcrDetectionState.tableDetected;
     _bumpGridRevision();
   }
 
@@ -318,9 +495,10 @@ final class OcrSession extends ChangeNotifier {
     _bumpGridRevision();
   }
 
-  /// Confirms the row/column grid layout (OCR-RULE-005). Only after this step
-  /// can individual cell receipts be issued.
-  void confirmGridStructure() {
+  /// Confirms the row/column grid layout (OCR-RULE-005), moves to Step 3/3
+  /// (`cellReview`) and automatically pre-confirms clean (unflagged) cells so
+  /// the user only has to inspect flagged cells or review exceptions.
+  void confirmGridStructure({bool autoConfirmCleanCells = false}) {
     if (_grid.rowCount == 0 || _grid.columnCount == 0) {
       _error = 'Bảng chưa có hàng hoặc cột để xác nhận.';
       notifyListeners();
@@ -334,6 +512,9 @@ final class OcrSession extends ChangeNotifier {
     _error = null;
     _gridConfirmed = true;
     _stage = OcrPipelineStage.cellReview;
+    if (autoConfirmCleanCells) {
+      confirmUnflaggedCells();
+    }
     notifyListeners();
   }
 
@@ -360,7 +541,9 @@ final class OcrSession extends ChangeNotifier {
         ref.column >= _grid.columnCount) {
       return '';
     }
-    return VietnameseText.nfc(_grid.cells[ref.row][ref.column].recognizedText ?? '');
+    return VietnameseText.nfc(
+      _grid.cells[ref.row][ref.column].recognizedText ?? '',
+    );
   }
 
   /// Edits the reviewed text for [ref] and invalidates any existing receipt for
@@ -370,6 +553,14 @@ final class OcrSession extends ChangeNotifier {
     _editedTexts[ref] = normalized;
     _receipts.remove(ref);
     notifyListeners();
+  }
+
+  /// Convenience for bottom-sheet editing: updates cell text and immediately
+  /// issues a review receipt in one tap.
+  void saveAndConfirmCell(OcrCellRef ref, String value) {
+    final normalized = VietnameseText.nfc(value);
+    _editedTexts[ref] = normalized;
+    confirmCell(ref);
   }
 
   bool isCellConfirmed(OcrCellRef ref) {
@@ -393,7 +584,7 @@ final class OcrSession extends ChangeNotifier {
     }
     final text = currentText(ref);
     if (_grid.hasHeader && ref.row == 0 && text.trim().isEmpty) {
-      _error = 'Ô tiêu đề cột (${ref.toString()}) không được để trống.';
+      _error = 'Ô tiêu đề cột ($ref) không được để trống.';
       notifyListeners();
       return;
     }
@@ -416,7 +607,6 @@ final class OcrSession extends ChangeNotifier {
   }
 
   /// Confirms all cells that carry no structural or recognition risk warnings.
-  /// Flagged cells still require individual confirmation.
   int confirmUnflaggedCells() {
     if (!_gridConfirmed) return 0;
     var count = 0;
@@ -433,6 +623,36 @@ final class OcrSession extends ChangeNotifier {
             extractionRevision: _extractionRevision,
             gridRevision: _gridRevision,
             reviewedTextDigest: _digestText(text),
+            reviewedAt: DateTime.now().toUtc(),
+          );
+          count++;
+        }
+      }
+    }
+    if (count > 0) notifyListeners();
+    return count;
+  }
+
+  /// Confirms all remaining cells in the table when the user explicitly chooses
+  /// to approve the whole reviewed grid.
+  int confirmAllCells() {
+    if (!_gridConfirmed) return 0;
+    var count = 0;
+    for (var r = 0; r < _grid.rowCount; r++) {
+      for (var c = 0; c < _grid.columnCount; c++) {
+        final ref = OcrCellRef(r, c);
+        if (!isCellConfirmed(ref)) {
+          final text = currentText(ref);
+          if (_grid.hasHeader && r == 0 && text.trim().isEmpty) {
+            _editedTexts[ref] = 'Cột ${c + 1}';
+          }
+          final finalText = currentText(ref);
+          _receipts[ref] = OcrReviewReceipt(
+            cell: ref,
+            artifactSha256: artifactSha256,
+            extractionRevision: _extractionRevision,
+            gridRevision: _gridRevision,
+            reviewedTextDigest: _digestText(finalText),
             reviewedAt: DateTime.now().toUtc(),
           );
           count++;
@@ -460,6 +680,19 @@ final class OcrSession extends ChangeNotifier {
     for (final row in _grid.cells) {
       for (final cell in row) {
         if (cell.risks.isNotEmpty) count++;
+      }
+    }
+    return count;
+  }
+
+  int get unconfirmedFlaggedCount {
+    var count = 0;
+    for (var r = 0; r < _grid.rowCount; r++) {
+      for (var c = 0; c < _grid.columnCount; c++) {
+        final ref = OcrCellRef(r, c);
+        if (_grid.cells[r][c].risks.isNotEmpty && !isCellConfirmed(ref)) {
+          count++;
+        }
       }
     }
     return count;

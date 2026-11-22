@@ -66,6 +66,18 @@ final class WebCellEngine {
     if (x == y)
       return result(DecisionStatus.exact, 'exact/verbatim',
           'Giá trị tuyệt đối giống nhau.');
+    if (x.trim().startsWith('=') && y.trim().startsWith('=')) {
+      final fa = _canonicalFormula(x), fb = _canonicalFormula(y);
+      if (fa == fb) {
+        return result(
+          DecisionStatus.equivalent,
+          'formula/syntax_normalized',
+          'Biểu thức công thức tương đương sau khi chuẩn hóa cú pháp (; ↔ , và hoa/thường).',
+          fa,
+          fb,
+        );
+      }
+    }
     if (explicitType == 'identifier' ||
         (explicitType == null && (_identifier(x) || _identifier(y)))) {
       String norm(String s) {
@@ -206,8 +218,42 @@ final class WebCellEngine {
       ? value.toInt().toString()
       : value.toString();
 
+  static String _canonicalFormula(String raw) {
+    var body = raw.trim().substring(1).trim();
+    body = body.replaceAll(
+      RegExp(r'\b(?:_xlfn|_xlws)\.', caseSensitive: false),
+      '',
+    );
+    final buf = StringBuffer('=');
+    var inQuotes = false;
+    for (var i = 0; i < body.length; i++) {
+      final ch = body[i];
+      if (ch == '"') {
+        inQuotes = !inQuotes;
+        buf.write(ch);
+      } else if (inQuotes) {
+        buf.write(ch);
+      } else if (ch == ';') {
+        buf.write(',');
+      } else if (ch.trim().isEmpty) {
+        continue;
+      } else {
+        buf.write(ch.toUpperCase());
+      }
+    }
+    return buf.toString();
+  }
+
   static (double?, String?) _number(String value) {
     var s = value.trim();
+    if (RegExp(r'^[+-]?[,.]\d+$').hasMatch(s)) {
+      final normalized = s
+          .replaceFirstMapped(
+            RegExp(r'^([+-]?)([,.])'),
+            (m) => '${m[1]}0.',
+          );
+      return (double.tryParse(normalized), null);
+    }
     if (RegExp(r'^\d{1,2}/\d{1,2}$').hasMatch(s))
       return (null, 'decimal/ambiguous_fraction');
     if (RegExp(r'^\d{1,3}[,.]\d{3}$').hasMatch(s))

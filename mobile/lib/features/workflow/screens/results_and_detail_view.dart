@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
@@ -110,255 +111,313 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
       _ => <StructuralChange>[],
     };
     final sheets = flow.result!.sheetResults;
+    final isTableView = widget.resultViewTab == 1;
+    final activeTableSheet = sheets.isEmpty
+        ? result
+        : (flow.selectedSheetPairId != null
+              ? sheets.firstWhere(
+                  (s) => s.sheetPair?.id == flow.selectedSheetPairId,
+                  orElse: () => sheets.first,
+                )
+              : sheets.first);
+
     return WorkflowScreenLayout(
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: DytavaColors.primaryDark,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 166,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: DytavaColors.primaryLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'RESULTS READY',
-                  style: DytavaTypography.labelSmall.copyWith(
-                    fontSize: 10,
-                    color: DytavaColors.primaryDark,
-                  ),
-                ),
+          if (flow.duplicateSourceFiles)
+            Container(
+              key: const ValueKey('results-duplicate-file-banner'),
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFED7AA)),
               ),
-              const SizedBox(height: 12),
-              Text(
-                '$total differences',
-                style: DytavaTypography.displayLarge.copyWith(
-                  fontSize: 29,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 12,
+              child: const Row(
                 children: [
+                  Icon(
+                    Icons.copy_all_rounded,
+                    color: Color(0xFFD97706),
+                    size: 22,
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Hai tệp A và B hoàn toàn giống nhau.',
+                      style: TextStyle(
+                        fontFamily: DytavaTypography.primaryFont,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF9A3412),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (!isTableView) ...[
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: DytavaColors.primaryDark,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 166,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: DytavaColors.primaryLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'RESULTS READY',
+                      style: DytavaTypography.labelSmall.copyWith(
+                        fontSize: 10,
+                        color: DytavaColors.primaryDark,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   Text(
-                    '${sheets.isEmpty ? 1 : sheets.length} sheets compared · ${result.cells.length} cells',
-                    style: DytavaTypography.bodySmall.copyWith(
+                    '$total differences',
+                    style: DytavaTypography.displayLarge.copyWith(
+                      fontSize: 29,
                       color: Colors.white,
                     ),
                   ),
-                  if (unresolved > 0)
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(48, 32),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 12,
+                    children: [
+                      Text(
+                        '${sheets.isEmpty ? 1 : sheets.length} sheets compared · ${result.cells.length} cells',
+                        style: DytavaTypography.bodySmall.copyWith(
+                          color: Colors.white,
+                        ),
                       ),
-                      onPressed: () => _select(_ChangeFilter.unresolved),
-                      child: Text(
-                        '$unresolved unresolved ›',
-                        style: const TextStyle(fontSize: 12),
+                      if (unresolved > 0)
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(48, 32),
+                          ),
+                          onPressed: () => _select(_ChangeFilter.unresolved),
+                          child: Text(
+                            '$unresolved unresolved ›',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                for (final item in [
+                  (
+                    modified,
+                    'Modified',
+                    DytavaColors.modified,
+                    _ChangeFilter.modified,
+                  ),
+                  (
+                    added.length,
+                    'Added',
+                    DytavaColors.primary,
+                    _ChangeFilter.added,
+                  ),
+                  (
+                    removed.length,
+                    'Removed',
+                    DytavaColors.removed,
+                    _ChangeFilter.removed,
+                  ),
+                ]) ...[
+                  if (item.$2 != 'Modified') const SizedBox(width: 8),
+                  Expanded(
+                    child: Material(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: const BorderSide(color: DytavaColors.border),
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => _select(item.$4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              DytavaCountUpText(
+                                value: item.$1,
+                                style: DytavaTypography.metricNumber.copyWith(
+                                  color: item.$3,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(item.$2, style: DytavaTypography.bodySmall),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 18),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: sheets.isEmpty
+                    ? const Text(
+                        'All sheets (1)',
+                        style: DytavaTypography.titleMedium,
+                      )
+                    : DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: isTableView
+                              ? (activeTableSheet.sheetPair?.id ?? 'ALL')
+                              : (flow.selectedSheetPairId ?? 'ALL'),
+                          style: DytavaTypography.titleMedium,
+                          items: [
+                            if (!isTableView)
+                              DropdownMenuItem(
+                                value: 'ALL',
+                                child: Text('All sheets (${sheets.length})'),
+                              ),
+                            for (final sheet in sheets)
+                              DropdownMenuItem(
+                                value: sheet.sheetPair!.id,
+                                child: Text(
+                                  sheet.sheetPair!.label,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            setState(() => _limit = 30);
+                            flow.selectResultSheet(
+                              value == 'ALL' ? null : value,
+                            );
+                          },
+                        ),
+                      ),
+              ),
+              Flexible(
+                child: TextButton(
+                  onPressed: () {
+                    final nextTab = widget.resultViewTab == 1 ? 0 : 1;
+                    if (nextTab == 1 &&
+                        sheets.isNotEmpty &&
+                        flow.selectedSheetPairId == null) {
+                      flow.selectResultSheet(sheets.first.sheetPair!.id);
+                    }
+                    widget.onResultViewTabChanged(nextTab);
+                    unawaited(
+                      SystemChrome.setPreferredOrientations(
+                        nextTab == 1
+                            ? const [
+                                DeviceOrientation.landscapeLeft,
+                                DeviceOrientation.landscapeRight,
+                                DeviceOrientation.portraitUp,
+                              ]
+                            : const [
+                                DeviceOrientation.portraitUp,
+                                DeviceOrientation.portraitDown,
+                                DeviceOrientation.landscapeLeft,
+                                DeviceOrientation.landscapeRight,
+                              ],
+                      ),
+                    );
+                  },
+                  child: Text(
+                    isTableView ? 'List view ›' : 'Table view ›',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: DytavaColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!isTableView) ...[
+            const SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final item in [
+                    (_ChangeFilter.all, 'All $total'),
+                    (_ChangeFilter.modified, 'Modified $modified'),
+                    (_ChangeFilter.added, 'Added ${added.length}'),
+                    (_ChangeFilter.removed, 'Removed ${removed.length}'),
+                    (_ChangeFilter.unresolved, 'Unresolved $unresolved'),
+                    (
+                      _ChangeFilter.equivalent,
+                      'Equivalent ${result.count(DecisionStatus.equivalent)}',
+                    ),
+                    (
+                      _ChangeFilter.same,
+                      'Same ${result.count(DecisionStatus.exact)}',
+                    ),
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        showCheckmark: false,
+                        selected: _filter == item.$1,
+                        label: Text(item.$2),
+                        onSelected: (_) => _select(item.$1),
+                        selectedColor: DytavaColors.primary,
+                        backgroundColor: DytavaColors.primaryLight,
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        labelStyle: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: _filter == item.$1
+                              ? Colors.white
+                              : DytavaColors.textSecondary,
+                        ),
                       ),
                     ),
                 ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            for (final item in [
-              (
-                modified,
-                'Modified',
-                DytavaColors.modified,
-                _ChangeFilter.modified,
-              ),
-              (
-                added.length,
-                'Added',
-                DytavaColors.primary,
-                _ChangeFilter.added,
-              ),
-              (
-                removed.length,
-                'Removed',
-                DytavaColors.removed,
-                _ChangeFilter.removed,
-              ),
-            ]) ...[
-              if (item.$2 != 'Modified') const SizedBox(width: 8),
-              Expanded(
-                child: Material(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: const BorderSide(color: DytavaColors.border),
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () => _select(item.$4),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          DytavaCountUpText(
-                            value: item.$1,
-                            style: DytavaTypography.metricNumber.copyWith(
-                              color: item.$3,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(item.$2, style: DytavaTypography.bodySmall),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 18),
-        Row(
-          children: [
-            Expanded(
-              child: sheets.isEmpty
-                  ? const Text(
-                      'All sheets (1)',
-                      style: DytavaTypography.titleMedium,
-                    )
-                  : DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: flow.selectedSheetPairId ?? 'ALL',
-                        style: DytavaTypography.titleMedium,
-                        items: [
-                          DropdownMenuItem(
-                            value: 'ALL',
-                            child: Text('All sheets (${sheets.length})'),
-                          ),
-                          for (final sheet in sheets)
-                            DropdownMenuItem(
-                              value: sheet.sheetPair!.id,
-                              child: Text(
-                                sheet.sheetPair!.label,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                        ],
-                        onChanged: (value) {
-                          setState(() => _limit = 30);
-                          flow.selectResultSheet(value == 'ALL' ? null : value);
-                        },
-                      ),
-                    ),
-            ),
-            Flexible(
-              child: TextButton(
-                onPressed: () => widget.onResultViewTabChanged(
-                  widget.resultViewTab == 1 ? 0 : 1,
-                ),
-                child: Text(
-                  widget.resultViewTab == 1 ? 'List view ›' : 'Table view ›',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: DytavaColors.textSecondary,
-                  ),
-                ),
-              ),
             ),
           ],
-        ),
-        const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final item in [
-                (_ChangeFilter.all, 'All $total'),
-                (_ChangeFilter.modified, 'Modified $modified'),
-                (_ChangeFilter.added, 'Added ${added.length}'),
-                (_ChangeFilter.removed, 'Removed ${removed.length}'),
-                (_ChangeFilter.unresolved, 'Unresolved $unresolved'),
-                (
-                  _ChangeFilter.equivalent,
-                  'Equivalent ${result.count(DecisionStatus.equivalent)}',
-                ),
-                (
-                  _ChangeFilter.same,
-                  'Same ${result.count(DecisionStatus.exact)}',
-                ),
-              ])
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    showCheckmark: false,
-                    selected: _filter == item.$1,
-                    label: Text(item.$2),
-                    onSelected: (_) => _select(item.$1),
-                    selectedColor: DytavaColors.primary,
-                    backgroundColor: DytavaColors.primaryLight,
-                    side: BorderSide.none,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    labelStyle: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _filter == item.$1
-                          ? Colors.white
-                          : DytavaColors.textSecondary,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        if (widget.resultViewTab == 1)
-          for (final sheet
-              in result.sheetResults.isEmpty ? [result] : result.sheetResults)
-            WorkflowSectionCard(
-              padding: const EdgeInsets.all(8),
-              children: [
-                if (sheet.sheetPair != null)
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Text(
-                      sheet.sheetPair!.label,
-                      style: DytavaTypography.titleMedium,
-                    ),
-                  ),
-                MobileAlignedGrid(
-                  key: ValueKey(sheet.id),
-                  result: sheet,
-                  onOpenCell: widget.onOpenDetail,
-                ),
-              ],
+          const SizedBox(height: 12),
+          if (isTableView)
+            MobileAlignedGrid(
+              key: ValueKey(activeTableSheet.id),
+              result: activeTableSheet,
+              onOpenCell: widget.onOpenDetail,
             )
-        else ...[
+          else ...[
           for (final cell in cells.take(_limit)) _cellCard(cell),
           for (final change in structural.take(
             (_limit - cells.length).clamp(0, _limit),
@@ -946,7 +1005,7 @@ class DifferenceDetailScreenView extends StatelessWidget {
               style: TextButton.styleFrom(
                 foregroundColor: DytavaColors.primary,
                 disabledForegroundColor:
-                    DytavaColors.textSecondary.withOpacity(0.35),
+                    DytavaColors.textSecondary.withValues(alpha: 0.35),
                 textStyle: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
@@ -972,7 +1031,7 @@ class DifferenceDetailScreenView extends StatelessWidget {
                 style: TextButton.styleFrom(
                   foregroundColor: DytavaColors.primary,
                   disabledForegroundColor:
-                      DytavaColors.textSecondary.withOpacity(0.35),
+                      DytavaColors.textSecondary.withValues(alpha: 0.35),
                   textStyle: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,

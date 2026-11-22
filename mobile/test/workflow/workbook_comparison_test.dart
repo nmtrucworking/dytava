@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:archive/archive.dart';
 import 'package:excel/excel.dart' as xlsx;
 import 'package:dytava/design_system/design_system.dart';
 import 'package:dytava/features/workflow/screens/results_and_detail_view.dart';
@@ -266,6 +267,113 @@ void main() {
       expect(flow.displayedResult, same(products));
       expect(flow.result, same(result));
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  test(
+    'merged cells blank non-anchor child cells, formulas normalize (=sum(A1;B2) == =SUM(A1,B2)) and shared formulas expand',
+    () {
+      final baseBytes = File('../tests/fixtures/workbook-a.xlsx').readAsBytesSync();
+      final decoded = ZipDecoder().decodeBytes(baseBytes);
+      final customSheetXml = '''
+<?xml version="1.0" encoding="UTF-8"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>
+    <row r="1">
+      <c r="A1" t="inlineStr"><is><t>ID</t></is></c>
+      <c r="B1" t="inlineStr"><is><t>MergedNote</t></is></c>
+      <c r="C1" t="inlineStr"><is><t>ChildCol</t></is></c>
+      <c r="D1" t="inlineStr"><is><t>FormulaCol</t></is></c>
+      <c r="E1" t="inlineStr"><is><t>SharedCol</t></is></c>
+    </row>
+    <row r="2">
+      <c r="A2" t="inlineStr"><is><t>001</t></is></c>
+      <c r="B2" t="inlineStr"><is><t>AnchorOnly</t></is></c>
+      <c r="C2" t="inlineStr"><is><t>DuplicateInChild</t></is></c>
+      <c r="D2"><f>=sum(A2;B2)</f></c>
+      <c r="E2"><f t="shared" ref="E2:E3" si="0">A2+B2</f></c>
+    </row>
+    <row r="3">
+      <c r="A3" t="inlineStr"><is><t>002</t></is></c>
+      <c r="B3" t="inlineStr"><is><t>Row3Note</t></is></c>
+      <c r="C3" t="inlineStr"><is><t>Row3Child</t></is></c>
+      <c r="D3" t="str"><f>_xlfn.CONCAT(A3;B3)</f><v></v></c>
+      <c r="E3"><f t="shared" si="0"/></c>
+    </row>
+  </sheetData>
+  <mergeCells count="1">
+    <mergeCell ref="B2:C2"/>
+  </mergeCells>
+</worksheet>
+''';
+
+      final archive = Archive();
+      for (final file in decoded.files) {
+        if (file.name == 'xl/worksheets/sheet2.xml') {
+          final bytes = utf8.encode(customSheetXml);
+          archive.addFile(ArchiveFile(file.name, bytes.length, bytes));
+        } else {
+          archive.addFile(
+            ArchiveFile(file.name, file.size, file.content),
+          );
+        }
+      }
+      final encoded = Uint8List.fromList(ZipEncoder().encode(archive)!);
+      final info = MobileFileUploadService.processFileBytes(
+        side: SourceSide.a,
+        fileName: 'merged-formula.xlsx',
+        bytes: encoded,
+      );
+      final snap = MobileFileUploadService.snapshot(
+        info.privateRef,
+        SourceArtifact(
+          id: 'a',
+          label: 'merged-formula.xlsx',
+          format: SourceFormat.xlsx,
+          privateRef: info.privateRef,
+        ),
+        const ImportBinding('a', 0, 0, 1),
+      )!;
+      final sheet2 = snap.workbookSheets.firstWhere(
+        (s) => s.sheetName == 'Sheet2',
+      );
+
+      // 1. Merge cell B2:C2 keeps anchor B2 ('AnchorOnly') and blanks child C2 ('')
+      expect(sheet2.records[0].cells['MergedNote']!.rawLexeme, 'AnchorOnly');
+      expect(sheet2.records[0].cells['ChildCol']!.rawLexeme, '');
+      expect(
+        sheet2.warnings.any((w) => w.contains('ô gộp')),
+        isTrue,
+      );
+
+      // 2. Formula with semicolons `=sum(A2;B2)` and `_xlfn.CONCAT(A3;B3)` normalizes nicely
+      expect(
+        sheet2.records[0].cells['FormulaCol']!.rawLexeme,
+        '=sum(A2,B2)',
+      );
+      expect(
+        sheet2.records[1].cells['FormulaCol']!.rawLexeme,
+        '=CONCAT(A3,B3)',
+      );
+
+      // 3. Shared formula child E3 (`<f t="shared" si="0"/>`) expands relative row ref A2+B2 → A3+B3
+      expect(
+        sheet2.records[0].cells['SharedCol']!.rawLexeme,
+        '=A2+B2',
+      );
+      expect(
+        sheet2.records[1].cells['SharedCol']!.rawLexeme,
+        '=A3+B3',
+      );
+
+      // 4. WebCellEngine compares `=sum(A1;B2)` and `=SUM(A1, B2)` as EQUIVALENT
+      const engine = WebCellEngine();
+      final decision = engine.compare(
+        const SourceCell(CellKind.text, rawLexeme: '=sum(A1;B2)'),
+        const SourceCell(CellKind.text, rawLexeme: '=SUM(A1, B2)'),
+      );
+      expect(decision.status, DecisionStatus.equivalent);
+      expect(decision.ruleId, 'formula/syntax_normalized');
     },
   );
 }

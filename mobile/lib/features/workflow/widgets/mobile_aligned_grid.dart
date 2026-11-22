@@ -1,9 +1,18 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import '../../../domain/workflow.dart';
 import '../../../design_system/design_system.dart';
+import '../../../domain/workflow.dart';
 
-/// Both panes use the same alignment/page and synchronize horizontal/vertical scroll.
+/// Mobile-native synchronized Table View for a single active sheet pair.
+///
+/// - Renders ONE active sheet at a time (never stacks multiple sheets vertically).
+/// - Clean 1-row toolbar: Landscape toggle (`Xoay ngang`), auto-zoom difference
+///   stepper (`Khác biệt X/N` with up/down arrows), and pinch-to-zoom on the
+///   table grid (no extra web filter chips or metadata text).
 class MobileAlignedGrid extends StatefulWidget {
   const MobileAlignedGrid({
     super.key,
@@ -17,6 +26,10 @@ class MobileAlignedGrid extends StatefulWidget {
 }
 
 class _MobileAlignedGridState extends State<MobileAlignedGrid> {
+  static const _rowHeight = 48.0;
+  static const _colWidth = 148.0;
+  static const _indexColWidth = 44.0;
+
   String filter = 'ALL';
   int page = 0;
   List<AlignedTableRow> rows = const [];
@@ -25,6 +38,15 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
   final horizontal = [ScrollController(), ScrollController()],
       vertical = [ScrollController(), ScrollController()];
   bool syncing = false;
+  bool _landscapeLocked = false;
+  double _cellZoom = 1.0;
+  double _gestureBaseZoom = 1.0;
+
+  /// List of `(visibleRowIndex, columnIndex, cellId)` for difference navigation.
+  List<(int, int, String?)> _diffLocations = const [];
+  int _activeDiffCursor = -1;
+  (int, int)? _highlightedCoord;
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +56,11 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
         c.addListener(() => _sync(c, group));
       }
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _diffLocations.isNotEmpty) {
+        _jumpToDifference(0);
+      }
+    });
   }
 
   void _sync(ScrollController source, List<ScrollController> group) {
@@ -54,15 +81,48 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
     if (!identical(old.result, widget.result)) {
       page = 0;
       _rebuild();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _diffLocations.isNotEmpty) {
+          _jumpToDifference(0);
+        }
+      });
     }
   }
 
   @override
   void dispose() {
+    if (_landscapeLocked) {
+      unawaited(
+        SystemChrome.setPreferredOrientations(const [
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]),
+      );
+    }
     for (final c in [...horizontal, ...vertical]) {
       c.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _toggleLandscapeOrientation() async {
+    final next = !_landscapeLocked;
+    setState(() => _landscapeLocked = next);
+    await SystemChrome.setPreferredOrientations(
+      next
+          ? const [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ]
+          : const [
+              DeviceOrientation.portraitUp,
+              DeviceOrientation.portraitDown,
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+    );
   }
 
   String kind(AlignedTableRow row) {
@@ -98,6 +158,83 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
     rows = widget.result.alignedRows
         .where((r) => filter == 'ALL' || kind(r) == filter)
         .toList();
+    _recomputeDiffLocations();
+  }
+
+  void _recomputeDiffLocations() {
+    final visible = rows.skip(page * 100).take(100).toList();
+    final locs = <(int, int, String?)>[];
+    for (var r = 0; r < visible.length; r++) {
+      final row = visible[r];
+      final rowKind = kind(row);
+      final mapByPair = {
+        for (final c in row.cells) (c.mapping.fieldA, c.mapping.fieldB): c,
+      };
+      var addedForRow = false;
+      for (var c = 0; c < mappings.length; c++) {
+        final m = mappings[c];
+        final cellDiff = mapByPair[(m.fieldA, m.fieldB)];
+        final status = cellDiff?.decision.status.name.toUpperCase();
+        if (status == 'DIFFERENT' || status == 'UNRESOLVED') {
+          locs.add((r, c, cellDiff?.id));
+          addedForRow = true;
+        }
+      }
+      if (!addedForRow &&
+          (rowKind == 'ADDED' ||
+              rowKind == 'REMOVED' ||
+              rowKind == 'UNRESOLVED')) {
+        locs.add((r, 0, null));
+      }
+    }
+    _diffLocations = locs;
+    _activeDiffCursor = locs.isEmpty ? -1 : 0;
+    _highlightedCoord = locs.isEmpty ? null : (locs.first.$1, locs.first.$2);
+  }
+
+  void _jumpToDifference(int nextIndex) {
+    if (_diffLocations.isEmpty) return;
+    final wrapped =
+        (nextIndex % _diffLocations.length + _diffLocations.length) %
+        _diffLocations.length;
+    final target = _diffLocations[wrapped];
+    setState(() {
+      _activeDiffCursor = wrapped;
+      _highlightedCoord = (target.$1, target.$2);
+      if (_cellZoom < 1.1) {
+        _cellZoom = 1.12;
+      }
+    });
+
+    final scaledColW = _colWidth * _cellZoom;
+    final scaledRowH = _rowHeight * _cellZoom;
+    final targetX = math.max(0.0, target.$2 * scaledColW - 20.0);
+    final targetY = math.max(0.0, target.$1 * scaledRowH - scaledRowH);
+
+    for (final hc in horizontal) {
+      if (hc.hasClients) {
+        final clampedX = targetX.clamp(0.0, hc.position.maxScrollExtent);
+        unawaited(
+          hc.animateTo(
+            clampedX,
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+          ),
+        );
+      }
+    }
+    for (final vc in vertical) {
+      if (vc.hasClients) {
+        final clampedY = targetY.clamp(0.0, vc.position.maxScrollExtent);
+        unawaited(
+          vc.animateTo(
+            clampedY,
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+          ),
+        );
+      }
+    }
   }
 
   Color color(String status) => switch (status) {
@@ -109,46 +246,72 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
     'REMOVED' => DytavaColors.differentBg,
     _ => DytavaColors.background,
   };
+
   Widget cell(
     String value, {
-    double width = 156,
+    double width = _colWidth,
+    double height = _rowHeight,
     Color? bg,
     VoidCallback? tap,
     bool header = false,
+    bool highlighted = false,
   }) => InkWell(
     onTap: tap,
     child: Container(
       width: width,
-      height: 52,
-      padding: const EdgeInsets.all(6),
+      height: height,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
         color: bg,
-        border: Border.all(color: DytavaColors.border, width: 0.5),
+        border: Border.all(
+          color: highlighted ? DytavaColors.primary : DytavaColors.border,
+          width: highlighted ? 2.0 : 0.5,
+        ),
       ),
       child: Text(
         value.isEmpty ? '—' : value,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
-        style: header
-            ? DytavaTypography.labelLarge
-            : DytavaTypography.dataSmall,
+        style:
+            (header
+                    ? DytavaTypography.labelLarge
+                    : DytavaTypography.dataSmall)
+                .copyWith(
+                  fontSize: ((header ? 12.5 : 11.5) * _cellZoom).clamp(
+                    10.5,
+                    17.0,
+                  ),
+                ),
       ),
     ),
   );
+
   Widget _pane(
     SourceSide side,
     List<AlignedTableRow> visible,
     List<Map<(String, String), CellDifference>> cellsByRow,
+    double gridHeight,
   ) {
     final index = side.index;
+    final scaledColW = _colWidth * _cellZoom;
+    final scaledRowH = _rowHeight * _cellZoom;
+    final scaledIndexW = _indexColWidth * _cellZoom;
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Nguồn ${side.name.toUpperCase()}',
-            style: DytavaTypography.titleMedium,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              'Nguồn ${side.name.toUpperCase()}',
+              style: const TextStyle(
+                fontFamily: DytavaTypography.primaryFont,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: DytavaColors.textPrimary,
+              ),
+            ),
           ),
           Scrollbar(
             controller: horizontal[index],
@@ -157,21 +320,24 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
               controller: horizontal[index],
               scrollDirection: Axis.horizontal,
               child: SizedBox(
-                width: 52 + 156 * mappings.length.toDouble(),
-                height: ((visible.length + 1) * 52.0).clamp(104, 468),
+                width: scaledIndexW + scaledColW * mappings.length.toDouble(),
+                height: gridHeight,
                 child: Column(
                   children: [
                     Row(
                       children: [
                         cell(
                           '#',
-                          width: 52,
+                          width: scaledIndexW,
+                          height: scaledRowH,
                           header: true,
                           bg: DytavaColors.softBlue,
                         ),
                         for (final m in mappings)
                           cell(
                             side == SourceSide.a ? m.fieldA : m.fieldB,
+                            width: scaledColW,
+                            height: scaledRowH,
                             header: true,
                             bg: DytavaColors.softBlue,
                           ),
@@ -181,7 +347,7 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                       child: ListView.builder(
                         controller: vertical[index],
                         primary: false,
-                        itemExtent: 52,
+                        itemExtent: scaledRowH,
                         itemCount: visible.length,
                         itemBuilder: (context, i) {
                           final row = visible[i],
@@ -200,7 +366,8 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                                   record == null
                                       ? '—'
                                       : '${record.ordinal + 1}',
-                                  width: 52,
+                                  width: scaledIndexW,
+                                  height: scaledRowH,
                                   bg: color(kind(row)),
                                   tap: () => showModalBottomSheet<void>(
                                     context: context,
@@ -211,11 +378,14 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                                   ),
                                 ),
                               ),
-                              for (final m in mappings)
+                              for (var colIdx = 0; colIdx < mappings.length; colIdx++)
                                 Builder(
                                   builder: (_) {
+                                    final m = mappings[colIdx];
                                     final c =
                                         cellsByRow[i][(m.fieldA, m.fieldB)];
+                                    final isFocused =
+                                        _highlightedCoord == (i, colIdx);
                                     return cell(
                                       record
                                               ?.cells[side == SourceSide.a
@@ -223,6 +393,9 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                                                   : m.fieldB]
                                               ?.rawLexeme ??
                                           '',
+                                      width: scaledColW,
+                                      height: scaledRowH,
+                                      highlighted: isFocused,
                                       bg: color(
                                         row.unresolved
                                             ? 'UNRESOLVED'
@@ -253,100 +426,173 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
 
   @override
   Widget build(BuildContext context) {
-    final result = widget.result,
-        visible = rows.skip(page * 100).take(100).toList();
+    final visible = rows.skip(page * 100).take(100).toList();
     final cellsByRow = [
       for (final r in visible)
         {for (final c in r.cells) (c.mapping.fieldA, c.mapping.fieldB): c},
     ];
+    final screenH = MediaQuery.sizeOf(context).height;
+    final scaledRowH = _rowHeight * _cellZoom;
+    final maxGridH = (screenH * 0.62).clamp(240.0, 560.0);
+    final gridHeight = ((visible.length + 1) * scaledRowH).clamp(
+      110.0,
+      maxGridH,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Hai nguồn A | B · ${result.durationMs} ms xử lý · ${result.alignedRows.length} hàng sau căn chỉnh',
-          style: DytavaTypography.bodySmall,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final value in [
-                'ALL',
-                'DIFFERENT',
-                'UNRESOLVED',
-                'EQUIVALENT',
-                'EXACT',
-                'ADDED',
-                'REMOVED',
-              ])
-                ChoiceChip(
-                  label: Text(
-                    '${value == 'ALL' ? 'Tất cả' : value} (${value == 'ALL' ? result.alignedRows.length : counts[value] ?? 0})',
+        // Single-line compact mobile toolbar: Landscape toggle + Difference Auto-Zoom stepper
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            OutlinedButton.icon(
+              key: const ValueKey('table-view-rotate-landscape-button'),
+              style: OutlinedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              ),
+              onPressed: _toggleLandscapeOrientation,
+              icon: Icon(
+                _landscapeLocked
+                    ? Icons.screen_lock_rotation_rounded
+                    : Icons.screen_rotation_rounded,
+                size: 15,
+              ),
+              label: Text(
+                _landscapeLocked ? 'Màn hình dọc' : 'Xoay ngang',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (_diffLocations.isNotEmpty)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    key: const ValueKey('table-view-prev-diff-button'),
+                    tooltip: 'Điểm khác trước',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => _jumpToDifference(_activeDiffCursor - 1),
+                    icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
                   ),
-                  selected: filter == value,
-                  onSelected: (_) => setState(() {
-                    filter = value;
-                    page = 0;
-                    _filter();
-                  }),
-                ),
-            ],
-          ),
+                  InkWell(
+                    key: const ValueKey('table-view-next-diff-chip'),
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _jumpToDifference(_activeDiffCursor + 1),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: DytavaColors.modifiedBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Khác biệt ${_activeDiffCursor + 1}/${_diffLocations.length}',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: DytavaColors.modified,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    key: const ValueKey('table-view-next-diff-button'),
+                    tooltip: 'Điểm khác tiếp theo',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => _jumpToDifference(_activeDiffCursor + 1),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+          ],
         ),
+        const SizedBox(height: 8),
         if (visible.isEmpty)
           const Padding(
             padding: EdgeInsets.all(20),
-            child: Text('Không có dòng phù hợp.'),
+            child: Text('Không có dòng dữ liệu.'),
           )
         else
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _pane(SourceSide.a, visible, cellsByRow),
-              const SizedBox(width: 8),
-              _pane(SourceSide.b, visible, cellsByRow),
-            ],
+          GestureDetector(
+            onScaleStart: (_) => _gestureBaseZoom = _cellZoom,
+            onScaleUpdate: (details) {
+              if (details.pointerCount >= 2) {
+                setState(() {
+                  _cellZoom = (_gestureBaseZoom * details.scale).clamp(
+                    0.8,
+                    1.6,
+                  );
+                });
+              }
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _pane(SourceSide.a, visible, cellsByRow, gridHeight),
+                const SizedBox(width: 8),
+                _pane(SourceSide.b, visible, cellsByRow, gridHeight),
+              ],
+            ),
           ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton(
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: const Size(0, 36),
+        if (rows.length > 100)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 36),
+                  ),
+                  onPressed: page > 0
+                      ? () => setState(() {
+                          page--;
+                          _recomputeDiffLocations();
+                        })
+                      : null,
+                  child: const Text(
+                    'Trang trước',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
-                onPressed: page > 0 ? () => setState(() => page--) : null,
-                child: const Text('Trang trước', style: TextStyle(fontSize: 12)),
-              ),
-              Expanded(
-                child: Text(
-                  '${rows.isEmpty ? 0 : page * 100 + 1}–${(page * 100 + 100).clamp(0, rows.length)} / ${rows.length} dòng',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Expanded(
+                  child: Text(
+                    '${page * 100 + 1}–${(page * 100 + 100).clamp(0, rows.length)} / ${rows.length}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              TextButton(
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: const Size(0, 36),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 36),
+                  ),
+                  onPressed: (page + 1) * 100 < rows.length
+                      ? () => setState(() {
+                          page++;
+                          _recomputeDiffLocations();
+                        })
+                      : null,
+                  child: const Text(
+                    'Trang sau',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
-                onPressed: (page + 1) * 100 < rows.length
-                    ? () => setState(() => page++)
-                    : null,
-                child: const Text('Trang sau', style: TextStyle(fontSize: 12)),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const Text(
-          'Chạm ô để xem giá trị gốc, chuẩn hóa và quy tắc; chạm số dòng để xem lý do căn chỉnh.',
-        ),
       ],
     );
   }

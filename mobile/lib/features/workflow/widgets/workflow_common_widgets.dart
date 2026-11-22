@@ -31,6 +31,9 @@ abstract final class WorkflowUiHelpers {
     if (code.contains('OCR') || code.contains('REVIEW')) {
       return 'Hướng xử lý: Mở màn hình Review để duyệt đầy đủ từng ô nhận dạng trước khi tiếp tục.';
     }
+    if (code.contains('DUPLICATE')) {
+      return 'Hướng xử lý: Hai tệp A và B hoàn toàn giống nhau. Hãy chọn bản cập nhật khác nếu bạn muốn tìm sai khác.';
+    }
     return 'Hướng xử lý: Kiểm tra lại trạng thái nguồn dữ liệu hoặc thử nạp lại nguồn hợp lệ.';
   }
 }
@@ -165,19 +168,11 @@ class WorkflowIssueList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${issueList[i].code}: ${issueList[i].message}',
+                        issueList[i].message,
                         style: DytavaTypography.bodySmall.copyWith(
                           color: DytavaColors.different,
                           fontWeight: FontWeight.w700,
-                          fontSize: 11.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        WorkflowUiHelpers.remediationForIssue(issueList[i]),
-                        style: DytavaTypography.bodySmall.copyWith(
-                          color: DytavaColors.textPrimary,
-                          fontSize: 11,
+                          fontSize: 12.5,
                         ),
                       ),
                     ],
@@ -418,7 +413,7 @@ class WorkflowScreenLayout extends StatelessWidget {
                   child: content,
                 ),
               ),
-              if (bottomBar != null) bottomBar!,
+              ?bottomBar,
             ],
           );
         } else {
@@ -429,7 +424,7 @@ class WorkflowScreenLayout extends StatelessWidget {
                 padding: contentPadding,
                 child: content,
               ),
-              if (bottomBar != null) bottomBar!,
+              ?bottomBar,
             ],
           );
         }

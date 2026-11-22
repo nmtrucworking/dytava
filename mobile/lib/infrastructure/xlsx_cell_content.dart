@@ -214,7 +214,20 @@ Map<String, XlsxSheetContent> inspectXlsxCellContent(Archive archive) {
     }
     if (all(sheet, 'drawing').isNotEmpty ||
         all(sheet, 'legacyDrawing').isNotEmpty) {
-      warnings.add('$name: ảnh/đối tượng nổi chưa được so sánh như ô.');
+      final floatingInfo = _inspectSheetDrawings(
+        archive,
+        doc,
+        all,
+        rels,
+        rel.path!,
+      );
+      if (floatingInfo.isNotEmpty) {
+        warnings.add(
+          '$name: có ${floatingInfo.length} ảnh/đối tượng nổi (${floatingInfo.join(', ')}) đặt thủ công trên sheet, không gắn vào một ô cố định.',
+        );
+      } else {
+        warnings.add('$name: ảnh/đối tượng nổi chưa được so sánh như ô.');
+      }
     }
     if (all(sheet, 'oleObject').isNotEmpty) {
       warnings.add('$name: đối tượng OLE nhúng chưa được so sánh.');
@@ -234,4 +247,71 @@ Map<String, XlsxSheetContent> inspectXlsxCellContent(Archive archive) {
     result[name] = XlsxSheetContent(rel.path!, cells, warnings);
   }
   return result;
+}
+
+List<String> _inspectSheetDrawings(
+  Archive archive,
+  XmlDocument? Function(String?) doc,
+  List<XmlElement> Function(XmlNode?, String) all,
+  Map<String, ({String? path, String type})> Function(String) rels,
+  String sheetPath,
+) {
+  final sheetRels = rels(sheetPath);
+  final summaries = <String>[];
+  String colLetters(int colZeroBased) {
+    var col = colZeroBased + 1;
+    var out = '';
+    while (col > 0) {
+      col--;
+      out = String.fromCharCode(65 + col % 26) + out;
+      col ~/= 26;
+    }
+    return out;
+  }
+
+  for (final rel in sheetRels.values) {
+    if (!rel.type.endsWith('/drawing') || rel.path == null) continue;
+    final drawingDoc = doc(rel.path);
+    if (drawingDoc == null) continue;
+    final drawingRels = rels(rel.path!);
+    for (final anchorTag in ['twoCellAnchor', 'oneCellAnchor', 'absoluteAnchor']) {
+      for (final anchor in all(drawingDoc, anchorTag)) {
+        final fromElem = all(anchor, 'from').firstOrNull;
+        String? anchorCell;
+        if (fromElem != null) {
+          final col = int.tryParse(
+            all(fromElem, 'col').firstOrNull?.innerText ?? '',
+          );
+          final row = int.tryParse(
+            all(fromElem, 'row').firstOrNull?.innerText ?? '',
+          );
+          if (col != null && row != null && col >= 0 && row >= 0) {
+            anchorCell = '${colLetters(col)}${row + 1}';
+          }
+        }
+        final blip = all(anchor, 'blip').firstOrNull;
+        final embedId = blip?.attributes
+            .where((a) => a.name.local == 'embed')
+            .firstOrNull
+            ?.value;
+        final mediaPath = embedId != null ? drawingRels[embedId]?.path : null;
+        final mediaFile =
+            mediaPath != null ? archive.findFile(mediaPath) : null;
+        if (mediaFile != null && mediaFile.size > 0) {
+          final shortHash = sha256
+              .convert(mediaFile.content)
+              .toString()
+              .substring(0, 8);
+          summaries.add(
+            anchorCell != null
+                ? 'neo gần $anchorCell · SHA $shortHash'
+                : 'tọa độ tự do · SHA $shortHash',
+          );
+        } else if (anchorCell != null) {
+          summaries.add('neo gần $anchorCell');
+        }
+      }
+    }
+  }
+  return summaries;
 }

@@ -38,21 +38,91 @@ class SourceSelectionView extends StatefulWidget {
 }
 
 class _SourceSelectionViewState extends State<SourceSelectionView> {
-  bool _showMappingReview = false;
+  Future<void> _openSheetMatchesModal(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: DytavaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (sheetContext) => AnimatedBuilder(
+        animation: widget.flow,
+        builder: (context, _) {
+          final isComplete = widget.flow.sheetMapping?.complete == true;
+          return ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.82,
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                16,
+                20,
+                24 + MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Đối chiếu cặp Sheet',
+                          style: TextStyle(
+                            fontFamily: DytavaTypography.primaryFont,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SheetMappingReview(flow: widget.flow),
+                  const SizedBox(height: 12),
+                  WorkflowPrimaryButton(
+                    key: const ValueKey('sheet-matches-modal-done'),
+                    label: isComplete ? 'Hoàn tất ghép sheet' : 'Đóng',
+                    onPressed: () => Navigator.pop(sheetContext),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   Widget _buildSideCard(BuildContext context, SourceSide side) {
     final slot = widget.flow.slot(side);
     final artifact = slot.artifact;
     final tag = side.name.toUpperCase();
     final isA = side == SourceSide.a;
+    final otherTag = isA ? 'B' : 'A';
+    final isDuplicateSlot = widget.flow.duplicateSlotSide == side;
 
     return Container(
+      key: ValueKey('source-card-${side.name}'),
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDuplicateSlot ? const Color(0xFFFFFBEB) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDuplicateSlot
+              ? const Color(0xFFF59E0B)
+              : const Color(0xFFE2E8F0),
+          width: isDuplicateSlot ? 1.4 : 1.0,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x06000000),
@@ -68,17 +138,21 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
+              color: isDuplicateSlot
+                  ? const Color(0xFFFEF3C7)
+                  : const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,
             child: Text(
               tag,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: DytavaTypography.primaryFont,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: DytavaColors.primary,
+                color: isDuplicateSlot
+                    ? const Color(0xFFD97706)
+                    : DytavaColors.primary,
               ),
             ),
           ),
@@ -113,13 +187,20 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  artifact == null
-                      ? 'XLSX, CSV, TSV, TXT, JSON'
-                      : '${artifact.format.name.toUpperCase()}  ·  ${slot.snapshot == null ? 'Needs review' : '${slot.snapshot!.records.length} rows  ·  ${slot.snapshot!.fields.length} columns'}',
-                  style: const TextStyle(
+                  isDuplicateSlot
+                      ? 'Trùng với tệp $otherTag · Chạm để chọn tệp khác'
+                      : (artifact == null
+                            ? 'XLSX, CSV, TSV, TXT, JSON'
+                            : '${artifact.format.name.toUpperCase()}  ·  ${slot.snapshot == null ? 'Needs review' : '${slot.snapshot!.records.length} rows  ·  ${slot.snapshot!.fields.length} columns'}'),
+                  style: TextStyle(
                     fontFamily: DytavaTypography.primaryFont,
                     fontSize: 11.5,
-                    color: Color(0xFF64748B),
+                    fontWeight: isDuplicateSlot
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                    color: isDuplicateSlot
+                        ? const Color(0xFFB45309)
+                        : const Color(0xFF64748B),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -134,6 +215,32 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
               width: 22,
               height: 22,
               child: CircularProgressIndicator(strokeWidth: 2.2),
+            )
+          else if (isDuplicateSlot)
+            Material(
+              color: const Color(0xFFD97706),
+              borderRadius: BorderRadius.circular(10),
+              child: InkWell(
+                key: ValueKey('replace-duplicate-${side.name}'),
+                borderRadius: BorderRadius.circular(10),
+                onTap: widget.flow.busy
+                    ? null
+                    : () => _handleFileUpload(context, side),
+                child: Container(
+                  height: 36,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Chọn lại',
+                    style: TextStyle(
+                      fontFamily: DytavaTypography.primaryFont,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
             )
           else ...[
             if (slot.state == InputState.needsReview &&
@@ -449,11 +556,8 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                   SizedBox(
                     height: 46,
                     child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _showMappingReview = !_showMappingReview;
-                        });
-                      },
+                      key: const ValueKey('open-sheet-matches-modal-button'),
+                      onPressed: () => _openSheetMatchesModal(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: DytavaColors.primary,
                         foregroundColor: Colors.white,
@@ -463,24 +567,20 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            _showMappingReview
-                                ? 'Hide sheet matches'
-                                : 'Review matches',
-                            style: const TextStyle(
+                            'Review matches',
+                            style: TextStyle(
                               fontFamily: DytavaTypography.primaryFont,
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Icon(
-                            _showMappingReview
-                                ? Icons.keyboard_arrow_up_rounded
-                                : Icons.arrow_forward_rounded,
+                            Icons.open_in_new_rounded,
                             size: 18,
                           ),
                         ],
@@ -490,11 +590,6 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                 ],
               ),
             ),
-            if (_showMappingReview)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: SheetMappingReview(flow: widget.flow),
-              ),
           ],
 
           // Quick sample link when no files are chosen
@@ -607,7 +702,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
       if (slotNow.state == InputState.needsReview) {
         await flow.confirmImport(side, expectedBinding: slotNow.binding);
       }
-      if (context.mounted) {
+      if (context.mounted && !flow.duplicateSourceFiles) {
         DytavaToast.success(
           context,
           'Đã tải ${info.fileName}: ${info.rowCount} hàng × ${info.columnCount} cột.',
@@ -724,6 +819,10 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
         return;
       }
       await flow.importSource(side);
+      final ocrSession = OcrCaptureService.session(acquired.privateRef);
+      if (ocrSession != null) {
+        await ocrSession.runPreprocessPreview();
+      }
       if (context.mounted &&
           flow.slot(side).state == InputState.needsReview) {
         flow.navigate(WorkflowScreen.ocrReview, side: side);

@@ -71,16 +71,24 @@ final class OcrToken {
   OcrBox get box => OcrBox.fromPoints(polygon);
 }
 
-/// User-visible preprocessing (INP-010 §3: crop/rotation transform is stored).
+/// User-visible preprocessing (INP-010 §3: crop/rotation/flip transform is stored).
 final class OcrPreprocessSettings {
   const OcrPreprocessSettings({
     this.quarterTurns = 0,
+    this.flipHorizontal = false,
+    this.flipVertical = false,
     this.corners,
     this.enhanceContrast = true,
   });
 
   /// Clockwise quarter turns applied to the oriented image.
   final int quarterTurns;
+
+  /// Horizontal mirror applied after rotation.
+  final bool flipHorizontal;
+
+  /// Vertical mirror applied after rotation.
+  final bool flipVertical;
 
   /// Document corners TL, TR, BR, BL in *rotated* image coordinates.
   /// `null` means the full rotated image.
@@ -89,11 +97,15 @@ final class OcrPreprocessSettings {
 
   OcrPreprocessSettings copyWith({
     int? quarterTurns,
+    bool? flipHorizontal,
+    bool? flipVertical,
     List<OcrPoint>? corners,
     bool clearCorners = false,
     bool? enhanceContrast,
   }) => OcrPreprocessSettings(
     quarterTurns: quarterTurns ?? this.quarterTurns,
+    flipHorizontal: flipHorizontal ?? this.flipHorizontal,
+    flipVertical: flipVertical ?? this.flipVertical,
     corners: clearCorners ? null : (corners ?? this.corners),
     enhanceContrast: enhanceContrast ?? this.enhanceContrast,
   );
@@ -102,18 +114,22 @@ final class OcrPreprocessSettings {
 /// Exact mapping from processed pixels back to oriented image pixels.
 ///
 /// The rectification is a bilinear warp of the four document corners, followed
-/// by a clockwise rotation of the oriented image. Both steps are invertible for
-/// the forward direction used here (processed → oriented).
+/// by optional horizontal/vertical flip and a clockwise rotation of the
+/// oriented image. All steps are invertible for the forward direction used
+/// here (processed → oriented).
 final class OcrGeometry {
   const OcrGeometry({
     required this.orientedWidth,
     required this.orientedHeight,
     required this.quarterTurns,
+    this.flipHorizontal = false,
+    this.flipVertical = false,
     required this.corners,
     required this.outputWidth,
     required this.outputHeight,
   });
   final int orientedWidth, orientedHeight, quarterTurns;
+  final bool flipHorizontal, flipVertical;
 
   /// TL, TR, BR, BL in rotated coordinates.
   final List<OcrPoint> corners;
@@ -122,21 +138,27 @@ final class OcrGeometry {
   int get rotatedWidth => quarterTurns.isOdd ? orientedHeight : orientedWidth;
   int get rotatedHeight => quarterTurns.isOdd ? orientedWidth : orientedHeight;
 
-  /// Processed → rotated (bilinear, same formula as the warp).
+  /// Processed → rotated (bilinear, same formula as the warp, then inverse flip).
   OcrPoint toRotated(OcrPoint p) {
     final u = outputWidth <= 1 ? 0.0 : p.x / (outputWidth - 1);
     final v = outputHeight <= 1 ? 0.0 : p.y / (outputHeight - 1);
     final tl = corners[0], tr = corners[1], br = corners[2], bl = corners[3];
-    final x =
+    var x =
         tl.x * (1 - u) * (1 - v) +
         tr.x * u * (1 - v) +
         bl.x * (1 - u) * v +
         br.x * u * v;
-    final y =
+    var y =
         tl.y * (1 - u) * (1 - v) +
         tr.y * u * (1 - v) +
         bl.y * (1 - u) * v +
         br.y * u * v;
+    if (flipHorizontal) {
+      x = (rotatedWidth - 1) - x;
+    }
+    if (flipVertical) {
+      y = (rotatedHeight - 1) - y;
+    }
     return OcrPoint(x, y);
   }
 
@@ -166,6 +188,22 @@ final class OcrGeometry {
   ];
 }
 
+/// Four explicit domain outcomes for OCR extraction and table reconstruction.
+enum OcrDetectionState {
+  /// No text tokens were recognized in the image.
+  noTextDetected,
+
+  /// Text tokens were found, but a reliable row/column table structure could
+  /// not be reconstructed.
+  textWithoutTable,
+
+  /// A tabular grid structure was reconstructed and is ready for review/edit.
+  tableDetected,
+
+  /// Decoding, preprocessing or recognition failed.
+  processingFailed,
+}
+
 /// Structure and recognition warnings (OCR-RULE-006). Warnings focus the
 /// reviewer; they never exempt any cell from review.
 enum OcrRisk {
@@ -180,27 +218,28 @@ enum OcrRisk {
 
 extension OcrRiskInfo on OcrRisk {
   String get label => switch (this) {
-    OcrRisk.lowConfidence => 'Low confidence',
-    OcrRisk.diacritics => 'Check diacritics',
-    OcrRisk.spansColumns => 'Crosses a column',
-    OcrRisk.multipleSegments => 'Joined pieces',
-    OcrRisk.rowShape => 'Row has gaps',
-    OcrRisk.typeOutlier => 'Unusual for column',
-    OcrRisk.blank => 'Blank or missed',
+    OcrRisk.lowConfidence => 'Độ tin cậy thấp',
+    OcrRisk.diacritics => 'Kiểm tra dấu tiếng Việt',
+    OcrRisk.spansColumns => 'Chồng biên cột',
+    OcrRisk.multipleSegments => 'Nhiều cụm từ gộp',
+    OcrRisk.rowShape => 'Hàng thiếu ô',
+    OcrRisk.typeOutlier => 'Khác kiểu cột',
+    OcrRisk.blank => 'Ô trống / chưa nhận diện',
   };
 
   String get help => switch (this) {
-    OcrRisk.lowConfidence => 'The recognizer was unsure about this text.',
+    OcrRisk.lowConfidence => 'Bộ nhận dạng chưa chắc chắn về chuỗi ký tự này.',
     OcrRisk.diacritics =>
-      'Vietnamese tone marks may be missing, stacked or on the wrong letter.',
+      'Dấu thanh tiếng Việt có thể bị mờ, chồng dấu hoặc đặt sai nguyên âm.',
     OcrRisk.spansColumns =>
-      'The text overlaps two columns and may belong to the neighbour.',
+      'Văn bản nằm vắt qua ranh giới hai cột, cần kiểm tra có bị gộp cột không.',
     OcrRisk.multipleSegments =>
-      'Separate pieces of text were joined into this cell.',
-    OcrRisk.rowShape => 'This row has fewer cells than most rows.',
+      'Nhiều cụm từ cách xa nhau đã được gộp vào cùng một ô.',
+    OcrRisk.rowShape => 'Hàng này có số ô ít hơn các hàng còn lại trong bảng.',
     OcrRisk.typeOutlier =>
-      'Most values in this column are numbers; this one is not (O/0, l/1).',
-    OcrRisk.blank => 'Nothing was read here. Confirm it is empty or type it.',
+      'Đa số giá trị trong cột là số nhưng ô này chứa chữ (dễ nhầm O/0, l/1).',
+    OcrRisk.blank =>
+      'Không phát hiện ký tự tại vị trí này. Hãy xác nhận ô trống hoặc nhập bổ sung.',
   };
 }
 

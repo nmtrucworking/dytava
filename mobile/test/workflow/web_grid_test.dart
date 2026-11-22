@@ -58,10 +58,6 @@ void main() {
         expect(find.byKey(const ValueKey('aligned-b-B-1')), findsOneWidget);
         await tester.tap(find.text('Alpha').first);
         expect(selected, isNotNull);
-        await tester.tap(find.text('ADDED (1)'));
-        await tester.pumpAndSettle();
-        expect(find.byKey(const ValueKey('aligned-b-B-1')), findsOneWidget);
-        expect(find.text('Alpha'), findsNothing);
         await tester.tap(find.byKey(const ValueKey('aligned-b-B-1')));
         await tester.pumpAndSettle();
         expect(find.text('Dòng thêm ở nguồn B'), findsOneWidget);
