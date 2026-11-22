@@ -25,6 +25,16 @@ final class MobileInputPort implements InputPort, InputCleanupPort {
       );
     }
     cancel.check();
+    onParsing();
+    final workbook = await MobileFileUploadService.snapshotInBackground(
+      artifact.privateRef,
+      artifact,
+      binding,
+    );
+    cancel.check();
+    if (workbook != null) {
+      return ImportOutcome.ready(workbook);
+    }
     final data = DemoInputPort.userFile(artifact.privateRef);
     if (data == null) {
       throw const WorkflowIssue(

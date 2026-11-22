@@ -109,3 +109,7 @@ CLI `npm run report:render` tạo PDF mẫu, HTML và sidecar SHA-256.
 [Hướng dẫn renderer](../docs-dytava/specs/report/RENDERER.md) nêu contract, limits và evidence.
 Engine web legacy thiếu lineage được ghi rõ trên preview; merged diff PDF và pipeline
 input 1 GB vẫn chưa triển khai.
+
+## So sánh workbook — 20/11/2026
+
+Đối chiếu tất cả worksheet, gồm sheet ẩn/rỗng; tự ghép tên có nghĩa rồi cấu trúc, chỉ yêu cầu chọn cặp chưa rõ. Tên mặc định Sheet1/Sheet2 không làm căn cứ identity. Kết quả có Tất cả/từng cặp; đổi phạm vi xem không chạy lại. Ảnh Place in Cell được so bytes qua metadata/richData/relationships; nội dung chưa resolve giữ UNRESOLVED. Chưa so pixel/OCR/thumbnail ảnh, ảnh nổi chỉ có cảnh báo. Chi tiết tại [đặc tả workbook](../docs-dytava/specs/engine/05_workbook_mapping_and_cell_content.md).

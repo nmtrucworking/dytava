@@ -1,4 +1,6 @@
 # Dytava — Input Specification
+> **Cập nhật 20/11/2026:** [hợp đồng workbook](../engine/05_workbook_mapping_and_cell_content.md) thay quy định một selected sheet và xác nhận thủ công mọi cặp sheet cho web/mobile: so sánh tất cả worksheet, tự ghép tên → cấu trúc, chỉ hỏi cặp chưa rõ; xem tổng/từng cặp. Ảnh trong ô là nội dung có kiểu, không so cached error như text. Wire Input 0.1.0 và ADR cũ vẫn là baseline lịch sử.
+
 
 Document ID: INP-000\
 Version: 0.2.0 (documentation/ISC-1; wire schemas vẫn 0.1.0)\

@@ -110,7 +110,7 @@ test('approved branding assets load in light/dark themes and narrow layouts', as
   }
   await expect(page.locator('.hero-illustration')).toBeVisible();
   await expect(page.locator('#btn-run-compare img')).toHaveAttribute('src', /\/compare\.svg$/);
-  await expect(page.locator('#btn-export-json')).toHaveCSS('background-color', 'rgb(139, 92, 246)');
+  await expect(page.locator('#btn-export-json')).toHaveCSS('background-color', 'rgb(15, 26, 28)');
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `viewport ${width}`).toBe(true);
@@ -144,4 +144,45 @@ test('Dytava report preview stays local, renders branding and discloses legacy m
   expect(await preview.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   expect(writes).toHaveLength(0);
   await preview.close();
+});
+
+test('workbook compares every sheet and switches all/pair views without parsing again', async ({ page }) => {
+  await page.locator('#file-input-a').setInputFiles('tests/fixtures/workbook-a.xlsx');
+  await expect(page.locator('#file-badge-a')).toContainText('workbook-a.xlsx');
+  await page.locator('#opt-key-column').selectOption('__POSITIONAL__');
+  await page.locator('#file-input-b').setInputFiles('tests/fixtures/workbook-b.xlsx');
+  await expect(page.locator('#workbook-result-controls')).toBeVisible();
+  await expect(page.locator('#sheet-pair-view option')).toHaveCount(6);
+  await expect(page.locator('#workbook-coverage')).toContainText('4 sheet A và 5 sheet B');
+  await expect(page.locator('#workbook-warnings')).toContainText('sheet ẩn');
+  const state = await page.evaluate(() => ({ id: window.dytavaApp.currentComparisonResult.report.report_id, count: window.dytavaApp.parseRevisions.A + window.dytavaApp.parseRevisions.B, pair: window.dytavaApp.currentComparisonResult.sheetResults.find(r => r.pair.nameA === 'Sheet1').pair.id }));
+  await page.locator('#sheet-pair-view').selectOption(state.pair);
+  await expect(page.locator('#table-container-a')).toContainText('ProductID');
+  await expect(page.locator('#table-container-b')).toContainText('SHA-256');
+  await expect(page.locator('#cnt-total')).toHaveText('6');
+  await page.locator('#sheet-pair-view').selectOption('ALL');
+  await expect(page.locator('#table-container-a')).toContainText('EmployeeID');
+  expect(await page.evaluate(() => ({ id: window.dytavaApp.currentComparisonResult.report.report_id, count: window.dytavaApp.parseRevisions.A + window.dytavaApp.parseRevisions.B }))).toEqual({ id: state.id, count: state.count });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  await mkdir('test-results/screenshots', { recursive: true });
+  await page.screenshot({ path: 'test-results/screenshots/workbook-mobile.png', fullPage: true });
+  const download = page.waitForEvent('download'); await page.locator('#btn-export-json').click();
+  expect((await download).suggestedFilename()).toMatch(/dytava.*json/);
+});
+
+test('ambiguous default-named sheets require a one-to-one choice before comparison', async ({ page }) => {
+  const wb = new ExcelJS.Workbook();
+  wb.addWorksheet('Sheet1').addRows([['ID', 'Value'], ['001', 'first']]);
+  wb.addWorksheet('Sheet2').addRows([['ID', 'Value'], ['002', 'second']]);
+  const buffer = Buffer.from(await wb.xlsx.writeBuffer());
+  for (const side of ['a', 'b']) await page.locator(`#file-input-${side}`).setInputFiles({ name: `ambiguous-${side}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer });
+  await expect(page.locator('#sheet-mapping-review')).toBeVisible();
+  expect(await page.evaluate(() => window.dytavaApp.currentComparisonResult)).toBeNull();
+  await page.locator('[data-map-sheet="0"]').selectOption('1');
+  await page.locator('#apply-sheet-mapping').click();
+  await expect(page.locator('#sheet-mapping-review')).toBeHidden();
+  await expect(page.locator('#sheet-pair-view option')).toHaveCount(3);
+  const pairs = await page.evaluate(() => window.dytavaApp.currentComparisonResult.sheetMapping.pairs.map(p => [p.nameA, p.nameB]));
+  expect(pairs).toEqual([['Sheet1', 'Sheet2'], ['Sheet2', 'Sheet1']]);
 });

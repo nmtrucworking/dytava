@@ -1,334 +1,356 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
 import '../widgets/workflow_common_widgets.dart';
 
-/// Màn hình Tiến trình so sánh (`SCR-07`):
-/// - Sử dụng `BrandIllustration` theo trạng thái thực thi (`processingCompare`, `statusCancelled`, `statusError`).
-/// - Hiển thị Donut Progress và Checklist các bước tiến trình theo Mockup Board 02 (Màn hình 5).
-class ProgressScreenView extends StatelessWidget {
+class ProgressScreenView extends StatefulWidget {
   final WorkflowController flow;
   final VoidCallback onBackToPolicyOrSources;
-
   const ProgressScreenView({
     super.key,
     required this.flow,
     required this.onBackToPolicyOrSources,
   });
+  @override
+  State<ProgressScreenView> createState() => _ProgressScreenViewState();
+}
+
+class _ProgressScreenViewState extends State<ProgressScreenView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _timeline = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
+  );
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _timeline.stop();
+      _timeline.value = 1;
+    } else if (!_timeline.isAnimating) {
+      _timeline.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timeline.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final flow = widget.flow;
     final hasTotal = flow.progressTotal != null && flow.progressTotal! > 0;
-    final progressValue = hasTotal
+    final value = hasTotal
         ? (flow.progressDone / flow.progressTotal!).clamp(0.0, 1.0)
-        : 0.68;
-
-    return DytavaFadeSlide(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WorkflowSectionCard(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        : null;
+    final active = flow.jobState.active;
+    final validating = flow.jobState == JobState.validating;
+    return AnimatedBuilder(
+      animation: _timeline,
+      builder: (context, _) {
+        final t = _timeline.value;
+        final entrance = Curves.easeOut.transform((t / 0.07).clamp(0.0, 1.0));
+        return WorkflowScreenLayout(
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Donut Ring tròn màu Lime chuẩn Mockup Board 02 (Màn hình 5) kèm Animation mượt mà
+              const SizedBox(height: 32),
               Center(
-                child: SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0.0, end: progressValue),
-                    duration: const Duration(milliseconds: 700),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, val, child) {
-                      final animatedPct = '${(val * 100).toInt()}%';
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox(
-                            width: 100,
-                            height: 100,
+                child: Opacity(
+                  opacity: entrance,
+                  child: Transform.scale(
+                          scale: 0.96 + entrance * 0.04,
+                          child: SizedBox(
+                            width: 160,
+                    height: 160,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/dytava/figma/progress-track.svg',
+                          width: 160,
+                          height: 160,
+                        ),
+                        Transform.rotate(
+                          angle:
+                              active && !MediaQuery.disableAnimationsOf(context)
+                              ? t * math.pi
+                              : 0,
+                          child: SizedBox(
+                            width: 150,
+                            height: 150,
                             child: CircularProgressIndicator(
-                              value: val,
-                              strokeWidth: 9,
-                              backgroundColor: DytavaColors.warmSurface,
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                DytavaColors.lime600,
+                              value: value,
+                              strokeWidth: 10,
+                              color: DytavaColors.primary,
+                              backgroundColor: Colors.transparent,
+                            ),
+                          ),
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              value == null ? '…' : '${(value * 100).round()}%',
+                              style: DytavaTypography.displayLarge.copyWith(
+                                fontSize: 38,
                               ),
                             ),
-                          ),
-                          Text(
-                            animatedPct,
-                            style: const TextStyle(
-                              fontFamily: DytavaTypography.editorialFont,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              color: DytavaColors.graphite,
+                            const SizedBox(height: 4),
+                            Text(
+                              active
+                                  ? 'IN PROGRESS'
+                                  : flow.jobState.name.toUpperCase(),
+                              style: DytavaTypography.labelSmall.copyWith(
+                                color: DytavaColors.primary,
+                                fontSize: 10,
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
-              Center(
-                child: Text(
-                  'Đang so sánh dữ liệu…',
-                  style: DytavaTypography.workspaceHeader.copyWith(
-                    fontSize: 20,
-                    letterSpacing: -0.4,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Center(
-                child: Text(
-                  'Đang ánh xạ, ghép và đối chiếu bản ghi giữa hai nguồn. Vui lòng chờ trong giây lát.',
-                  textAlign: TextAlign.center,
-                  style: DytavaTypography.bodySmall.copyWith(
-                    color: DytavaColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Checklist các bước tiến trình thời gian thực kèm hiệu ứng Staggered Fade-Slide
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: DytavaColors.warmSurface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: DytavaColors.subtleBorder),
-                ),
-                child: Column(
-                  children: [
-                    DytavaFadeSlide(
-                      delay: const Duration(milliseconds: 40),
-                      child: _buildProgressStepRow(
-                        label: 'Đọc nguồn A',
-                        statusText: '00:03',
-                        isDone: true,
-                      ),
-                    ),
-                    const Divider(height: 16, color: DytavaColors.subtleBorder),
-                    DytavaFadeSlide(
-                      delay: const Duration(milliseconds: 80),
-                      child: _buildProgressStepRow(
-                        label: 'Đọc nguồn B',
-                        statusText: '00:04',
-                        isDone: true,
-                      ),
-                    ),
-                    const Divider(height: 16, color: DytavaColors.subtleBorder),
-                    DytavaFadeSlide(
-                      delay: const Duration(milliseconds: 120),
-                      child: _buildProgressStepRow(
-                        label: 'Chuẩn hóa dữ liệu',
-                        statusText: '00:07',
-                        isDone: true,
-                      ),
-                    ),
-                    const Divider(height: 16, color: DytavaColors.subtleBorder),
-                    DytavaFadeSlide(
-                      delay: const Duration(milliseconds: 160),
-                      child: _buildProgressStepRow(
-                        label: 'Ánh xạ & ghép bản ghi',
-                        statusText:
-                            flow.jobState.active ? 'Đang xử lý…' : 'Hoàn tất',
-                        isCurrent: flow.jobState.active,
-                        isDone: !flow.jobState.active,
-                      ),
-                    ),
-                    const Divider(height: 16, color: DytavaColors.subtleBorder),
-                    DytavaFadeSlide(
-                      delay: const Duration(milliseconds: 200),
-                      child: _buildProgressStepRow(
-                        label: 'Tổng hợp kết quả',
-                        statusText:
-                            !flow.jobState.active ? 'Hoàn tất' : 'Chờ xử lý',
-                        isDone: !flow.jobState.active,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            const SizedBox(height: 16),
-
-            // Trạng thái kỹ thuật phụ trợ
+            ),
+            const SizedBox(height: 24),
+            Text(
+              flow.jobState == JobState.failed
+                  ? 'Comparison failed'
+                  : flow.jobState == JobState.cancelled
+                  ? 'Comparison cancelled'
+                  : 'Comparing your data',
+              textAlign: TextAlign.center,
+              style: DytavaTypography.displayMedium,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Matching sheets, columns, keys and values.',
+              textAlign: TextAlign.center,
+              style: DytavaTypography.bodyMedium,
+            ),
+            const SizedBox(height: 30),
             Row(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Semantics(
-                        liveRegion: true,
-                        child: Text(
-                          'Trạng thái: ${WorkflowUiHelpers.formatEnumName(flow.jobState)}',
-                          style: DytavaTypography.titleMedium.copyWith(
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        flow.phase,
-                        style: DytavaTypography.bodySmall.copyWith(
-                          color: DytavaColors.textSecondary,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
+                const Expanded(
+                  child: Text(
+                    'Checking sheets and records',
+                    style: DytavaTypography.bodySmall,
                   ),
                 ),
                 Text(
-                  '${flow.progressDone} / ${flow.progressTotal ?? 'chưa xác định'}',
-                  style: DytavaTypography.dataMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                  value == null ? 'Working…' : '${(value * 100).round()}%',
+                  style: DytavaTypography.bodySmall.copyWith(
+                    color: DytavaColors.primary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-
-            // 2 Nút hành động đáy theo Mockup Board 02
-            if (flow.jobState.active)
-              Row(
+            const SizedBox(height: 10),
+            LinearProgressIndicator(
+              value: value,
+              minHeight: 7,
+              borderRadius: BorderRadius.circular(4),
+              color: DytavaColors.primary,
+              backgroundColor: DytavaColors.primaryLight,
+            ),
+            const SizedBox(height: 26),
+            _reveal(
+              t,
+              0.02,
+              0.09,
+              WorkflowSectionCard(
                 children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: onBackToPolicyOrSources,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: DytavaColors.limePrimary,
-                        foregroundColor: DytavaColors.graphite,
-                        elevation: 0,
-                        shape: const StadiumBorder(),
-                        minimumSize: const Size(48, 48),
-                        textStyle: const TextStyle(
-                          fontFamily: DytavaTypography.editorialFont,
-                          fontWeight: FontWeight.w800,
+                  for (final side in SourceSide.values) ...[
+                    if (side == SourceSide.b)
+                      const Divider(indent: 42, height: 18),
+                    Row(
+                      children: [
+                        Container(
+                          width: 30,
+                          height: 30,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: DytavaColors.primaryLight,
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: Text(
+                            side.name.toUpperCase(),
+                            style: const TextStyle(
+                              color: DytavaColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
-                      icon: const Icon(
-                        Icons.play_circle_outline_rounded,
-                        size: 18,
-                      ),
-                      label: const Text('Chạy nền'),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            flow.slot(side).artifact?.label ??
+                                'File ${side.name.toUpperCase()}',
+                            style: DytavaTypography.bodyMedium.copyWith(
+                              color: DytavaColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            _reveal(
+              t,
+              0.035,
+              0.105,
+              Column(
+                children: [
+                  _stage(
+                    1,
+                    'Read and validate files',
+                    'Source workbooks recognized',
+                    !validating,
+                    validating,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: flow.jobState == JobState.cancelling
-                          ? null
-                          : flow.cancelComparison,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: DytavaColors.graphite,
-                        side: const BorderSide(
-                          color: DytavaColors.subtleBorder,
-                        ),
-                        shape: const StadiumBorder(),
-                        minimumSize: const Size(48, 48),
-                        textStyle: const TextStyle(
-                          fontFamily: DytavaTypography.editorialFont,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      label: const Text('Hủy so sánh'),
-                    ),
+                  _stage(
+                    2,
+                    'Match and compare records',
+                    'Checking structure and cell values',
+                    flow.jobState == JobState.completed,
+                    !validating && active,
+                  ),
+                  _stage(
+                    3,
+                    'Prepare results',
+                    flow.jobState == JobState.completed ? 'Ready' : 'Up next',
+                    flow.jobState == JobState.completed,
+                    false,
                   ),
                 ],
               ),
-            if (!flow.jobState.active)
-              WorkflowSecondaryButton(
-                label: flow.inputsReady ? 'Trở lại cấu hình' : 'Về nguồn A/B',
-                iconAsset: DytavaIcons.back,
-                onPressed: onBackToPolicyOrSources,
+            ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+                bottomBar: StickyBottomBar(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (active)
+                        OutlinedButton(
+                          onPressed: flow.jobState == JobState.cancelling
+                              ? null
+                              : flow.cancelComparison,
+                          child: Text(
+                            flow.jobState == JobState.cancelling
+                                ? 'Cancelling…'
+                                : 'Cancel comparison',
+                          ),
+                        )
+                      else
+                        WorkflowPrimaryButton(
+                          label: 'Back to setup',
+                          onPressed: widget.onBackToPolicyOrSources,
+                        ),
+                      if (flow.jobState == JobState.failed ||
+                          flow.jobState == JobState.cancelled)
+                        TextButton(
+                          onPressed: flow.startBlockers.isEmpty
+                              ? flow.runComparison
+                              : null,
+                          child: const Text('Try again'),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+      },
+    );
+  }
+
+  Widget _reveal(double t, double start, double end, Widget child) {
+    final v = Curves.easeOut.transform(
+      ((t - start) / (end - start)).clamp(0.0, 1.0),
+    );
+    return Opacity(
+      opacity: v,
+      child: Transform.translate(offset: Offset(0, 8 * (1 - v)), child: child),
+    );
+  }
+
+  Widget _stage(
+    int number,
+    String title,
+    String subtitle,
+    bool done,
+    bool current,
+  ) => Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (done)
+          SvgPicture.asset(
+            'assets/dytava/figma/progress-read.svg',
+            width: 24,
+            height: 24,
+          )
+        else if (number == 3)
+          SvgPicture.asset(
+            'assets/dytava/figma/progress-report.svg',
+            width: 24,
+            height: 24,
+          )
+        else
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: current ? DytavaColors.primary : DytavaColors.primaryLight,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '$number',
+              style: TextStyle(
+                color: current ? Colors.white : DytavaColors.textPrimary,
+                fontSize: 12,
               ),
-            if (flow.jobState == JobState.failed ||
-                flow.jobState == JobState.cancelled) ...[
-              const SizedBox(height: 8),
-              WorkflowPrimaryButton(
-                label: 'Thử lại so sánh',
-                iconAsset: DytavaIcons.refresh,
-                onPressed: flow.startBlockers.isEmpty
-                    ? flow.runComparison
-                    : null,
+            ),
+          ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: DytavaTypography.bodyMedium.copyWith(
+                  color: current || done
+                      ? DytavaColors.textPrimary
+                      : DytavaColors.textSecondary,
+                  fontWeight: current ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: DytavaTypography.bodySmall.copyWith(fontSize: 11),
               ),
             ],
-          ],
+          ),
         ),
       ],
     ),
   );
-}
-
-  Widget _buildProgressStepRow({
-    required String label,
-    required String statusText,
-    bool isDone = false,
-    bool isCurrent = false,
-  }) {
-    return Row(
-      children: [
-        if (isDone)
-          const Icon(
-            Icons.check_circle_rounded,
-            color: Color(0xFF10B981),
-            size: 18,
-          )
-        else if (isCurrent)
-          const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.2,
-              valueColor: AlwaysStoppedAnimation<Color>(DytavaColors.lime600),
-            ),
-          )
-        else
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: DytavaColors.precisionNeutral,
-                width: 1.5,
-              ),
-            ),
-          ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-              color: isCurrent
-                  ? DytavaColors.graphite
-                  : DytavaColors.textSecondary,
-            ),
-          ),
-        ),
-        Text(
-          statusText,
-          style: TextStyle(
-            fontSize: 11,
-            color: isDone
-                ? DytavaColors.textSecondary
-                : (isCurrent
-                      ? DytavaColors.lime600
-                      : DytavaColors.precisionNeutral),
-            fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
-          ),
-        ),
-      ],
-    );
-  }
 }

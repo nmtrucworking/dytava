@@ -1,4 +1,5 @@
 import Papa from 'papaparse';
+import { inspectCellContent } from './xlsx-cell-content.js';
 import { unzipSync, zipSync, strFromU8, strToU8 } from 'fflate';
 
 export const MAX_FILE_BYTES = 500 * 1024 * 1024;
@@ -94,6 +95,7 @@ export async function parseFile(file, sheetName) {
   if (format !== 'xlsx') return { name: file.name, format, ...parseText(await file.text(), format) };
   const buffer = await file.arrayBuffer();
   inspectZip(buffer);
+  const content = await inspectCellContent(unzipSync(new Uint8Array(buffer)));
   const { default: ExcelJS } = await import('exceljs');
   let workbook = new ExcelJS.Workbook();
   try {
@@ -107,15 +109,28 @@ export async function parseFile(file, sheetName) {
       throw new Error('Tệp Excel không đúng chuẩn OpenXML hoặc cấu trúc sheet không hợp lệ. Vui lòng mở và lưu lại tệp (Save As) dạng .xlsx hoặc .csv trong Excel / Google Sheets rồi thử lại.');
     }
   }
-  const sheets = workbook.worksheets.filter(s => s && (s.state === 'visible' || !s.state || s.state === 'normal') && ((s.actualRowCount ?? 0) > 0 || (s.rowCount ?? 0) > 0));
-  const fallbackSheets = sheets.length ? sheets : workbook.worksheets.filter(s => s && ((s.actualRowCount ?? 0) > 0 || (s.rowCount ?? 0) > 0));
-  const candidateSheets = fallbackSheets.length ? fallbackSheets : workbook.worksheets.filter(s => s);
-  const sheet = sheetName ? candidateSheets.find(s => s.name === sheetName) : candidateSheets[0];
-  if (!sheet) throw new Error('Workbook không có sheet dữ liệu hiển thị.');
+  const candidates = workbook.worksheets.filter(Boolean);
+  if (!candidates.length) throw new Error('Workbook không có worksheet dữ liệu.');
+  const tables = candidates.map(sheet => readWorksheet(sheet, content.get(sheet.name)));
+  if (tables.reduce((n, t) => n + t.rows.length, 0) > MAX_ROWS || tables.reduce((n, t) => n + t.rows.length * t.headers.length, 0) > MAX_CELLS) throw new Error('Toàn workbook vượt giới hạn dòng hoặc số ô.');
+  const sheet = sheetName ? tables.find(s => s.sheetName === sheetName) : tables[0];
+  if (!sheet) throw new Error('Không tìm thấy sheet đã chọn.');
+  const warnings = [...new Set(tables.flatMap(t => t.warnings))];
+  return { name: file.name, format, ...sheet, sheets: tables.map(t => t.sheetName), tables, warnings };
+}
+
+function readWorksheet(sheet, content = { cells: new Map(), warnings: [] }) {
+  for (const [address, special] of content.cells) {
+    if (!/^[A-Z]{1,3}[1-9]\d*$/.test(address || '')) throw new Error('Địa chỉ ô ảnh không hợp lệ.');
+    sheet.getCell(address).value = special.label;
+  }
   const colCount = Math.max(sheet.columnCount || 0, sheet.actualColumnCount || 0, 1);
   const rowCount = Math.max(sheet.rowCount || 0, sheet.actualRowCount || 0);
   if (rowCount > MAX_ROWS + 1 || colCount > MAX_COLUMNS || rowCount * colCount > MAX_CELLS + MAX_COLUMNS) throw new Error('Sheet vượt giới hạn 1.500.000 dòng, 500 cột hoặc 25.000.000 ô.');
   const getText = cell => {
+    if (cell.isMerged && cell.master.address !== cell.address) return '';
+    const special = content.cells.get(cell.address);
+    if (special) return special.label;
     if (cell.value instanceof Date) return cell.value.toISOString().slice(0, 10);
     if (cell.value && typeof cell.value === 'object') {
       if ('formula' in cell.value || 'sharedFormula' in cell.value) return cell.result === undefined ? `=${cell.formula}` : String(cell.result instanceof Date ? cell.result.toISOString() : cell.result);
@@ -151,7 +166,7 @@ export async function parseFile(file, sheetName) {
     const hasDateOrPureNumber = rawCells.filter(v => /^\d{4}-\d{2}-\d{2}/.test(v) || /^-?\d+(\.\d+)?$/.test(v)).length;
     const looksLikeData = hasDateOrPureNumber >= Math.ceil(rawCells.length / 2);
 
-    if (hasNoBlanks && isUnique && !looksLikeData) {
+    if (hasNoBlanks && isUnique && !looksLikeData && !rawCells.some((_, c) => content.cells.has(row.getCell(c + 1).address))) {
       const nextRow = sheet.getRow(r + 1);
       if (nextRow && nextRow.actualCellCount > 0) {
         headerRow = r;
@@ -167,27 +182,39 @@ export async function parseFile(file, sheetName) {
     headers = Array.from({ length: firstRowColCount }, (_, i) => getText(row1.getCell(i + 1)).trim());
     while (headers.length && !headers.at(-1)) headers.pop();
   }
+  if ([...content.cells.keys()].some(address => /^[A-Z]+1$/.test(address))) {
+    headerRow = 0; headers = Array.from({ length: colCount }, () => '');
+  }
+  // Preserve data-only/image columns beyond the header labels.
+  let dataWidth = headers.length;
+  sheet.eachRow((row, number) => { if (number > headerRow) row.eachCell((cell, col) => { if (getText(cell) !== '') dataWidth = Math.max(dataWidth, col); }); });
+  while (headers.length < dataWidth) headers.push('');
 
   // Ensure header names are valid, non-empty, and unique so validateTable succeeds
-  const seenHeaders = new Map();
+  const seenHeaders = new Set();
   headers = headers.map((h, i) => {
-    let name = h || `Cột ${i + 1}`;
-    if (seenHeaders.has(name)) {
-      const count = seenHeaders.get(name) + 1;
-      seenHeaders.set(name, count);
-      return `${name} (${count})`;
-    }
-    seenHeaders.set(name, 1);
-    return name;
+    const base = h || `Cột ${i + 1}`;
+    let name = base, n = 1;
+    while (seenHeaders.has(name)) name = `${base} (${++n})`;
+    seenHeaders.add(name); return name;
   });
 
-  const rows = [];
+  const rows = [], specialCells = Object.create(null), sourceRows = [];
   sheet.eachRow((row, number) => {
     if (number > headerRow) {
       const rData = Array.from({ length: headers.length }, (_, i) => getText(row.getCell(i + 1)));
-      if (rData.some(c => c !== '')) rows.push(rData);
+      if (rData.some(c => c !== '')) {
+        for (let c = 0; c < headers.length; c++) {
+          const special = content.cells.get(row.getCell(c + 1).address);
+          if (special) specialCells[`${rows.length},${c}`] = special;
+        }
+        sourceRows.push(number); rows.push(rData);
+      }
     }
   });
-  const visibleSheets = candidateSheets.length ? candidateSheets : [sheet];
-  return { name: file.name, format, sheetName: sheet.name, sheets: visibleSheets.map(s => s.name), ...validateTable(headers, rows) };
+  const warnings = [...content.warnings];
+  if (sheet.state === 'hidden' || sheet.state === 'veryHidden') warnings.push(`${sheet.name}: sheet ẩn được đưa vào phạm vi toàn workbook.`);
+  if (Object.values(specialCells).some(c => c.kind === 'unsupported')) warnings.push(`${sheet.name}: có nội dung ô chưa đọc được; kết quả được giữ ở trạng thái chưa kết luận.`);
+  const table = !headers.length && !rows.length ? { headers: [], rows: [] } : validateTable(headers, rows);
+  return { sheetName: sheet.name, state: sheet.state || 'visible', headerRow, sourceRows, specialCells, warnings, ...table };
 }

@@ -54,3 +54,17 @@ Tài nguyên thương hiệu chuẩn được lưu trong thư mục `../branding
 ## Scope thiết kế mở rộng
 
 [Quyết định 12/11/2026](../docs-dytava/decisions/ADR_SCOPE_EXPANSION_2026-11-12.md) yêu cầu **1 GB/source**, **PDF diff hợp nhất A/B** và **PDF template Dytava**; [Report spec](../docs-dytava/specs/report/README.md) định nghĩa hai đầu ra. Đây là yêu cầu phải triển khai/kiểm thử, chưa là khả năng hiện tại. Mobile đã nhập tệp thật và tạo/lưu CSV/JSON; chưa có pipeline 1 GB hoặc PDF.
+
+## So sánh workbook — 20/11/2026
+
+Đối chiếu tất cả worksheet, gồm sheet ẩn/rỗng; tự ghép tên có nghĩa rồi cấu trúc, chỉ yêu cầu chọn cặp chưa rõ. Tên mặc định Sheet1/Sheet2 không làm căn cứ identity. Kết quả có Tất cả/từng cặp; đổi phạm vi xem không chạy lại. Ảnh Place in Cell được so bytes qua metadata/richData/relationships; nội dung chưa resolve giữ UNRESOLVED. Chưa so pixel/OCR/thumbnail ảnh, ảnh nổi chỉ có cảnh báo. Chi tiết tại [đặc tả workbook](../docs-dytava/specs/engine/05_workbook_mapping_and_cell_content.md).
+
+## Giao diện Dytava từ Figma — 22/11/2026
+
+Mobile dùng [thiết kế Dytava](https://www.figma.com/design/rFnyuWVIqLEw3YQUAuElNk/Dytava?node-id=1-23): nền `#F5F8F6`, xanh `#107C41` / `#185C37`, font Inter được đóng gói cục bộ. Logo, minh họa và icon tham chiếu được lưu tại `assets/dytava/figma/`; giấy phép Inter tại `assets/fonts/Inter-OFL.txt`.
+
+Các màn hình được thay: launch (`19:1003`), Home (`1:23`), nhập tệp (`1:90`), preview (`47:30`), cấu hình nâng cao (`47:38`, `47:50`), tiến trình (`1:114`), kết quả (`1:37`), chi tiết (`1:66`), xuất báo cáo (`19:940`), lịch sử (`19:907`), cài đặt (`47:70`) và review OCR mẫu (`47:78`). Navigation bar, Comparison Rail và dashboard kết quả cũ không còn trong luồng ứng dụng.
+
+Quick Compare tự phân tích hai nguồn, chạy khi đề xuất có độ tin cậy cao và chuyển sang review khi chưa chắc chắn. Advanced giữ khả năng chọn sheet/cột, ghép hàng theo vị trí/khóa/chuỗi, loại tác vụ và quy tắc từng cột. Kết quả mặc định là danh sách thay đổi, có thể chuyển sang bảng A/B, lọc toàn workbook/từng sheet và xem cả các ô tương đương hoặc giống nhau.
+
+Nội dung dùng dữ liệu và khả năng thật của mobile: lịch sử chỉ có phiên trong bộ nhớ, xuất CSV/JSON, OCR vẫn là dữ liệu mẫu. Không hiển thị lịch sử, PDF/XLSX export hoặc lưu mặc định lâu dài như tính năng đã triển khai chỉ vì prototype có minh họa. Layout co giãn ở 320–600dp và hỗ trợ chữ 200%; animation launch/progress tôn trọng cài đặt giảm chuyển động.

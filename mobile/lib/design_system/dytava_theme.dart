@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'dytava_colors.dart';
 import 'dytava_typography.dart';
 
-/// Cấu hình ThemeData chuẩn Flutter Material 3 cho DYTAVA — Precision Workspace
+/// Cấu hình ThemeData chuẩn Flutter Material 3 cho DYTAVA (Figma 2026 Baseline)
 class DytavaTheme {
   DytavaTheme._();
 
@@ -11,48 +11,63 @@ class DytavaTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      primaryColor: DytavaColors.limePrimary,
-      scaffoldBackgroundColor: DytavaColors.offWhite,
+      primaryColor: DytavaColors.primary,
+      scaffoldBackgroundColor: DytavaColors.background,
       fontFamily: DytavaTypography.primaryFont,
       fontFamilyFallback: const [DytavaTypography.fallbackFont],
       textTheme: DytavaTypography.textTheme,
       colorScheme: const ColorScheme.light(
-        primary: DytavaColors.limePrimary,
-        secondary: DytavaColors.graphite,
-        tertiary: DytavaColors.lime600,
-        surface: DytavaColors.white,
-        error: DytavaColors.differenceCoral,
-        onPrimary: DytavaColors.graphite,
-        onSecondary: DytavaColors.white,
-        onSurface: DytavaColors.graphite,
-        onError: DytavaColors.white,
+        primary: DytavaColors.primary,
+        secondary: DytavaColors.primaryDark,
+        tertiary: DytavaColors.primaryLight,
+        surface: DytavaColors.surface,
+        error: DytavaColors.removed,
+        onPrimary: DytavaColors.onPrimary,
+        onSecondary: DytavaColors.onPrimaryDark,
+        onSurface: DytavaColors.textPrimary,
+        onError: Colors.white,
+      ),
+      dividerColor: DytavaColors.border,
+      dividerTheme: const DividerThemeData(
+        color: DytavaColors.border,
+        thickness: 1,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: DytavaColors.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        showDragHandle: true,
       ),
       cardTheme: CardThemeData(
-        color: DytavaColors.white,
+        color: DytavaColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: DytavaColors.subtleBorder, width: 1),
         ),
         margin: EdgeInsets.zero,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: DytavaColors.offWhite,
+        backgroundColor: DytavaColors.background,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: DytavaColors.graphite,
+        foregroundColor: DytavaColors.textPrimary,
         centerTitle: false,
         elevation: 0,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: DytavaColors.limePrimary,
-          foregroundColor: DytavaColors.graphite,
+          backgroundColor: DytavaColors.primary,
+          foregroundColor: Colors.white,
           minimumSize: const Size(48, 52),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: const StadiumBorder(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           textStyle: const TextStyle(
-            fontFamily: DytavaTypography.editorialFont,
-            fontWeight: FontWeight.w800,
+            fontFamily: DytavaTypography.primaryFont,
+            fontWeight: FontWeight.w600,
             fontSize: 15,
             letterSpacing: -0.2,
           ),
@@ -60,14 +75,16 @@ class DytavaTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: DytavaColors.limePrimary,
-          foregroundColor: DytavaColors.graphite,
+          backgroundColor: DytavaColors.primary,
+          foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: const StadiumBorder(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           textStyle: const TextStyle(
-            fontFamily: DytavaTypography.editorialFont,
-            fontWeight: FontWeight.w800,
+            fontFamily: DytavaTypography.primaryFont,
+            fontWeight: FontWeight.w600,
             fontSize: 15,
             letterSpacing: -0.2,
           ),
@@ -75,38 +92,42 @@ class DytavaTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: DytavaColors.graphite,
-          backgroundColor: DytavaColors.warmSurface,
+          foregroundColor: DytavaColors.textPrimary,
+          backgroundColor: DytavaColors.surface,
           side: const BorderSide(color: DytavaColors.subtleBorder, width: 1),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          shape: const StadiumBorder(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           textStyle: const TextStyle(
-            fontFamily: DytavaTypography.editorialFont,
-            fontWeight: FontWeight.w700,
+            fontFamily: DytavaTypography.primaryFont,
+            fontWeight: FontWeight.w600,
             fontSize: 14,
           ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: DytavaColors.graphite,
+          foregroundColor: DytavaColors.primary,
           textStyle: const TextStyle(
-            fontFamily: DytavaTypography.editorialFont,
-            fontWeight: FontWeight.w700,
+            fontFamily: DytavaTypography.primaryFont,
+            fontWeight: FontWeight.w600,
             fontSize: 14,
           ),
         ),
       ),
       chipTheme: const ChipThemeData(
         backgroundColor: DytavaColors.white,
-        selectedColor: DytavaColors.limePrimary,
+        selectedColor: DytavaColors.primaryLight,
         labelStyle: TextStyle(
-          color: DytavaColors.graphite,
+          color: DytavaColors.textPrimary,
+          fontFamily: DytavaTypography.primaryFont,
           fontWeight: FontWeight.w600,
           fontSize: 12,
         ),
         secondaryLabelStyle: TextStyle(
-          color: DytavaColors.graphite,
+          color: DytavaColors.primary,
+          fontFamily: DytavaTypography.primaryFont,
           fontWeight: FontWeight.bold,
           fontSize: 12,
         ),
@@ -122,43 +143,52 @@ class DytavaTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: DytavaColors.subtleBorder, width: 1),
+          borderSide: const BorderSide(
+            color: DytavaColors.subtleBorder,
+            width: 1,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: DytavaColors.subtleBorder, width: 1),
+          borderSide: const BorderSide(
+            color: DytavaColors.subtleBorder,
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: DytavaColors.lime600, width: 2),
+          borderSide: const BorderSide(color: DytavaColors.primary, width: 2),
         ),
-        hintStyle: const TextStyle(color: DytavaColors.textMuted, fontSize: 14),
+        hintStyle: const TextStyle(
+          color: DytavaColors.textSecondary,
+          fontSize: 14,
+        ),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return DytavaColors.graphite;
+            return Colors.white;
           }
-          return DytavaColors.precisionNeutral;
+          return DytavaColors.textSecondary;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return DytavaColors.limePrimary;
+            return DytavaColors.primary;
           }
-          return DytavaColors.warmSurface;
+          return DytavaColors.sameBg;
         }),
         trackOutlineColor: WidgetStateProperty.all(DytavaColors.subtleBorder),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: DytavaColors.offWhite,
-        indicatorColor: DytavaColors.limePrimary,
+        backgroundColor: DytavaColors.surface,
+        indicatorColor: DytavaColors.primaryLight,
         elevation: 0,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: DytavaColors.graphite,
+              fontWeight: FontWeight.w700,
+              color: DytavaColors.primary,
             );
           }
           return const TextStyle(
@@ -167,7 +197,18 @@ class DytavaTheme {
             color: DytavaColors.textSecondary,
           );
         }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: DytavaColors.primary, size: 22);
+          }
+          return const IconThemeData(
+            color: DytavaColors.textSecondary,
+            size: 22,
+          );
+        }),
       ),
     );
   }
+
+  static ThemeData get darkTheme => lightTheme;
 }

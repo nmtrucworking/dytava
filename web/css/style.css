@@ -1320,7 +1320,13 @@ button:disabled, input:disabled, select:disabled { opacity: .5; cursor: not-allo
 .privacy-note { color: var(--muted); font-size: .85rem; line-height: 1.65; }
 .compare-note { padding: .5rem 1.25rem; }
 .policy-select { display: flex; align-items: center; gap: .8rem; padding: .75rem 1.25rem; border-block: 1px solid var(--outline-light); }
-.sheet-selectors { display: flex; justify-content: space-around; gap: 1rem; padding: .3rem 1rem; }
+.sheet-selectors { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 1rem; padding: .3rem 1rem; }
+.sheet-selectors label { flex: 1 1 240px; min-width: 0; max-width: 100%; }
+.sheet-selectors select { width: 100%; min-width: 0; max-width: 100%; }
+#workbook-coverage { flex: 1 1 240px; min-width: 0; }
+#sheet-mapping-review label { display: block; margin: .5rem 0; }
+#sheet-mapping-review select { width: 100%; max-width: 100%; }
+#sheet-mapping-review button { margin: .25rem; white-space: normal; }
 .sheet-selectors label:has(select[hidden]) { display: none; }
 .empty-state { padding: 2rem; color: var(--muted); text-align: center; }
 .empty-state h1, .empty-state h3 { color: var(--text); }

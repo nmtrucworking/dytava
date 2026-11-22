@@ -162,61 +162,19 @@ void main() {
     });
   });
 
-  group('Streamlined 3-Screen Mobile Flow widget tests', () {
-    testWidgets(
-      'User can run full comparison in 3 simple screens with minimal clicks',
-      (tester) async {
-        tester.view.physicalSize = const Size(390, 844);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-
-        await tester.pumpWidget(
-          ExcelCompareApp(controller: createDemoWorkflow()),
-        );
-
-        // Screen 0 -> Home: Tap "Bắt đầu so sánh"
-        await tap(tester, 'Bắt đầu so sánh');
-
-        // Screen 1: Data Selection (Chọn dữ liệu)
-        expect(find.text('So sánh dữ liệu'), findsOneWidget);
-        expect(
-          find.text('Chọn hai bảng tính để tìm các giá trị thay đổi.'),
-          findsOneWidget,
-        );
-        expect(find.text('So sánh hai tệp'), findsOneWidget);
-        expect(find.text('So sánh hai cột'), findsOneWidget);
-        expect(find.text('Đối soát theo ID'), findsOneWidget);
-
-        // Switch to "Đối soát theo ID"
-        await tap(tester, 'Đối soát theo ID');
-
-        // 1-Tap Prepare Both Sources
-        await tap(tester, 'Tự động chuẩn bị nhanh cả 2 nguồn (1 chạm)');
-
-        // Both sources ready -> "Kiểm tra đề xuất" button is available
-        await tap(tester, 'Kiểm tra đề xuất');
-
-        // Screen 2: Proposal Review (Kiểm tra đề xuất)
-        expect(find.text('Kiểm tra đề xuất đối chiếu'), findsOneWidget);
-        expect(
-          find.textContaining('Dytava tự động phân tích cấu trúc'),
-          findsOneWidget,
-        );
-        expect(find.text('Tiến hành so sánh'), findsOneWidget);
-
-        // 1 Tap on "Tiến hành so sánh" -> executes and leads straight to Screen 3!
-        await tap(tester, 'Tiến hành so sánh');
-
-        // Screen 3: Results (Kết quả)
-        expect(find.text('COMPLETED · Kết quả so sánh'), findsOneWidget);
-        expect(
-          find.text('Kết quả đối soát theo ID (Reconcile by ID)'),
-          findsOneWidget,
-        );
-        expect(find.text('Bắt đầu phiên so sánh mới'), findsOneWidget);
-        expect(find.text('Xuất / xem trước báo cáo'), findsOneWidget);
-      },
-    );
+  testWidgets('Quick Compare analyzes both files before running', (tester) async {
+    final flow = createDemoWorkflow();
+    addTearDown(flow.dispose);
+    await tester.pumpWidget(ExcelCompareApp(controller: flow));
+    await tester.tap(find.byTooltip('Compare files'));
+    await tester.pumpAndSettle();
+    await tap(tester, 'Use sample files ›');
+    expect(flow.inputsReady, isTrue);
+    expect(flow.result, isNull);
+    await tap(tester, 'Compare files');
+    expect(flow.proposal, isNotNull);
+    expect(flow.resultCurrent, isTrue);
+    expect(find.text('RESULTS READY'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

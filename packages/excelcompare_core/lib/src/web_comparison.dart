@@ -43,6 +43,8 @@ final class WebCellEngine {
 
   ComparisonDecision compare(SourceCell a, SourceCell b,
       {String? explicitType, double tolerance = 0}) {
+    final content = compareCellContent(a, b);
+    if (content != null) return content;
     final x = a.rawLexeme ?? '', y = b.rawLexeme ?? '';
     ComparisonDecision result(DecisionStatus status, String rule, String reason,
             [String? na, String? nb]) =>

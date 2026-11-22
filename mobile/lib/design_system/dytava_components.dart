@@ -231,8 +231,8 @@ class DytavaSessionResumeCard extends StatelessWidget {
                   child: FilledButton(
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(48, 48),
-                      backgroundColor: DytavaColors.limePrimary,
-                      foregroundColor: DytavaColors.graphite,
+                      backgroundColor: DytavaColors.primary,
+                      foregroundColor: Colors.white,
                       elevation: 0,
                       shape: const StadiumBorder(),
                     ),
@@ -360,14 +360,14 @@ class DytavaStickyActionBar extends StatelessWidget {
                     flex: 3,
                     child: FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: DytavaColors.limePrimary,
-                        foregroundColor: DytavaColors.graphite,
+                        backgroundColor: DytavaColors.primary,
+                        foregroundColor: Colors.white,
                         elevation: 0,
-                        minimumSize: const Size(48, 48),
+                        minimumSize: const Size(48, 50),
                         shape: const StadiumBorder(),
                         textStyle: const TextStyle(
-                          fontFamily: DytavaTypography.editorialFont,
-                          fontWeight: FontWeight.w800,
+                          fontFamily: DytavaTypography.primaryFont,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       onPressed: onPrimaryPressed,
@@ -385,7 +385,10 @@ class DytavaStickyActionBar extends StatelessWidget {
                               textAlign: TextAlign.center,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: DytavaTypography.labelLarge,
+                              style: DytavaTypography.labelLarge.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],

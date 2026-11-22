@@ -266,30 +266,34 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
           'Hai nguồn A | B · ${result.durationMs} ms xử lý · ${result.alignedRows.length} hàng sau căn chỉnh',
           style: DytavaTypography.bodySmall,
         ),
-        Wrap(
-          spacing: 6,
-          children: [
-            for (final value in [
-              'ALL',
-              'DIFFERENT',
-              'UNRESOLVED',
-              'EQUIVALENT',
-              'EXACT',
-              'ADDED',
-              'REMOVED',
-            ])
-              ChoiceChip(
-                label: Text(
-                  '${value == 'ALL' ? 'Tất cả' : value} (${value == 'ALL' ? result.alignedRows.length : counts[value] ?? 0})',
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final value in [
+                'ALL',
+                'DIFFERENT',
+                'UNRESOLVED',
+                'EQUIVALENT',
+                'EXACT',
+                'ADDED',
+                'REMOVED',
+              ])
+                ChoiceChip(
+                  label: Text(
+                    '${value == 'ALL' ? 'Tất cả' : value} (${value == 'ALL' ? result.alignedRows.length : counts[value] ?? 0})',
+                  ),
+                  selected: filter == value,
+                  onSelected: (_) => setState(() {
+                    filter = value;
+                    page = 0;
+                    _filter();
+                  }),
                 ),
-                selected: filter == value,
-                onSelected: (_) => setState(() {
-                  filter = value;
-                  page = 0;
-                  _filter();
-                }),
-              ),
-          ],
+            ],
+          ),
         ),
         if (visible.isEmpty)
           const Padding(

@@ -3,19 +3,14 @@ import 'package:flutter/material.dart';
 
 import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
-import '../../../domain/smart_proposal_engine.dart';
 import '../../../domain/workflow.dart';
+import '../widgets/sheet_mapping_review.dart';
 import '../widgets/workflow_common_widgets.dart';
 
-/// Màn hình Ánh xạ cột (`SCR-05`):
-/// - Sử dụng `BrandIllustration.onboarding(DytavaIllustrations.onboardingMapping)` ở đầu trang.
-/// - Hiển thị `BrandIllustration.emptyMapping()` khi chưa có cột nào được ghép.
-/// - Sử dụng `BrandIcon(DytavaIcons.mapping)` và `BrandIcon(DytavaIcons.link)` cho từng cặp cột 1:1.
 class MappingScreenView extends StatelessWidget {
   final WorkflowController flow;
   final VoidCallback onAutoMap;
   final VoidCallback onContinuePolicy;
-
   const MappingScreenView({
     super.key,
     required this.flow,
@@ -29,878 +24,497 @@ class MappingScreenView extends StatelessWidget {
     final b = flow.slot(SourceSide.b).snapshot!;
     final config = flow.config;
     final chosen = {for (final m in config.mappings) m.fieldA: m.fieldB};
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        WorkflowSectionCard(
-          padding: const EdgeInsets.all(14),
-          color: DytavaColors.softBlue,
-          border: Border.all(
-            color: DytavaColors.primary.withValues(alpha: 0.3),
+    return WorkflowScreenLayout(
+      contentPadding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 4),
+          const Text('Match your columns', style: DytavaTypography.titleLarge),
+          const SizedBox(height: 2),
+          Text(
+            '${a.sheetName ?? 'Original'} → ${b.sheetName ?? 'Updated'}',
+            style: DytavaTypography.titleSmall.copyWith(
+              color: DytavaColors.primary,
+            ),
           ),
-          children: [
-            Row(
+          const SizedBox(height: 8),
+          SheetMappingReview(flow: flow),
+          for (final field in a.fields)
+            WorkflowSectionCard(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              margin: const EdgeInsets.only(bottom: 6),
               children: [
-                BrandIllustration.onboarding(
-                  DytavaIllustrations.onboardingMapping,
-                  maxHeight: 54,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Ghép cột 1:1 bằng Field ID giữa Sheet A và Sheet B. Cột không ghép được ghi nhận như thay đổi cấu trúc.',
-                    style: DytavaTypography.bodyMedium.copyWith(
-                      color: DytavaColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: OutlinedButton.icon(
-            icon: const BrandIcon(DytavaIcons.mapping, size: 18),
-            label: const Text(
-              'Tự động ghép cột cùng tên',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: DytavaColors.primary,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              backgroundColor: DytavaColors.softBlue,
-              side: const BorderSide(color: DytavaColors.primary),
-              minimumSize: const Size(48, 48),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: onAutoMap,
-          ),
-        ),
-        WorkflowSectionCard(
-          children: [
-            Row(
-              children: [
-                const BrandIcon(DytavaIcons.columns, size: 22),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Ánh xạ các cột (Sheet A → Sheet B)',
-                    style: DytavaTypography.titleLarge.copyWith(
-                      color: DytavaColors.textPrimary,
-                    ),
-                  ),
-                ),
-                WorkflowStatusPill(
-                  label: '${config.mappings.length}/${a.fields.length} cột',
-                  color: config.mappings.isNotEmpty
-                      ? DytavaColors.exact
-                      : DytavaColors.textSecondary,
-                  bg: config.mappings.isNotEmpty
-                      ? DytavaColors.softGreen
-                      : DytavaColors.background,
-                  iconAsset: config.mappings.isNotEmpty
-                      ? DytavaIcons.check
-                      : DytavaIcons.empty,
-                ),
-              ],
-            ),
-            if (config.mappings.isEmpty) ...[
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: DytavaColors.background,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: DytavaColors.border),
-                ),
-                child: Row(
+                Row(
                   children: [
-                    BrandIllustration.emptyMapping(size: 56),
-                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Chưa có cặp cột nào được ghép. Hãy chọn cột tương ứng ở Sheet B hoặc bấm Tự động ghép cột cùng tên.',
-                        style: DytavaTypography.bodySmall.copyWith(
-                          color: DytavaColors.textPrimary,
-                        ),
+                        field.label,
+                        style: DytavaTypography.titleSmall,
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            for (final f in a.fields)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: DropdownButtonFormField<String>(
-                  key: ValueKey('mapping-${f.id}-${chosen[f.id]}'),
-                  initialValue: chosen[f.id] ?? '',
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: 'A: ${f.label} (${f.id}) → B',
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: BrandIcon(DytavaIcons.link, size: 18),
+                    const Icon(
+                      Icons.arrow_forward,
+                      size: 16,
+                      color: DytavaColors.textSecondary,
                     ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                                key: ValueKey(
+                                  'mapping-${field.id}-${chosen[field.id]}',
+                                ),
+                                isExpanded: true,
+                                value: chosen[field.id] ?? '',
+                                style: DytavaTypography.titleSmall.copyWith(
+                                  color: DytavaColors.primary,
+                                ),
+                                items: [
+                                  const DropdownMenuItem(
+                                    value: '',
+                                    child: Text('Unpaired'),
+                                  ),
+                                  for (final target in b.fields)
+                                    DropdownMenuItem(
+                                      value: target.id,
+                                      enabled: !chosen.entries.any(
+                                        (m) =>
+                                            m.key != field.id && m.value == target.id,
+                                      ),
+                                      child: Text(
+                                        target.label,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                ],
+                                onChanged: flow.busy
+                                    ? null
+                                    : (value) {
+                                        final mappings = config.mappings
+                                            .where((m) => m.fieldA != field.id)
+                                            .toList();
+                                        if (value != null && value.isNotEmpty) {
+                                          mappings.add(FieldMapping(field.id, value));
+                                        }
+                                        final rules = Map<String, FieldRule>.of(
+                                          config.rules,
+                                        );
+                                        rules.putIfAbsent(
+                                          field.id,
+                                          () => FieldRule(
+                                            type: field.id == 'id'
+                                                ? SemanticType.identifier
+                                                : SemanticType.freeText,
+                                          ),
+                                        );
+                                        flow.configure(
+                                          config.copyWith(
+                                            mappings: mappings,
+                                            rules: rules,
+                                            mappingConfirmed: false,
+                                            policyConfirmed: false,
+                                            modeConfirmed: false,
+                                            keys: [],
+                                          ),
+                                        );
+                                      },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        chosen[field.id] == field.id
+                            ? 'Exact name'
+                            : 'Confirm the corresponding column',
+                        style: DytavaTypography.bodySmall,
+                      ),
+                    ],
                   ),
-                  items: [
-                    const DropdownMenuItem(
-                      value: '',
-                      child: Text('Không ghép'),
-                    ),
-                    for (final target in b.fields)
-                      DropdownMenuItem(
-                        value: target.id,
-                        enabled: !chosen.entries.any(
-                          (m) => m.key != f.id && m.value == target.id,
-                        ),
-                        child: Text('${target.label} (${target.id})'),
-                      ),
-                  ],
-                  onChanged: (value) {
-                    final mappings = config.mappings
-                        .where((m) => m.fieldA != f.id)
-                        .toList();
-                    if (value != null && value.isNotEmpty) {
-                      mappings.add(FieldMapping(f.id, value));
-                    }
-                    final rules = Map<String, FieldRule>.of(config.rules);
-                    rules.putIfAbsent(
-                      f.id,
-                      () => FieldRule(
-                        type: f.id == 'id'
-                            ? SemanticType.identifier
-                            : SemanticType.decimal,
-                      ),
-                    );
-                    flow.configure(
-                      config.copyWith(
-                        mappings: mappings,
-                        rules: rules,
-                        mappingConfirmed: false,
-                        policyConfirmed: false,
-                        modeConfirmed: false,
-                        keys: [],
-                      ),
-                    );
-                  },
+                TextButton(
+                  onPressed: flow.busy ? null : onAutoMap,
+                  child: const Text('Auto match columns →'),
                 ),
-              ),
-            const SizedBox(height: 12),
-            WorkflowCheckTile(
-              label: 'Xác nhận ánh xạ hiện hành',
-              checked: config.mappingConfirmed,
-              onChanged: config.mappings.isEmpty
-                  ? null
-                  : (checked) => flow.configure(
-                      config.copyWith(mappingConfirmed: checked),
+                WorkflowSectionCard(
+                  children: [
+                    Text(
+                      '${config.mappings.length} pairs · ${a.fields.length - config.mappings.length} unpaired in A · ${b.fields.length - config.mappings.length} unpaired in B',
+                      style: DytavaTypography.titleSmall,
                     ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Unpaired columns are tracked as structural changes.',
+                      style: DytavaTypography.bodySmall,
+                    ),
+                  ],
+                ),
+                WorkflowCheckTile(
+                  label: 'Confirm current column mapping',
+                  checked: config.mappingConfirmed,
+                  onChanged: config.mappings.isNotEmpty || flow.structuralWorkbookOnly
+                      ? (v) => flow.configure(config.copyWith(mappingConfirmed: v))
+                      : null,
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
-            const SizedBox(height: 12),
-            WorkflowPrimaryButton(
-              label: 'Tiếp tục cấu hình so sánh',
-              iconAsset: DytavaIcons.policy,
-              onPressed: config.mappingConfirmed ? onContinuePolicy : null,
+            bottomBar: StickyBottomBar(
+              child: WorkflowPrimaryButton(
+                label: 'Continue to comparison setup',
+                onPressed:
+                    config.mappingConfirmed && flow.sheetMapping?.complete != false
+                    ? onContinuePolicy
+                    : null,
+              ),
             ),
-          ],
-        ),
-      ],
-    );
+          );
   }
 }
 
-/// Màn hình Cấu hình & Quy tắc chuẩn hóa (`SCR-06`):
-/// - Chia cấu hình thành 3 nhóm rõ ràng (Khóa ghép hàng, Quy tắc từng cột, Chiều đối chiếu).
-/// - Tích hợp `BrandIllustration.onboarding(DytavaIllustrations.onboardingPolicy)` và `BrandIcon.semanticType(...)`.
-/// - Bắt buộc xác nhận tường minh theo nghiệp vụ trước khi chạy.
 class PolicyScreenView extends StatelessWidget {
   final WorkflowController flow;
   final VoidCallback onQuickConfirmAndRun;
-
   const PolicyScreenView({
     super.key,
     required this.flow,
     required this.onQuickConfirmAndRun,
   });
 
-  void _updateRule(String field, FieldRule value) => flow.configure(
+  void _rule(String field, FieldRule value) => flow.configure(
     flow.config.copyWith(
       rules: {...flow.config.rules, field: value},
       policyConfirmed: false,
-      modeConfirmed: false,
     ),
   );
-
-  String _semanticTypeDescription(SemanticType type) => switch (type) {
-    SemanticType.identifier =>
-      'Định danh (IDENTIFIER) · Giữ nguyên chữ số 0 ở đầu (ví dụ 00123)',
-    SemanticType.decimal =>
-      'Số thập phân (DECIMAL) · Chuẩn hóa dấu chấm/phẩy và sai số tuyệt đối',
-    SemanticType.freeText =>
-      'Văn bản tự do (FREE_TEXT) · Đối chiếu chuỗi ký tự và khoảng trắng',
-    SemanticType.boolean =>
-      'Giá trị logic (BOOLEAN) · Chuẩn hóa trạng thái đúng/sai',
-    SemanticType.percentage =>
-      'Phần trăm (PERCENTAGE) · Chuẩn hóa tỷ lệ phần trăm',
-  };
 
   @override
   Widget build(BuildContext context) {
     final config = flow.config;
-    final allConfirmed =
-        config.mappingConfirmed &&
-        config.modeConfirmed &&
-        config.policyConfirmed &&
-        config.directionConfirmed;
-
-    final proposal =
-        flow.proposal ??
-        (flow.inputsReady
-            ? SmartProposalEngine.analyze(
-                flow.slot(SourceSide.a).snapshot!,
-                flow.slot(SourceSide.b).snapshot!,
-                taskMode: flow.taskMode,
-              )
-            : null);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Màn hình 2 — Kiểm tra đề xuất đối chiếu (Smart Proposal Review)
-        WorkflowSectionCard(
-          padding: const EdgeInsets.all(16),
-          color: DytavaColors.white,
-          border: Border.all(
-            color: DytavaColors.primary.withValues(alpha: 0.3),
+    final invalidTolerance = config.rules.values.any((r) {
+      final v = double.tryParse(r.tolerance);
+      return v == null || !v.isFinite || v < 0;
+    });
+    final a = flow.slot(SourceSide.a).snapshot!;
+    final b = flow.slot(SourceSide.b).snapshot!;
+    return WorkflowScreenLayout(
+      contentPadding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 4),
+          const Text(
+            'Ready for a clear view.',
+            style: DytavaTypography.titleLarge,
           ),
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: DytavaColors.softBlue,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  alignment: Alignment.center,
-                  child: const BrandIcon(DytavaIcons.policy, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Kiểm tra đề xuất đối chiếu',
-                        style: DytavaTypography.titleLarge.copyWith(
-                          color: DytavaColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'Dytava tự động phân tích cấu trúc, gợi ý khóa/cột và phương pháp ghép.',
-                        style: DytavaTypography.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                WorkflowStatusPill(
-                  label: flow.taskMode.label,
-                  color: DytavaColors.primary,
-                  bg: DytavaColors.softBlue,
-                  iconAsset: DytavaIcons.check,
-                ),
-              ],
-            ),
-            const Divider(height: 20),
-
-            // Đánh giá mức độ tin cậy
-            if (proposal != null) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: proposal.isHighConfidence
-                      ? DytavaColors.softGreen
-                      : DytavaColors.softAmber,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: proposal.isHighConfidence
-                        ? DytavaColors.exact.withValues(alpha: 0.4)
-                        : DytavaColors.unresolved.withValues(alpha: 0.4),
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    BrandIcon(
-                      proposal.isHighConfidence
-                          ? DytavaIcons.success
-                          : DytavaIcons.warning,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            proposal.isHighConfidence
-                                ? 'Đề xuất tối ưu (Tin cậy cao)'
-                                : 'Cần lưu ý & xác nhận',
-                            style: DytavaTypography.titleMedium.copyWith(
-                              color: proposal.isHighConfidence
-                                  ? DytavaColors.exact
-                                  : DytavaColors.unresolved,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            proposal.confidenceReason,
-                            style: DytavaTypography.bodySmall,
-                          ),
-                          if (proposal.requiresExplicitConfirmation) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              'Khi chưa đủ căn cứ chọn khóa hoặc chuẩn hóa, Dytava yêu cầu bạn xác nhận trước khi tiếp tục.',
-                              style: DytavaTypography.bodySmall.copyWith(
-                                color: DytavaColors.unresolved,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+          const SizedBox(height: 2),
+          const Text(
+            'Review the proposed matches and comparison rules.',
+            style: DytavaTypography.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          WorkflowSectionCard(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 6),
+            children: [
+              Text(
+                'A  ${flow.slot(SourceSide.a).artifact!.label}',
+                style: DytavaTypography.titleSmall,
               ),
-              const SizedBox(height: 12),
-
-              // Bản tóm tắt đề xuất
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: DytavaColors.background,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: DytavaColors.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const BrandIcon(DytavaIcons.key, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            proposal.mode == MatchingMode.key
-                                ? 'Phương pháp: Ghép theo mã ID (${proposal.keys.isEmpty ? 'Chưa chọn' : proposal.keys.join(', ')})'
-                                : 'Phương pháp: Ghép theo thứ tự hàng (Positional)',
-                            style: DytavaTypography.titleMedium.copyWith(
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const BrandIcon(DytavaIcons.columns, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Ánh xạ: Đã tự động ghép ${proposal.mappings.length} cặp cột (${proposal.mappings.map((m) => '${m.fieldA} → ${m.fieldB}').join(', ')})',
-                            style: DytavaTypography.bodySmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const BrandIcon(DytavaIcons.normalize, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Chuẩn hóa: Tự động nhận diện định dạng số, tiền tệ, ngày tháng.',
-                            style: DytavaTypography.bodySmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 4),
+              Text(
+                'B  ${flow.slot(SourceSide.b).artifact!.label}',
+                style: DytavaTypography.titleSmall,
               ),
-              const SizedBox(height: 14),
-
-              // Nút CTA chính chuẩn Precision Workspace: Tiến hành so sánh
-              WorkflowPrimaryButton(
-                label: 'Tiến hành so sánh',
-                iconAsset: DytavaIcons.play,
-                onPressed: flow.busy
-                    ? null
-                    : () {
-                        flow.applyProposal(run: true);
-                      },
+              const SizedBox(height: 4),
+              Text(
+                '${a.records.length} → ${b.records.length} rows',
+                style: DytavaTypography.bodySmall,
               ),
             ],
-          ],
-        ),
-
-        // Thẻ tóm tắt cấu hình & xác nhận nhanh (Chi tiết nâng cao)
-        WorkflowSectionCard(
-          color: DytavaColors.warmSurface,
-          border: Border.all(
-            color: DytavaColors.subtleBorder,
-            width: 1.2,
           ),
-          children: [
-            Row(
-              children: [
-                BrandIllustration.onboarding(
-                  DytavaIllustrations.onboardingPolicy,
-                  maxHeight: 44,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Tóm tắt cấu hình đối chiếu',
-                    style: DytavaTypography.titleMedium.copyWith(
-                      color: DytavaColors.graphite,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                WorkflowStatusPill(
-                  label: allConfirmed ? 'Đã phê duyệt' : 'Cần xác nhận',
-                  color: allConfirmed
-                      ? DytavaColors.exact
-                      : DytavaColors.unresolved,
-                  bg: allConfirmed
-                      ? DytavaColors.softGreen
-                      : DytavaColors.softAmber,
-                  iconAsset: allConfirmed
-                      ? DytavaIcons.check
-                      : DytavaIcons.warning,
-                ),
-              ],
+          SheetMappingReview(flow: flow),
+        _expand('Columns', '${config.mappings.length} pairs · Edit', [
+          for (final m in config.mappings)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                '${m.fieldA} → ${m.fieldB}',
+                style: DytavaTypography.bodyMedium,
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              '• Khóa ghép: ${WorkflowUiHelpers.formatEnumName(config.mode)}${config.mode == MatchingMode.key ? ' (${config.keys.isEmpty ? 'chưa chọn' : config.keys.join(' → ')})' : ''}\n'
-              '• Chính sách chuẩn hóa: ${config.mappings.length} cột ánh xạ (${config.policyConfirmed ? 'đã xác nhận' : 'chưa xác nhận'})\n'
-              '• Chiều so sánh: ${config.direction == ComparisonDirection.aToB ? 'A → B' : 'B → A'} (${config.directionConfirmed ? 'đã xác nhận' : 'chưa xác nhận'})',
-              style: DytavaTypography.bodyMedium,
-            ),
-            const SizedBox(height: 10),
-            WorkflowSecondaryButton(
-              label: allConfirmed
-                  ? 'Chạy nhanh với cấu hình đã duyệt'
-                  : 'Xem tóm tắt & Xác nhận cấu hình',
-              iconAsset: allConfirmed ? DytavaIcons.play : DytavaIcons.policy,
-              onPressed: onQuickConfirmAndRun,
-            ),
-          ],
-        ),
-
-        // Nhóm 1: Chế độ ghép hàng & Khóa định danh
-        WorkflowSectionCard(
-          children: [
-            Row(
-              children: [
-                const BrandIcon(DytavaIcons.key, size: 22),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Ghép hàng giữa 2 Sheets',
-                    style: DytavaTypography.titleLarge.copyWith(
-                      color: DytavaColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => flow.navigate(WorkflowScreen.mapping),
+            child: const Text('Edit column mapping →'),
+          ),
+        ]),
+        _expand('Comparison task', flow.taskMode.label, [
+          DropdownButtonFormField<ComparisonTaskMode>(
+            initialValue: flow.taskMode,
+            isExpanded: true,
+            items: const [
+              DropdownMenuItem(
+                value: ComparisonTaskMode.compareFiles,
+                child: Text('Compare files'),
+              ),
+              DropdownMenuItem(
+                value: ComparisonTaskMode.compareColumns,
+                child: Text('Compare columns'),
+              ),
+              DropdownMenuItem(
+                value: ComparisonTaskMode.reconcile,
+                child: Text('Reconcile by ID'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              final policy = flow.config.webPolicy;
+              flow.setTaskMode(value);
+              flow.analyzeAndPropose();
+              flow.applyProposal();
+              flow.configure(flow.config.copyWith(webPolicy: policy));
+            },
+          ),
+        ]),
+        _expand(
+          'Row matching',
+          switch (config.mode) {
+            MatchingMode.key => 'By key column',
+            MatchingMode.positional => 'By position',
+            MatchingMode.orderedSequence => 'Sequence alignment',
+          },
+          [
             DropdownButtonFormField<MatchingMode>(
-              key: ValueKey(config.mode),
               initialValue: config.mode,
               isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Chế độ'),
-              items: [
-                for (final mode in MatchingMode.values)
-                  DropdownMenuItem(
-                    value: mode,
-                    child: Text(WorkflowUiHelpers.formatEnumName(mode)),
-                  ),
+              decoration: const InputDecoration(labelText: 'Match rows'),
+              items: const [
+                DropdownMenuItem(
+                  value: MatchingMode.positional,
+                  child: Text('By position'),
+                ),
+                DropdownMenuItem(
+                  value: MatchingMode.key,
+                  child: Text('By key column'),
+                ),
+                DropdownMenuItem(
+                  value: MatchingMode.orderedSequence,
+                  child: Text('Sequence alignment'),
+                ),
               ],
-              onChanged: (mode) {
-                if (mode != null) {
+              onChanged: (v) {
+                if (v != null) {
                   flow.configure(
-                    config.copyWith(mode: mode, modeConfirmed: false, keys: []),
+                    config.copyWith(mode: v, modeConfirmed: false),
                   );
                 }
               },
             ),
             if (config.mode == MatchingMode.key) ...[
-              const SizedBox(height: 10),
-              const WorkflowInfoBanner(
-                text: 'Chọn khóa theo thứ tự. Khóa phải là IDENTIFIER, không trim hoặc tolerance. Null/trùng được giữ unresolved, không tự ghép.',
-                iconAsset: DytavaIcons.key,
+              const SizedBox(height: 12),
+              const Text(
+                'Choose one or more key columns.',
+                style: DytavaTypography.bodySmall,
               ),
               for (final m in config.mappings)
-                WorkflowCheckTile(
-                  label: 'Khóa: ${m.fieldA}',
-                  checked: config.keys.contains(m.fieldA),
-                  onChanged: (checked) {
-                    final keys = config.keys
-                        .where((k) => k != m.fieldA)
-                        .toList();
-                    if (checked) keys.add(m.fieldA);
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(m.fieldA, style: DytavaTypography.bodyMedium),
+                  value: config.keys.contains(m.fieldA),
+                  onChanged: (v) {
+                    final keys = [...config.keys];
+                    if (v == true) {
+                      keys.add(m.fieldA);
+                    } else {
+                      keys.remove(m.fieldA);
+                    }
+                    final rules = {...config.rules};
+                    if (v == true) {
+                      rules[m.fieldA] = const FieldRule(
+                        type: SemanticType.identifier,
+                      );
+                    }
                     flow.configure(
-                      config.copyWith(keys: keys, modeConfirmed: false),
+                      config.copyWith(
+                        keys: keys,
+                        rules: rules,
+                        modeConfirmed: false,
+                      ),
                     );
                   },
                 ),
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: DytavaColors.softBlue,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Tuple khóa: ${config.keys.join(' → ')}',
-                  style: DytavaTypography.dataMedium.copyWith(
-                    color: DytavaColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
             ],
-            const SizedBox(height: 8),
-            WorkflowCheckTile(
-              label: 'Xác nhận chế độ và khóa',
-              checked: config.modeConfirmed,
-              onChanged: (checked) =>
-                  flow.configure(config.copyWith(modeConfirmed: checked)),
-            ),
-          ],
-        ),
-
-        // Nhóm 2: Policy từng cột với `BrandIcon.semanticType(...)`
-        WorkflowSectionCard(
-          children: [
-            Row(
-              children: [
-                const BrandIcon(DytavaIcons.normalize, size: 22),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Policy từng cột',
-                    style: DytavaTypography.titleLarge.copyWith(
-                      color: DytavaColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Kiểu dữ liệu và quy tắc chuẩn hóa cho từng cặp cột đã ánh xạ.',
+            const SizedBox(height: 10),
+            const Text(
+              'Missing or duplicate keys remain unresolved; no match is guessed.',
               style: DytavaTypography.bodySmall,
             ),
-            for (final m in config.mappings) ...[
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: DytavaColors.background,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: DytavaColors.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        if (config.rules[m.fieldA] case final FieldRule r) ...[
-                          BrandIcon.semanticType(r.type, size: 22),
-                          const SizedBox(width: 8),
-                        ],
-                        Expanded(
-                          child: Text(
-                            'Cột ${m.fieldA} → ${m.fieldB} · kiểu ban đầu là gợi ý',
-                            style: DytavaTypography.titleMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (config.rules[m.fieldA] case final FieldRule r) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        _semanticTypeDescription(r.type),
-                        style: DytavaTypography.bodySmall.copyWith(
-                          color: DytavaColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<SemanticType>(
-                      key: ValueKey(
-                        'type-${m.fieldA}-${config.rules[m.fieldA]?.type}',
-                      ),
-                      initialValue: config.rules[m.fieldA]?.type,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        labelText: 'Kiểu ${m.fieldA}',
-                      ),
-                      items: [
-                        for (final type in SemanticType.values)
-                          DropdownMenuItem(value: type, child: Text(type.name)),
-                      ],
-                      onChanged: (type) {
-                        if (type != null) {
-                          _updateRule(m.fieldA, FieldRule(type: type));
-                        }
-                      },
-                    ),
-                    if (config.rules[m.fieldA] case final FieldRule rule) ...[
-                      WorkflowCheckTile(
-                        label: 'Tự suy luận kiểu như bản web',
-                        checked: rule.webAuto,
-                        onChanged: (checked) => _updateRule(
-                          m.fieldA,
-                          FieldRule(
-                            type: rule.type,
-                            trim: rule.trim,
-                            separatorA: rule.separatorA,
-                            separatorB: rule.separatorB,
-                            tolerance: rule.tolerance,
-                            webAuto: checked,
-                          ),
-                        ),
-                      ),
-                      WorkflowCheckTile(
-                        label: 'Trim ${m.fieldA}',
-                        checked: rule.trim,
-                        onChanged: (checked) => _updateRule(
-                          m.fieldA,
-                          FieldRule(
-                            type: rule.type,
-                            webAuto: rule.webAuto,
-                            trim: checked,
-                            separatorA: rule.separatorA,
-                            separatorB: rule.separatorB,
-                            tolerance: rule.tolerance,
-                          ),
-                        ),
-                      ),
-                      if (rule.type == SemanticType.decimal ||
-                          rule.type == SemanticType.percentage) ...[
-                        for (final side in SourceSide.values)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: DropdownButtonFormField<String>(
-                              key: ValueKey(
-                                'separator-${m.fieldA}-${side.name}-${side == SourceSide.a ? rule.separatorA : rule.separatorB}',
-                              ),
-                              initialValue: side == SourceSide.a
-                                  ? rule.separatorA
-                                  : rule.separatorB,
-                              decoration: InputDecoration(
-                                labelText:
-                                    'Dấu thập phân ${m.fieldA} / ${side.name.toUpperCase()}',
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: '.',
-                                  child: Text('Chấm (.)'),
-                                ),
-                                DropdownMenuItem(
-                                  value: ',',
-                                  child: Text('Phẩy (,)'),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                if (value != null) {
-                                  _updateRule(
-                                    m.fieldA,
-                                    FieldRule(
-                                      type: rule.type,
-                                      webAuto: rule.webAuto,
-                                      trim: rule.trim,
-                                      tolerance: rule.tolerance,
-                                      separatorA: side == SourceSide.a
-                                          ? value
-                                          : rule.separatorA,
-                                      separatorB: side == SourceSide.b
-                                          ? value
-                                          : rule.separatorB,
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                        TextFormField(
-                          key: ValueKey('tolerance-${m.fieldA}'),
-                          initialValue: rule.tolerance,
-                          decoration: InputDecoration(
-                            labelText: 'Sai số tuyệt đối ${m.fieldA}',
-                          ),
-                          onChanged: (value) => _updateRule(
-                            m.fieldA,
-                            FieldRule(
-                              type: rule.type,
-                              webAuto: rule.webAuto,
-                              trim: rule.trim,
-                              separatorA: rule.separatorA,
-                              separatorB: rule.separatorB,
-                              tolerance: value,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            for (final item in <(String, bool, WebComparisonPolicy)>[
-              (
-                'Bỏ khoảng trắng đầu/cuối',
-                config.webPolicy.trimText,
-                WebComparisonPolicy(
-                  trimText: !config.webPolicy.trimText,
-                  caseSensitiveText: config.webPolicy.caseSensitiveText,
-                  preserveLeadingZeros: config.webPolicy.preserveLeadingZeros,
-                  caseSensitiveIdentifier:
-                      config.webPolicy.caseSensitiveIdentifier,
-                  distinctNullZero: config.webPolicy.distinctNullZero,
-                  treatOrdinalAsMetadata:
-                      config.webPolicy.treatOrdinalAsMetadata,
-                ),
-              ),
-              (
-                'Phân biệt hoa/thường trong văn bản',
-                config.webPolicy.caseSensitiveText,
-                WebComparisonPolicy(
-                  trimText: config.webPolicy.trimText,
-                  caseSensitiveText: !config.webPolicy.caseSensitiveText,
-                  preserveLeadingZeros: config.webPolicy.preserveLeadingZeros,
-                  caseSensitiveIdentifier:
-                      config.webPolicy.caseSensitiveIdentifier,
-                  distinctNullZero: config.webPolicy.distinctNullZero,
-                  treatOrdinalAsMetadata:
-                      config.webPolicy.treatOrdinalAsMetadata,
-                ),
-              ),
-              (
-                'Bảo toàn số 0 đầu mã',
-                config.webPolicy.preserveLeadingZeros,
-                WebComparisonPolicy(
-                  trimText: config.webPolicy.trimText,
-                  caseSensitiveText: config.webPolicy.caseSensitiveText,
-                  preserveLeadingZeros: !config.webPolicy.preserveLeadingZeros,
-                  caseSensitiveIdentifier:
-                      config.webPolicy.caseSensitiveIdentifier,
-                  distinctNullZero: config.webPolicy.distinctNullZero,
-                  treatOrdinalAsMetadata:
-                      config.webPolicy.treatOrdinalAsMetadata,
-                ),
-              ),
-              (
-                'Phân biệt hoa/thường trong mã',
-                config.webPolicy.caseSensitiveIdentifier,
-                WebComparisonPolicy(
-                  trimText: config.webPolicy.trimText,
-                  caseSensitiveText: config.webPolicy.caseSensitiveText,
-                  preserveLeadingZeros: config.webPolicy.preserveLeadingZeros,
-                  caseSensitiveIdentifier:
-                      !config.webPolicy.caseSensitiveIdentifier,
-                  distinctNullZero: config.webPolicy.distinctNullZero,
-                  treatOrdinalAsMetadata:
-                      config.webPolicy.treatOrdinalAsMetadata,
-                ),
-              ),
-              (
-                'Phân biệt ô trống và số 0',
-                config.webPolicy.distinctNullZero,
-                WebComparisonPolicy(
-                  trimText: config.webPolicy.trimText,
-                  caseSensitiveText: config.webPolicy.caseSensitiveText,
-                  preserveLeadingZeros: config.webPolicy.preserveLeadingZeros,
-                  caseSensitiveIdentifier:
-                      config.webPolicy.caseSensitiveIdentifier,
-                  distinctNullZero: !config.webPolicy.distinctNullZero,
-                  treatOrdinalAsMetadata:
-                      config.webPolicy.treatOrdinalAsMetadata,
-                ),
-              ),
-              (
-                'Coi STT / No. là thông tin thứ tự',
-                config.webPolicy.treatOrdinalAsMetadata,
-                WebComparisonPolicy(
-                  trimText: config.webPolicy.trimText,
-                  caseSensitiveText: config.webPolicy.caseSensitiveText,
-                  preserveLeadingZeros: config.webPolicy.preserveLeadingZeros,
-                  caseSensitiveIdentifier:
-                      config.webPolicy.caseSensitiveIdentifier,
-                  distinctNullZero: config.webPolicy.distinctNullZero,
-                  treatOrdinalAsMetadata:
-                      !config.webPolicy.treatOrdinalAsMetadata,
-                ),
-              ),
-            ])
-              WorkflowCheckTile(
-                label: item.$1,
-                checked: item.$2,
-                onChanged: (_) => flow.configure(
-                  config.copyWith(webPolicy: item.$3, policyConfirmed: false),
-                ),
-              ),
-            WorkflowCheckTile(
-              label: 'Xác nhận toàn bộ policy',
-              checked: config.policyConfirmed,
-              onChanged: (checked) =>
-                  flow.configure(config.copyWith(policyConfirmed: checked)),
-            ),
           ],
         ),
-
-        // Nhóm 3: Chiều so sánh
-        WorkflowSectionCard(
-          children: [
-            Row(
-              children: [
-                const BrandIcon(DytavaIcons.compareFiles, size: 22),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Chiều so sánh',
-                    style: DytavaTypography.titleLarge.copyWith(
-                      color: DytavaColors.textPrimary,
+        _expand('Rules', 'Custom rules · Edit', [
+          for (final m in config.mappings) ...[
+            Text(m.fieldA, style: DytavaTypography.titleSmall),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                'Detect type automatically',
+                style: DytavaTypography.bodyMedium,
+              ),
+              value: config.rules[m.fieldA]?.webAuto ?? false,
+              onChanged: (value) {
+                final r =
+                    config.rules[m.fieldA] ??
+                    const FieldRule(type: SemanticType.freeText);
+                _rule(
+                  m.fieldA,
+                  FieldRule(
+                    type: r.type,
+                    trim: r.trim,
+                    tolerance: r.tolerance,
+                    separatorA: r.separatorA,
+                    separatorB: r.separatorB,
+                    webAuto: value,
+                  ),
+                );
+              },
+            ),
+            DropdownButtonFormField<SemanticType>(
+              key: ValueKey('type-${m.fieldA}-${config.rules[m.fieldA]?.type}'),
+              initialValue:
+                  config.rules[m.fieldA]?.type ?? SemanticType.freeText,
+              decoration: const InputDecoration(labelText: 'Data type'),
+              items: [
+                for (final type in SemanticType.values)
+                  DropdownMenuItem(
+                    value: type,
+                    child: Text(switch (type) {
+                      SemanticType.identifier => 'Identifier',
+                      SemanticType.freeText => 'Text',
+                      SemanticType.decimal => 'Number',
+                      SemanticType.boolean => 'Boolean',
+                      SemanticType.percentage => 'Percentage',
+                    }),
+                  ),
+              ],
+              onChanged: (v) {
+                if (v != null) {
+                  final r =
+                      config.rules[m.fieldA] ??
+                      const FieldRule(type: SemanticType.freeText);
+                  _rule(
+                    m.fieldA,
+                    FieldRule(
+                      type: v,
+                      trim: r.trim,
+                      tolerance: r.tolerance,
+                      separatorA: r.separatorA,
+                      separatorB: r.separatorB,
+                      webAuto: false,
                     ),
+                  );
+                }
+              },
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                'Trim spaces',
+                style: DytavaTypography.bodyMedium,
+              ),
+              value: config.rules[m.fieldA]?.trim ?? false,
+              onChanged: (v) {
+                final r =
+                    config.rules[m.fieldA] ??
+                    const FieldRule(type: SemanticType.freeText);
+                _rule(
+                  m.fieldA,
+                  FieldRule(
+                    type: r.type,
+                    trim: v,
+                    tolerance: r.tolerance,
+                    separatorA: r.separatorA,
+                    separatorB: r.separatorB,
+                    webAuto: false,
+                  ),
+                );
+              },
+            ),
+            if (config.rules[m.fieldA]?.type == SemanticType.decimal ||
+                config.rules[m.fieldA]?.type == SemanticType.percentage) ...[
+              for (final side in SourceSide.values)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: DropdownButtonFormField<String>(
+                    initialValue: side == SourceSide.a
+                        ? config.rules[m.fieldA]?.separatorA ?? '.'
+                        : config.rules[m.fieldA]?.separatorB ?? ',',
+                    decoration: InputDecoration(
+                      labelText:
+                          'Decimal separator · ${side.name.toUpperCase()}',
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: '.', child: Text('Dot (1.25)')),
+                      DropdownMenuItem(value: ',', child: Text('Comma (1,25)')),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      final r = config.rules[m.fieldA]!;
+                      _rule(
+                        m.fieldA,
+                        FieldRule(
+                          type: r.type,
+                          trim: r.trim,
+                          tolerance: r.tolerance,
+                          separatorA: side == SourceSide.a
+                              ? value
+                              : r.separatorA,
+                          separatorB: side == SourceSide.b
+                              ? value
+                              : r.separatorB,
+                        ),
+                      );
+                    },
                   ),
                 ),
-              ],
+            ],
+            TextFormField(
+              initialValue: config.rules[m.fieldA]?.tolerance ?? '0',
+              decoration: const InputDecoration(
+                labelText: 'Absolute tolerance',
+              ),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              onChanged: (v) {
+                final r =
+                    config.rules[m.fieldA] ??
+                    const FieldRule(type: SemanticType.freeText);
+                _rule(
+                  m.fieldA,
+                  FieldRule(
+                    type: r.type,
+                    trim: r.trim,
+                    tolerance: v,
+                    separatorA: r.separatorA,
+                    separatorB: r.separatorB,
+                    webAuto: r.webAuto,
+                  ),
+                );
+              },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+          ],
+        ]),
+        _expand(
+          'File order',
+          config.direction == ComparisonDirection.aToB
+              ? 'Original A → Updated B'
+              : 'Original B → Updated A',
+          [
             DropdownButtonFormField<ComparisonDirection>(
-              key: ValueKey(config.direction),
               initialValue: config.direction,
               isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Chiều'),
               items: const [
                 DropdownMenuItem(
                   value: ComparisonDirection.aToB,
@@ -911,79 +525,93 @@ class PolicyScreenView extends StatelessWidget {
                   child: Text('B → A'),
                 ),
               ],
-              onChanged: (direction) {
-                if (direction != null) {
+              onChanged: (v) {
+                if (v != null) {
                   flow.configure(
-                    config.copyWith(
-                      direction: direction,
-                      directionConfirmed: false,
-                    ),
+                    config.copyWith(direction: v, directionConfirmed: false),
                   );
                 }
               },
             ),
-            const SizedBox(height: 6),
-            Text(
-              config.direction == ComparisonDirection.aToB
-                  ? 'Chỉ ở B: thêm. Chỉ ở A: thiếu.'
-                  : 'Chỉ ở A: thêm. Chỉ ở B: thiếu.',
-              style: DytavaTypography.bodyMedium,
-            ),
-            const SizedBox(height: 6),
-            WorkflowCheckTile(
-              label: 'Xác nhận chiều so sánh',
-              checked: config.directionConfirmed,
-              onChanged: (checked) =>
-                  flow.configure(config.copyWith(directionConfirmed: checked)),
-            ),
           ],
         ),
-
-        if (flow.startBlockers.isNotEmpty)
+        if (flow.proposal?.isHighConfidence == false)
           WorkflowSectionCard(
-            color: DytavaColors.softRed,
-            children: [
-              WorkflowIssueList(issues: flow.startBlockers),
-              if (flow.startBlockers.any(
-                (b) => b.code == 'MAPPING_CONFIRMATION_REQUIRED',
-              )) ...[
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: DytavaColors.primary,
-                      minimumSize: const Size(48, 44),
-                    ),
-                    icon: const BrandIcon(DytavaIcons.mapping, size: 18),
-                    label: const Text('Tự động ghép cột & xác nhận (1 chạm)'),
-                    onPressed: () {
-                      flow.applyProposal(run: false);
-                    },
-                  ),
-                ),
-              ],
+            color: DytavaColors.modifiedBg,
+            children: const [
+              Text(
+                'Review the proposed matches',
+                style: DytavaTypography.titleSmall,
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Some matches need your confirmation. Unmatched records will stay unresolved.',
+                style: DytavaTypography.bodySmall,
+              ),
             ],
           ),
-        const SizedBox(height: 8),
-        WorkflowPrimaryButton(
-          label: flow.slot(SourceSide.a).artifact?.isFixture == true
-              ? 'Chạy so sánh'
-              : 'Tiến hành so sánh',
-          iconAsset: DytavaIcons.play,
-          onPressed: flow.busy
-              ? null
-              : (flow.startBlockers.isEmpty
-                    ? flow.runComparison
-                    : (flow.startBlockers.every(
-                            (b) => b.code == 'MAPPING_CONFIRMATION_REQUIRED',
-                          )
-                          ? () {
-                              flow.applyProposal(run: true);
-                            }
-                          : null)),
-        ),
-      ],
-    );
+                const SizedBox(height: 16),
+              ],
+            ),
+            bottomBar: StickyBottomBar(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Confirm these settings to start your comparison.',
+                    style: DytavaTypography.bodySmall,
+                  ),
+                  if (invalidTolerance) ...[
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Enter a valid non-negative tolerance.',
+                      style: DytavaTypography.bodySmall,
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  WorkflowPrimaryButton(
+                    label: 'Start comparison',
+                    onPressed:
+                        flow.busy ||
+                                flow.sheetMapping?.complete == false ||
+                                invalidTolerance ||
+                                (config.mode == MatchingMode.key &&
+                                    config.keys.isEmpty)
+                            ? null
+                            : onQuickConfirmAndRun,
+                  ),
+                ],
+              ),
+            ),
+          );
   }
+
+  Widget _expand(String title, String summary, List<Widget> children) =>
+      Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: Theme(
+            data: DytavaTheme.lightTheme.copyWith(
+              dividerColor: Colors.transparent,
+            ),
+            child: ExpansionTile(
+              title: Text(title, style: DytavaTypography.titleSmall),
+              subtitle: Text(
+                summary,
+                style: DytavaTypography.bodySmall.copyWith(
+                  color: DytavaColors.primary,
+                ),
+              ),
+              childrenPadding: const EdgeInsets.all(16),
+              children: children,
+            ),
+          ),
+        ),
+      );
 }

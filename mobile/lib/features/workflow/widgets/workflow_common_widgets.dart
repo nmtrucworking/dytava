@@ -7,9 +7,12 @@ import '../../../domain/workflow.dart';
 
 /// Các hàm tiện ích và thành phần giao diện dùng chung cho tầng Presentation của Workflow.
 abstract final class WorkflowUiHelpers {
-  static String formatEnumName(Enum value) => value == MatchingMode.orderedSequence ? 'Căn chỉnh chuỗi (chèn/xóa)' : value.name
-      .replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]}')
-      .toUpperCase();
+  static String formatEnumName(Enum value) =>
+      value == MatchingMode.orderedSequence
+      ? 'Căn chỉnh chuỗi (chèn/xóa)'
+      : value.name
+            .replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]}')
+            .toUpperCase();
 
   static String remediationForIssue(WorkflowIssue issue) {
     final code = issue.code.toUpperCase();
@@ -38,6 +41,7 @@ class WorkflowSectionCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final Color color;
   final Border? border;
+  final EdgeInsetsGeometry? margin;
 
   const WorkflowSectionCard({
     super.key,
@@ -45,34 +49,27 @@ class WorkflowSectionCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.color = DytavaColors.white,
     this.border,
+    this.margin,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: margin ?? const EdgeInsets.only(bottom: 12),
       padding: padding,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(20),
-        border: border ?? Border.all(color: DytavaColors.subtleBorder, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x080F1A1C),
-            offset: Offset(0, 4),
-            blurRadius: 16,
-          ),
-          BoxShadow(
-            color: Color(0x040F1A1C),
-            offset: Offset(0, 1),
-            blurRadius: 4,
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border:
+            border ?? Border.all(color: DytavaColors.subtleBorder, width: 1),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: children,
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: children,
+        ),
       ),
     );
   }
@@ -344,6 +341,101 @@ class WorkflowCheckTile extends StatelessWidget {
   }
 }
 
+/// Thanh tác vụ dính chân trang (Sticky Bottom Bar) cho Mobile UX
+/// Đảm bảo các nút hành động chính (Primary/Secondary Action) luôn nổi cố định ở đáy màn hình,
+/// không bị cuộn theo nội dung trang, kèm hiệu ứng bóng mờ và viền ngăn cách sắc nét.
+class StickyBottomBar extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+
+  const StickyBottomBar({
+    super.key,
+    required this.child,
+    this.padding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < 350;
+    final horizontalPad = isCompact ? 16.0 : 24.0;
+    return Container(
+      decoration: BoxDecoration(
+        color: DytavaColors.background,
+        border: const Border(
+          top: BorderSide(color: DytavaColors.subtleBorder, width: 1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      padding: padding ?? EdgeInsets.fromLTRB(horizontalPad, 8, horizontalPad, 8),
+      child: SafeArea(
+        top: false,
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Bố cục màn hình Workflow với thanh nút hành động Sticky ở chân trang.
+/// Tự động thích ứng:
+/// - Khi màn hình có chiều cao giới hạn (trong app chuẩn): Phần nội dung cuộn khi cần (`Expanded` + `SingleChildScrollView`),
+///   sử dụng `ClampingScrollPhysics` để không bị scroll khi nội dung vừa vặn màn hình.
+/// - Nút bấm dính cố định (`StickyBottomBar`) ở chân trang.
+/// - Khi bị bọc trong Scrollable ngoài (ví dụ trong widget test): Tự động hiển thị dạng Column không flex để tránh lỗi unbounded height.
+class WorkflowScreenLayout extends StatelessWidget {
+  final Widget content;
+  final Widget? bottomBar;
+  final EdgeInsetsGeometry contentPadding;
+  final ScrollPhysics physics;
+
+  const WorkflowScreenLayout({
+    super.key,
+    required this.content,
+    this.bottomBar,
+    this.contentPadding = const EdgeInsets.fromLTRB(20, 8, 20, 8),
+    this.physics = const ClampingScrollPhysics(),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.hasBoundedHeight) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: physics,
+                  padding: contentPadding,
+                  child: content,
+                ),
+              ),
+              if (bottomBar != null) bottomBar!,
+            ],
+          );
+        } else {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: contentPadding,
+                child: content,
+              ),
+              if (bottomBar != null) bottomBar!,
+            ],
+          );
+        }
+      },
+    );
+  }
+}
+
 /// Nút bấm chính chiều rộng đầy đủ (tối thiểu 48×48dp)
 class WorkflowPrimaryButton extends StatelessWidget {
   final String label;
@@ -371,34 +463,45 @@ class WorkflowPrimaryButton extends StatelessWidget {
                   onPressed!();
                 },
           style: FilledButton.styleFrom(
-            backgroundColor: DytavaColors.limePrimary,
-            foregroundColor: DytavaColors.graphite,
-            minimumSize: const Size(48, 50),
-            shape: const StadiumBorder(),
+            backgroundColor: DytavaColors.primary,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(48, 52),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             elevation: 0,
             textStyle: const TextStyle(
-              fontFamily: DytavaTypography.editorialFont,
-              fontWeight: FontWeight.w800,
+              fontFamily: DytavaTypography.primaryFont,
+              fontWeight: FontWeight.w700,
               fontSize: 15,
             ),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
             children: [
-              if (iconAsset != null) ...[
-                BrandIcon(iconAsset!, size: 18),
-                const SizedBox(width: 8),
-              ],
-              Flexible(
+              if (iconAsset != null) const SizedBox(width: 26),
+              Expanded(
                 child: Text(
                   label,
+                  textAlign: TextAlign.center,
                   style: DytavaTypography.labelLarge.copyWith(
-                    color: DytavaColors.graphite,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: onPressed == null
+                        ? DytavaColors.textSecondary
+                        : Colors.white,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
+              if (iconAsset != null) ...[
+                const SizedBox(width: 8),
+                BrandIcon(
+                  iconAsset!,
+                  size: 18,
+                  color: onPressed == null
+                      ? DytavaColors.textSecondary
+                      : Colors.white,
+                ),
+              ],
             ],
           ),
         ),
@@ -436,18 +539,20 @@ class WorkflowSecondaryButton extends StatelessWidget {
                   onPressed!();
                 },
           style: OutlinedButton.styleFrom(
-            backgroundColor: DytavaColors.warmSurface,
-            foregroundColor: DytavaColors.graphite,
+            backgroundColor: DytavaColors.surface,
+            foregroundColor: DytavaColors.textPrimary,
             side: const BorderSide(
               color: DytavaColors.subtleBorder,
-              width: 1.2,
+              width: 1.0,
             ),
             minimumSize: const Size(48, 48),
-            shape: const StadiumBorder(),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             elevation: 0,
             textStyle: const TextStyle(
-              fontFamily: DytavaTypography.editorialFont,
-              fontWeight: FontWeight.w700,
+              fontFamily: DytavaTypography.primaryFont,
+              fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
           ),
@@ -456,7 +561,7 @@ class WorkflowSecondaryButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 18, color: DytavaColors.graphite),
+                Icon(icon, size: 18, color: DytavaColors.textPrimary),
                 const SizedBox(width: 8),
               ] else if (iconAsset != null) ...[
                 BrandIcon(iconAsset!, size: 18),
@@ -466,8 +571,8 @@ class WorkflowSecondaryButton extends StatelessWidget {
                 child: Text(
                   label,
                   style: const TextStyle(
-                    color: DytavaColors.graphite,
-                    fontWeight: FontWeight.bold,
+                    color: DytavaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -482,154 +587,43 @@ class WorkflowSecondaryButton extends StatelessWidget {
 /// Thanh tiến trình 4 bước Guided Mobile Workflow (`Nguồn → Cấu hình → So sánh → Kết quả`)
 /// Sử dụng `BrandIcon` SVG chính thức của Dytava.
 class DytavaGuidedStepHeader extends StatelessWidget {
-  final WorkflowScreen screen;
-
   const DytavaGuidedStepHeader({super.key, required this.screen});
-
+  final WorkflowScreen screen;
   @override
   Widget build(BuildContext context) {
-    final currentStep = switch (screen) {
-      WorkflowScreen.home => 0,
-      WorkflowScreen.sources ||
-      WorkflowScreen.preview ||
-      WorkflowScreen.ocrReview => 1,
-      WorkflowScreen.mapping || WorkflowScreen.policy => 2,
-      WorkflowScreen.progress => 3,
-      WorkflowScreen.results ||
-      WorkflowScreen.detail ||
-      WorkflowScreen.export => 4,
-    };
-    final stepDetailTitle = switch (screen) {
-      WorkflowScreen.home => 'Bắt đầu phiên',
-      WorkflowScreen.sources => 'Bước 1/4 · Chọn & kiểm tra Nguồn A/B',
-      WorkflowScreen.preview => 'Bước 1/4 · Xem trước & xác nhận bảng nguồn',
-      WorkflowScreen.ocrReview => 'Bước 1/4 · Duyệt từng ô OCR mẫu',
-      WorkflowScreen.mapping => 'Bước 2/4 · Ghép cột tương ứng giữa A và B',
-      WorkflowScreen.policy => 'Bước 2/4 · Quy tắc chuẩn hóa & chiều so sánh',
-      WorkflowScreen.progress => 'Bước 3/4 · Đang thực thi đối chiếu',
-      WorkflowScreen.results => 'Bước 4/4 · Kết quả đối chiếu & sai khác',
-      WorkflowScreen.detail => 'Bước 4/4 · Chi tiết bằng chứng từng ô',
-      WorkflowScreen.export => 'Bước 4/4 · Xem trước & xuất báo cáo',
-    };
-    const steps = [
-      (1, 'Nguồn', DytavaIcons.importData),
-      (2, 'Cấu hình', DytavaIcons.policy),
-      (3, 'So sánh', DytavaIcons.compareProgress),
-      (4, 'Kết quả', DytavaIcons.compareTable),
-    ];
-
-    return Semantics(
-      container: true,
-      label: 'Tiến độ phiên so sánh: $stepDetailTitle',
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: DytavaColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: DytavaColors.border),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x06000000),
-              offset: Offset(0, 2),
-              blurRadius: 8,
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                for (var i = 0; i < steps.length; i++) ...[
-                  if (i > 0)
-                    Expanded(
-                      child: Container(
-                        height: 2.5,
-                        color: currentStep > steps[i].$1 - 1
-                            ? DytavaColors.lime600
-                            : DytavaColors.subtleBorder,
-                      ),
-                    ),
-                  Flexible(
-                    flex: 2,
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: currentStep == steps[i].$1
-                                ? DytavaColors.limePrimary
-                                : (currentStep > steps[i].$1
-                                      ? const Color(0xFFE8F5E9)
-                                      : DytavaColors.warmSurface),
-                            border: Border.all(
-                              color: currentStep > steps[i].$1
-                                  ? const Color(0xFF10B981)
-                                  : (currentStep == steps[i].$1
-                                        ? DytavaColors.lime600
-                                        : DytavaColors.subtleBorder),
-                              width: 1.5,
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: BrandIcon(
-                            currentStep > steps[i].$1
-                                ? DytavaIcons.check
-                                : steps[i].$3,
-                            size: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            steps[i].$2,
-                            maxLines: 1,
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontFamily: DytavaTypography.editorialFont,
-                              fontWeight: currentStep == steps[i].$1
-                                  ? FontWeight.w800
-                                  : FontWeight.w500,
-                              color: currentStep == steps[i].$1
-                                  ? DytavaColors.graphite
-                                  : DytavaColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
+    final step = screen == WorkflowScreen.mapping ? 1 : 2;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              for (var i = 1; i <= 2; i++) ...[
+                if (i > 1) const SizedBox(width: 6),
+                Expanded(
+                  child: Container(
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: i <= step
+                          ? DytavaColors.primary
+                          : DytavaColors.primaryLight,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: DytavaColors.warmSurface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: DytavaColors.subtleBorder, width: 0.8),
-              ),
-              child: Text(
-                stepDetailTitle,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontFamily: DytavaTypography.editorialFont,
-                  fontWeight: FontWeight.w700,
-                  color: DytavaColors.graphite,
                 ),
-              ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'ADVANCED COMPARE · STEP $step OF 2',
+            style: DytavaTypography.labelSmall.copyWith(
+              color: DytavaColors.primary,
+              fontSize: 10,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -640,86 +634,84 @@ class WorkflowSessionHistoryView extends StatelessWidget {
   final WorkflowController flow;
   final VoidCallback onOpenResults;
   final VoidCallback onQuickRun;
-
   const WorkflowSessionHistoryView({
     super.key,
     required this.flow,
     required this.onOpenResults,
     required this.onQuickRun,
   });
-
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        WorkflowSectionCard(
-          children: [
-            Row(
-              children: [
-                const BrandIcon(DytavaIcons.history, size: 22),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Phiên đối chiếu trong bộ nhớ tạm',
-                    style: DytavaTypography.titleLarge.copyWith(
-                      color: DytavaColors.textPrimary,
-                    ),
-                  ),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const SizedBox(height: 20),
+      Text(
+        flow.resultCurrent
+            ? '1 current comparison'
+            : 'No completed comparisons',
+        style: DytavaTypography.bodyMedium,
+      ),
+      const SizedBox(height: 24),
+      if (flow.resultCurrent)
+        Card(
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            leading: Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: DytavaColors.primaryLight,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'X',
+                style: TextStyle(
+                  color: DytavaColors.primary,
+                  fontWeight: FontWeight.w700,
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Theo chính sách bảo mật P0, ứng dụng chỉ giữ kết quả của phiên đang mở trong bộ nhớ tạm và tự động dọn sạch khi đóng phiên.',
-              style: DytavaTypography.bodyMedium,
+            title: Text(
+              flow.slot(SourceSide.a).artifact?.label ?? 'Current comparison',
+              style: DytavaTypography.titleSmall,
             ),
-            const SizedBox(height: 12),
-            if (flow.resultCurrent && flow.result != null) ...[
-              DytavaHistoryCard(
-                title:
-                    '${flow.slot(SourceSide.a).artifact?.label ?? 'Sheet A'} → ${flow.slot(SourceSide.b).artifact?.label ?? 'Sheet B'}',
-                subtitle:
-                    '${flow.result!.matchedRecords} hàng ghép • ${flow.result!.cells.length} cặp ô • ${flow.result!.count(DecisionStatus.different)} khác biệt',
-                badgeText: 'HIỆN HÀNH',
-                onTap: onOpenResults,
-              ),
-              DytavaResultCard(
-                fileA:
-                    flow.slot(SourceSide.a).artifact?.label ?? 'sample.csv (A)',
-                fileB:
-                    flow.slot(SourceSide.b).artifact?.label ?? 'sample.csv (B)',
-                totalPairs: flow.result!.cells.length,
-                equivalentCount: flow.result!.count(DecisionStatus.equivalent),
-                differentCount: flow.result!.count(DecisionStatus.different),
-                unresolvedCount: flow.result!.count(DecisionStatus.unresolved),
-                onTap: onOpenResults,
-              ),
-              const SizedBox(height: 12),
-              WorkflowPrimaryButton(
-                label: 'Mở bảng Sheet Diff 2 Sheets hiện hành',
-                iconAsset: DytavaIcons.compareTable,
-                onPressed: onOpenResults,
-              ),
-            ] else ...[
-              const DytavaEmptyState(
-                illustrationAsset: DytavaIllustrations.emptyHistory,
-                title: 'Chưa có phiên hoàn tất',
-                message:
-                    'Bắt đầu phiên mới hoặc chạy trải nghiệm nhanh để xem kết quả tại đây.',
-              ),
-              const SizedBox(height: 12),
-              WorkflowPrimaryButton(
-                label: 'Chạy Sheet Diff 2 Bảng mẫu ngay',
-                iconAsset: DytavaIcons.play,
-                onPressed: onQuickRun,
-              ),
-            ],
-          ],
+            subtitle: Text(
+              '${flow.result!.cells.length} cells · ${flow.result!.count(DecisionStatus.different)} modified',
+              style: DytavaTypography.bodySmall,
+            ),
+            trailing: const Icon(Icons.chevron_right, size: 18),
+            onTap: onOpenResults,
+          ),
+        )
+      else ...[
+        const SizedBox(height: 40),
+        const Center(
+          child: Icon(Icons.history, color: DytavaColors.primary, size: 44),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'Your results will appear here.',
+          textAlign: TextAlign.center,
+          style: DytavaTypography.titleMedium,
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Comparisons stay in memory until you close the session.',
+          textAlign: TextAlign.center,
+          style: DytavaTypography.bodyMedium,
+        ),
+        const SizedBox(height: 24),
+        TextButton(
+          onPressed: onQuickRun,
+          child: const Text('Try a sample comparison →'),
         ),
       ],
-    );
-  }
+    ],
+  );
 }
 
 /// Giao diện phụ trợ: Mẫu quy tắc chuẩn hóa & Giải thích 4 trạng thái quyết định
@@ -839,66 +831,224 @@ class WorkflowLearnAndPresetsView extends StatelessWidget {
 
 /// Giao diện phụ trợ: Cài đặt & Quyền riêng tư
 class WorkflowSettingsView extends StatelessWidget {
-  const WorkflowSettingsView({super.key});
-
+  const WorkflowSettingsView({
+    super.key,
+    required this.flow,
+    required this.onOpenPresets,
+  });
+  final WorkflowController flow;
+  final VoidCallback onOpenPresets;
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        WorkflowSectionCard(
-          children: [
-            Row(
-              children: [
-                BrandIllustration.securityLocal(size: 48),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Cài đặt đối chiếu & Quyền riêng tư',
-                    style: DytavaTypography.titleLarge.copyWith(
-                      color: DytavaColors.textPrimary,
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _label('COMPARISON'),
+      _tile(
+        'Compare mode',
+        'Quick Compare',
+        'Propose mappings; confirm uncertain matches.',
+      ),
+      _tile(
+        'Comparison rules',
+        'Configure ›',
+        'Values, spaces and text case.',
+        onTap: () => _rules(context),
+      ),
+      _tile(
+        'Rule presets',
+        'View ›',
+        'Explore the available comparison rules.',
+        onTap: onOpenPresets,
+      ),
+      _label('DEVICE & DATA'),
+      _tile(
+        'Session storage',
+        'In memory',
+        'Data is cleared when you close the comparison.',
+      ),
+      _tile(
+        'Privacy',
+        'On this device',
+        'Files are processed locally. Reports save to a location you choose.',
+      ),
+      _label('ABOUT DYTAVA'),
+      _tile('Dytava', 'Version 1.0.0', 'Two spreadsheets. One clear view.'),
+    ],
+  );
+
+  Widget _label(String text) => Padding(
+    padding: const EdgeInsets.only(top: 16, bottom: 12),
+    child: Text(
+      text,
+      style: DytavaTypography.labelSmall.copyWith(
+        color: DytavaColors.primary,
+        fontSize: 11,
+      ),
+    ),
+  );
+  Widget _tile(
+    String title,
+    String value,
+    String subtitle, {
+    VoidCallback? onTap,
+  }) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Text(title, style: DytavaTypography.titleSmall),
+                  Text(
+                    value,
+                    style: DytavaTypography.bodyMedium.copyWith(
+                      color: DytavaColors.primary,
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(subtitle, style: DytavaTypography.bodySmall),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _rules(BuildContext context) async {
+    var policy = flow.config.webPolicy;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, update) => SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Comparison settings',
+                  style: DytavaTypography.displayMedium,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Choose what counts as a difference.',
+                  style: DytavaTypography.bodyMedium,
+                ),
+                const SizedBox(height: 24),
+                Material(
+                  color: DytavaColors.background,
+                  borderRadius: BorderRadius.circular(18),
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        title: const Text(
+                          'Ignore text case',
+                          style: DytavaTypography.titleSmall,
+                        ),
+                        subtitle: const Text(
+                          'Treat “Excel” and “excel” as equal.',
+                          style: DytavaTypography.bodySmall,
+                        ),
+                        value: !policy.caseSensitiveText,
+                        onChanged: (v) => update(
+                          () => policy = WebComparisonPolicy(
+                            trimText: policy.trimText,
+                            caseSensitiveText: !v,
+                            preserveLeadingZeros: policy.preserveLeadingZeros,
+                            caseSensitiveIdentifier:
+                                policy.caseSensitiveIdentifier,
+                            distinctNullZero: policy.distinctNullZero,
+                            treatOrdinalAsMetadata:
+                                policy.treatOrdinalAsMetadata,
+                          ),
+                        ),
+                      ),
+                      const Divider(indent: 16, endIndent: 16, height: 1),
+                      SwitchListTile(
+                        title: const Text(
+                          'Trim spaces',
+                          style: DytavaTypography.titleSmall,
+                        ),
+                        subtitle: const Text(
+                          'Ignore spaces around text.',
+                          style: DytavaTypography.bodySmall,
+                        ),
+                        value: policy.trimText,
+                        onChanged: (v) => update(
+                          () => policy = WebComparisonPolicy(
+                            trimText: v,
+                            caseSensitiveText: policy.caseSensitiveText,
+                            preserveLeadingZeros: policy.preserveLeadingZeros,
+                            caseSensitiveIdentifier:
+                                policy.caseSensitiveIdentifier,
+                            distinctNullZero: policy.distinctNullZero,
+                            treatOrdinalAsMetadata:
+                                policy.treatOrdinalAsMetadata,
+                          ),
+                        ),
+                      ),
+                      const Divider(indent: 16, endIndent: 16, height: 1),
+                      SwitchListTile(
+                        title: const Text(
+                          'Preserve leading zeros',
+                          style: DytavaTypography.titleSmall,
+                        ),
+                        subtitle: const Text(
+                          'Keep “001” distinct from “1”.',
+                          style: DytavaTypography.bodySmall,
+                        ),
+                        value: policy.preserveLeadingZeros,
+                        onChanged: (v) => update(
+                          () => policy = WebComparisonPolicy(
+                            trimText: policy.trimText,
+                            caseSensitiveText: policy.caseSensitiveText,
+                            preserveLeadingZeros: v,
+                            caseSensitiveIdentifier:
+                                policy.caseSensitiveIdentifier,
+                            distinctNullZero: policy.distinctNullZero,
+                            treatOrdinalAsMetadata:
+                                policy.treatOrdinalAsMetadata,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'These rules apply to the current session.',
+                  style: DytavaTypography.bodySmall,
+                ),
+                WorkflowPrimaryButton(
+                  label: 'Save settings',
+                  onPressed: () {
+                    flow.configure(flow.config.copyWith(webPolicy: policy));
+                    Navigator.pop(context);
+                  },
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            const WorkflowInfoBanner(
-              text:
-                  'Chế độ Offline-First: Mọi dữ liệu bảng tính và ảnh OCR đều được xử lý cục bộ trên thiết bị.',
-              iconAsset: DytavaIcons.shield,
-              color: DytavaColors.exact,
-              bgColor: DytavaColors.softGreen,
-            ),
-            const Divider(height: 24),
-            const ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: BrandIcon(DytavaIcons.compareTable, size: 24),
-              title: Text('Giao diện kết quả mặc định'),
-              subtitle: Text('Sheet Diff 2 Sheets (Hợp nhất & Song song)'),
-              trailing: WorkflowStatusPill(
-                label: 'Đang bật',
-                color: DytavaColors.exact,
-                bg: DytavaColors.exactBg,
-                iconAsset: DytavaIcons.check,
-              ),
-            ),
-            const ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: BrandIcon(DytavaIcons.policy, size: 24),
-              title: Text('Kiến trúc thực thi'),
-              subtitle: Text(
-                'UDG 3.1 • Guided Mobile Workflow • Brand Assets v2.0',
-              ),
-              trailing: WorkflowStatusPill(
-                label: 'v0.3.0',
-                color: DytavaColors.primary,
-                bg: DytavaColors.softBlue,
-              ),
-            ),
-          ],
+          ),
         ),
-      ],
+      ),
     );
   }
 }

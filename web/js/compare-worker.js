@@ -4,7 +4,7 @@ self.onmessage = async ({ data }) => {
   try {
     const result = data.type === 'parse'
       ? await parseFile(data.file, data.sheetName)
-      : new CompareEngine(data.policy).compareTables(data.fileA, data.fileB, data.keyColumn, { alignmentMode: data.alignmentMode, treatOrdinalAsMetadata: data.treatOrdinalAsMetadata });
+      : new CompareEngine(data.policy).compareTables(data.fileA, data.fileB, data.keyColumn, { alignmentMode: data.alignmentMode, treatOrdinalAsMetadata: data.treatOrdinalAsMetadata, sheetOverrides: data.sheetOverrides });
     self.postMessage({ id: data.id, result });
   } catch (error) { self.postMessage({ id: data.id, error: error.message || 'Không xử lý được dữ liệu.' }); }
 };

@@ -9,6 +9,8 @@ release_baseline: Android P0 mở rộng; extensions disabled by default
 specification_state: SPECIFIED_PENDING_REVIEW
 execution_state: NOT_VERIFIED
 ---
+> **Cập nhật 20/11/2026:** [Ghép toàn workbook và nội dung ô](05_workbook_mapping_and_cell_content.md) thay quy định một selected sheet và xác nhận thủ công mọi cặp sheet cho web/mobile: so sánh tất cả worksheet, tự ghép tên → cấu trúc, chỉ hỏi cặp chưa rõ; xem tổng/từng cặp. Ảnh trong ô là nội dung có kiểu, không so cached error như text. Wire Input 0.1.0 và ADR cũ vẫn là baseline lịch sử.
+
 
 # DYTAVA UDG 3.1 — đặc tả thuật toán chính
 
@@ -37,7 +39,7 @@ V3 gốc là snapshot tham khảo, không dùng đồng thời như một nguồ
 2. Source snapshot read-only, bounded raw row store; compare chỉ đọc snapshot frozen. Không đọc nguồn sống để lấp metadata thiếu trong khi compare.
 3. P0 KEY dùng external sort + merge join trên canonical key bytes, không thử ghép Cartesian duplicate buckets. SQLite là result/index store tùy adapter, không làm cơ sở tuyên bố O(R).
 4. SHA-256 với domain separation cho signatures; hash bằng nhau luôn kiểm bytes. Key và exact-content signatures tách biệt; tolerance không tham gia join/hash grouping.
-5. Không auto-accept mapping/axis/key từ confidence. Score chỉ xếp gợi ý; user confirmations là gate. ORDERED/MULTISET là extension, fail closed khi không có căn cứ identity.
+5. Với column mapping/axis/key, không auto-accept từ confidence; riêng ghép sheet theo yêu cầu 20/11/2026 dùng hợp đồng workbook. Score chỉ xếp gợi ý; user confirmations là gate. ORDERED/MULTISET là extension, fail closed khi không có căn cứ identity.
 6. Batch commits vào staging generation; publish immutable result bằng commit marker sau audit. Không giữ transaction suốt một region.
 7. COMPLETED có thể chứa uncertainty đã được kiểm đếm đầy đủ; scope đọc dở không export. Cancel/restart không tái dùng partial READY hoặc checkpoint của attempt cũ.
 8. Resource profiles là input bắt buộc có finite limits và calibration evidence; không có profile hợp lệ thì chặn enable. Không biến số thiết kế chưa đo thành benchmark hoặc âm thầm hạ trần sản phẩm.

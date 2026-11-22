@@ -7,6 +7,8 @@ reviewer: TBD
 updated: 2026-11-13
 release_baseline: P0 mở rộng
 ---
+> **Cập nhật 20/11/2026:** [hợp đồng workbook](../engine/05_workbook_mapping_and_cell_content.md) thay quy định một selected sheet và xác nhận thủ công mọi cặp sheet cho web/mobile: so sánh tất cả worksheet, tự ghép tên → cấu trúc, chỉ hỏi cặp chưa rõ; xem tổng/từng cặp. Ảnh trong ô là nội dung có kiểu, không so cached error như text. Wire Input 0.1.0 và ADR cũ vẫn là baseline lịch sử.
+
 
 # Report Export Specification — PDF diff và báo cáo Dytava
 
@@ -118,3 +120,7 @@ Tên nguồn hiển thị trong report theo lựa chọn export; mặc định g
 | REP-TC-012 | FR-017/018, NFR-UX-02 | Render pages, in grayscale, inspect reading order/fonts | Không overlap/cắt chữ, đủ labels/legend; accessibility checklist có evidence |
 
 Các REP-TC-* vẫn PLANNED cho nghiệm thu toàn target; unit/E2E, PDF mẫu và long-cell smoke của [renderer](RENDERER.md) chỉ là evidence cho subset đã triển khai. Không chuyển cả registry sang PASS từ các kiểm tra này. Nghiệm thu cần golden JSON độc lập, PDF text extraction, page renders và visual QA, counts reconciliation, font/active-content inspection, device/browser evidence. Xem [kế hoạch dung lượng lớn](../../testing/EXPANDED_SCOPE_ACCEPTANCE.md) cho pipeline 1 GB.
+
+### Workbook extension — 20/11/2026
+
+Runtime renderer và JSON Schema có `workbook` tùy chọn với summary mỗi cặp, `SHEET` structural detail và mode `ORDERED_SEQUENCE`. Legacy web report được bridge rõ ràng, giữ cảnh báo thiếu audit metadata. CSV có Sheet A/Sheet B. Mobile JSON có `sheets` chứa report từng cặp; xuất từ chế độ xem một cặp vẫn giữ toàn workbook.

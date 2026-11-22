@@ -1,3 +1,4 @@
+import { describeSheet, mapSheets } from './sheet-mapping.js';
 import { brandIcon, emptyState } from './branding.js';
 import Papa from 'papaparse';
 import { SAMPLE_DATASETS } from './sample-data.js';
@@ -17,6 +18,7 @@ class App {
     this.user = null; this.allowRegistration = true; this.retentionDays = 30;
     this.fileA = null;
     this.fileB = null;
+    this.sheetOverrides = []; this.sheetPairView = 'ALL';
     this.localFiles = {}; this.parseRevisions = { A: 0, B: 0 };
     this.init();
   }
@@ -133,9 +135,23 @@ class App {
       zone.ondragleave = () => zone.classList.remove('drag-over');
       zone.ondrop = event => { event.preventDefault(); zone.classList.remove('drag-over'); if (event.dataTransfer.files[0]) this.loadFile(event.dataTransfer.files[0], side.toUpperCase()); };
       input.onchange = () => { if (input.files[0]) this.loadFile(input.files[0], side.toUpperCase()); input.value = ''; };
-      document.getElementById(`sheet-${side}`).onchange = event => this.loadFile(this.localFiles[side.toUpperCase()], side.toUpperCase(), event.target.value);
+      document.getElementById(`sheet-${side}`).onchange = event => {
+        const key = side.toUpperCase(), current = this[`file${key}`];
+        const table = current?.tables?.find(t => t.sheetName === event.target.value);
+        if (table) {
+          this[`file${key}`] = { ...current, ...table, warnings: current.warnings };
+          this.updateFileBadges();
+          if (!this.currentComparisonResult) this.renderInitialEmptyState(); else this.renderDualGrid();
+        }
+      };
     }
+    document.getElementById('sheet-pair-view').onchange = event => { this.sheetPairView = event.target.value; this.gridPage = 0; this.updateSummaryCounters(); this.renderDualGrid(); };
     document.getElementById('sample-dataset-select').onchange = event => {
+      this.sheetOverrides = []; this.sheetPairView = 'ALL'; this.runRevision++;
+      document.getElementById('sheet-mapping-review').hidden = true;
+      document.getElementById('workbook-result-controls').hidden = true;
+      document.getElementById('workbook-warnings').textContent = '';
+      this.parseRevisions.A++; this.parseRevisions.B++;
       const key = event.target.value;
       if (!key) {
         this.fileA = null; this.fileB = null; this.localFiles = {};
@@ -154,19 +170,65 @@ class App {
     if (!file || !this.isEnabled('FLAG_OFFLINE_XLSX_CSV')) return this.showToast('Nhập tệp đang tạm tắt.', 'error');
     const revision = ++this.parseRevisions[side]; this.setBusy(1);
     try {
+      this.runRevision++; this.currentComparisonResult = null;
+      this[`file${side}`] = null; this.updateFileBadges();
+      document.getElementById('sheet-mapping-review').hidden = true;
+      this.sheetOverrides = []; this.sheetPairView = 'ALL';
+      this.updateSaveButton(); this.renderInitialEmptyState();
       const result = await this.worker.call({ type: 'parse', file, sheetName });
       if (revision !== this.parseRevisions[side]) return;
       this[`file${side}`] = result; this.localFiles[side] = file;
       this.updateFileBadges(); this.populateKeyColumnOptions();
+      if (!this.reviewSheetMapping()) { this.renderInitialEmptyState(); return; }
+
       if (this.fileA && this.fileB) {
         await this.runComparison();
-        this.showToast(`Đã đọc ${file.name}: ${result.rows.length} dòng. Hoàn tất đối chiếu.`);
+        if (this.currentComparisonResult) this.showToast(`Đã đối chiếu toàn bộ workbook: ${this.currentComparisonResult.sheetResults?.length || 1} cặp/phạm vi sheet.`);
       } else {
         this.renderInitialEmptyState();
-        this.showToast(`Đã đọc ${file.name}: ${result.rows.length} dòng. Vui lòng tải tiếp ${side === 'A' ? 'Nguồn B' : 'Nguồn A'} để đối chiếu.`);
+        this.showToast(`Đã đọc ${file.name}: ${(result.tables || [result]).reduce((n, t) => n + t.rows.length, 0)} dòng${result.tables ? ` / ${result.tables.length} sheet` : ''}. Vui lòng tải tiếp ${side === 'A' ? 'Nguồn B' : 'Nguồn A'} để đối chiếu.`);
       }
     } catch (error) { if (revision === this.parseRevisions[side]) this.showToast(error.message, 'error'); }
     finally { this.setBusy(-1); }
+  }
+  workbookMapping() {
+    if (!this.fileA || !this.fileB || (!this.fileA.tables && !this.fileB.tables)) return null;
+    return mapSheets((this.fileA.tables || [this.fileA]).map(describeSheet), (this.fileB.tables || [this.fileB]).map(describeSheet), this.sheetOverrides);
+  }
+  reviewSheetMapping() {
+    const panel = document.getElementById('sheet-mapping-review'), plan = this.workbookMapping();
+    panel.hidden = !plan || plan.complete;
+    if (!plan || plan.complete) return true;
+    const a = this.fileA.tables || [this.fileA], b = this.fileB.tables || [this.fileB];
+    panel.innerHTML = `<p><strong>Cần chọn cặp sheet</strong></p><p>Các sheet còn lại chưa có bằng chứng ghép duy nhất. Đã ghép tự động ${plan.pairs.length} cặp.</p>${plan.unresolvedA.map(i => `<label>${e(a[i].sheetName || a[i].name)} (A) <select class="form-select" data-map-sheet="${i}"><option value="">Chưa chọn</option>${plan.unresolvedB.map(j => `<option value="${j}">${e(b[j].sheetName || b[j].name)} (B)</option>`).join('')}<option value="NONE">Chỉ có ở A</option></select></label>`).join('')}<button id="apply-sheet-mapping" class="btn btn-primary">Áp dụng các cặp đã chọn</button><button id="keep-unmatched-sheets" class="btn btn-outline">Giữ riêng tất cả sheet chưa ghép</button>`;
+    panel.querySelector('#apply-sheet-mapping').onclick = () => {
+      const additions = [...panel.querySelectorAll('[data-map-sheet]')].filter(el => el.value !== '').map(el => ({ a: a[Number(el.dataset.mapSheet)].sheetName || a[Number(el.dataset.mapSheet)].name, b: el.value === 'NONE' ? null : b[Number(el.value)].sheetName || b[Number(el.value)].name }));
+      try {
+        mapSheets(a.map(describeSheet), b.map(describeSheet), [...this.sheetOverrides, ...additions]);
+        this.sheetOverrides.push(...additions); if (this.reviewSheetMapping()) this.runComparison();
+      } catch (error) { this.showToast(error.message, 'error'); }
+    };
+    panel.querySelector('#keep-unmatched-sheets').onclick = () => {
+      this.sheetOverrides.push(...plan.unresolvedA.map(i => ({ a: a[i].sheetName || a[i].name, b: null })), ...plan.unresolvedB.map(j => ({ a: null, b: b[j].sheetName || b[j].name })));
+      this.reviewSheetMapping(); this.runComparison();
+    };
+    return false;
+  }
+  displayedResult() {
+    const all = this.currentComparisonResult;
+    return all?.sheetResults?.find(r => r.pair.id === this.sheetPairView) || all;
+  }
+  updateWorkbookResultControls() {
+    const result = this.currentComparisonResult, control = document.getElementById('workbook-result-controls');
+    control.hidden = !result?.sheetResults;
+    if (result?.sheetResults) {
+      const selector = document.getElementById('sheet-pair-view');
+      selector.innerHTML = `<option value="ALL">Tất cả (${result.sheetResults.length} cặp/phạm vi sheet)</option>${result.sheetResults.map(r => `<option value="${e(r.pair.id)}">${e(r.label)} · ${e(r.pair.method)} · ${r.summary.different} khác / ${r.summary.unresolved} chưa kết luận</option>`).join('')}`;
+      if (!result.sheetResults.some(r => r.pair.id === this.sheetPairView)) this.sheetPairView = 'ALL';
+      selector.value = this.sheetPairView;
+      document.getElementById('workbook-coverage').textContent = `Đã xử lý toàn bộ ${(this.fileA.tables || [this.fileA]).length} sheet A và ${(this.fileB.tables || [this.fileB]).length} sheet B. Sheet thêm: ${result.report.sheet_changes.filter(s => s.status === 'ADDED').length}; sheet bớt: ${result.report.sheet_changes.filter(s => s.status === 'REMOVED').length}.`;
+    }
+    document.getElementById('workbook-warnings').textContent = (result?.report.warnings || []).join(' ');
   }
   updateFileBadges() {
     for (const side of ['A', 'B']) {
@@ -176,7 +238,7 @@ class App {
       const sheet = document.getElementById(`sheet-${side.toLowerCase()}`);
       if (file) {
         badge.hidden = false;
-        badge.textContent = `${file.name} (${file.rows.length} hàng)`;
+        badge.textContent = file.tables ? `${file.name} (${file.tables.length} sheet · ${file.tables.reduce((n, t) => n + t.rows.length, 0)} hàng)` : `${file.name} (${file.rows.length} hàng)`;
         label.textContent = file.sheetName || file.name;
         sheet.hidden = !file.sheets || file.sheets.length < 2;
         sheet.innerHTML = (file.sheets || []).map(name => `<option value="${e(name)}">${e(name)}</option>`).join('');
@@ -196,7 +258,8 @@ class App {
       return;
     }
     const previous = select.value;
-    const headers = this.fileA.headers.filter(h => this.fileB.headers.includes(h));
+    const allTables = [...(this.fileA.tables || [this.fileA]), ...(this.fileB.tables || [this.fileB])];
+    const headers = allTables[0].headers.filter(h => allTables.every(t => t.headers.includes(h)));
     const isIdCol = h => /mã|^id$|code|sku/i.test(h) && !/^(#|no\.?|stt|số thứ tự)$/i.test(h);
     const guess = headers.find(isIdCol);
 
@@ -256,6 +319,8 @@ class App {
     button.textContent = saved ? '✓ Đã lưu thống kê' : 'Lưu thống kê phiên';
   }
   renderInitialEmptyState() {
+    document.getElementById('workbook-result-controls').hidden = true;
+    document.getElementById('workbook-warnings').textContent = [...(this.fileA?.warnings || []), ...(this.fileB?.warnings || [])].join(' ');
     for (const id of ['cnt-total', 'cnt-exact', 'cnt-equiv', 'cnt-diff', 'cnt-unres', 'cnt-added-removed']) {
       document.getElementById(id).textContent = '—';
     }
@@ -288,6 +353,7 @@ class App {
       this.renderInitialEmptyState();
       return;
     }
+    if (!this.reviewSheetMapping()) return;
     const revision = ++this.runRevision;
     const tolerance = Number(document.getElementById('opt-tolerance').value);
     if (!Number.isFinite(tolerance) || tolerance < 0 || tolerance > 1e9) return this.showToast('Dung sai phải từ 0 đến 1.000.000.000.', 'error');
@@ -316,11 +382,11 @@ class App {
     this.setBusy(1); const start = performance.now();
     try {
       const result = await this.worker.call({
-        type: 'compare', fileA, fileB, policy: { ...policyConfig, policy_id: policyId }, keyColumn, alignmentMode
+        type: 'compare', fileA, fileB, sheetOverrides: this.sheetOverrides, policy: { ...policyConfig, policy_id: policyId }, keyColumn, alignmentMode
       });
       if (revision !== this.runRevision) return;
-      result.metadata = { clientId: crypto.randomUUID(), formatA: fileA.format, formatB: fileB.format, rowsA: fileA.rows.length, rowsB: fileB.rows.length, durationMs: Math.round((performance.now() - start) * 100) / 100, policyId, policyConfig, summary: result.summary };
-      this.currentComparisonResult = result; this.gridPage = 0; this.updateSummaryCounters(); this.renderDualGrid();
+      result.metadata = { clientId: crypto.randomUUID(), formatA: fileA.format, formatB: fileB.format, rowsA: (fileA.tables || [fileA]).reduce((n, t) => n + t.rows.length, 0), rowsB: (fileB.tables || [fileB]).reduce((n, t) => n + t.rows.length, 0), durationMs: Math.round((performance.now() - start) * 100) / 100, policyId, policyConfig, summary: result.summary };
+      this.currentComparisonResult = result; this.updateWorkbookResultControls(); this.gridPage = 0; this.updateSummaryCounters(); this.renderDualGrid();
       document.getElementById('comparison-error').textContent = '';
       document.getElementById('comparison-error-art').hidden = true;
     } catch (error) {
@@ -335,25 +401,27 @@ class App {
     } finally { this.setBusy(-1); }
   }
   updateSummaryCounters() {
-    const summary = this.currentComparisonResult.summary;
+    const summary = this.displayedResult().summary;
     for (const [id, key] of [['cnt-total', 'total_cells_checked'], ['cnt-exact', 'exact'], ['cnt-equiv', 'equivalent'], ['cnt-diff', 'different'], ['cnt-unres', 'unresolved']]) document.getElementById(id).textContent = summary[key];
     document.getElementById('cnt-added-removed').textContent = `+${summary.added_rows} / -${summary.removed_rows}`;
   }
   renderDualGrid() {
     if (!this.currentComparisonResult) return;
-    const { headers, alignedRows } = this.currentComparisonResult;
+    const { headers, alignedRows } = this.displayedResult();
     const filtered = alignedRows.filter(row => this.activeFilter === 'ALL' || (this.activeFilter === 'ROWS' ? ['ADDED', 'REMOVED'].includes(row.rowStatus) : row.rowStatus === this.activeFilter));
     this.gridPage = Math.min(this.gridPage, Math.max(0, Math.ceil(filtered.length / 100) - 1));
     const rows = filtered.slice(this.gridPage * 100, (this.gridPage + 1) * 100);
     for (const side of ['A', 'B']) {
       const pane = document.getElementById(`table-container-${side.toLowerCase()}`);
+      const scope = this.displayedResult();
+      if (this.currentComparisonResult.sheetResults) document.getElementById(`label-table-${side.toLowerCase()}`).textContent = scope.pair ? (side === 'A' ? scope.pair.nameA : scope.pair.nameB) ?? '(Không có sheet)' : `Tất cả sheet · ${this[`file${side}`].name}`;
       pane.innerHTML = `<table class="diff-table"><thead><tr><th>#</th>${headers.map(h => `<th>${e(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((row, i) => {
         const lineNum = this.gridPage * 100 + i + 1;
         const lineHint = row.sourceLineA && row.sourceLineB && row.sourceLineA !== row.sourceLineB
           ? ` title="Nguồn A: dòng ${row.sourceLineA} ↔ Nguồn B: dòng ${row.sourceLineB}${row.matchRationale ? ` (${e(row.matchRationale)})` : ''}"`
           : (row.matchRationale ? ` title="${e(row.matchRationale)}"` : '');
-        return `<tr class="${row.rowStatus === 'ADDED' ? 'row-added' : row.rowStatus === 'REMOVED' ? 'row-removed' : ''}"${lineHint}><td${lineHint}>${lineNum}</td>${headers.map((h, field) => {
-          const value = row[`row${side}`]?.[this[`file${side}`].headers.indexOf(h)] ?? '';
+        return `<tr class="${row.rowStatus === 'ADDED' ? 'row-added' : row.rowStatus === 'REMOVED' ? 'row-removed' : ''}"${lineHint}><td${lineHint}>${row.sheetLabel ? `${e(row.sheetLabel)} · ` : ''}${lineNum}</td>${headers.map((h, field) => {
+          const value = row[`row${side}`]?.[(row[`headers${side}`] || this[`file${side}`].headers).indexOf(h)] ?? '';
           const cmp = row.cellComparisons[h];
           const status = cmp?.status;
           const classes = { EXACT: 'cell-exact', EQUIVALENT: 'cell-equiv', DIFFERENT: 'cell-diff', UNRESOLVED: 'cell-unres' };
@@ -372,8 +440,8 @@ class App {
           let cmp = row.cellComparisons[field];
           if (cmp) {
             if (cmp.status === 'EXACT' && (!cmp.rawA || cmp.rawA === '')) {
-              const valA = row.rowA?.[this.fileA?.headers?.indexOf(field)] ?? '';
-              const valB = row.rowB?.[this.fileB?.headers?.indexOf(field)] ?? '';
+              const valA = row.rowA?.[(row.headersA || this.fileA?.headers)?.indexOf(field)] ?? '';
+              const valB = row.rowB?.[(row.headersB || this.fileB?.headers)?.indexOf(field)] ?? '';
               cmp = { ...cmp, rawA: valA, rawB: valB, normA: valA, normB: valB };
             }
             this.openInspectorModal(field, row.key, cmp);
@@ -419,8 +487,9 @@ class App {
   exportCsvDiff() {
     if (!this.currentComparisonResult || !this.isEnabled('FLAG_REPORT_EXPORT')) return;
     const { headers, alignedRows } = this.currentComparisonResult;
-    const rows = alignedRows.filter(row => !['EXACT', 'EQUIVALENT'].includes(row.rowStatus)).map(row => [row.key, row.rowStatus, ...headers.map(h => String(row.rowA?.[this.fileA.headers.indexOf(h)] ?? '')), ...headers.map(h => String(row.rowB?.[this.fileB.headers.indexOf(h)] ?? ''))]);
-    const csv = Papa.unparse({ fields: ['Key', 'Status', ...headers.map(h => `${h} (A)`), ...headers.map(h => `${h} (B)`)], data: rows }, { escapeFormulae: /^[\s]*[=+\-@\t\r\n]/, quotes: true });
+    const rows = alignedRows.filter(row => !['EXACT', 'EQUIVALENT'].includes(row.rowStatus)).map(row => [row.sheetA || '', row.sheetB || '', row.key, row.rowStatus, ...headers.map(h => String(row.rowA?.[(row.headersA || this.fileA.headers).indexOf(h)] ?? '')), ...headers.map(h => String(row.rowB?.[(row.headersB || this.fileB.headers).indexOf(h)] ?? ''))]);
+    for (const change of this.currentComparisonResult.report.sheet_changes || []) rows.push([change.sheetA || '', change.sheetB || '', change.sheetA || change.sheetB, `SHEET_${change.status}`, ...Array(headers.length * 2).fill('')]);
+    const csv = Papa.unparse({ fields: ['Sheet A', 'Sheet B', 'Key', 'Status', ...headers.map(h => `${h} (A)`), ...headers.map(h => `${h} (B)`)], data: rows }, { escapeFormulae: /^[\s]*[=+\-@\t\r\n]/, quotes: true });
     download(`\uFEFF${csv}`, `differences-${Date.now()}.csv`, 'text/csv;charset=utf-8'); this.showToast('Đã xuất CSV khác biệt.');
   }
   async renderPublicReleases() {

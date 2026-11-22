@@ -1,14 +1,18 @@
 import 'dart:convert';
 import 'dart:async';
 import 'dart:isolate';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:archive/archive.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:xml/xml.dart';
 
 import '../domain/workflow.dart';
+
+import 'package:excelcompare_core/excelcompare_core.dart';
+
+import 'xlsx_cell_content.dart';
 import 'demo/demo_workflow_ports.dart';
 
 final class UploadedFileInfo {
@@ -29,10 +33,20 @@ final class UploadedFileInfo {
 }
 
 final class _ParsedTable {
-  const _ParsedTable(this.headers, this.rows, this.headerRow);
+  const _ParsedTable(
+    this.headers,
+    this.rows,
+    this.headerRow, {
+    this.sourceRows = const [],
+    this.specialCells = const {},
+    this.warnings = const [],
+  });
   final List<String> headers;
   final List<List<String>> rows;
   final int headerRow;
+  final List<int> sourceRows;
+  final Map<String, SourceCell> specialCells;
+  final List<String> warnings;
 }
 
 final class _ParsedFile {
@@ -69,6 +83,18 @@ abstract final class MobileFileUploadService {
     String name,
     Uint8List bytes,
   ) async {
+    if (kIsWeb) {
+      await Future<void>.delayed(Duration.zero);
+      try {
+        return _parse(name, bytes);
+      } catch (error) {
+        throw FormatException(
+          error is FormatException
+              ? error.message
+              : 'Không đọc được tệp. Hãy lưu lại dạng XLSX hoặc CSV.',
+        );
+      }
+    }
     final port = ReceivePort();
     Isolate? worker;
     try {
@@ -112,6 +138,19 @@ abstract final class MobileFileUploadService {
   }
 
   static UploadedFileInfo? info(String ref) {
+    if (ref == 'fixture:a' || ref == 'fixture:b') {
+      final isA = ref == 'fixture:a';
+      final name = _selected[ref] ?? 'Sheet 1 (Doanh thu)';
+      return UploadedFileInfo(
+        fileName: isA ? 'sample_a.xlsx' : 'sample_b.xlsx',
+        format: SourceFormat.xlsx,
+        privateRef: ref,
+        rowCount: 4,
+        columnCount: 2,
+        sheets: const ['Sheet 1 (Doanh thu)', 'Sheet 2 (Chi phí)'],
+        sheetName: name,
+      );
+    }
     final file = _files[ref];
     if (file == null) return null;
     final name = _selected[ref] ?? file.tables.keys.first,
@@ -130,6 +169,40 @@ abstract final class MobileFileUploadService {
   }
 
   static UploadedFileInfo selectSheet(String ref, String name) {
+    if (ref == 'fixture:a' || ref == 'fixture:b') {
+      _selected[ref] = name;
+      final isSheet2 = name.contains('2') || name.contains('Chi phí');
+      final isA = ref == 'fixture:a';
+      final vals = isSheet2
+          ? (isA
+                ? [
+                    ['E01', '50.0'],
+                    ['E02', '120.0'],
+                    ['E03', '85.5'],
+                  ]
+                : [
+                    ['E01', '50.0'],
+                    ['E02', '135.0'],
+                    ['E03', '85.5'],
+                  ])
+          : (isA ? DemoInputPort.valuesA : DemoInputPort.valuesB);
+      final flds = isSheet2
+          ? [
+              const TableField('id', 'Mã chi phí'),
+              const TableField('amount', 'Số tiền'),
+            ]
+          : DemoInputPort.fields;
+      DemoInputPort.registerUserFile(
+        ref,
+        fileName: isA ? 'sample_a.xlsx' : 'sample_b.xlsx',
+        format: SourceFormat.xlsx,
+        fields: flds,
+        values: vals,
+        sheetName: name,
+        headerRow: 1,
+      );
+      return info(ref)!;
+    }
     final file = _files[ref];
     final table = file?.tables[name];
     if (file == null || table == null) {
@@ -146,6 +219,101 @@ abstract final class MobileFileUploadService {
       headerRow: table.headerRow,
     );
     return info(ref)!;
+  }
+
+  /// The selected tab is only a preview; this inventory freezes all worksheets.
+  static InputSnapshot? snapshot(
+    String ref,
+    SourceArtifact artifact,
+    ImportBinding binding,
+  ) {
+    final file = _files[ref];
+    if (file == null) return null;
+    return _buildSnapshot(
+      file,
+      _selected[ref] ?? file.tables.keys.first,
+      artifact,
+      binding,
+    );
+  }
+
+  static Future<InputSnapshot?> snapshotInBackground(
+    String ref,
+    SourceArtifact artifact,
+    ImportBinding binding,
+  ) async {
+    final file = _files[ref];
+    if (file == null) return null;
+    final selected = _selected[ref] ?? file.tables.keys.first;
+    return kIsWeb
+        ? _buildSnapshot(file, selected, artifact, binding)
+        : Isolate.run(() => _buildSnapshot(file, selected, artifact, binding));
+  }
+
+  static InputSnapshot _buildSnapshot(
+    _ParsedFile file,
+    String selectedName,
+    SourceArtifact artifact,
+    ImportBinding binding,
+  ) {
+    InputSnapshot build(
+      String name,
+      _ParsedTable t,
+      int sheetIndex,
+    ) => InputSnapshot(
+      id: '${artifact.id}-sheet-$sheetIndex-${binding.revision}-${binding.attempt}',
+      binding: binding,
+      sheetName: file.format == SourceFormat.xlsx ? name : null,
+      fields: t.headers.map((h) => TableField(h, h)),
+      fullValidation: true,
+      ocrReviewed: false,
+      warnings: t.warnings,
+      records: [
+        for (var r = 0; r < t.rows.length; r++)
+          TableRecord(
+            '${artifact.id}-sheet-$sheetIndex-row-$r',
+            r,
+            {
+              for (var c = 0; c < t.headers.length; c++)
+                t.headers[c]:
+                    t.specialCells['$r,$c'] ??
+                    SourceCell(CellKind.text, rawLexeme: t.rows[r][c]),
+            },
+            {
+              for (var c = 0; c < t.headers.length; c++)
+                t.headers[c]:
+                    '$name!${_columnLetters(c + 1)}${r < t.sourceRows.length ? t.sourceRows[r] : r + t.headerRow + 1}',
+            },
+          ),
+      ],
+    );
+    final entries = file.tables.entries.toList(),
+        sheets = [
+          for (var i = 0; i < entries.length; i++)
+            build(entries[i].key, entries[i].value, i),
+        ];
+    final selected = sheets[entries.indexWhere((e) => e.key == selectedName)];
+    return InputSnapshot(
+      id: selected.id,
+      binding: binding,
+      fields: selected.fields,
+      records: selected.records,
+      fullValidation: true,
+      ocrReviewed: false,
+      sheetName: selected.sheetName,
+      workbookSheets: file.format == SourceFormat.xlsx ? sheets : const [],
+      warnings: sheets.expand((s) => s.warnings),
+    );
+  }
+
+  static String _columnLetters(int column) {
+    var out = '';
+    while (column > 0) {
+      column--;
+      out = String.fromCharCode(65 + column % 26) + out;
+      column ~/= 26;
+    }
+    return out;
   }
 
   static void release(String ref) {
@@ -302,6 +470,7 @@ abstract final class MobileFileUploadService {
         const [];
     String text(XmlNode node, String name) =>
         elements(node, name).map((e) => e.innerText).join();
+    final content = inspectXlsxCellContent(archive);
     final strings = elements(
       doc('xl/sharedStrings.xml'),
       'si',
@@ -334,22 +503,22 @@ abstract final class MobileFileUploadService {
         '1';
     final sheets = <String, String>{};
     for (final sheet in elements(workbook, 'sheet')) {
-      if (sheet.getAttribute('state') == 'hidden' ||
-          sheet.getAttribute('state') == 'veryHidden') {
-        continue;
-      }
       final id = sheet.attributes
           .where((a) => a.name.local == 'id')
           .firstOrNull
           ?.value;
+      if (!elements(doc('xl/_rels/workbook.xml.rels'), 'Relationship').any(
+        (r) =>
+            r.getAttribute('Id') == id &&
+            ((r.getAttribute('Type') ?? '').isEmpty ||
+                (r.getAttribute('Type') ?? '').endsWith('/worksheet')),
+      )) {
+        continue;
+      }
       var path = rels[id];
       if (path == null) continue;
-      path = path.startsWith('/')
-          ? path.substring(1)
-          : path.startsWith('xl/')
-          ? path
-          : 'xl/$path';
-      if (path.contains('..')) {
+      path = resolveXlsxPart('xl/workbook.xml', path);
+      if (path == null) {
         throw const FormatException('Đường dẫn sheet không hợp lệ.');
       }
       sheets[sheet.getAttribute('name') ?? 'Sheet ${sheets.length + 1}'] = path;
@@ -364,8 +533,14 @@ abstract final class MobileFileUploadService {
     final tables = <String, _ParsedTable>{};
     for (final entry in sheets.entries) {
       final sheet = doc(entry.value);
-      if (sheet == null) continue;
+      if (sheet == null) {
+        throw const FormatException(
+          'Thiếu worksheet được workbook tham chiếu.',
+        );
+      }
+      final specialContent = content[entry.key];
       final sparse = <int, Map<int, String>>{};
+      final sparseSpecial = <String, SourceCell>{};
       var width = 0;
       for (final row in elements(sheet, 'row')) {
         final ri =
@@ -427,6 +602,11 @@ abstract final class MobileFileUploadService {
               }
             }
           }
+          final special = specialContent?.cells[c.getAttribute('r')];
+          if (special != null) {
+            value = special.rawLexeme ?? '';
+            sparseSpecial['$ri,$col'] = special;
+          }
           if (value.length > 32767) {
             throw const FormatException('Nội dung một ô vượt 32.767 ký tự.');
           }
@@ -435,7 +615,15 @@ abstract final class MobileFileUploadService {
         }
         if (values.isNotEmpty) sparse[ri] = values;
       }
-      if (sparse.isEmpty) continue;
+      if (sparse.isEmpty) {
+        tables[entry.key] = _ParsedTable(
+          [],
+          [],
+          0,
+          warnings: specialContent?.warnings ?? const [],
+        );
+        continue;
+      }
       if (sparse.length * width > maxCells) {
         throw const FormatException('Sheet vượt giới hạn số ô.');
       }
@@ -459,6 +647,7 @@ abstract final class MobileFileUploadService {
         if (row.every((v) => v.isNotEmpty) &&
             row.toSet().length == row.length &&
             numeric < (row.length / 2).ceil() &&
+            !sparseSpecial.keys.any((k) => k.startsWith('$r,')) &&
             sparse[r + 1]?.values.any((v) => v.isNotEmpty) == true) {
           header = r;
           headers = row;
@@ -471,15 +660,57 @@ abstract final class MobileFileUploadService {
           headers.removeLast();
         }
       }
-      final rows = <List<String>>[];
+      if (sparseSpecial.keys.any((k) => k.startsWith('1,'))) {
+        header = 0;
+        headers = List.filled(width, '', growable: true);
+      }
+      var dataWidth = headers.length;
+      for (final row in sparse.entries.where((e) => e.key > header)) {
+        for (final cell in row.value.entries) {
+          if (cell.value.isNotEmpty && cell.key + 1 > dataWidth) {
+            dataWidth = cell.key + 1;
+          }
+        }
+      }
+      while (headers.length < dataWidth) {
+        headers.add('');
+      }
+      final rows = <List<String>>[],
+          sourceRows = <int>[],
+          specialCells = <String, SourceCell>{};
       for (final r in sparse.keys.where((r) => r > header).toList()..sort()) {
         final row = List.generate(headers.length, (c) => sparse[r]?[c] ?? '');
-        if (row.any((v) => v.isNotEmpty)) rows.add(row);
+        if (row.any((v) => v.isNotEmpty)) {
+          for (var c = 0; c < headers.length; c++) {
+            final special = sparseSpecial['$r,$c'];
+            if (special != null) specialCells['${rows.length},$c'] = special;
+          }
+          sourceRows.add(r);
+          rows.add(row);
+        }
       }
-      tables[entry.key] = _validate(headers, rows, header, repair: true);
+      final validated = _validate(headers, rows, header, repair: true);
+      tables[entry.key] = _ParsedTable(
+        validated.headers,
+        validated.rows,
+        header,
+        sourceRows: sourceRows,
+        specialCells: specialCells,
+        warnings: specialContent?.warnings ?? const [],
+      );
     }
     if (tables.isEmpty) {
       throw const FormatException('Workbook không có sheet dữ liệu hiển thị.');
+    }
+    if (tables.values.fold<int>(0, (n, t) => n + t.rows.length) > maxRows ||
+        tables.values.fold<int>(
+              0,
+              (n, t) => n + t.rows.length * t.headers.length,
+            ) >
+            maxCells) {
+      throw const FormatException(
+        'Toàn workbook vượt giới hạn dòng hoặc số ô.',
+      );
     }
     return _ParsedFile(name, SourceFormat.xlsx, tables);
   }

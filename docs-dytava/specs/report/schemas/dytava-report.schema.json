@@ -197,7 +197,8 @@
       "type": "string",
       "enum": [
         "KEY",
-        "POSITIONAL"
+        "POSITIONAL",
+        "ORDERED_SEQUENCE"
       ]
     },
     "key_fields": {
@@ -351,6 +352,89 @@
       ],
       "additionalProperties": false
     },
+    "workbook": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "const": "ALL_WORKSHEETS"
+        },
+        "sheets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "left": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "right": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "method": {
+                "type": "string"
+              },
+              "exact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "equivalent": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "different": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "unresolved": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "added_rows": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "removed_rows": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "id",
+              "left",
+              "right",
+              "method",
+              "exact",
+              "equivalent",
+              "different",
+              "unresolved",
+              "added_rows",
+              "removed_rows"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "scope",
+        "sheets"
+      ],
+      "additionalProperties": false
+    },
     "details_scope": {
       "type": "string",
       "enum": [
@@ -369,7 +453,8 @@
             "enum": [
               "CELL",
               "ROW",
-              "FIELD"
+              "FIELD",
+              "SHEET"
             ]
           },
           "status": {

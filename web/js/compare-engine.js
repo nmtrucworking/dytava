@@ -1,3 +1,6 @@
+import { describeSheet, mapSheets } from './sheet-mapping.js';
+import { compareSpecialCells } from './xlsx-cell-content.js';
+
 /**
  * Dytava / ExcelCompare - Core Semantic Comparison & Alignment Engine
  * Compliant with EXC PRD 1.0-DESIGN
@@ -849,11 +852,46 @@ export class CompareEngine {
   /**
    * Compare two datasets (tables) aligned by a Key Column, Sequence Alignment, or Row Index
    */
+  compareWorkbooks(fileA, fileB, keyColumn, options) {
+    const tablesA = fileA.tables || [fileA], tablesB = fileB.tables || [fileB];
+    const mapping = mapSheets(tablesA.map(describeSheet), tablesB.map(describeSheet), options.sheetOverrides || []);
+    if (!mapping.complete) throw new Error('Chưa xác định được cặp sheet. Hãy chọn các cặp còn mơ hồ trước khi so sánh.');
+    const sheetResults = mapping.pairs.map(pair => {
+      const a = pair.a === null ? null : tablesA[pair.a], b = pair.b === null ? null : tablesB[pair.b];
+      const empty = { headers: [], rows: [] };
+      const scopedA = { name: fileA.name, format: fileA.format, ...(a || empty) }, scopedB = { name: fileB.name, format: fileB.format, ...(b || empty) };
+      // A chosen key is a per-sheet setting; never silently change it for another schema.
+      const result = this.compareTables(scopedA, scopedB, a && b ? keyColumn : null, { ...options, singleTable: true, alignmentMode: a && b ? options.alignmentMode : 'POSITIONAL' });
+      const label = `${pair.nameA ?? '(Không có)'} ↔ ${pair.nameB ?? '(Không có)'}`;
+      for (const row of result.alignedRows) Object.assign(row, { sheetPairId: pair.id, sheetA: pair.nameA, sheetB: pair.nameB, sheetLabel: label, headersA: scopedA.headers, headersB: scopedB.headers });
+      result.report.inputs.A.sheet = pair.nameA; result.report.inputs.B.sheet = pair.nameB;
+      result.report.warnings = [...(a?.warnings || []), ...(b?.warnings || [])];
+      return { ...result, pair, label };
+    });
+    const summary = { total_cells_checked: 0, exact: 0, equivalent: 0, different: 0, unresolved: 0, added_rows: 0, removed_rows: 0 };
+    for (const r of sheetResults) for (const k of Object.keys(summary)) summary[k] += r.summary[k];
+    const headers = [...new Set(sheetResults.flatMap(r => r.headers))];
+    const warnings = [...new Set([...(fileA.warnings || []), ...(fileB.warnings || []), ...sheetResults.flatMap(r => r.report.warnings)])];
+    const report = {
+      schema_version: 1, report_id: `rep-${crypto.randomUUID()}`, engine_version: '1.1.0-workbook',
+      policy_id: this.policy.policy_id, policy: { ...this.policy }, key_column: keyColumn, alignment_mode: options.alignmentMode || 'POSITIONAL',
+      inputs: { A: { name: fileA.name, format: fileA.format }, B: { name: fileB.name, format: fileB.format } },
+      summary, warnings, scope: 'ALL_WORKSHEETS', sheet_mapping: mapping.pairs,
+      sheet_changes: mapping.pairs.filter(p => p.a === null || p.b === null).map(p => ({ sheetA: p.nameA, sheetB: p.nameB, status: p.a === null ? 'ADDED' : 'REMOVED' })),
+      sheets: sheetResults.map(r => ({ pair: r.pair, ...r.report })),
+      differences: [...mapping.pairs.filter(p => p.a === null || p.b === null).map(p => ({ kind: 'SHEET', status: p.a === null ? 'ADDED' : 'REMOVED', key: p.nameA || p.nameB, left: p.a === null ? null : { raw: p.nameA }, right: p.b === null ? null : { raw: p.nameB }, sheetA: p.nameA, sheetB: p.nameB, reason: 'Sheet chỉ tồn tại ở một workbook.' })), ...sheetResults.flatMap(r => r.report.differences.map(d => ({ ...d, sheetA: r.pair.nameA, sheetB: r.pair.nameB, key: `${r.label} | ${d.key}` })))],
+      generated_at: new Date().toISOString(),
+    };
+    return { headers, keyColumn, alignedRows: sheetResults.flatMap(r => r.alignedRows), summary, report, sheetResults, sheetMapping: mapping };
+  }
+
   compareTables(fileA, fileB, keyColumn = null, options = {}) {
     if (typeof keyColumn === 'object' && keyColumn !== null) {
       options = keyColumn;
       keyColumn = options.keyColumn || null;
     }
+    if (!options.singleTable && (fileA.tables || fileB.tables)) return this.compareWorkbooks(fileA, fileB, keyColumn, options);
+
     const headersA = fileA.headers || [];
     const headersB = fileB.headers || [];
     const rowsA = fileA.rows || [];
@@ -980,6 +1018,8 @@ export class CompareEngine {
               status: 'DIFFERENT', type: 'schema', rawA: String(a), rawB: String(b), normA: String(a), normB: String(b),
               ruleId: 'schema/missing_column', reason: 'Cột chỉ tồn tại ở một nguồn dữ liệu.'
             };
+          } else if (fileA.specialCells?.[`${sourceLineA - 1},${indexA.get(col)}`] || fileB.specialCells?.[`${sourceLineB - 1},${indexB.get(col)}`]) {
+            cmp = compareSpecialCells(fileA.specialCells?.[`${sourceLineA - 1},${indexA.get(col)}`], fileB.specialCells?.[`${sourceLineB - 1},${indexB.get(col)}`], String(a), String(b));
           } else if (a === b) {
             cmp = EXACT_CMP;
           } else {
@@ -987,7 +1027,7 @@ export class CompareEngine {
           }
 
           // Downgrade ordinal column difference if row content matches
-          if (ordinalCols.has(col) && treatOrdinalAsMetadata && cmp.status === 'DIFFERENT') {
+          if (ordinalCols.has(col) && treatOrdinalAsMetadata && cmp.status === 'DIFFERENT' && cmp.type !== 'image') {
             cmp = {
               status: 'EQUIVALENT',
               type: 'metadata',
@@ -1008,7 +1048,9 @@ export class CompareEngine {
           if (cmp.status === 'DIFFERENT' || cmp.status === 'UNRESOLVED') differences.push({
             kind: 'CELL', status: cmp.status, field: col, key,
             left: { raw: cmp.rawA, normalized: cmp.normA }, right: { raw: cmp.rawB, normalized: cmp.normB },
-            ruleId: cmp.ruleId, reason: cmp.reason
+            ruleId: cmp.ruleId, reason: cmp.reason,
+            sourceRefA: !indexA.has(col) ? null : { type: fileA.format === 'xlsx' ? 'XLSX' : 'TABLE', location: `${fileA.sheetName || fileA.name || 'A'}!R${fileA.sourceRows?.[sourceLineA - 1] ?? sourceLineA + (fileA.headerRow || 0)}C${(indexA.get(col) ?? -1) + 1}` },
+            sourceRefB: !indexB.has(col) ? null : { type: fileB.format === 'xlsx' ? 'XLSX' : 'TABLE', location: `${fileB.sheetName || fileB.name || 'B'}!R${fileB.sourceRows?.[sourceLineB - 1] ?? sourceLineB + (fileB.headerRow || 0)}C${(indexB.get(col) ?? -1) + 1}` }
           });
         }
       }
@@ -1028,7 +1070,9 @@ export class CompareEngine {
     const report = {
       schema_version: 1, report_id: `rep-${globalThis.crypto.randomUUID()}`, engine_version: '1.0.0-web',
       policy_id: this.policy.policy_id, policy: { ...this.policy }, key_column: keyColumn,
-      inputs: { A: { name: fileA.name, format: fileA.format }, B: { name: fileB.name, format: fileB.format } },
+      inputs: { A: { name: fileA.name, format: fileA.format, sheet: fileA.sheetName }, B: { name: fileB.name, format: fileB.format, sheet: fileB.sheetName } },
+      warnings: [...(fileA.warnings || []), ...(fileB.warnings || [])],
+      alignment_mode: mode,
       summary, differences, generated_at: new Date().toISOString()
     };
     return { headers, keyColumn, alignedRows, summary, report };

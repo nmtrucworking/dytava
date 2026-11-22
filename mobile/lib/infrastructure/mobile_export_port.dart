@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:isolate';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import '../domain/workflow.dart';
 
 /// Portable local report preview; the view offers an explicit native Save action.
@@ -21,7 +23,9 @@ final class MobileExportPort implements ExportPort {
         'Chọn CSV hoặc JSON.',
       );
     }
-    final output = await Isolate.run(() => renderMobileReport(result, request));
+    final output = kIsWeb
+        ? renderMobileReport(result, request)
+        : await Isolate.run(() => renderMobileReport(result, request));
     cancel.check();
     return output;
   }
@@ -57,6 +61,25 @@ PreparedExport renderMobileReport(
   ComparisonResult result,
   ExportRequest request,
 ) {
+  if (result.sheetResults.isNotEmpty && request.kind == ExportKind.csvDiff) {
+    final parts = result.sheetResults
+        .map((r) => renderMobileReport(r, request))
+        .toList();
+    final first = parts.first.previewText;
+    final headerEnd = first.indexOf('\r\n');
+    final header = headerEnd < 0 ? first : first.substring(0, headerEnd);
+    final bodies = parts
+        .map((p) {
+          final i = p.previewText.indexOf('\r\n');
+          return i < 0 ? '' : p.previewText.substring(i + 2);
+        })
+        .where((s) => s.isNotEmpty);
+    return PreparedExport(
+      [header, ...bodies].join('\r\n'),
+      parts.fold(0, (n, p) => n + p.selectedCellCount),
+      fileName: 'dytava-workbook-differences.csv',
+    );
+  }
   final cells = result.cells
       .where(
         (c) =>
@@ -73,6 +96,8 @@ PreparedExport renderMobileReport(
 
     final rows = <List<Object?>>[
       [
+        'sheet_a',
+        'sheet_b',
         'kind',
         'status',
         'row_a',
@@ -88,6 +113,8 @@ PreparedExport renderMobileReport(
       ],
       for (final c in cells)
         [
+          result.sheetPair?.nameA,
+          result.sheetPair?.nameB,
           'CELL',
           c.decision.status.name,
           c.rowA,
@@ -105,6 +132,8 @@ PreparedExport renderMobileReport(
         (r) => r.a == null || r.b == null || r.unresolved,
       ))
         [
+          result.sheetPair?.nameA,
+          result.sheetPair?.nameB,
           'ROW',
           r.unresolved
               ? 'UNRESOLVED'
@@ -131,9 +160,17 @@ PreparedExport renderMobileReport(
           r.rationale,
         ],
       for (final s in result.structural.where(
-        (s) => s.kind.startsWith('FIELD'),
+        (s) => s.kind.startsWith('FIELD') || s.kind.startsWith('SHEET'),
       ))
-        ['SCHEMA', s.kind, s.side.name, '', s.recordId],
+        [
+          result.sheetPair?.nameA,
+          result.sheetPair?.nameB,
+          'SCHEMA',
+          s.kind,
+          s.side.name,
+          '',
+          s.recordId,
+        ],
     ];
     return PreparedExport(
       '\ufeff${rows.map((r) => r.map(quote).join(',')).join('\r\n')}',
@@ -144,6 +181,27 @@ PreparedExport renderMobileReport(
   return PreparedExport(
     const JsonEncoder.withIndent('  ').convert({
       'schema': 'dytava-mobile-web-parity/v1',
+      'scope': result.sheetResults.isNotEmpty ? 'ALL_WORKSHEETS' : 'TABLE',
+      'sheet_pair': result.sheetPair == null
+          ? null
+          : {
+              'id': result.sheetPair!.id,
+              'a': result.sheetPair!.nameA,
+              'b': result.sheetPair!.nameB,
+              'method': result.sheetPair!.method,
+              'score': result.sheetPair!.score,
+            },
+      'warnings': result.warnings,
+      if (result.sheetResults.isNotEmpty)
+        'sheets': [
+          for (final sheet in result.sheetResults)
+            jsonDecode(
+              renderMobileReport(
+                sheet,
+                ExportRequest(ExportKind.jsonReport, request.selection),
+              ).previewText,
+            ),
+        ],
       'selection': request.selection.name,
       'result_id': result.id,
       'alignment_mode': result.plan.config.mode.name,
@@ -163,6 +221,10 @@ PreparedExport renderMobileReport(
             'field_b': c.mapping.fieldB,
             'raw_a': c.a.rawLexeme,
             'raw_b': c.b.rawLexeme,
+            'kind_a': c.a.kind.name,
+            'kind_b': c.b.kind.name,
+            if (c.a.imageDigest != null) 'image_sha256_a': c.a.imageDigest,
+            if (c.b.imageDigest != null) 'image_sha256_b': c.b.imageDigest,
             'normalized_a': c.decision.left?.label,
             'normalized_b': c.decision.right?.label,
             'status': c.decision.status.name,

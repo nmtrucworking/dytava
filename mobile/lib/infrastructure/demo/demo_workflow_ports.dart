@@ -73,7 +73,8 @@ final class DemoInputPort implements InputPort {
     void Function() onParsing,
   ) async {
     await _checkpoint(cancel);
-    final isUserFile = artifact.privateRef.startsWith('userfile:');
+    final isUserFile = artifact.privateRef.startsWith('userfile:') ||
+        _userFiles.containsKey(artifact.privateRef);
     if (!isUserFile &&
         (!const {
               'fixture:a',
@@ -82,7 +83,8 @@ final class DemoInputPort implements InputPort {
             }.contains(artifact.privateRef) ||
             (artifact.privateRef == 'fixture:image-a'
                 ? artifact.format != SourceFormat.png
-                : artifact.format != SourceFormat.csv))) {
+                : (artifact.format != SourceFormat.csv &&
+                    artifact.format != SourceFormat.xlsx)))) {
       throw const WorkflowIssue(
         'INPUT_CAPABILITY_DISABLED',
         'Bản flow chỉ đọc nguồn mẫu. Adapter tệp thật chưa được bật.',

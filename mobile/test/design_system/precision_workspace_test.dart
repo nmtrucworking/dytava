@@ -4,16 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('DYTAVA — Precision Workspace Branding Tests', () {
-    test('Official Precision Workspace color tokens match brand specifications', () {
-      expect(DytavaColors.limePrimary, const Color(0xFFC8FF4A));
-      expect(DytavaColors.lime600, const Color(0xFF86E63A));
-      expect(DytavaColors.offWhite, const Color(0xFFF7F6F2));
-      expect(DytavaColors.warmSurface, const Color(0xFFEDEBE4));
-      expect(DytavaColors.graphite, const Color(0xFF0F1A1C));
-      expect(DytavaColors.graphite800, const Color(0xFF1B2426));
-      expect(DytavaColors.differenceCoral, const Color(0xFFE97965));
-      expect(DytavaColors.precisionNeutral, const Color(0xFF607276));
-      expect(DytavaColors.signalLime, const Color(0xFFC8FF4A));
+    test('Dytava Figma palette replaces the legacy palette', () {
+      expect(DytavaColors.primary, const Color(0xFF107C41));
+      expect(DytavaColors.primaryDark, const Color(0xFF185C37));
+      expect(DytavaColors.background, const Color(0xFFF5F8F6));
+      expect(DytavaColors.border, const Color(0xFFDCE3DC));
+      expect(DytavaColors.limePrimary, DytavaColors.primaryLight);
+      expect(DytavaColors.different, DytavaColors.removed);
     });
 
     testWidgets('ComparisonRail renders dual-stream connected structure and handles actions', (

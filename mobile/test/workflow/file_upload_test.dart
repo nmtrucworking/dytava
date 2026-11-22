@@ -167,14 +167,12 @@ NV003,Lê Hoàng Nam,Kinh Doanh,12000000''';
       await tester.pumpAndSettle();
 
       // Verify Empty State is shown when no files are uploaded
-      expect(find.text('Chưa chọn · UNSELECTED'), findsNWidgets(2));
-      expect(find.byType(BrandIllustration), findsWidgets);
+      expect(find.text('Choose file A'), findsOneWidget);
+      expect(find.text('Choose file B'), findsOneWidget);
+      expect(find.byTooltip('Select file A'), findsOneWidget);
+      expect(find.byTooltip('Select file B'), findsOneWidget);
+      expect(find.text('Two files. One comparison.'), findsOneWidget);
 
-      // Verify Upload buttons are visible
-      expect(find.text('Tải tệp A từ thiết bị'), findsOneWidget);
-      expect(find.text('Tải tệp B từ thiết bị'), findsOneWidget);
-      expect(find.text('Chọn bảng mẫu A'), findsOneWidget);
-      expect(find.text('Chọn bảng mẫu B'), findsOneWidget);
     });
   });
 }

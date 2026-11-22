@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:excelcompare_core/excelcompare_core.dart';
 
 import '../domain/workflow.dart';
+import '../domain/workbook_comparison.dart';
+import '../domain/smart_proposal_engine.dart';
 
 /// Web engine pipeline on a native worker isolate, terminated on cancel/timeout.
 final class MobileComparisonPort implements ComparisonPort {
@@ -19,6 +21,26 @@ final class MobileComparisonPort implements ComparisonPort {
     void Function(String, int, int?) onProgress,
   ) async {
     cancel.check();
+    if (kIsWeb) {
+      await Future<void>.delayed(Duration.zero);
+      cancel.check();
+      try {
+        final result = compareMobileTables(plan, (phase, done, total) {
+          if (!cancel.cancelled) {
+            onProgress(phase, done, total);
+          }
+        });
+        cancel.check();
+        return result;
+      } on WorkflowIssue {
+        rethrow;
+      } catch (e) {
+        throw const WorkflowIssue(
+          'COMPARE_FAILED',
+          'Không xử lý được dữ liệu.',
+        );
+      }
+    }
     final messages = ReceivePort();
     final errors = ReceivePort();
     final done = Completer<ComparisonResult>();
@@ -40,6 +62,9 @@ final class MobileComparisonPort implements ComparisonPort {
             matchedRecords: message.matchedRecords,
             alignedRows: message.alignedRows,
             durationMs: message.durationMs,
+            sheetResults: message.sheetResults,
+            sheetPair: message.sheetPair,
+            warnings: message.warnings,
           ),
         );
       } else if (message is WorkflowIssue) {
@@ -107,6 +132,121 @@ void _worker((SendPort, FrozenPlan) input) {
   }
 }
 
+ComparisonResult _compareWorkbooks(
+  FrozenPlan plan,
+  void Function(String, int, int?) progress,
+) {
+  final watch = Stopwatch()..start(),
+      a = workbookTables(plan.a),
+      b = workbookTables(plan.b);
+  final mapping = mapWorkbookSnapshots(
+    plan.a,
+    plan.b,
+    overrides: plan.sheetOverrides,
+  );
+  if (!mapping.complete) {
+    throw const WorkflowIssue(
+      'SHEET_MAPPING_REQUIRED',
+      'Cần chọn các cặp sheet chưa xác định được.',
+    );
+  }
+  final results = <ComparisonResult>[];
+  InputSnapshot empty(InputSnapshot other) => InputSnapshot(
+    id: '${other.id}-absent',
+    binding: other.binding,
+    fields: const [],
+    records: const [],
+    fullValidation: true,
+    ocrReviewed: false,
+  );
+  for (final pair in mapping.pairs) {
+    final left = pair.a == null ? empty(b[pair.b!]) : a[pair.a!],
+        right = pair.b == null ? empty(a[pair.a!]) : b[pair.b!];
+    final inferred = SmartProposalEngine.analyze(left, right);
+    final previewPair =
+        left.sheetName == plan.a.sheetName &&
+        right.sheetName == plan.b.sheetName;
+    final inferredConfig = SmartProposalEngine.toConfiguration(
+      inferred,
+      direction: plan.config.direction,
+    );
+    final config = previewPair && pair.a != null && pair.b != null
+        ? plan.config
+        : ComparisonConfiguration(
+            mappings: inferredConfig.mappings,
+            rules: {
+              for (final m in inferredConfig.mappings)
+                m.fieldA:
+                    plan.config.rules[m.fieldA] ??
+                    inferredConfig.rules[m.fieldA]!,
+            },
+            mode:
+                pair.a == null ||
+                    pair.b == null ||
+                    plan.config.mode == MatchingMode.positional
+                ? MatchingMode.positional
+                : inferredConfig.mode,
+            keys: inferredConfig.keys,
+            direction: plan.config.direction,
+            webPolicy: plan.config.webPolicy,
+            mappingConfirmed: true,
+            modeConfirmed: true,
+            policyConfirmed: true,
+            directionConfirmed: true,
+          );
+    final scoped = FrozenPlan(
+      '${plan.id}-${pair.id}',
+      plan.revision,
+      left,
+      right,
+      config,
+    );
+    final raw = compareMobileTables(
+      scoped,
+      (phase, done, total) => progress('${pair.label} · $phase', done, total),
+    );
+    final structural = [...raw.structural];
+    if (pair.a == null || pair.b == null) {
+      final added = plan.config.direction == ComparisonDirection.aToB
+          ? pair.a == null
+          : pair.b == null;
+      structural.add(
+        StructuralChange(
+          added ? 'SHEET_ADDED' : 'SHEET_REMOVED',
+          pair.a == null ? SourceSide.b : SourceSide.a,
+          pair.nameA ?? pair.nameB!,
+        ),
+      );
+    }
+    results.add(
+      ComparisonResult(
+        id: raw.id,
+        plan: scoped,
+        cells: raw.cells,
+        structural: structural,
+        unresolvedRecords: raw.unresolvedRecords,
+        matchedRecords: raw.matchedRecords,
+        alignedRows: raw.alignedRows,
+        durationMs: raw.durationMs,
+        sheetPair: pair,
+        warnings: [...left.warnings, ...right.warnings],
+      ),
+    );
+  }
+  return ComparisonResult(
+    id: '${plan.id}-workbook',
+    plan: plan,
+    cells: results.expand((r) => r.cells),
+    structural: results.expand((r) => r.structural),
+    unresolvedRecords: results.expand((r) => r.unresolvedRecords),
+    matchedRecords: results.fold(0, (n, r) => n + r.matchedRecords),
+    alignedRows: results.expand((r) => r.alignedRows).toList(),
+    durationMs: watch.elapsedMilliseconds,
+    sheetResults: results,
+    warnings: {...plan.a.warnings, ...plan.b.warnings}.toList(),
+  );
+}
+
 typedef _Pair = (TableRecord?, TableRecord?, String, bool);
 
 /// Same anchor + LIS + Needleman-Wunsch workflow as web; bounded cumulative DP.
@@ -115,6 +255,9 @@ ComparisonResult compareMobileTables(
   FrozenPlan plan,
   void Function(String, int, int?) progress,
 ) {
+  if (plan.a.workbookSheets.isNotEmpty || plan.b.workbookSheets.isNotEmpty) {
+    return _compareWorkbooks(plan, progress);
+  }
   final watch = Stopwatch()..start();
   final config = plan.config;
   final engine = WebCellEngine(config.webPolicy);
@@ -280,7 +423,11 @@ ComparisonResult compareMobileTables(
               );
         if (ordinals.contains(m.fieldA) &&
             config.webPolicy.treatOrdinalAsMetadata &&
-            decision.status == DecisionStatus.different) {
+            decision.status == DecisionStatus.different &&
+            left.kind != CellKind.image &&
+            right.kind != CellKind.image &&
+            left.kind != CellKind.unsupported &&
+            right.kind != CellKind.unsupported) {
           decision = ComparisonDecision(
             status: DecisionStatus.equivalent,
             ruleId: 'metadata/ordinal_renumbered',

@@ -227,7 +227,12 @@ final class InputSnapshot {
     required Iterable<TableRecord> records,
     required this.fullValidation,
     required this.ocrReviewed,
-  }) : fields = List.unmodifiable(fields),
+    this.sheetName,
+    Iterable<InputSnapshot> workbookSheets = const [],
+    Iterable<String> warnings = const [],
+  }) : workbookSheets = List.unmodifiable(workbookSheets),
+       warnings = List.unmodifiable(warnings),
+       fields = List.unmodifiable(fields),
        records = List.unmodifiable(records);
   final String id;
   final ImportBinding binding;
@@ -235,6 +240,9 @@ final class InputSnapshot {
   final List<TableRecord> records;
   final bool fullValidation;
   final bool ocrReviewed;
+  final String? sheetName;
+  final List<InputSnapshot> workbookSheets;
+  final List<String> warnings;
 }
 
 final class ReviewCell {
@@ -361,12 +369,20 @@ final class ComparisonConfiguration {
 }
 
 final class FrozenPlan {
-  const FrozenPlan(this.id, this.revision, this.a, this.b, this.config);
+  const FrozenPlan(
+    this.id,
+    this.revision,
+    this.a,
+    this.b,
+    this.config, {
+    this.sheetOverrides = const [],
+  });
   final String id;
   final int revision;
   final InputSnapshot a;
   final InputSnapshot b;
   final ComparisonConfiguration config;
+  final List<(String?, String?)> sheetOverrides;
 }
 
 final class CellDifference {
@@ -436,6 +452,9 @@ final class ComparisonResult {
     required this.matchedRecords,
     this.alignedRows = const [],
     this.durationMs = 0,
+    this.sheetResults = const [],
+    this.sheetPair,
+    this.warnings = const [],
   }) : cells = List.unmodifiable(cells),
        structural = List.unmodifiable(structural),
        unresolvedRecords = List.unmodifiable(unresolvedRecords);
@@ -447,6 +466,9 @@ final class ComparisonResult {
   final int matchedRecords;
   final List<AlignedTableRow> alignedRows;
   final int durationMs;
+  final List<ComparisonResult> sheetResults;
+  final SheetPair? sheetPair;
+  final List<String> warnings;
   late final Map<DecisionStatus, int> _counts = _countCells();
   Map<DecisionStatus, int> _countCells() {
     final counts = {for (final s in DecisionStatus.values) s: 0};

@@ -1,4 +1,6 @@
 # Cấu trúc bảng và phạm vi dữ liệu
+> **Cập nhật 20/11/2026:** [hợp đồng workbook](../engine/05_workbook_mapping_and_cell_content.md) thay quy định một selected sheet và xác nhận thủ công mọi cặp sheet cho web/mobile: so sánh tất cả worksheet, tự ghép tên → cấu trúc, chỉ hỏi cặp chưa rõ; xem tổng/từng cặp. Ảnh trong ô là nội dung có kiểu, không so cached error như text. Wire Input 0.1.0 và ADR cũ vẫn là baseline lịch sử.
+
 
 > **ADR status 11/11/2026:** [INP-ADR-001..009 đã chốt](../../decisions/ADR_REGISTER_P0_2026-11-11.md) cho Android P0, gồm OCR có review. Các câu “OPEN”, “OCR P2” hoặc “chưa quyết định” của baseline 0.1.0 khi xung đột là lịch sử; schema và test implementation vẫn DRAFT/PLANNED.
 
@@ -11,7 +13,7 @@ Updated: 12/11/2026
 
 ## 1. Mục đích và phạm vi
 
-Định nghĩa SourceTable, Field, Row và preview mà adapter cung cấp trước normalization. Mô hình chứa được nhiều bảng; Android P0 chỉ chọn **một table/scope trên mỗi nguồn** theo INP-ADR-003. Nhiều sheet trong workbook được hiển thị để người dùng chọn một, không phải multi-sheet comparison. Không suy ra hỗ trợ nhiều sheet từ khả năng biểu diễn của schema.
+Định nghĩa SourceTable, Field, Row và preview mà adapter cung cấp trước normalization. Một SourceTable vẫn là một table/scope; yêu cầu ngày 20/11/2026 bổ sung danh mục tất cả worksheet trên mỗi nguồn và kế hoạch ghép một–một, mỗi cặp dùng table comparison riêng. Quy định một selected sheet của INP-ADR-003 là baseline lịch sử, được thay trong runtime web/mobile theo hợp đồng workbook liên kết ở đầu trang.
 
 ## 2. Thuật ngữ và định nghĩa
 

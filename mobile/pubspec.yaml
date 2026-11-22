@@ -42,6 +42,7 @@ dependencies:
   csv: ^8.0.0
   excel: ^4.0.6
   archive: ^3.6.1
+  crypto: ^3.0.8
   xml: ^6.5.0
 
 dev_dependencies:
@@ -67,9 +68,11 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/fonts/Inter-OFL.txt
     - assets/fonts/PlusJakartaSans-OFL.txt
     - assets/fonts/BeVietnamPro-OFL.txt
     - assets/fonts/IBMPlexMono-OFL.txt
+    - assets/dytava/figma/
     - assets/dytava/brand/svg/
     - assets/dytava/icons/svg/color/
     - assets/dytava/icons/svg/glyph/
@@ -87,6 +90,16 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
   fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf
+          weight: 400
+        - asset: assets/fonts/Inter.ttf
+          weight: 500
+        - asset: assets/fonts/Inter.ttf
+          weight: 600
+        - asset: assets/fonts/Inter.ttf
+          weight: 700
     - family: Plus Jakarta Sans
       fonts:
         - asset: assets/fonts/PlusJakartaSans-Regular.ttf

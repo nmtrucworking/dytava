@@ -2,11 +2,14 @@ import 'dart:async';
 
 import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../app/workflow_composition.dart';
 import '../../application/workflow_controller.dart';
 import '../../design_system/design_system.dart';
 import '../../domain/workflow.dart';
+import '../../infrastructure/file_upload_service.dart';
 import 'screens/home_screen_view.dart';
 import 'screens/mapping_and_policy_view.dart';
 import 'screens/preview_and_ocr_view.dart';
@@ -18,11 +21,7 @@ import 'widgets/workflow_common_widgets.dart';
 /// Khu vực tiện ích phụ trợ (không cạnh tranh với quy trình đối chiếu 4 bước)
 enum _AuxiliaryView { none, history, presets, settings }
 
-/// Giao diện ứng dụng di động Dytava thiết kế theo kiến trúc Guided Mobile Workflow:
-/// - Tách điều hướng ứng dụng khỏi các bước workflow (loại bỏ thanh 5 tab trang trí cố định).
-/// - Trang chủ tập trung vào một CTA chính ("So sánh mới") và "Phiên hiện tại — Tiếp tục phiên so sánh".
-/// - Mỗi màn hình trong luồng 4 bước (`Nguồn → Cấu hình → So sánh → Kết quả`) tập trung vào một thao tác chính.
-/// - Tích hợp đồng bộ `BrandIcon` và `BrandIllustration` theo trạng thái nghiệp vụ.
+/// Dytava mobile navigation and comparison workflow.
 class WorkflowPage extends StatefulWidget {
   const WorkflowPage({super.key, this.controller});
   final WorkflowController? controller;
@@ -195,28 +194,19 @@ class _WorkflowPageState extends State<WorkflowPage>
       flow.config.copyWith(
         mappings: mappings,
         rules: rules,
-        mappingConfirmed: mappings.isNotEmpty,
+        mappingConfirmed: mappings.isNotEmpty || flow.structuralWorkbookOnly,
       ),
     );
   }
 
   void _applyApprovedConfigAndRun() {
     var updated = flow.config.copyWith(
-      mappingConfirmed: flow.config.mappings.isNotEmpty,
+      mappingConfirmed:
+          flow.config.mappings.isNotEmpty || flow.structuralWorkbookOnly,
       modeConfirmed: true,
       policyConfirmed: true,
       directionConfirmed: true,
     );
-    if (updated.mode == MatchingMode.key && updated.keys.isEmpty) {
-      final defaultKey = updated.mappings.any((m) => m.fieldA == 'id')
-          ? 'id'
-          : (updated.mappings.isNotEmpty
-                ? updated.mappings.first.fieldA
-                : null);
-      if (defaultKey != null) {
-        updated = updated.copyWith(keys: [defaultKey]);
-      }
-    }
     flow.configure(updated);
     if (flow.startBlockers.isEmpty && !flow.busy) {
       setState(() => _auxView = _AuxiliaryView.none);
@@ -225,31 +215,129 @@ class _WorkflowPageState extends State<WorkflowPage>
   }
 
   Future<void> _quickConfirmAllAndRun() async {
-    if (flow.config.mappings.isEmpty) {
-      if (flow.proposal != null) {
-        flow.applyProposal(run: false);
-      } else {
-        _autoMapFields();
+    _applyApprovedConfigAndRun();
+  }
+
+  Future<void> _switchSheetsAndCompare({String? sheetA, String? sheetB}) async {
+    setState(() => _quickProcessing = true);
+    try {
+      if (sheetA != null) {
+        final slotA = flow.slot(SourceSide.a);
+        if (slotA.artifact != null) {
+          MobileFileUploadService.selectSheet(
+            slotA.artifact!.privateRef,
+            sheetA,
+          );
+          await flow.selectSource(
+            SourceSide.a,
+            slotA.artifact!.format,
+            slotA.artifact!.privateRef,
+            slotA.artifact!.label,
+          );
+          await flow.importSource(SourceSide.a);
+          final slotNowA = flow.slot(SourceSide.a);
+          if (slotNowA.state == InputState.needsReview) {
+            await flow.confirmImport(
+              SourceSide.a,
+              expectedBinding: slotNowA.binding,
+            );
+          }
+        }
       }
+      if (sheetB != null) {
+        final slotB = flow.slot(SourceSide.b);
+        if (slotB.artifact != null) {
+          MobileFileUploadService.selectSheet(
+            slotB.artifact!.privateRef,
+            sheetB,
+          );
+          await flow.selectSource(
+            SourceSide.b,
+            slotB.artifact!.format,
+            slotB.artifact!.privateRef,
+            slotB.artifact!.label,
+          );
+          await flow.importSource(SourceSide.b);
+          final slotNowB = flow.slot(SourceSide.b);
+          if (slotNowB.state == InputState.needsReview) {
+            await flow.confirmImport(
+              SourceSide.b,
+              expectedBinding: slotNowB.binding,
+            );
+          }
+        }
+      }
+      if (flow.inputsReady) {
+        flow.analyzeAndPropose();
+        if (flow.proposal != null) {
+          flow.applyProposal(run: false);
+        } else {
+          _autoMapFields();
+        }
+        _applyApprovedConfigAndRun();
+      }
+    } finally {
+      if (mounted) setState(() => _quickProcessing = false);
     }
-    final cfg = flow.config;
-    final alreadyApproved =
-        cfg.mappingConfirmed &&
-        cfg.modeConfirmed &&
-        cfg.policyConfirmed &&
-        cfg.directionConfirmed &&
-        (cfg.mode != MatchingMode.key || cfg.keys.isNotEmpty);
+  }
 
-    if (alreadyApproved) {
-      _applyApprovedConfigAndRun();
-      return;
-    }
-
-    final approvedThisTime = await showDytavaConfigConfirmationSheet(
+  Future<void> _openExport() async {
+    _scopeConfirmed = false;
+    await showModalBottomSheet<void>(
       context: context,
-      config: cfg,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, update) => AnimatedBuilder(
+          animation: flow,
+          builder: (context, _) => ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.8,
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                24,
+                0,
+                24,
+                24 + MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: ExportScreenView(
+                flow: flow,
+                exportKind: _exportKind,
+                selection: _selection,
+                scopeConfirmed: _scopeConfirmed,
+                onKindChanged: (kind) => update(() {
+                  _exportKind = kind;
+                  _scopeConfirmed = false;
+                }),
+                onSelectionChanged: (selection) => update(() {
+                  _selection = selection;
+                  _scopeConfirmed = false;
+                }),
+                onScopeConfirmedChanged: (value) =>
+                    update(() => _scopeConfirmed = value),
+                onRunExportPreview: () =>
+                    flow.exportResult(ExportRequest(_exportKind, _selection)),
+                onBackToResults: () => Navigator.pop(sheetContext),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
-    if (approvedThisTime == true && mounted) {
+    if (flow.exportState?.active == true) await flow.cancelExport();
+  }
+
+  void _compareAutomatically() {
+    if (!flow.inputsReady || flow.busy) return;
+    final policy = flow.config.webPolicy;
+    flow.analyzeAndPropose();
+    flow.applyProposal(run: false);
+    flow.configure(flow.config.copyWith(webPolicy: policy));
+    if (flow.sheetMapping?.complete == false ||
+        flow.proposal?.isHighConfidence != true) {
+      _go(WorkflowScreen.policy);
+    } else {
       _applyApprovedConfigAndRun();
     }
   }
@@ -262,20 +350,20 @@ class _WorkflowPageState extends State<WorkflowPage>
   }
 
   String _appBarTitle() {
-    if (_auxView == _AuxiliaryView.history) return 'Phiên hiện tại';
+    if (_auxView == _AuxiliaryView.history) return 'Recent comparisons';
     if (_auxView == _AuxiliaryView.presets) return 'Mẫu quy tắc';
-    if (_auxView == _AuxiliaryView.settings) return 'Cài đặt & bảo mật';
+    if (_auxView == _AuxiliaryView.settings) return 'App settings';
     const titles = [
       'Dytava',
-      'Chọn nguồn A/B',
-      'Kiểm tra nguồn',
-      'Duyệt dữ liệu OCR',
-      'Ánh xạ cột',
-      'Xác nhận cấu hình',
-      'Tiến trình',
-      'Kết quả đối chiếu',
-      'Chi tiết sai khác',
-      'Xuất báo cáo',
+      'Import files',
+      'File preview',
+      'OCR review',
+      'Column mapping',
+      'Review comparison',
+      'Comparing files',
+      'Comparison results',
+      'Change details',
+      'Export report',
     ];
     return titles[flow.screen.index];
   }
@@ -289,183 +377,260 @@ class _WorkflowPageState extends State<WorkflowPage>
       builder: (context, constraints) {
         // Tự động nhận diện màn hình lớn (Desktop / Web / Tablet >= 600dp)
         final isLargeScreen = constraints.maxWidth >= 600;
-        final maxAppWidth = isLargeScreen ? 480.0 : double.infinity;
 
         final scaffold = Scaffold(
           backgroundColor: DytavaColors.background,
           appBar: AppBar(
-            title: Text(_appBarTitle(), style: DytavaTypography.titleLarge),
-            backgroundColor: DytavaColors.white,
+            toolbarHeight: isRootHome ? 72 : 56,
+            titleSpacing: isRootHome ? 24 : 14,
+            title: isRootHome
+                ? Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/dytava/figma/home-logo.svg',
+                        width: 34,
+                        height: 31,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Dytava',
+                                style: DytavaTypography.titleLarge.copyWith(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                'Excel Compare',
+                                style: DytavaTypography.bodySmall.copyWith(
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    _appBarTitle(),
+                    style: DytavaTypography.titleLarge.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+            backgroundColor: DytavaColors.background,
             elevation: 0,
-            leading: isRootHome
+            leadingWidth: 56,
+            leading: isRootHome || flow.screen == WorkflowScreen.progress
                 ? null
-                : IconButton(
-                    tooltip: 'Quay lại',
-                    onPressed: flow.busy ? null : _back,
-                    icon: const BrandIcon(DytavaIcons.back, size: 20),
+                : Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: Center(
+                      child: IconButton(
+                        tooltip: 'Back',
+                        onPressed: flow.busy ? null : _back,
+                        style: IconButton.styleFrom(
+                          backgroundColor: DytavaColors.white,
+                          padding: EdgeInsets.zero,
+                          fixedSize: const Size(38, 38),
+                        ),
+                        icon: SizedBox(
+                          width: 38,
+                          height: 38,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SvgPicture.asset(
+                                'assets/dytava/figma/back.svg',
+                                width: 38,
+                                height: 38,
+                              ),
+                              const Icon(Icons.arrow_back, size: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
             actions: [
-              if (isRootHome) ...[
-                IconButton(
-                  tooltip: 'Phiên trong bộ nhớ',
-                  onPressed: () =>
-                      setState(() => _auxView = _AuxiliaryView.history),
-                  icon: const Icon(Icons.history_rounded),
+              if (isRootHome)
+                Padding(
+                  padding: const EdgeInsets.only(right: 24),
+                  child: IconButton(
+                    tooltip: 'Comparison settings',
+                    onPressed: () =>
+                        setState(() => _auxView = _AuxiliaryView.settings),
+                    icon: SvgPicture.asset(
+                      'assets/dytava/figma/home-settings.svg',
+                      width: 38,
+                      height: 38,
+                    ),
+                  ),
                 ),
-                PopupMenuButton<_AuxiliaryView>(
-                  tooltip: 'Thêm tùy chọn',
-                  icon: const Icon(Icons.more_vert_rounded),
-                  onSelected: (view) =>
-                      setState(() => _auxView = view),
-                  itemBuilder: (context) => const [
+              if (!isRootHome &&
+                  flow.screen != WorkflowScreen.progress &&
+                  _auxView == _AuxiliaryView.none)
+                PopupMenuButton<String>(
+                  tooltip: 'Session actions',
+                  onSelected: (action) async {
+                    if (action == 'home') {
+                      _go(WorkflowScreen.home);
+                    } else {
+                      await flow.closeSession();
+                    }
+                  },
+                  itemBuilder: (_) => [
                     PopupMenuItem(
-                      value: _AuxiliaryView.presets,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.tune_rounded, size: 20),
-                          SizedBox(width: 12),
-                          Expanded(child: Text('Mẫu quy tắc')),
-                        ],
-                      ),
+                      value: 'home',
+                      enabled: !flow.busy,
+                      child: const Text('Home'),
                     ),
                     PopupMenuItem(
-                      value: _AuxiliaryView.settings,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.settings_outlined, size: 20),
-                          SizedBox(width: 12),
-                          Expanded(child: Text('Cài đặt & bảo mật')),
-                        ],
-                      ),
+                      value: 'close',
+                      enabled: flow.usable && !flow.busy,
+                      child: const Text('Close comparison'),
                     ),
                   ],
-                ),
-              ],
-              if (!isRootHome)
-                IconButton(
-                  tooltip: 'Về trang chủ',
-                  onPressed: flow.busy
-                      ? null
-                      : () {
-                          setState(() => _auxView = _AuxiliaryView.none);
-                          flow.navigate(WorkflowScreen.home);
-                        },
-                  icon: const BrandIcon(DytavaIcons.navHome, size: 20),
-                ),
-              if (flow.screen != WorkflowScreen.home)
-                IconButton(
-                  tooltip: 'Đóng phiên và dọn dữ liệu phiên',
-                  onPressed: flow.usable
-                      ? () async {
-                          await flow.closeSession();
-                          if (mounted) {
-                            setState(() => _auxView = _AuxiliaryView.none);
-                          }
-                        }
-                      : null,
-                  icon: const BrandIcon(DytavaIcons.close, size: 20),
                 ),
             ],
           ),
-          body: SafeArea(
-            bottom: false,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              switchInCurve: Curves.easeOutQuad,
-              switchOutCurve: Curves.easeInQuad,
-              layoutBuilder: (currentChild, previousChildren) {
-                return Stack(
-                  alignment: Alignment.topCenter,
-                  children: <Widget>[
-                    ...previousChildren,
-                    ?currentChild,
-                  ],
-                );
-              },
-              transitionBuilder: (child, animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
-              },
-              child: ListView(
-                key: ValueKey('${flow.screen.name}-aux-${_auxView.name}'),
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                padding: EdgeInsets.fromLTRB(
-                  isLargeScreen ? 16.0 : (constraints.maxWidth < 350 ? 12.0 : 16.0),
-                  16,
-                  isLargeScreen ? 16.0 : (constraints.maxWidth < 350 ? 12.0 : 16.0),
-                  64 + MediaQuery.of(context).padding.bottom,
-                ),
-                children: [
-                  if (_auxView == _AuxiliaryView.none &&
-                      flow.screen != WorkflowScreen.home &&
-                      flow.screen != WorkflowScreen.results &&
-                      flow.screen != WorkflowScreen.progress)
-                    DytavaGuidedStepHeader(screen: flow.screen),
-                  if (flow.issue != null && _auxView == _AuxiliaryView.none)
-                    Semantics(
-                      liveRegion: true,
-                      child: WorkflowIssueList(issues: [flow.issue!]),
+          body: Stack(
+            children: [
+              if (isRootHome)
+                Positioned(
+                  left: -75,
+                  bottom: -10,
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: 0.1,
+                      child: SvgPicture.asset(
+                        'assets/dytava/figma/home-decoration.svg',
+                        width: 171,
+                        height: 157,
+                      ),
                     ),
-                  ..._buildActiveContent(),
-                ],
+                  ),
+                ),
+              SafeArea(
+                bottom: false,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  layoutBuilder: (currentChild, previousChildren) {
+                    return Stack(
+                      fit: StackFit.expand,
+                      alignment: Alignment.topCenter,
+                      children: <Widget>[...previousChildren, ?currentChild],
+                    );
+                  },
+                  transitionBuilder: (child, animation) {
+                    final curved = CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    );
+                    return FadeTransition(
+                      opacity: curved,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.02),
+                          end: Offset.zero,
+                        ).animate(curved),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey('${flow.screen.name}-aux-${_auxView.name}'),
+                    child: _buildScreenContent(constraints),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-          bottomNavigationBar: flow.screen == WorkflowScreen.home
-              ? NavigationBar(
-                  selectedIndex: switch (_auxView) {
-                    _AuxiliaryView.none => 0,
-                    _AuxiliaryView.history => 1,
-                    _AuxiliaryView.settings || _AuxiliaryView.presets => 2,
-                  },
-                  onDestinationSelected: (idx) {
-                    setState(() {
-                      _auxView = switch (idx) {
-                        0 => _AuxiliaryView.none,
-                        1 => _AuxiliaryView.history,
-                        2 => _AuxiliaryView.settings,
-                        _ => _AuxiliaryView.none,
-                      };
-                    });
-                  },
-                  destinations: const [
-                    NavigationDestination(
-                      icon: Icon(Icons.home_outlined),
-                      selectedIcon: Icon(Icons.home_rounded),
-                      label: 'Trang chủ',
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: isRootHome
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 8, bottom: 24),
+                  child: SizedBox(
+                    width: MediaQuery.textScalerOf(context).scale(1) > 1.3
+                        ? 276
+                        : 224,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Expanded(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Tap to compare',
+                                  style: DytavaTypography.titleLarge.copyWith(
+                                    fontSize: 17,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Select two files to begin',
+                                  style: DytavaTypography.bodySmall.copyWith(
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        SizedBox(
+                          width: 72,
+                          height: 72,
+                          child: FloatingActionButton(
+                            heroTag: 'compare-files',
+                            tooltip: 'Compare files',
+                            onPressed: () => _go(WorkflowScreen.sources),
+                            backgroundColor: DytavaColors.primary,
+                            shape: const CircleBorder(),
+                            elevation: 6,
+                            child: SvgPicture.asset(
+                              'assets/dytava/figma/compare-action.svg',
+                              width: 34,
+                              height: 34,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    NavigationDestination(
-                      icon: Icon(Icons.history_rounded),
-                      selectedIcon: Icon(Icons.history_rounded),
-                      label: 'Lịch sử',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.settings_outlined),
-                      selectedIcon: Icon(Icons.settings_rounded),
-                      label: 'Cài đặt',
-                    ),
-                  ],
+                  ),
                 )
               : null,
         );
 
         Widget page = scaffold;
 
-        // Căn giữa chuẩn flex-center trên Desktop / Web / Tablet (giữ nguyên tỉ lệ 9:16 mobile)
+        // Căn giữa chuẩn flex-center trên Desktop / Web / Tablet (giữ nguyên chuẩn xác tỉ lệ 9:16 mobile)
         if (isLargeScreen) {
+          final targetWidth = (constraints.maxHeight * 9 / 16).clamp(
+            380.0,
+            480.0,
+          );
           page = Container(
             color: DytavaColors.warmSurface,
             alignment: Alignment.center,
             child: Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: maxAppWidth,
+                  maxWidth: targetWidth,
                   maxHeight: constraints.maxHeight,
                 ),
                 child: Container(
@@ -493,134 +658,167 @@ class _WorkflowPageState extends State<WorkflowPage>
           );
         }
 
-        return PopScope(
-          canPop: isRootHome && !flow.busy,
-          onPopInvokedWithResult: (didPop, _) {
-            if (!didPop) unawaited(_back());
-          },
-          child: page,
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle.dark.copyWith(
+            statusBarColor: Colors.transparent,
+            systemNavigationBarColor: DytavaColors.background,
+          ),
+          child: PopScope(
+            canPop: isRootHome && !flow.busy,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop) unawaited(_back());
+            },
+            child: page,
+          ),
         );
       },
     );
   }
 
-  List<Widget> _buildActiveContent() {
+  Widget _buildScreenContent(BoxConstraints constraints) {
+    final padHorizontal = constraints.maxWidth < 350 ? 20.0 : 24.0;
+    final isRootHome =
+        flow.screen == WorkflowScreen.home && _auxView == _AuxiliaryView.none;
+
     if (_auxView == _AuxiliaryView.history) {
-      return [
-        WorkflowSessionHistoryView(
+      return SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: padHorizontal, vertical: 12),
+        child: WorkflowSessionHistoryView(
           flow: flow,
           onOpenResults: () => _go(WorkflowScreen.results),
           onQuickRun: _oneTapQuickRun,
         ),
-      ];
+      );
     }
     if (_auxView == _AuxiliaryView.presets) {
-      return [
-        WorkflowLearnAndPresetsView(
+      return SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: padHorizontal, vertical: 12),
+        child: WorkflowLearnAndPresetsView(
           selectedPreset: _selectedPolicyPreset,
           onSelectPreset: (id) => setState(() => _selectedPolicyPreset = id),
         ),
-      ];
+      );
     }
     if (_auxView == _AuxiliaryView.settings) {
-      return const [WorkflowSettingsView()];
+      return SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: padHorizontal, vertical: 12),
+        child: WorkflowSettingsView(
+          flow: flow,
+          onOpenPresets: () =>
+              setState(() => _auxView = _AuxiliaryView.presets),
+        ),
+      );
     }
-    return _buildWorkflowScreenContent();
-  }
 
-  List<Widget> _buildWorkflowScreenContent() {
     if (const {
           WorkflowScreen.mapping,
           WorkflowScreen.policy,
         }.contains(flow.screen) &&
         !flow.inputsReady) {
-      return [
-        WorkflowSectionCard(
-          children: [
-            const WorkflowInfoBanner(
-              text: 'Nguồn đã thay đổi; cần xác thực lại trước khi cấu hình.',
-              iconAsset: DytavaIcons.warning,
-              color: DytavaColors.unresolved,
-              bgColor: DytavaColors.softAmber,
+      return Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(padHorizontal),
+              child: const WorkflowSectionCard(
+                children: [
+                  WorkflowInfoBanner(
+                    text:
+                        'Nguồn đã thay đổi; cần xác thực lại trước khi cấu hình.',
+                    iconAsset: DytavaIcons.warning,
+                    color: DytavaColors.unresolved,
+                    bgColor: DytavaColors.softAmber,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            WorkflowSecondaryButton(
+          ),
+          StickyBottomBar(
+            child: WorkflowSecondaryButton(
               label: 'Về nguồn A/B',
               iconAsset: DytavaIcons.back,
               onPressed: () => _go(WorkflowScreen.sources),
             ),
-          ],
-        ),
-      ];
+          ),
+        ],
+      );
     }
+
     if (const {
           WorkflowScreen.results,
           WorkflowScreen.detail,
           WorkflowScreen.export,
         }.contains(flow.screen) &&
         !flow.resultCurrent) {
-      return [
-        WorkflowSectionCard(
-          children: [
-            const WorkflowInfoBanner(
-              text:
-                  'Kết quả đã mất hiệu lực. Hãy xác thực nguồn và so sánh lại.',
-              iconAsset: DytavaIcons.error,
-              color: DytavaColors.different,
-              bgColor: DytavaColors.softRed,
+      return Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(padHorizontal),
+              child: const WorkflowSectionCard(
+                children: [
+                  WorkflowInfoBanner(
+                    text:
+                        'Kết quả đã mất hiệu lực. Hãy xác thực nguồn và so sánh lại.',
+                    iconAsset: DytavaIcons.error,
+                    color: DytavaColors.different,
+                    bgColor: DytavaColors.softRed,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            WorkflowSecondaryButton(
+          ),
+          StickyBottomBar(
+            child: WorkflowSecondaryButton(
               label: 'Về nguồn A/B',
               iconAsset: DytavaIcons.back,
               onPressed: () => _go(WorkflowScreen.sources),
             ),
-          ],
-        ),
-      ];
+          ),
+        ],
+      );
     }
+
+    Widget content;
 
     switch (flow.screen) {
       case WorkflowScreen.home:
-        return [
-          HomeScreenView(
+        content = SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(padHorizontal, 0, padHorizontal, 96),
+          child: HomeScreenView(
             flow: flow,
             quickProcessing: _quickProcessing,
             onStartNewSession: () => _go(WorkflowScreen.sources),
             onQuickRun: _oneTapQuickRun,
             onResumeSession: _resumeCurrentSession,
+            onViewHistory: () =>
+                setState(() => _auxView = _AuxiliaryView.history),
             onCloseSession: () async {
               await flow.closeSession();
               if (mounted) setState(() => _auxView = _AuxiliaryView.none);
             },
           ),
-        ];
+        );
       case WorkflowScreen.sources:
-        return [
-          SourceSelectionView(
-            flow: flow,
-            quickProcessing: _quickProcessing,
-            onQuickPrepareBoth: _quickPrepareBoth,
-            onOpenPreview: (side) => _go(WorkflowScreen.preview, side: side),
-            onContinueMapping: () => _go(WorkflowScreen.mapping),
-            onContinueToProposal: () {
-              if (flow.inputsReady) {
-                flow.analyzeAndPropose();
-                flow.applyProposal(run: false);
-                _go(WorkflowScreen.policy);
-              }
-            },
-          ),
-        ];
+        content = SourceSelectionView(
+          flow: flow,
+          quickProcessing: _quickProcessing,
+          onQuickPrepareBoth: _quickPrepareBoth,
+          onOpenPreview: (side) => _go(WorkflowScreen.preview, side: side),
+          onContinueMapping: () => _go(WorkflowScreen.mapping),
+          onContinueToProposal: _compareAutomatically,
+        );
       case WorkflowScreen.preview:
-        return [
-          PreviewScreenView(
-            flow: flow,
-            onOpenOcrReview: () =>
-                _go(WorkflowScreen.ocrReview, side: flow.activeSide),
-            onBackToSources: () => _go(WorkflowScreen.sources),
-          ),
-        ];
+        content = PreviewScreenView(
+          flow: flow,
+          onOpenOcrReview: () =>
+              _go(WorkflowScreen.ocrReview, side: flow.activeSide),
+          onBackToSources: () => _go(WorkflowScreen.sources),
+        );
       case WorkflowScreen.ocrReview:
         final source = flow.slot(flow.activeSide);
         if (_reviewBinding != source.binding) {
@@ -628,85 +826,68 @@ class _WorkflowPageState extends State<WorkflowPage>
           _reviewed.clear();
         }
         final cells = source.review?.cells ?? const <ReviewCell>[];
-        return [
-          OcrReviewScreenView(
-            flow: flow,
-            reviewedCells: _reviewed,
-            onToggleCell: (cellId) => setState(() {
-              _reviewed.contains(cellId)
-                  ? _reviewed.remove(cellId)
-                  : _reviewed.add(cellId);
-            }),
-            onReviewAll: () => setState(() {
-              _reviewed.addAll(cells.map((c) => c.id));
-            }),
-            onConfirmReviewed: () async {
-              await flow.confirmImport(
-                source.side,
-                expectedBinding: source.binding,
-                reviewedCells: Set.of(_reviewed),
-              );
-              if (mounted) {
-                _go(WorkflowScreen.preview, side: source.side);
-              }
-            },
-          ),
-        ];
+        content = OcrReviewScreenView(
+          flow: flow,
+          reviewedCells: _reviewed,
+          onToggleCell: (cellId) => setState(() {
+            _reviewed.contains(cellId)
+                ? _reviewed.remove(cellId)
+                : _reviewed.add(cellId);
+          }),
+          onReviewAll: () => setState(() {
+            _reviewed.addAll(cells.map((c) => c.id));
+          }),
+          onConfirmReviewed: () async {
+            await flow.confirmImport(
+              source.side,
+              expectedBinding: source.binding,
+              reviewedCells: Set.of(_reviewed),
+            );
+            if (mounted) {
+              _go(WorkflowScreen.preview, side: source.side);
+            }
+          },
+        );
       case WorkflowScreen.mapping:
-        return [
-          MappingScreenView(
-            flow: flow,
-            onAutoMap: _autoMapFields,
-            onContinuePolicy: () => _go(WorkflowScreen.policy),
-          ),
-        ];
+        content = MappingScreenView(
+          flow: flow,
+          onAutoMap: _autoMapFields,
+          onContinuePolicy: () => _go(WorkflowScreen.policy),
+        );
       case WorkflowScreen.policy:
-        if (flow.inputsReady && flow.proposal == null) {
-          flow.analyzeAndPropose();
-          flow.applyProposal(run: false);
-        } else if (flow.inputsReady &&
-            flow.config.mappings.isEmpty &&
-            flow.proposal != null) {
-          flow.applyProposal(run: false);
-        }
-        return [
-          PolicyScreenView(
-            flow: flow,
-            onQuickConfirmAndRun: _quickConfirmAllAndRun,
-          ),
-        ];
+        content = PolicyScreenView(
+          flow: flow,
+          onQuickConfirmAndRun: _quickConfirmAllAndRun,
+        );
       case WorkflowScreen.progress:
-        return [
-          ProgressScreenView(
-            flow: flow,
-            onBackToPolicyOrSources: () => _go(
-              flow.inputsReady ? WorkflowScreen.policy : WorkflowScreen.sources,
-            ),
+        content = ProgressScreenView(
+          flow: flow,
+          onBackToPolicyOrSources: () => _go(
+            flow.inputsReady ? WorkflowScreen.policy : WorkflowScreen.sources,
           ),
-        ];
+        );
       case WorkflowScreen.results:
-        return [
-          ResultsScreenView(
-            flow: flow,
-            resultViewTab: _resultViewTab,
-            onResultViewTabChanged: (idx) =>
-                setState(() => _resultViewTab = idx),
-            onOpenDetail: (cellId) =>
-                _go(WorkflowScreen.detail, cellId: cellId),
-            onOpenExport: () => _go(WorkflowScreen.export),
-          ),
-        ];
+        content = ResultsScreenView(
+          flow: flow,
+          resultViewTab: _resultViewTab,
+          onResultViewTabChanged: (idx) =>
+              setState(() => _resultViewTab = idx),
+          onOpenDetail: (cellId) =>
+              _go(WorkflowScreen.detail, cellId: cellId),
+          onOpenExport: _openExport,
+          onSwitchSheetsAndCompare: _switchSheetsAndCompare,
+        );
       case WorkflowScreen.detail:
-        return [
-          DifferenceDetailScreenView(
-            flow: flow,
-            onSelectCellId: (id) => setState(() => flow.detailId = id),
-            onBackToResults: () => _go(WorkflowScreen.results),
-          ),
-        ];
+        content = DifferenceDetailScreenView(
+          flow: flow,
+          onSelectCellId: (id) => setState(() => flow.detailId = id),
+          onBackToResults: () => _go(WorkflowScreen.results),
+        );
       case WorkflowScreen.export:
-        return [
-          ExportScreenView(
+        content = SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: padHorizontal, vertical: 12),
+          child: ExportScreenView(
             flow: flow,
             exportKind: _exportKind,
             selection: _selection,
@@ -725,7 +906,47 @@ class _WorkflowPageState extends State<WorkflowPage>
                 flow.exportResult(ExportRequest(_exportKind, _selection)),
             onBackToResults: () => _go(WorkflowScreen.results),
           ),
-        ];
+        );
     }
+
+    if (flow.screen == WorkflowScreen.mapping ||
+        flow.screen == WorkflowScreen.policy) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(padHorizontal, 6, padHorizontal, 6),
+            child: DytavaGuidedStepHeader(screen: flow.screen),
+          ),
+          if (flow.issue != null && _auxView == _AuxiliaryView.none)
+            Padding(
+              padding: EdgeInsets.fromLTRB(padHorizontal, 0, padHorizontal, 6),
+              child: Semantics(
+                liveRegion: true,
+                child: WorkflowIssueList(issues: [flow.issue!]),
+              ),
+            ),
+          Expanded(child: content),
+        ],
+      );
+    }
+
+    if (flow.issue != null && _auxView == _AuxiliaryView.none && !isRootHome) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(padHorizontal, 6, padHorizontal, 6),
+            child: Semantics(
+              liveRegion: true,
+              child: WorkflowIssueList(issues: [flow.issue!]),
+            ),
+          ),
+          Expanded(child: content),
+        ],
+      );
+    }
+
+    return content;
   }
 }

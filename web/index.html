@@ -153,7 +153,13 @@
           </div>
         </div>
 
-        <div class="sheet-selectors"><label>Sheet nguồn A <select id="sheet-a" class="form-select" hidden aria-label="Sheet nguồn A"></select></label><label>Sheet nguồn B <select id="sheet-b" class="form-select" hidden aria-label="Sheet nguồn B"></select></label></div>
+        <div class="sheet-selectors"><label>Xem trước nguồn A <select id="sheet-a" class="form-select" hidden aria-label="Sheet nguồn A"></select></label><label>Xem trước nguồn B <select id="sheet-b" class="form-select" hidden aria-label="Sheet nguồn B"></select></label></div>
+        <div id="sheet-mapping-review" class="metric-card" hidden aria-live="polite"></div>
+        <div id="workbook-result-controls" class="sheet-selectors" hidden>
+          <label>Phạm vi kết quả <select id="sheet-pair-view" class="form-select" aria-label="Phạm vi kết quả"></select></label>
+          <p id="workbook-coverage" class="privacy-note"></p>
+        </div>
+        <div id="workbook-warnings" class="privacy-note" role="status"></div>
         <div id="compare-processing" class="processing-state" hidden><img class="state-illustration" src="assets/dytava/illustrations/svg/square/processing-compare.svg" width="160" height="160" alt="" aria-hidden="true" loading="lazy"><p id="compare-status" class="privacy-note" role="status"></p></div>
         <img id="comparison-error-art" class="state-illustration" src="assets/dytava/illustrations/svg/square/status-warning.svg" width="120" height="120" alt="" hidden>
         <p id="comparison-error" class="form-message error compare-note" role="alert"></p>

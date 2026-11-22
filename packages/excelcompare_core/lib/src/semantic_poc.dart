@@ -12,7 +12,7 @@ Decimal? _tryDecimal(String input) {
   }
 }
 
-enum CellKind { text, number, boolean, missing, blank, jsonNull, ocrText, error }
+enum CellKind { text, number, boolean, missing, blank, jsonNull, ocrText, error, image, unsupported }
 enum SemanticType { identifier, freeText, decimal, boolean, percentage }
 enum DecisionStatus { exact, equivalent, different, unresolved }
 
@@ -25,10 +25,53 @@ enum ReasonCode {
 }
 
 final class SourceCell {
-  const SourceCell(this.kind, {this.rawLexeme, this.ocrReviewed = true});
+  const SourceCell(this.kind, {this.rawLexeme, this.ocrReviewed = true, this.imageBytes, this.imageDigest, this.mediaType, this.contentIssue});
   final CellKind kind;
   final String? rawLexeme;
   final bool ocrReviewed;
+  final List<int>? imageBytes;
+  final String? imageDigest, mediaType, contentIssue;
+}
+
+ComparisonDecision? compareCellContent(SourceCell a, SourceCell b) {
+  if (a.kind != CellKind.image &&
+      b.kind != CellKind.image &&
+      a.kind != CellKind.unsupported &&
+      b.kind != CellKind.unsupported) return null;
+  final x = a.rawLexeme ?? '', y = b.rawLexeme ?? '';
+  ComparisonDecision result(
+          DecisionStatus status, String rule, String reason) =>
+      ComparisonDecision(
+          status: status,
+          ruleId: rule,
+          explanation: reason,
+          left: TextValue(a.imageDigest ?? x),
+          right: TextValue(b.imageDigest ?? y));
+  if (a.kind == CellKind.unsupported ||
+      b.kind == CellKind.unsupported ||
+      (a.kind == CellKind.image && a.imageBytes == null) ||
+      (b.kind == CellKind.image && b.imageBytes == null))
+    return result(DecisionStatus.unresolved, 'content/unsupported',
+        a.contentIssue ?? b.contentIssue ?? 'Thiếu nội dung nhị phân ảnh.');
+  if (a.kind != CellKind.image || b.kind != CellKind.image)
+    return result(DecisionStatus.different, 'image/bytes',
+        'Một ô là ảnh, ô còn lại có kiểu dữ liệu khác.');
+  final ba = a.imageBytes!, bb = b.imageBytes!;
+  var same = a.imageDigest == b.imageDigest && ba.length == bb.length;
+  if (same) {
+    for (var i = 0; i < ba.length; i++) {
+      if (ba[i] != bb[i]) {
+        same = false;
+        break;
+      }
+    }
+  }
+  return result(
+      same ? DecisionStatus.exact : DecisionStatus.different,
+      'image/bytes',
+      same
+          ? 'Nội dung nhị phân ảnh nhúng giống nhau.'
+          : 'Nội dung nhị phân ảnh nhúng khác nhau; chưa kết luận tương đương hình ảnh.');
 }
 
 final class DecimalInputPolicy {
@@ -136,6 +179,8 @@ final class SemanticPolicyEngine {
   const SemanticPolicyEngine();
 
   ComparisonDecision compare(SourceCell a, SourceCell b, FieldPolicy policy) {
+    final content = compareCellContent(a, b);
+    if (content != null) return content;
     final left = normalize(a, policy, side: 'A');
     final right = normalize(b, policy, side: 'B');
     final rule = 'semantic/${policy.type.name}/poc-v1';
@@ -159,7 +204,7 @@ final class SemanticPolicyEngine {
     if (cell.kind == CellKind.ocrText && !cell.ocrReviewed) {
       return const NormalizationOutcome.failure(ReasonCode.ocrReviewRequired);
     }
-    if (cell.kind == CellKind.error) {
+    if (cell.kind == CellKind.error || cell.kind == CellKind.image || cell.kind == CellKind.unsupported) {
       return const NormalizationOutcome.failure(ReasonCode.parseFailed);
     }
     if (cell.kind == CellKind.blank || cell.kind == CellKind.missing ||

@@ -6,6 +6,8 @@ owner: Algorithm design role
 reviewer: Technical review role; assignee pending
 updated: 2026-11-13
 ---
+> **Cập nhật 20/11/2026:** [hợp đồng workbook](05_workbook_mapping_and_cell_content.md) thay quy định một selected sheet và xác nhận thủ công mọi cặp sheet cho web/mobile: so sánh tất cả worksheet, tự ghép tên → cấu trúc, chỉ hỏi cặp chưa rõ; xem tổng/từng cặp. Ảnh trong ô là nội dung có kiểu, không so cached error như text. Wire Input 0.1.0 và ADR cũ vẫn là baseline lịch sử.
+
 
 # Execution plan và capability contract — L0
 

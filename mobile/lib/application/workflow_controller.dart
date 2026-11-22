@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../domain/smart_proposal_engine.dart';
 import '../domain/workflow.dart';
+import '../domain/workbook_comparison.dart';
 
 final class _Work {
   final cancel = Cancellation();
@@ -59,6 +60,61 @@ final class WorkflowController extends ChangeNotifier {
   DecisionStatus? resultFilter;
   int page = 0;
   String? detailId;
+  String? selectedSheetPairId;
+  final List<(String?, String?)> sheetOverrides = [];
+  bool get hasWorkbook => SourceSide.values.any(
+    (s) => slot(s).snapshot?.workbookSheets.isNotEmpty == true,
+  );
+  SheetMappingPlan? get sheetMapping => !inputsReady || !hasWorkbook
+      ? null
+      : mapWorkbookSnapshots(
+          slot(SourceSide.a).snapshot!,
+          slot(SourceSide.b).snapshot!,
+          overrides: sheetOverrides,
+        );
+  bool get structuralWorkbookOnly {
+    final mapping = sheetMapping;
+    if (mapping == null || !mapping.complete) return false;
+    final a = workbookTables(slot(SourceSide.a).snapshot!),
+        b = workbookTables(slot(SourceSide.b).snapshot!);
+    return mapping.pairs.every(
+      (p) =>
+          p.a == null ||
+          p.b == null ||
+          !a[p.a!].fields.any(
+            (fa) => b[p.b!].fields.any(
+              (fb) =>
+                  normalizeSheetLabel(fa.label) ==
+                  normalizeSheetLabel(fb.label),
+            ),
+          ),
+    );
+  }
+
+  ComparisonResult? get displayedResult =>
+      result?.sheetResults
+          .where((r) => r.sheetPair?.id == selectedSheetPairId)
+          .firstOrNull ??
+      result;
+  void selectResultSheet(String? id) {
+    selectedSheetPairId = id;
+    page = 0;
+    _emit();
+  }
+
+  void resolveSheetPair(String? a, String? b) {
+    if (!inputsReady || busy) return;
+    mapWorkbookSnapshots(
+      slot(SourceSide.a).snapshot!,
+      slot(SourceSide.b).snapshot!,
+      overrides: [...sheetOverrides, (a, b)],
+    );
+    sheetOverrides.add((a, b));
+    _invalidate();
+    _alignWorkbookPreviews();
+    analyzeAndPropose();
+  }
+
   static const pageSize = 12;
   String _id(String prefix) => '$prefix-${++_serial}';
   SourceSlot slot(SourceSide side) => _slots[side]!;
@@ -92,6 +148,8 @@ final class WorkflowController extends ChangeNotifier {
     if (_comparison != null) jobState = JobState.cancelling;
     if (_export != null) exportState = ExportState.cancelling;
     if (source) {
+      sheetOverrides.clear();
+      selectedSheetPairId = null;
       config = ComparisonConfiguration();
       proposal = null;
     }
@@ -279,10 +337,113 @@ final class WorkflowController extends ChangeNotifier {
       if (identical(_imports[side], work)) _imports.remove(side);
       work.stopped.complete();
       if (inputsReady) {
+        _alignWorkbookPreviews();
         analyzeAndPropose();
       } else {
         _emit();
       }
+    }
+  }
+
+  void selectWorkbookPreview(SourceSide side, String name) {
+    if (!inputsReady || busy || !hasWorkbook) return;
+    _invalidate();
+    config = ComparisonConfiguration();
+    _alignWorkbookPreviews(preferredSide: side, preferredName: name);
+    analyzeAndPropose();
+  }
+
+  void _alignWorkbookPreviews({
+    SourceSide? preferredSide,
+    String? preferredName,
+  }) {
+    final mapping = sheetMapping;
+    if (mapping == null) return;
+    final candidates = mapping.pairs
+        .where((p) => p.a != null && p.b != null)
+        .toList();
+    final ta = workbookTables(slot(SourceSide.a).snapshot!),
+        tb = workbookTables(slot(SourceSide.b).snapshot!);
+    int value(SheetPair p) {
+      final a = ta[p.a!], b = tb[p.b!];
+      final shared = a.fields
+          .where(
+            (fa) => b.fields.any(
+              (fb) =>
+                  normalizeSheetLabel(fa.label) ==
+                  normalizeSheetLabel(fb.label),
+            ),
+          )
+          .length;
+      return shared * 2 +
+          (a.records.isNotEmpty && b.records.isNotEmpty ? 1 : 0);
+    }
+
+    candidates.sort((a, b) => value(b).compareTo(value(a)));
+    final pair = preferredName == null
+        ? candidates.firstOrNull
+        : candidates
+              .where(
+                (p) =>
+                    (preferredSide == SourceSide.a ? p.nameA : p.nameB) ==
+                    preferredName,
+              )
+              .firstOrNull;
+    if (pair == null && preferredName != null && preferredSide != null) {
+      final old = slot(preferredSide), original = old.snapshot!;
+      final selected = workbookTables(original)
+          .where((s) => s.sheetName == preferredName)
+          .firstOrNull;
+      if (selected != null) {
+        _slots[preferredSide] = SourceSlot(
+          side: preferredSide,
+          state: old.state,
+          artifact: old.artifact,
+          generation: old.generation,
+          revision: old.revision,
+          attempt: old.attempt,
+          config: old.config,
+          snapshot: InputSnapshot(
+            id: selected.id,
+            binding: original.binding,
+            fields: selected.fields,
+            records: selected.records,
+            fullValidation: original.fullValidation,
+            ocrReviewed: original.ocrReviewed,
+            sheetName: selected.sheetName,
+            workbookSheets: original.workbookSheets,
+            warnings: original.warnings,
+          ),
+        );
+      }
+      return;
+    }
+    if (pair == null) return;
+    for (final side in SourceSide.values) {
+      final slotNow = slot(side),
+          original = slotNow.snapshot!,
+          tables = workbookTables(original);
+      final selected = tables[side == SourceSide.a ? pair.a! : pair.b!];
+      _slots[side] = SourceSlot(
+        side: side,
+        state: slotNow.state,
+        artifact: slotNow.artifact,
+        generation: slotNow.generation,
+        revision: slotNow.revision,
+        attempt: slotNow.attempt,
+        config: slotNow.config,
+        snapshot: InputSnapshot(
+          id: selected.id,
+          binding: original.binding,
+          fields: selected.fields,
+          records: selected.records,
+          fullValidation: original.fullValidation,
+          ocrReviewed: original.ocrReviewed,
+          sheetName: selected.sheetName,
+          workbookSheets: original.workbookSheets,
+          warnings: original.warnings,
+        ),
+      );
     }
   }
 
@@ -427,6 +588,9 @@ final class WorkflowController extends ChangeNotifier {
         proposal!,
         direction: config.direction,
       );
+      if (structuralWorkbookOnly) {
+        config = config.copyWith(mappingConfirmed: true);
+      }
       _invalidate();
       issue = null;
       _emit();
@@ -438,6 +602,14 @@ final class WorkflowController extends ChangeNotifier {
 
   List<WorkflowIssue> get startBlockers {
     final blockers = <WorkflowIssue>[];
+    if (sheetMapping?.complete == false) {
+      blockers.add(
+        const WorkflowIssue(
+          'SHEET_MAPPING_REQUIRED',
+          'Cần chọn các cặp sheet chưa xác định được.',
+        ),
+      );
+    }
     for (final side in SourceSide.values) {
       if (!slot(side).ready) {
         blockers.add(
@@ -448,7 +620,8 @@ final class WorkflowController extends ChangeNotifier {
         );
       }
     }
-    if (!config.mappingConfirmed || config.mappings.isEmpty) {
+    if (!config.mappingConfirmed ||
+        (config.mappings.isEmpty && !structuralWorkbookOnly)) {
       blockers.add(
         const WorkflowIssue(
           'MAPPING_CONFIRMATION_REQUIRED',
@@ -555,6 +728,7 @@ final class WorkflowController extends ChangeNotifier {
       slot(SourceSide.a).snapshot!,
       slot(SourceSide.b).snapshot!,
       config,
+      sheetOverrides: List.unmodifiable(sheetOverrides),
     );
     final work = _Work();
     _comparison = work;
@@ -602,6 +776,7 @@ final class WorkflowController extends ChangeNotifier {
         );
       }
       result = output;
+      selectedSheetPairId = null;
       validity = ResultValidity.current;
       jobState = JobState.completed;
       resultFilter = null;
@@ -678,7 +853,7 @@ final class WorkflowController extends ChangeNotifier {
 
   List<CellDifference> get selectedCells => !resultCurrent
       ? const []
-      : result!.cells
+      : displayedResult!.cells
             .where(
               (c) => resultFilter == null || c.decision.status == resultFilter,
             )

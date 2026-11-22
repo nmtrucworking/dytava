@@ -7,52 +7,46 @@ import 'dytava_colors.dart';
 class DytavaTypography {
   DytavaTypography._();
 
-  static const String editorialFont = 'Manrope';
-  static const String displayFont = 'Manrope';
+  static const String editorialFont = 'Inter';
+  static const String displayFont = 'Inter';
   static const String primaryFont = 'Inter';
   static const String dataFont = 'Inter';
   static const String fallbackFont = 'Be Vietnam Pro';
   static const String systemFont = 'Roboto';
 
-  // Precision Workspace typography
-  static const TextStyle workspaceHeader = TextStyle(
-    fontFamily: editorialFont,
-    fontFamilyFallback: [displayFont, fallbackFont, systemFont],
-    fontSize: 26,
-    fontWeight: FontWeight.w800,
-    letterSpacing: -0.7,
-    color: DytavaColors.graphite,
-    height: 1.2,
+  // Precision Workspace typography (Figma 2026 Baseline)
+  // DISPLAY / 28 · 40 · SEMIBOLD: "Spot the difference."
+  static const TextStyle displayLarge = TextStyle(
+    fontFamily: displayFont,
+    fontFamilyFallback: [fallbackFont, systemFont],
+    fontSize: 28,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.6,
+    color: DytavaColors.textPrimary,
+    height: 1.25,
   );
+
+  // HEADING / 24 · 32 · SEMIBOLD: "Two files. One comparison."
+  static const TextStyle displayMedium = TextStyle(
+    fontFamily: displayFont,
+    fontFamilyFallback: [fallbackFont, systemFont],
+    fontSize: 24,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.4,
+    color: DytavaColors.textPrimary,
+    height: 1.33,
+  );
+
+  static const TextStyle workspaceHeader = displayLarge;
 
   static const TextStyle precisionTag = TextStyle(
     fontFamily: dataFont,
     fontFamilyFallback: ['IBM Plex Mono', fallbackFont, systemFont],
     fontSize: 11,
     fontWeight: FontWeight.w700,
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
     fontFeatures: [FontFeature.tabularFigures()],
-    color: DytavaColors.precisionNeutral,
-  );
-
-  static const TextStyle displayLarge = TextStyle(
-    fontFamily: displayFont,
-    fontFamilyFallback: [primaryFont, fallbackFont],
-    fontSize: 32,
-    fontWeight: FontWeight.w800,
-    letterSpacing: -0.8,
-    color: DytavaColors.textPrimary,
-    height: 1.3,
-  );
-
-  static const TextStyle displayMedium = TextStyle(
-    fontFamily: displayFont,
-    fontFamilyFallback: [primaryFont, fallbackFont],
-    fontSize: 24,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.5,
-    color: DytavaColors.textPrimary,
-    height: 1.3,
+    color: DytavaColors.primary,
   );
 
   static const TextStyle titleLarge = TextStyle(

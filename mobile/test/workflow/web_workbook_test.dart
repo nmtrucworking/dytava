@@ -51,7 +51,7 @@ void main() {
     expect(snapshot.fields.map((f) => f.id), ['Title', 'Date']);
     expect(snapshot.records.single.cells['Title']!.rawLexeme, 'Project Brief');
     expect(snapshot.records.single.cells['Date']!.rawLexeme, '2023-10-13');
-    expect(snapshot.records.single.locations['Title'], 'Planned!R4/Title');
+    expect(snapshot.records.single.locations['Title'], 'Planned!A4');
   });
   test('malformed delimited rows and unsupported binary XLS are rejected', () {
     for (final pair in [

@@ -148,14 +148,14 @@ class ComparisonRail extends StatelessWidget {
             FilledButton(
               onPressed: onPrimaryAction,
               style: FilledButton.styleFrom(
-                backgroundColor: DytavaColors.limePrimary,
-                foregroundColor: DytavaColors.graphite,
+                backgroundColor: DytavaColors.primary,
+                foregroundColor: Colors.white,
                 elevation: 0,
                 minimumSize: const Size(double.infinity, 50),
                 shape: const StadiumBorder(),
                 textStyle: const TextStyle(
-                  fontFamily: DytavaTypography.editorialFont,
-                  fontWeight: FontWeight.w800,
+                  fontFamily: DytavaTypography.primaryFont,
+                  fontWeight: FontWeight.w700,
                   fontSize: 15,
                   letterSpacing: -0.2,
                 ),
@@ -168,10 +168,11 @@ class ComparisonRail extends StatelessWidget {
                     child: Text(
                       primaryActionLabel,
                       overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_rounded, size: 18),
+                  const Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
                 ],
               ),
             ),

@@ -1,4 +1,6 @@
 # Định dạng file và hợp đồng adapter
+> **Cập nhật 20/11/2026:** [hợp đồng workbook và ảnh trong ô](../engine/05_workbook_mapping_and_cell_content.md) thay quy định một selected sheet và xác nhận thủ công mọi cặp sheet cho web/mobile: so sánh tất cả worksheet, tự ghép tên → cấu trúc, chỉ hỏi cặp chưa rõ; xem tổng/từng cặp. Ảnh trong ô là nội dung có kiểu, không so cached error như text. Wire Input 0.1.0 và ADR cũ vẫn là baseline lịch sử.
+
 
 > **Quyết định scope ngày 11/11/2026:** [9 ADR](../../decisions/ADR_REGISTER_P0_2026-11-11.md) chốt P0 Android là XLSX/CSV/TSV + PNG/JPEG với manual OCR review (tối đa một nguồn ảnh); JSON chuyển P1. Các adapter vẫn CHƯA được chứng minh triển khai. Schema ImportConfig 0.1.0 chưa thể ingest ảnh P0, phải version-migrate trước khi bật.
 

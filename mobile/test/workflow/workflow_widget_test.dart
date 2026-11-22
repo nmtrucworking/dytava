@@ -10,503 +10,245 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide ComparisonResult;
 
 Future<void> tap(WidgetTester tester, String text) async {
-  final target = find.text(text);
-  await tester.scrollUntilVisible(
-    target,
-    250,
-    scrollable: find.byType(Scrollable).first,
-  );
+  final target = find.text(text).first;
   await tester.ensureVisible(target);
   await tester.pumpAndSettle();
   await tester.tap(target);
   await tester.pumpAndSettle();
 }
 
+Future<void> prepare(WorkflowController flow) async {
+  for (final side in SourceSide.values) {
+    await flow.selectSource(
+      side,
+      SourceFormat.csv,
+      'fixture:${side.name}',
+      'sample-${side.name}.csv',
+    );
+    await flow.importSource(side);
+    final slot = flow.slot(side);
+    if (slot.state == InputState.needsReview) {
+      await flow.confirmImport(side, expectedBinding: slot.binding);
+    }
+  }
+}
+
 void main() {
+  testWidgets('Import, auto compare, filter, inspect and export a report', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final flow = createDemoWorkflow();
+    addTearDown(flow.dispose);
+    await tester.pumpWidget(ExcelCompareApp(controller: flow));
+    await tester.tap(find.byTooltip('Compare files'));
+    await tester.pumpAndSettle();
+    expect(find.text('Import files'), findsOneWidget);
+    final compare = find.widgetWithText(FilledButton, 'Compare files');
+    expect(tester.widget<FilledButton>(compare).onPressed, isNull);
+    await tap(tester, 'Use sample files ›');
+    expect(flow.inputsReady, isTrue);
+    await tap(tester, 'Compare files');
+    expect(flow.resultCurrent, isTrue);
+    expect(find.text('RESULTS READY'), findsOneWidget);
+    expect(find.text('Modified 1'), findsOneWidget);
+    await tap(tester, 'Modified 1');
+    final modified = flow.result!.cells.firstWhere(
+      (c) => c.decision.status == DecisionStatus.different,
+    );
+    final change = find.byKey(ValueKey('change-${modified.id}'));
+    await tester.ensureVisible(change);
+    await tester.tap(change);
+    await tester.pumpAndSettle();
+    expect(find.text('Change details'), findsOneWidget);
+    expect(find.text(modified.a.rawLexeme!), findsWidgets);
+    expect(find.text(modified.b.rawLexeme!), findsWidgets);
+    await tap(tester, 'Back to differences');
+    await tap(tester, 'Export report');
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Prepare report'),
+          )
+          .onPressed,
+      isNull,
+    );
+    await tap(tester, 'Confirm format and report scope');
+    await tap(tester, 'Prepare report');
+    expect(flow.receipt, isNotNull);
+    expect(find.text('Report ready'), findsOneWidget);
+    await tap(tester, 'Cancel');
+    expect(find.text('Comparison results'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
-    'mobile user can complete source/configuration/result/detail/export activities',
+    'Manual setup preserves confirmation until Start comparison is tapped',
     (tester) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      await tester.pumpWidget(
-        ExcelCompareApp(controller: createDemoWorkflow()),
-      );
-      await tap(tester, 'Bắt đầu so sánh');
-      final continueButton = find.widgetWithText(
-        FilledButton,
-        'Tiếp tục ánh xạ cột',
-      );
-      await tester.scrollUntilVisible(
-        continueButton,
-        250,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(tester.widget<FilledButton>(continueButton).onPressed, isNull);
-      // Start each independent source, inspect scope and explicitly confirm it.
-      for (final side in ['A', 'B']) {
-        await tester.drag(find.byType(ListView), const Offset(0, 1000));
-        await tester.pumpAndSettle();
-        await tap(tester, 'Chọn bảng mẫu $side');
-        await tap(tester, 'Kiểm tra $side');
-        await tap(tester, 'Kiểm tra nguồn mẫu');
-        await tap(tester, 'Xác nhận phạm vi và header mẫu');
-        await tap(tester, 'Trở về nguồn A/B');
-      }
-      await tap(tester, 'Tiếp tục ánh xạ cột');
-      for (final field in [('id', 'Mã (id)'), ('amount', 'Giá trị (amount)')]) {
-        final dropdown = find.byKey(ValueKey('mapping-${field.$1}-null'));
-        await tester.ensureVisible(dropdown);
-        await tester.tap(dropdown);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text(field.$2).last);
-        await tester.pumpAndSettle();
-      }
-      await tap(tester, 'Xác nhận ánh xạ hiện hành');
-      await tap(tester, 'Tiếp tục cấu hình so sánh');
-      await tap(tester, 'Xác nhận chế độ và khóa');
-      await tap(tester, 'Xác nhận toàn bộ policy');
-      await tap(tester, 'Xác nhận chiều so sánh');
-      await tap(tester, 'Chạy so sánh');
-      expect(find.text('COMPLETED · Kết quả so sánh'), findsOneWidget);
-      expect(find.text('EXACT: 5'), findsOneWidget);
-      await tap(tester, 'amount: EQUIVALENT');
-      expect(find.text('Raw: 8.5'), findsOneWidget);
-      expect(find.text('Raw: 8,5'), findsOneWidget);
-      await tap(tester, 'Trở về kết quả');
-      await tap(tester, 'Xuất / xem trước báo cáo');
-      await tap(tester, 'Xác nhận định dạng và phạm vi preview');
-      await tap(tester, 'Tạo bản xem trước');
-      expect(find.text('Bản xem trước đã sẵn sàng.'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
-  testWidgets(
-    'OCR flow requires each selected cell review and rejects stale screen data',
-    (tester) async {
-      final f = WorkflowController(
-        input: DemoInputPort(),
-        comparator: DemoComparisonPort(),
-        exporter: DemoExportPort(),
-      );
-      addTearDown(f.dispose);
-      await tester.runAsync(() async {
-        await f.selectSource(
-          SourceSide.a,
-          SourceFormat.png,
-          'fixture:image-a',
-          'image.png',
-        );
-        await f.importSource(SourceSide.a);
-        f.navigate(WorkflowScreen.ocrReview, side: SourceSide.a);
-      });
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: DytavaTheme.lightTheme,
-          home: WorkflowPage(controller: f),
+      final flow = createDemoWorkflow();
+      addTearDown(flow.dispose);
+      await tester.runAsync(() => prepare(flow));
+      flow.analyzeAndPropose();
+      flow.applyProposal();
+      flow.configure(
+        flow.config.copyWith(
+          modeConfirmed: false,
+          policyConfirmed: false,
+          directionConfirmed: false,
         ),
       );
-      final confirm = find.widgetWithText(
-        FilledButton,
-        'Xác nhận các ô đã review',
-      );
-      await tester.scrollUntilVisible(
-        confirm,
-        250,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(tester.widget<FilledButton>(confirm).onPressed, isNull);
-      await tester.drag(find.byType(ListView), const Offset(0, 1500));
+      flow.navigate(WorkflowScreen.policy);
+      await tester.pumpWidget(ExcelCompareApp(controller: flow));
       await tester.pumpAndSettle();
-      final cells = f.slot(SourceSide.a).review!.cells;
-      for (final cell in cells) {
-        await tap(tester, '${cell.id}: ${cell.recognizedText}');
-      }
-      await tap(tester, 'Xác nhận các ô đã review');
-      expect(f.slot(SourceSide.a).ready, isTrue);
+      expect(flow.result, isNull);
+      expect(flow.config.policyConfirmed, isFalse);
+      expect(find.text('Ready for a clear view.'), findsOneWidget);
+      await tap(tester, 'Start comparison');
+      expect(flow.resultCurrent, isTrue);
+      expect(flow.config.policyConfirmed, isTrue);
       expect(tester.takeException(), isNull);
     },
   );
 
   testWidgets(
-    'mobile user can use fast-track 1-tap flow to quickly reach comparison results and navigate diffs',
+    'Explicit rule edits override auto detection and invalid tolerance blocks running',
     (tester) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      await tester.pumpWidget(
-        ExcelCompareApp(controller: createDemoWorkflow()),
-      );
-      // 1-Tap Fast Run right from Home
-      await tap(tester, 'Thử nhanh với dữ liệu mẫu');
-      expect(find.text('COMPLETED · Kết quả so sánh'), findsOneWidget);
-      expect(find.text('EXACT: 5'), findsOneWidget);
-
-      // Filter chips quick selection
-      await tap(tester, 'Khác biệt (1)');
-      expect(find.text('amount: DIFFERENT'), findsOneWidget);
-
-      // Open detail
-      await tap(tester, 'amount: DIFFERENT');
-      expect(find.text('Raw: 10'), findsOneWidget);
-
-      // Next / Previous diff navigation inside detail
-      expect(find.text('Khác biệt 1/1'), findsOneWidget);
-      await tap(tester, 'Trở về kết quả');
-
-      // Export preview
-      await tap(tester, 'Xuất / xem trước báo cáo');
-      await tap(tester, 'Xác nhận định dạng và phạm vi preview');
-      await tap(tester, 'Tạo bản xem trước');
-      expect(find.text('Bản xem trước đã sẵn sàng.'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
-    'Guided Mobile Workflow navigation, auxiliary views, session resume card and 2-sheet diff view work seamlessly',
-    (tester) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      await tester.pumpWidget(
-        ExcelCompareApp(controller: createDemoWorkflow()),
-      );
-
-      // Open auxiliary Policy Presets & Learn view from Home overflow menu
-      await tester.tap(find.byTooltip('Thêm tùy chọn'));
+      final flow = createDemoWorkflow();
+      addTearDown(flow.dispose);
+      await tester.runAsync(() => prepare(flow));
+      flow.analyzeAndPropose();
+      flow.applyProposal();
+      flow.navigate(WorkflowScreen.policy);
+      await tester.pumpWidget(ExcelCompareApp(controller: flow));
+      await tap(tester, 'Rules');
+      final type = find.byType(DropdownButtonFormField<SemanticType>).last;
+      await tester.ensureVisible(type);
       await tester.pumpAndSettle();
-      await tap(tester, 'Mẫu quy tắc');
-      expect(find.text('academic-records-v1'), findsOneWidget);
-      expect(find.byType(DytavaPolicyCard), findsWidgets);
-
-      // Return to Home via Back button
-      await tester.tap(find.byTooltip('Quay lại'));
+      await tester.tap(type);
       await tester.pumpAndSettle();
-
-      // Open Settings & Privacy auxiliary view from Home overflow menu
-      await tester.tap(find.byTooltip('Thêm tùy chọn'));
+      await tester.tap(find.text('Text').last);
       await tester.pumpAndSettle();
-      await tap(tester, 'Cài đặt & bảo mật');
-      expect(
-        find.text('Sheet Diff 2 Sheets (Hợp nhất & Song song)'),
-        findsOneWidget,
-      );
-      await tester.tap(find.byTooltip('Quay lại'));
-      await tester.pumpAndSettle();
-
-      // Run 1-tap Sheet Diff 2 Sheets (ExcelCompare.org Dual Grid Table Diff)
-      await tap(tester, 'Thử nhanh với dữ liệu mẫu');
-      await tester.scrollUntilVisible(
-        find.byType(DytavaSheetDiffView),
-        250,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(find.byType(DytavaSheetDiffView), findsOneWidget);
-      expect(find.text('All'), findsOneWidget);
-      expect(find.text('Added'), findsOneWidget);
-      expect(find.text('Deleted'), findsOneWidget);
-      expect(find.text('Unchanged'), findsOneWidget);
-      expect(find.text('Modified'), findsOneWidget);
-      expect(find.textContaining('Sheet A ·'), findsOneWidget);
-      expect(find.textContaining('Sheet B ·'), findsOneWidget);
-
-      // Filter by Added, Modified, Unchanged and return to All on the ExcelCompare.org ribbon
-      await tap(tester, 'Added');
-      expect(find.text('005'), findsOneWidget);
-      await tap(tester, 'Modified');
-      expect(find.text('8.5'), findsOneWidget);
-      expect(find.text('8,5'), findsOneWidget);
-      await tap(tester, 'All');
-      expect(find.text('id (Mã)'), findsWidgets);
-      expect(find.text('amount (Giá trị)'), findsWidgets);
-
-      // Return to Home via AppBar Home action and verify Session Resume Card ("Tiếp tục phiên của bạn")
-      await tester.tap(find.byTooltip('Về trang chủ'));
-      await tester.pumpAndSettle();
-      expect(find.byType(DytavaSessionResumeCard), findsOneWidget);
-      expect(find.text('Tiếp tục phiên của bạn'), findsOneWidget);
-      expect(find.byType(DytavaResultCard), findsOneWidget);
-
-      // Open current session history view from AppBar
-      await tester.tap(find.byTooltip('Phiên trong bộ nhớ'));
-      await tester.pumpAndSettle();
-      expect(find.byType(DytavaHistoryCard), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
-    'P0: configuration confirmation sheet prevents silent policy approval until user explicitly confirms',
-    (tester) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      final f = WorkflowController(
-        input: DemoInputPort(),
-        comparator: DemoComparisonPort(),
-        exporter: DemoExportPort(),
-      );
-      addTearDown(f.dispose);
-
-      await tester.runAsync(() async {
-        for (final side in SourceSide.values) {
-          await f.selectSource(
-            side,
-            SourceFormat.csv,
-            side == SourceSide.a ? 'fixture:a' : 'fixture:b',
-            'sample.csv',
-          );
-          await f.importSource(side);
-          await f.confirmImport(side, expectedBinding: f.slot(side).binding);
-        }
-        f.configure(
-          ComparisonConfiguration(
-            mappings: const [
-              FieldMapping('id', 'id'),
-              FieldMapping('amount', 'amount'),
-            ],
-            rules: const {
-              'id': FieldRule(type: SemanticType.identifier),
-              'amount': FieldRule(type: SemanticType.decimal),
-            },
-            mappingConfirmed: true,
-            modeConfirmed: false,
-            policyConfirmed: false,
-            directionConfirmed: false,
-          ),
-        );
-        f.navigate(WorkflowScreen.policy);
-      });
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: DytavaTheme.lightTheme,
-          home: WorkflowPage(controller: f),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Tapping fast confirm on unapproved config opens the confirmation summary sheet instead of silently running
-      await tap(tester, 'Xem tóm tắt & Xác nhận cấu hình');
-      expect(find.text('Xác nhận cấu hình đối chiếu tổng hợp'), findsOneWidget);
-      expect(
-        find.textContaining('1. Chế độ ghép hàng & Khóa định danh'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('2. Chính sách chuẩn hóa'), findsOneWidget);
-      expect(find.textContaining('3. Chiều so sánh'), findsOneWidget);
-
-      // Dismissing via "Chỉnh sửa lại" does not run comparison
-      await tester.tap(find.text('Chỉnh sửa lại'));
-      await tester.pumpAndSettle();
-      expect(f.screen, WorkflowScreen.policy);
-      expect(f.config.policyConfirmed, isFalse);
-
-      // Opening again and confirming runs comparison
-      await tap(tester, 'Xem tóm tắt & Xác nhận cấu hình');
-      await tester.tap(find.text('Xác nhận lần này & Chạy'));
-      await tester.pumpAndSettle();
-      expect(f.screen, WorkflowScreen.results);
-      expect(f.config.modeConfirmed, isTrue);
-      expect(f.config.policyConfirmed, isTrue);
-      expect(f.config.directionConfirmed, isTrue);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
-    'P0: wide 8-column table scrolls horizontally with pinned row identifier and opens cell detail bottom sheet',
-    (tester) async {
-      tester.view.physicalSize = const Size(360, 780);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      final fields = [
-        for (var i = 1; i <= 8; i++)
-          TableField('col_$i', 'Trường dữ liệu mở rộng số $i'),
-      ];
-      final records = [
-        for (var r = 0; r < 3; r++)
-          TableRecord(
-            'r_${r + 1}',
-            r,
-            {
-              for (var i = 1; i <= 8; i++)
-                'col_$i': SourceCell(
-                  CellKind.text,
-                  rawLexeme: 'Giá trị hàng ${r + 1} cột $i',
-                ),
-            },
-            {for (var i = 1; i <= 8; i++) 'col_$i': 'R${r + 1}C$i'},
-          ),
-      ];
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: DytavaTheme.lightTheme,
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: DytavaSheetPreviewTable(
-                sheetTitle: 'Bảng rộng 8 cột',
-                fields: fields,
-                records: records,
-              ),
-            ),
-          ),
-        ),
-      );
+      expect(flow.config.rules['amount']!.type, SemanticType.freeText);
+      expect(flow.config.rules['amount']!.webAuto, isFalse);
+      final tolerance = find.byType(TextFormField).last;
+      await tester.ensureVisible(tolerance);
+      await tester.enterText(tolerance, '-1');
       await tester.pumpAndSettle();
       expect(
-        find.textContaining('3 hàng × 8 cột · ↔ Cuộn ngang'),
-        findsOneWidget,
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Start comparison'),
+            )
+            .onPressed,
+        isNull,
       );
       expect(tester.takeException(), isNull);
     },
   );
 
-  testWidgets(
-    'P0 & P1: priority diff cards, bottom sheet detail, 200% text scale and responsive device matrix render without overflow',
-    (tester) async {
-      for (final viewport in const [
-        Size(320, 640),
-        Size(360, 780),
-        Size(390, 844),
-        Size(768, 1024),
-      ]) {
-        tester.view.physicalSize = viewport;
+  testWidgets('OCR import requires confirmation of every uncertain value', (
+    tester,
+  ) async {
+    final flow = WorkflowController(
+      input: DemoInputPort(),
+      comparator: DemoComparisonPort(),
+      exporter: DemoExportPort(),
+    );
+    addTearDown(flow.dispose);
+    await tester.runAsync(() async {
+      await flow.selectSource(
+        SourceSide.a,
+        SourceFormat.png,
+        'fixture:image-a',
+        'image.png',
+      );
+      await flow.importSource(SourceSide.a);
+      flow.navigate(WorkflowScreen.ocrReview, side: SourceSide.a);
+    });
+    await tester.pumpWidget(ExcelCompareApp(controller: flow));
+    expect(flow.slot(SourceSide.a).ready, isFalse);
+    final confirm = find.byWidgetPredicate(
+      (w) => w is FilledButton && w.onPressed == null,
+    );
+    expect(tester.widget<FilledButton>(confirm).onPressed, isNull);
+    for (var i = 0; i < flow.slot(SourceSide.a).review!.cells.length; i++) {
+      final checkbox = find.byType(CheckboxListTile).at(i);
+      await tester.ensureVisible(checkbox);
+      await tester.tap(checkbox);
+      await tester.pumpAndSettle();
+    }
+    await tap(tester, 'Import reviewed values');
+    expect(flow.slot(SourceSide.a).ready, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final width in [320.0, 390.0, 412.0, 600.0]) {
+    for (final scale in [1.0, 2.0]) {
+      testWidgets('Home, sources, results fit ${width}dp at ${scale}x text', (
+        tester,
+      ) async {
+        tester.view.physicalSize = Size(width, 844);
         tester.view.devicePixelRatio = 1;
-
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final flow = createDemoWorkflow();
+        addTearDown(flow.dispose);
         await tester.pumpWidget(
-          MediaQuery(
-            data: MediaQueryData(
-              size: viewport,
-              textScaler: const TextScaler.linear(2.0),
+          MaterialApp(
+            theme: DytavaTheme.lightTheme,
+            home: MediaQuery(
+              data: MediaQueryData(
+                size: Size(width, 844),
+                textScaler: TextScaler.linear(scale),
+                disableAnimations: true,
+              ),
+              child: WorkflowPage(controller: flow),
             ),
-            child: ExcelCompareApp(controller: createDemoWorkflow()),
           ),
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-      }
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.tap(find.byTooltip('Compare files'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await tester.runAsync(() async {
+          await prepare(flow);
+          flow.analyzeAndPropose();
+          flow.applyProposal();
+          await flow.runComparison();
+        });
+        await tester.pumpAndSettle();
+        expect(find.text('RESULTS READY'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
 
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: DytavaTheme.lightTheme,
-          home: WorkflowPage(controller: createDemoWorkflow()),
-        ),
-      );
-      await tap(tester, 'Thử nhanh với dữ liệu mẫu');
-
-      // Priority diff section is shown above the spreadsheet grid
-      await tester.scrollUntilVisible(
-        find.textContaining('Các khác biệt cần kiểm tra'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(find.textContaining('Các khác biệt cần kiểm tra'), findsOneWidget);
-      expect(find.byType(DytavaPriorityDiffCard), findsWidgets);
-
-      // Open quick inspection Bottom Sheet from Priority Diff Card
-      final quickSheetBtn = find.text('Xem nhanh (Sheet)').first;
-      await tester.ensureVisible(quickSheetBtn);
-      await tester.pumpAndSettle();
-      await tester.tap(quickSheetBtn);
-      await tester.pumpAndSettle();
-      expect(
-        find.text('1. Phân biệt Giá trị gốc (Raw) & Sau chuẩn hóa (Canonical)'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('2. Nguyên nhân & Căn cứ quyết định (Rationale)'),
-        findsOneWidget,
-      );
-      await tester.ensureVisible(find.text('Đóng'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Đóng'));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
-    'Automated Brand Asset QA: all 47 DytavaIllustrations and core DytavaIcons render and transition by business state',
-    (tester) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      // 1. Verify state-driven BrandIllustration transitions across workflow
-      await tester.pumpWidget(
-        ExcelCompareApp(controller: createDemoWorkflow()),
-      );
-
-      // Go to Source Selection: unselected slots show emptyFiles illustration
-      await tap(tester, 'Bắt đầu so sánh');
-      expect(
-        find.byWidgetPredicate(
-          (w) =>
-              w is BrandIllustration &&
-              w.asset == DytavaIllustrations.emptyFiles,
-        ),
-        findsNWidgets(2),
-      );
-
-      // Selecting Source A replaces its emptyFiles illustration with fileCsv format BrandIcon
-      await tap(tester, 'Chọn bảng mẫu A');
-      expect(
-        find.byWidgetPredicate(
-          (w) =>
-              w is BrandIllustration &&
-              w.asset == DytavaIllustrations.emptyFiles,
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.byWidgetPredicate(
-          (w) => w is BrandIcon && w.asset == DytavaIcons.fileCsv,
-        ),
-        findsWidgets,
-      );
-
-      // 2. Render gallery of all 47 DytavaIllustrations and all core DytavaIcons to verify SVG asset integrity
-      expect(DytavaIllustrations.allAssets.length, 47);
-      expect(DytavaIcons.allCoreAssets.length, greaterThanOrEqualTo(75));
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: DytavaTheme.lightTheme,
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: Column(
-                children: [
-                  for (final ill in DytavaIllustrations.allAssets)
-                    BrandIllustration(ill, size: 48),
-                  for (final ic in DytavaIcons.allCoreAssets)
-                    BrandIcon(ic, size: 20),
-                ],
-              ),
+  testWidgets('Brand assets render without SVG errors', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: DytavaTheme.lightTheme,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                for (final asset in DytavaIllustrations.allAssets)
+                  BrandIllustration(asset, size: 48),
+                for (final asset in DytavaIcons.allCoreAssets)
+                  BrandIcon(asset, size: 20),
+              ],
             ),
           ),
         ),
-      );
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-    },
-  );
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'ExcelCompare.org dual-grid Table Diff virtualizes large tables, syncs scrolling/selection and opens fullscreen view',
