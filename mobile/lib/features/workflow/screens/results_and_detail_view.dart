@@ -536,6 +536,7 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                         cell.a.rawLexeme ?? '—',
                         DytavaColors.background,
                         DytavaColors.textPrimary,
+                        sourceCell: cell.a,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -545,6 +546,7 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                         cell.b.rawLexeme ?? '—',
                         bg,
                         color,
+                        sourceCell: cell.b,
                       ),
                     ),
                   ],
@@ -667,7 +669,120 @@ Widget _badge(String label, Color color, Color bg) => Container(
   ),
 );
 
-Widget _value(String label, String value, Color bg, Color color) => Container(
+Widget _imagePlacementBadge(SourceCell cell) {
+  final isManual = cell.imagePlacement == 'drawingAnchor';
+  final label = isManual
+      ? 'Ảnh đặt thủ công (Place over Cells)'
+      : 'Ảnh trong ô (Place in Cell)';
+  final badgeColor =
+      isManual ? const Color(0xFFB45309) : const Color(0xFF0369A1);
+  final badgeBg =
+      isManual ? const Color(0xFFFEF3C7) : const Color(0xFFE0F2FE);
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+    decoration: BoxDecoration(
+      color: badgeBg,
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          isManual ? Icons.layers_outlined : Icons.grid_view_rounded,
+          size: 11,
+          color: badgeColor,
+        ),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: badgeColor,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _renderedCellImage(
+  SourceCell cell, {
+  double height = 76,
+}) {
+  final bytes = cell.imageBytes;
+  if (bytes == null || bytes.isEmpty) return const SizedBox.shrink();
+  final shortSha = (cell.imageDigest != null && cell.imageDigest!.length >= 8)
+      ? cell.imageDigest!.substring(0, 8)
+      : (cell.imageDigest ?? '');
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _imagePlacementBadge(cell),
+      const SizedBox(height: 6),
+      Container(
+        height: height,
+        width: double.infinity,
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: DytavaColors.border),
+        ),
+        child: Image.memory(
+          Uint8List.fromList(bytes),
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.none,
+          errorBuilder: (_, _, _) => Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.broken_image_outlined,
+                  size: 16,
+                  color: DytavaColors.textSecondary,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    'Ảnh (${cell.mediaType ?? "bin"} · ${bytes.length} B)',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DytavaTypography.bodySmall.copyWith(fontSize: 10),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      if (shortSha.isNotEmpty) ...[
+        const SizedBox(height: 4),
+        Text(
+          '${(cell.mediaType ?? 'IMG').toUpperCase()} · ${bytes.length} B · SHA $shortSha',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: DytavaTypography.dataSmall.copyWith(
+            fontSize: 10,
+            color: DytavaColors.textSecondary,
+          ),
+        ),
+      ],
+    ],
+  );
+}
+
+Widget _value(
+  String label,
+  String value,
+  Color bg,
+  Color color, {
+  SourceCell? sourceCell,
+}) => Container(
   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
   decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(9)),
   child: Column(
@@ -675,15 +790,21 @@ Widget _value(String label, String value, Color bg, Color color) => Container(
     children: [
       Text(label, style: DytavaTypography.bodySmall.copyWith(fontSize: 10)),
       const SizedBox(height: 4),
-      Text(
-        value,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: DytavaTypography.dataMedium.copyWith(
-          fontWeight: FontWeight.w600,
-          color: color,
+      if (sourceCell != null &&
+          sourceCell.kind == CellKind.image &&
+          sourceCell.imageBytes != null &&
+          sourceCell.imageBytes!.isNotEmpty)
+        _renderedCellImage(sourceCell, height: 68)
+      else
+        Text(
+          value,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: DytavaTypography.dataMedium.copyWith(
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
         ),
-      ),
     ],
   ),
 );
@@ -822,12 +943,18 @@ class DifferenceDetailScreenView extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
+                        if (cell.a.kind == CellKind.image &&
+                            cell.a.imageBytes != null &&
+                            cell.a.imageBytes!.isNotEmpty) ...[
+                          _renderedCellImage(cell.a, height: 132),
+                          const SizedBox(height: 6),
+                        ],
                         SelectableText(
                           cell.a.rawLexeme ?? '—',
-                          style: const TextStyle(
-                            fontSize: 28,
+                          style: TextStyle(
+                            fontSize: cell.a.kind == CellKind.image ? 12 : 28,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
+                            color: const Color(0xFF1E293B),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -888,12 +1015,18 @@ class DifferenceDetailScreenView extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
+                        if (cell.b.kind == CellKind.image &&
+                            cell.b.imageBytes != null &&
+                            cell.b.imageBytes!.isNotEmpty) ...[
+                          _renderedCellImage(cell.b, height: 132),
+                          const SizedBox(height: 6),
+                        ],
                         SelectableText(
                           cell.b.rawLexeme ?? '—',
-                          style: const TextStyle(
-                            fontSize: 28,
+                          style: TextStyle(
+                            fontSize: cell.b.kind == CellKind.image ? 12 : 28,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
+                            color: const Color(0xFF1E293B),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -941,24 +1074,26 @@ class DifferenceDetailScreenView extends StatelessWidget {
           const Divider(height: 36, thickness: 1, color: Color(0xFFE2E8F0)),
 
           // Info row
-          Row(
-            children: [
-              const Icon(
-                Icons.info_outline_rounded,
-                color: DytavaColors.primary,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Compared as ${_ruleTypeLabel(cell)} values.',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF1E293B),
-                  fontWeight: FontWeight.w400,
+            Row(
+              children: [
+                const Icon(
+                  Icons.info_outline_rounded,
+                  color: DytavaColors.primary,
+                  size: 18,
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Compared as ${_ruleTypeLabel(cell)} values.',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF1E293B),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: 20),
 
           // Technical Details collapsible card
@@ -1049,7 +1184,11 @@ class DifferenceDetailScreenView extends StatelessWidget {
 String _changeTitle(CellDifference cell) {
   final rule = cell.decision.ruleId.toLowerCase();
   String typeName = 'Value';
-  if (rule.contains('bool') ||
+  if (cell.a.kind == CellKind.image ||
+      cell.b.kind == CellKind.image ||
+      rule.contains('image')) {
+    typeName = 'Image value';
+  } else if (rule.contains('bool') ||
       _isBooleanString(cell.a.rawLexeme) ||
       _isBooleanString(cell.b.rawLexeme)) {
     typeName = 'Boolean value';
@@ -1076,6 +1215,12 @@ bool _isBooleanString(String? s) {
 }
 
 String _changeSubtitle(CellDifference cell) {
+  if (cell.a.kind == CellKind.image || cell.b.kind == CellKind.image) {
+    if (cell.decision.explanation != null &&
+        cell.decision.explanation!.trim().isNotEmpty) {
+      return cell.decision.explanation!;
+    }
+  }
   return switch (cell.decision.status) {
     DecisionStatus.different => 'The original and updated values are different.',
     DecisionStatus.equivalent =>
@@ -1112,6 +1257,11 @@ String _normalizedLabel(CanonicalValue? canonical, String? raw) {
 
 String _ruleTypeLabel(CellDifference cell) {
   final rule = cell.decision.ruleId.toLowerCase();
+  if (cell.a.kind == CellKind.image ||
+      cell.b.kind == CellKind.image ||
+      rule.contains('image')) {
+    return 'Embedded Image (SHA-256 & Binary)';
+  }
   if (rule.contains('bool') ||
       _isBooleanString(cell.a.rawLexeme) ||
       _isBooleanString(cell.b.rawLexeme)) {
@@ -1198,6 +1348,20 @@ class _TechnicalDetailsCardState extends State<_TechnicalDetailsCard> {
                 children: [
                   const Divider(height: 16, color: Color(0xFFDCFCE7)),
                   _techRow('Rule reference', widget.cell.decision.ruleId),
+                  if (widget.cell.a.kind == CellKind.image)
+                    _techRow(
+                      'Original image placement',
+                      widget.cell.a.imagePlacement == 'drawingAnchor'
+                          ? 'Place over Cells (Drawing Anchor)'
+                          : 'Place in Cell (RichData)',
+                    ),
+                  if (widget.cell.b.kind == CellKind.image)
+                    _techRow(
+                      'Updated image placement',
+                      widget.cell.b.imagePlacement == 'drawingAnchor'
+                          ? 'Place over Cells (Drawing Anchor)'
+                          : 'Place in Cell (RichData)',
+                    ),
                   _techRow(
                     'Original cell',
                     _cellLocation(widget.flow, widget.cell, SourceSide.a),

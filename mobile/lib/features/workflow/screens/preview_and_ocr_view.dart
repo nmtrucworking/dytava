@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:flutter/material.dart';
 
 import '../../../application/workflow_controller.dart';
@@ -133,11 +134,64 @@ class PreviewScreenView extends StatelessWidget {
                                   constraints: const BoxConstraints(
                                     maxWidth: 180,
                                   ),
-                                  child: Text(
-                                    row.cells[field.id]?.rawLexeme ?? '—',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: DytavaTypography.dataSmall,
+                                  child: Builder(
+                                    builder: (_) {
+                                      final cellObj = row.cells[field.id];
+                                      if (cellObj != null &&
+                                          cellObj.kind == CellKind.image &&
+                                          cellObj.imageBytes != null &&
+                                          cellObj.imageBytes!.isNotEmpty) {
+                                        return Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 28,
+                                              height: 28,
+                                              padding: const EdgeInsets.all(2),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                                border: Border.all(
+                                                  color: DytavaColors.border,
+                                                ),
+                                              ),
+                                              child: Image.memory(
+                                                Uint8List.fromList(
+                                                  cellObj.imageBytes!,
+                                                ),
+                                                fit: BoxFit.contain,
+                                                filterQuality:
+                                                    FilterQuality.none,
+                                                errorBuilder: (_, _, _) =>
+                                                    const Icon(
+                                                      Icons.image_outlined,
+                                                      size: 16,
+                                                    ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Flexible(
+                                              child: Text(
+                                                cellObj.imagePlacement ==
+                                                        'drawingAnchor'
+                                                    ? 'Ảnh thủ công'
+                                                    : 'Ảnh trong ô',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: DytavaTypography.dataSmall,
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      }
+                                      return Text(
+                                        cellObj?.rawLexeme ?? '—',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: DytavaTypography.dataSmall,
+                                      );
+                                    },
                                   ),
                                 ),
                               ),

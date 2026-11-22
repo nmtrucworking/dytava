@@ -37,10 +37,19 @@ Tại `mobile/`:
 ```bash
 flutter analyze
 flutter test
+flutter build apk --release --split-per-abi
+flutter build apk --release
 flutter build apk --debug
 ```
 
-Tại Home chọn **Bắt đầu so sánh**, chọn hai tệp hoặc thử dữ liệu mẫu. Bộ mẫu có các ô trùng, tương đương, khác biệt và một hàng thêm; diagnostic hai giá trị vẫn nhận A=`8.5`, B=`8,5`. Bản APK debug thường nằm tại `build/app/outputs/flutter-apk/app-debug.apk`.
+Tại Home chọn **Bắt đầu so sánh**, chọn hai tệp hoặc thử dữ liệu mẫu. Bộ mẫu có các ô trùng, tương đương, khác biệt và một hàng thêm; diagnostic hai giá trị vẫn nhận A=`8.5`, B=`8,5`.
+
+Các bản APK sau khi build nằm tại `mobile/build/app/outputs/flutter-apk/`:
+- `app-armeabi-v7a-release.apk`: ~27.3 MB (`28,639,883` bytes, SHA-256: `7298f8bcaf84a3a0448007b49999bb785bd04bd2e6c1b4470151e2f176eb8774`)
+- `app-arm64-v8a-release.apk`: ~33.4 MB (`35,003,249` bytes, SHA-256: `a14cfa2fc36c294b62293642ea7317da1e605e7759bdc640da8b62f019f50cd3`)
+- `app-x86_64-release.apk`: ~35.4 MB (`37,154,072` bytes, SHA-256: `923bddb7b88efc8f629e53c6789446054a21f60cc055159131b40986fcf1f403`)
+- `app-release.apk` (Universal APK): ~88.3 MB (`92,614,380` bytes, SHA-256: `527ccf56b1afb5e62b7c2931d0c7ba75d707b73ca711f5611099dd9acedd21bf`)
+- `app-debug.apk`: `build/app/outputs/flutter-apk/app-debug.apk` (`226,165,232` bytes, SHA-256: `02d3fae8e97d5510a8581bd109609c405f63964ecfe5e11549413f45f6c245fa`)
 
 ## Branding
 
@@ -49,7 +58,7 @@ Theme và typography nằm trong `lib/design_system/`. `DytavaAsset` dùng
 `assets/dytava/`, đã khai báo trong `pubspec.yaml`. Bốn trạng thái kết quả
 có badge, màu và illustration riêng theo branding chính thức.
 
-Tài nguyên thương hiệu chuẩn được lưu trong thư mục `../branding/`. Từ gốc monorepo, chạy `npm run branding:sync` khi kho `branding/` thay đổi. Chỉ dùng SVG trong runtime, không giải mã các ảnh PNG 4K của thư viện.
+Tài nguyên thương hiệu chuẩn được lưu trong thư mục `../branding/`. Từ gốc monorepo, chạy `npm run branding:sync` khi kho `branding/` thay đổi. Script `scripts/sync-branding.js` đã được tối ưu để chỉ đồng bộ đúng **101 file SVG** thực tế sử dụng trên mobile (`2` brand SVGs, `6` file format SVGs, `67` glyph icon SVGs, `26` illustration SVGs), loại bỏ hoàn toàn các ảnh raster (`png_4k`, `png_512`, `png_128`, `preview_768`), icon variant trùng lặp (`svg/color`, `svg/outline`) và font không sử dụng (`Plus Jakarta Sans`, `cupertino_icons`), giúp giảm dung lượng `mobile/assets/dytava/` từ `61 MB` xuống `732 KB`.
 
 ## Scope thiết kế mở rộng
 

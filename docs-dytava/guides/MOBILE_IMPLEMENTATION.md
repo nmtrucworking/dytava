@@ -156,3 +156,25 @@ Kiểm tra bản bổ sung: `flutter analyze` **PASS**, `flutter test` **39 test
 4. **Kiểm chứng tự động:**
    - `cd mobile && flutter analyze`: **PASS (No issues found)**.
    - `cd mobile && flutter test`: **PASS, 45 tests** (bao gồm bài kiểm thử Automated Brand Asset QA xác minh toàn bộ 47 `DytavaIllustrations` và các `DytavaIcons`).
+
+## 10. Tối ưu hóa tài nguyên Branding & Giảm dung lượng APK sau build — 22/11/2026
+
+1. **Loại bỏ tài nguyên Branding và Font không sử dụng:**
+   - Cập nhật [`scripts/sync-branding.js`](../../scripts/sync-branding.js), [`dytava_icons.dart`](../../mobile/lib/design_system/dytava_icons.dart) và [`dytava_illustrations.dart`](../../mobile/lib/design_system/dytava_illustrations.dart) để chỉ đồng bộ và khai báo đúng **101 file SVG** thực tế được sử dụng trên Mobile (`2` brand SVGs, `6` file format SVGs, `67` glyph icon SVGs, `26` illustration SVGs).
+   - Loại bỏ toàn bộ thư mục ảnh raster và bản trùng lặp không dùng ở runtime: `brand/png_4k/`, `formats/png_4k/`, `icons/png_4k/`, `icons/png_512/`, `icons/png_128/`, `illustrations/png_4k/`, `illustrations/preview_768/`, `adaptive/`, `icons/svg/color/`, `icons/svg/outline/`.
+   - Xóa `assets/dytava/figma/home-settings.svg` không sử dụng và tối ưu kích thước ảnh `assets/dytava/figma/home-workbooks.png` từ `1254×1254` (`1.01 MB`) xuống `512×512` (`213 KB`).
+   - Gỡ bỏ bộ font `Plus Jakarta Sans` (5 file `.ttf` + `OFL.txt`) và package `cupertino_icons` không sử dụng trong [`mobile/pubspec.yaml`](../../mobile/pubspec.yaml).
+   - Kết quả: Dung lượng thư mục `mobile/assets/dytava/` giảm từ **`61 MB` xuống `732 KB`** (giảm ~98.8%); kho `branding/` gốc giảm từ **`84 MB` xuống `9.5 MB`**; tổng dung lượng `flutter_assets` đóng gói trong APK release chỉ còn **`2.67 MB`**.
+2. **Tối ưu cấu hình Build Release Android ([`mobile/android/app/build.gradle`](../../mobile/android/app/build.gradle)):**
+   - Bật R8 code shrinking (`minifyEnabled = true`) và resource shrinking (`shrinkResources = true`) kèm [`proguard-rules.pro`](../../mobile/android/app/proguard-rules.pro) cho Google ML Kit Text Recognition và AndroidX Window.
+   - Kết hợp tree-shaking icon (`MaterialIcons-Regular.otf` giảm 99.5% từ `1.64 MB` xuống `7.8 KB`).
+3. **Kết quả kiểm thử và Build APK (`mobile/build/app/outputs/flutter-apk/`):**
+   - `cd mobile && flutter analyze`: **PASS (No issues found)**.
+   - `cd mobile && flutter test`: **PASS (102/102 tests)**.
+   - `npm test`: **PASS (52/52 tests)**.
+   - `flutter build apk --release --split-per-abi` & `flutter build apk --release`:
+     - `app-armeabi-v7a-release.apk`: **`28,639,883` bytes (~27.3 MB)** — SHA-256: `7298f8bcaf84a3a0448007b49999bb785bd04bd2e6c1b4470151e2f176eb8774`
+     - `app-arm64-v8a-release.apk`: **`35,003,249` bytes (~33.4 MB)** — SHA-256: `a14cfa2fc36c294b62293642ea7317da1e605e7759bdc640da8b62f019f50cd3`
+     - `app-x86_64-release.apk`: **`37,154,072` bytes (~35.4 MB)** — SHA-256: `923bddb7b88efc8f629e53c6789446054a21f60cc055159131b40986fcf1f403`
+     - `app-release.apk` (Universal): **`92,614,380` bytes (~88.3 MB)** — SHA-256: `527ccf56b1afb5e62b7c2931d0c7ba75d707b73ca711f5611099dd9acedd21bf`
+     - `app-debug.apk`: **`226,165,232` bytes** — SHA-256: `02d3fae8e97d5510a8581bd109609c405f63964ecfe5e11549413f45f6c245fa`

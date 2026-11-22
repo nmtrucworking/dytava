@@ -779,7 +779,14 @@ abstract final class MobileFileUploadService {
           }
           final special = specialContent?.cells[c.getAttribute('r')];
           if (special != null) {
-            value = special.rawLexeme ?? '';
+            if (special.kind == CellKind.image &&
+                special.imagePlacement == 'drawingAnchor' &&
+                value.trim().isNotEmpty) {
+              // Cell already has its own text/number value; keep floating image if cell is blank, or let cell value coexist
+              value = special.rawLexeme ?? value;
+            } else {
+              value = special.rawLexeme ?? '';
+            }
             sparseSpecial['$ri,$col'] = special;
           }
           if (value.length > 32767) {
@@ -789,6 +796,25 @@ abstract final class MobileFileUploadService {
           if (col + 1 > width) width = col + 1;
         }
         if (values.isNotEmpty) sparse[ri] = values;
+      }
+      if (specialContent != null) {
+        for (final entryCell in specialContent.cells.entries) {
+          final parsedAddr = _parseCellAddress(entryCell.key);
+          if (parsedAddr == null) continue;
+          final ri = parsedAddr.row;
+          final col = parsedAddr.col;
+          if (ri > maxRows + 1 || col >= maxColumns) continue;
+          if (mergedNonAnchors.contains((ri, col))) continue;
+          if (!sparseSpecial.containsKey('$ri,$col')) {
+            final rowMap = sparse.putIfAbsent(ri, () => <int, String>{});
+            final lex = entryCell.value.rawLexeme ?? '';
+            if ((rowMap[col] ?? '').isEmpty) {
+              rowMap[col] = lex;
+            }
+            sparseSpecial['$ri,$col'] = entryCell.value;
+            if (col + 1 > width) width = col + 1;
+          }
+        }
       }
       if (sparse.isEmpty) {
         tables[entry.key] = _ParsedTable(

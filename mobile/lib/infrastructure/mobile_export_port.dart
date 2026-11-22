@@ -225,6 +225,10 @@ PreparedExport renderMobileReport(
             'kind_b': c.b.kind.name,
             if (c.a.imageDigest != null) 'image_sha256_a': c.a.imageDigest,
             if (c.b.imageDigest != null) 'image_sha256_b': c.b.imageDigest,
+            if (c.a.imagePlacement != null)
+              'image_placement_a': c.a.imagePlacement,
+            if (c.b.imagePlacement != null)
+              'image_placement_b': c.b.imagePlacement,
             'normalized_a': c.decision.left?.label,
             'normalized_b': c.decision.right?.label,
             'status': c.decision.status.name,

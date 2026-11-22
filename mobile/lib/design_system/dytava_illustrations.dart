@@ -7,41 +7,13 @@ abstract final class DytavaIllustrations {
   static const emptyComparisons =
       'assets/dytava/illustrations/svg/square/empty-comparisons.svg';
 
-  /// Chưa có lịch sử
-  static const emptyHistory =
-      'assets/dytava/illustrations/svg/square/empty-history.svg';
-
-  /// Chưa có báo cáo
-  static const emptyReports =
-      'assets/dytava/illustrations/svg/square/empty-reports.svg';
-
-  /// Không tìm thấy kết quả
-  static const emptySearch =
-      'assets/dytava/illustrations/svg/square/empty-search.svg';
-
   /// Chưa có tệp dữ liệu
   static const emptyFiles =
       'assets/dytava/illustrations/svg/square/empty-files.svg';
 
-  /// Chưa có quy tắc
-  static const emptyPolicies =
-      'assets/dytava/illustrations/svg/square/empty-policies.svg';
-
-  /// Chưa lưu mục yêu thích
-  static const emptyFavorites =
-      'assets/dytava/illustrations/svg/square/empty-favorites.svg';
-
   /// Chưa có hình ảnh để nhận dạng
   static const emptyOcr =
       'assets/dytava/illustrations/svg/square/empty-ocr.svg';
-
-  /// Chưa có thông báo
-  static const emptyNotifications =
-      'assets/dytava/illustrations/svg/square/empty-notifications.svg';
-
-  /// Chưa có dữ liệu bảng
-  static const emptyDatasets =
-      'assets/dytava/illustrations/svg/square/empty-datasets.svg';
 
   /// Chưa ánh xạ cột
   static const emptyMapping =
@@ -58,10 +30,6 @@ abstract final class DytavaIllustrations {
   /// Nhập tệp thành công
   static const successImport =
       'assets/dytava/illustrations/svg/square/success-import.svg';
-
-  /// Xuất báo cáo thành công
-  static const successExport =
-      'assets/dytava/illustrations/svg/square/success-export.svg';
 
   /// Trùng khớp tuyệt đối
   static const statusExact =
@@ -87,10 +55,6 @@ abstract final class DytavaIllustrations {
   static const statusError =
       'assets/dytava/illustrations/svg/square/status-error.svg';
 
-  /// Không có mạng
-  static const statusOffline =
-      'assets/dytava/illustrations/svg/square/status-offline.svg';
-
   /// Không có quyền truy cập tệp
   static const statusNoPermission =
       'assets/dytava/illustrations/svg/square/status-no-permission.svg';
@@ -111,53 +75,9 @@ abstract final class DytavaIllustrations {
   static const statusCancelled =
       'assets/dytava/illustrations/svg/square/status-cancelled.svg';
 
-  /// Đang so sánh
-  static const processingCompare =
-      'assets/dytava/illustrations/svg/square/processing-compare.svg';
-
-  /// Đang nhập dữ liệu
-  static const processingImport =
-      'assets/dytava/illustrations/svg/square/processing-import.svg';
-
-  /// Đang nhận dạng ảnh
-  static const processingOcr =
-      'assets/dytava/illustrations/svg/square/processing-ocr.svg';
-
-  /// Đang ánh xạ trường
-  static const processingMapping =
-      'assets/dytava/illustrations/svg/square/processing-mapping.svg';
-
-  /// Đang chuẩn hóa dữ liệu
-  static const processingNormalize =
-      'assets/dytava/illustrations/svg/square/processing-normalize.svg';
-
-  /// Đang tạo báo cáo
-  static const processingReport =
-      'assets/dytava/illustrations/svg/square/processing-report.svg';
-
-  /// Đang đồng bộ (tùy chọn)
-  static const processingCloud =
-      'assets/dytava/illustrations/svg/square/processing-cloud.svg';
-
   /// Xử lý tại thiết bị
   static const securityLocal =
       'assets/dytava/illustrations/svg/square/security-local.svg';
-
-  /// Bảo vệ dữ liệu
-  static const securityEncrypted =
-      'assets/dytava/illustrations/svg/square/security-encrypted.svg';
-
-  /// Yêu cầu đồng ý
-  static const securityConsent =
-      'assets/dytava/illustrations/svg/square/security-consent.svg';
-
-  /// Hướng dẫn sử dụng
-  static const educationGuide =
-      'assets/dytava/illustrations/svg/square/education-guide.svg';
-
-  /// Dữ liệu nhiều hàng
-  static const datasetLarge =
-      'assets/dytava/illustrations/svg/square/dataset-large.svg';
 
   /// Chọn hai tệp dữ liệu
   static const onboardingImport =
@@ -178,10 +98,6 @@ abstract final class DytavaIllustrations {
   /// Xuất báo cáo có thể truy vết
   static const onboardingReport =
       'assets/dytava/illustrations/svg/wide/onboarding-report.svg';
-
-  /// Bảo vệ quyền riêng tư
-  static const onboardingPrivacy =
-      'assets/dytava/illustrations/svg/wide/onboarding-privacy.svg';
 
   /// Bắt đầu so sánh dữ liệu
   static const heroGetStarted =
@@ -230,53 +146,32 @@ abstract final class DytavaIllustrations {
     return statusError;
   }
 
-  /// Toàn bộ 47 illustration chuẩn trong kho dùng cho kiểm thử tự động (Asset QA)
+  /// Danh sách các illustration đang sử dụng dùng cho kiểm thử tự động (Asset QA)
   static const List<String> allAssets = [
     emptyComparisons,
-    emptyHistory,
-    emptyReports,
-    emptySearch,
     emptyFiles,
-    emptyPolicies,
-    emptyFavorites,
     emptyOcr,
-    emptyNotifications,
-    emptyDatasets,
     emptyMapping,
     emptyFilter,
     successCompare,
     successImport,
-    successExport,
     statusExact,
     statusEquivalent,
     statusDifferent,
     statusUnresolved,
     statusWarning,
     statusError,
-    statusOffline,
     statusNoPermission,
     statusFileCorrupt,
     statusUnsupportedFormat,
     statusMemoryLimit,
     statusCancelled,
-    processingCompare,
-    processingImport,
-    processingOcr,
-    processingMapping,
-    processingNormalize,
-    processingReport,
-    processingCloud,
     securityLocal,
-    securityEncrypted,
-    securityConsent,
-    educationGuide,
-    datasetLarge,
     onboardingImport,
     onboardingMapping,
     onboardingPolicy,
     onboardingCompare,
     onboardingReport,
-    onboardingPrivacy,
     heroGetStarted,
     heroEmptyWorkspace,
   ];

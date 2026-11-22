@@ -85,3 +85,42 @@ test('ordinal metadata policy cannot hide an image change beyond the sampling wi
   assert.equal(result.alignedRows[60].cellComparisons['No.'].status, 'DIFFERENT');
   assert.equal(result.alignedRows[60].cellComparisons['No.'].ruleId, 'image/bytes');
 });
+
+test('place-in-cell and manual drawing-anchored images distinguish placement and expose renderable data URLs', async () => {
+  const entries = unzipSync(new Uint8Array(await readFile(new URL('fixtures/workbook-a.xlsx', import.meta.url))));
+  // Add a drawing relationship and drawing1.xml anchoring a manual image at B3 on sheet2 (Employee sheet)
+  const sheet2Xml = strFromU8(entries['xl/worksheets/sheet2.xml']).replace(
+    '</worksheet>',
+    '<drawing r:id="rIdDrawing1"/></worksheet>',
+  );
+  entries['xl/worksheets/sheet2.xml'] = strToU8(sheet2Xml);
+  entries['xl/worksheets/_rels/sheet2.xml.rels'] = strToU8(
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rIdDrawing1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>' +
+    '</Relationships>',
+  );
+  entries['xl/drawings/drawing1.xml'] = strToU8(
+    '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+    '<xdr:twoCellAnchor><xdr:from><xdr:col>1</xdr:col><xdr:row>1</xdr:row></xdr:from><xdr:pic><xdr:blipFill><a:blip r:embed="rIdImg1"/></xdr:blipFill></xdr:pic></xdr:twoCellAnchor>' +
+    '</xdr:wsDr>',
+  );
+  entries['xl/drawings/_rels/drawing1.xml.rels'] = strToU8(
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rIdImg1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image1.png"/>' +
+    '</Relationships>',
+  );
+  const a = await parseFile(new File([zipSync(entries)], 'manual-drawing.xlsx'));
+  // Sheet1 has Place in Cell (RichData)
+  const placeInCell = a.tables[0].specialCells['0,1'];
+  assert.equal(placeInCell.kind, 'image');
+  assert.equal(placeInCell.imagePlacement, 'placeInCell');
+  assert.ok(placeInCell.dataUrl.startsWith('data:image/png;base64,'));
+  assert.ok(placeInCell.label.includes('Ảnh trong ô'));
+  // Sheet2 has Manual Drawing Anchor at B2 (col=1, row=1 -> B2 -> data row 0, col 1)
+  const manualCell = a.tables[1].specialCells['0,1'];
+  assert.equal(manualCell.kind, 'image');
+  assert.equal(manualCell.imagePlacement, 'drawingAnchor');
+  assert.ok(manualCell.dataUrl.startsWith('data:image/png;base64,'));
+  assert.ok(manualCell.label.includes('Ảnh đặt thủ công'));
+  assert.ok(a.warnings.some(w => w.includes('Place over Cells')));
+});

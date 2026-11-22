@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../application/workflow_controller.dart';
-import '../../../domain/workflow.dart';
-import '../../../domain/workbook_comparison.dart';
-
-import 'package:flutter/material.dart';
-
-import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
-import '../../../domain/workflow.dart';
 import '../../../domain/workbook_comparison.dart';
+import '../../../domain/workflow.dart';
 
 /// Thẻ hiển thị và điều chỉnh ánh xạ sheet trong toàn bộ workbook (Precision Workspace v3.2).
 /// Khi tất cả sheet đã khớp tự động, thu gọn mặc định thành 1 dòng trạng thái trực quan,

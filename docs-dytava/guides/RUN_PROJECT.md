@@ -304,11 +304,27 @@ Chạy lệnh ở `mobile/`, không analyze từ gốc monorepo vì `branding/` 
 Tại `mobile/`:
 
 ```bash
+# Build APK release tách theo kiến trúc ABI (khuyên dùng để tối ưu dung lượng ~27-35 MB/APK)
+flutter build apk --release --split-per-abi
+
+# Hoặc build APK release universal (gộp mọi ABI, ~88.3 MB)
+flutter build apk --release
+
+# Hoặc build APK debug để phát triển
 flutter build apk --debug
-adb install -r build/app/outputs/flutter-apk/app-debug.apk
+
+# Cài APK lên emulator / thiết bị đang kết nối (ví dụ bản arm64-v8a release trên Mac ARM)
+adb install -r build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
 ```
 
-`flutter run` vốn đã build/cài/chạy trên emulator; bước `adb install` là tùy chọn. File APK debug dự kiến ở `mobile/build/app/outputs/flutter-apk/app-debug.apk`.
+`flutter run` vốn đã build/cài/chạy trên emulator; bước `adb install` là tùy chọn. Các file APK sau khi build nằm tại `mobile/build/app/outputs/flutter-apk/`:
+- `app-armeabi-v7a-release.apk` (~27.3 MB / `28,639,883` bytes)
+- `app-arm64-v8a-release.apk` (~33.4 MB / `35,003,249` bytes)
+- `app-x86_64-release.apk` (~35.4 MB / `37,154,072` bytes)
+- `app-release.apk` (~88.3 MB / `92,614,380` bytes)
+- `app-debug.apk` (`226,165,232` bytes)
+
+Cấu hình `release` trong `mobile/android/app/build.gradle` đã bật R8 code shrinking (`minifyEnabled = true`), resource shrinking (`shrinkResources = true`) kèm `proguard-rules.pro` cho ML Kit OCR & AndroidX Window, và chỉ đóng gói 101 file SVG branding thực sự sử dụng (`flutter_assets` chỉ chiếm `2.67 MB`).
 
 **Chưa phát hành production:** `mobile/android/app/build.gradle` hiện để `applicationId = 'com.example.dytava'` và release dùng `signingConfigs.debug`. Cần cấu hình package ID, keystore và ký phát hành trước khi phân phối.
 

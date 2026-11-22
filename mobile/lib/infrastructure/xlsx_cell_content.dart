@@ -160,15 +160,16 @@ Map<String, XlsxSheetContent> inspectXlsxCellContent(Archive archive) {
     if (file == null || file.size == 0) {
       return unsupported('Thiếu media hoặc ảnh là liên kết ngoài');
     }
-    return images.putIfAbsent(rel!.path!, () {
+    return images.putIfAbsent('placeInCell:${rel!.path!}', () {
       final bytes = List<int>.unmodifiable(file.content),
           digest = sha256.convert(bytes).toString();
       return SourceCell(
         CellKind.image,
-        rawLexeme: '[Ảnh nhúng · SHA-256 $digest]',
+        rawLexeme: '[Ảnh trong ô · SHA-256 $digest]',
         imageBytes: bytes,
         imageDigest: digest,
         mediaType: file.name.split('.').last.toLowerCase(),
+        imagePlacement: 'placeInCell',
       );
     });
   }
@@ -214,16 +215,20 @@ Map<String, XlsxSheetContent> inspectXlsxCellContent(Archive archive) {
     }
     if (all(sheet, 'drawing').isNotEmpty ||
         all(sheet, 'legacyDrawing').isNotEmpty) {
-      final floatingInfo = _inspectSheetDrawings(
+      final drawingInspection = _inspectSheetDrawings(
         archive,
         doc,
         all,
         rels,
         rel.path!,
+        images,
       );
-      if (floatingInfo.isNotEmpty) {
+      for (final entry in drawingInspection.anchoredCells.entries) {
+        cells.putIfAbsent(entry.key, () => entry.value);
+      }
+      if (drawingInspection.summaries.isNotEmpty) {
         warnings.add(
-          '$name: có ${floatingInfo.length} ảnh/đối tượng nổi (${floatingInfo.join(', ')}) đặt thủ công trên sheet, không gắn vào một ô cố định.',
+          '$name: có ${drawingInspection.summaries.length} ảnh/đối tượng nổi (${drawingInspection.summaries.join(', ')}) đặt thủ công trên sheet (Place over Cells).',
         );
       } else {
         warnings.add('$name: ảnh/đối tượng nổi chưa được so sánh như ô.');
@@ -249,15 +254,18 @@ Map<String, XlsxSheetContent> inspectXlsxCellContent(Archive archive) {
   return result;
 }
 
-List<String> _inspectSheetDrawings(
+({List<String> summaries, Map<String, SourceCell> anchoredCells})
+_inspectSheetDrawings(
   Archive archive,
   XmlDocument? Function(String?) doc,
   List<XmlElement> Function(XmlNode?, String) all,
   Map<String, ({String? path, String type})> Function(String) rels,
   String sheetPath,
+  Map<String, SourceCell> imageCache,
 ) {
   final sheetRels = rels(sheetPath);
   final summaries = <String>[];
+  final anchoredCells = <String, SourceCell>{};
   String colLetters(int colZeroBased) {
     var col = colZeroBased + 1;
     var out = '';
@@ -294,14 +302,31 @@ List<String> _inspectSheetDrawings(
             .where((a) => a.name.local == 'embed')
             .firstOrNull
             ?.value;
-        final mediaPath = embedId != null ? drawingRels[embedId]?.path : null;
+        final mediaRel = embedId != null ? drawingRels[embedId] : null;
+        final mediaPath = mediaRel?.path;
         final mediaFile =
             mediaPath != null ? archive.findFile(mediaPath) : null;
         if (mediaFile != null && mediaFile.size > 0) {
-          final shortHash = sha256
-              .convert(mediaFile.content)
-              .toString()
-              .substring(0, 8);
+          final cell = imageCache.putIfAbsent(
+            'drawingAnchor:$mediaPath:${anchorCell ?? "free"}',
+            () {
+              final bytes = List<int>.unmodifiable(mediaFile.content);
+              final digest = sha256.convert(bytes).toString();
+              return SourceCell(
+                CellKind.image,
+                rawLexeme:
+                    '[Ảnh đặt thủ công${anchorCell != null ? " · neo $anchorCell" : ""} · SHA-256 $digest]',
+                imageBytes: bytes,
+                imageDigest: digest,
+                mediaType: mediaFile.name.split('.').last.toLowerCase(),
+                imagePlacement: 'drawingAnchor',
+              );
+            },
+          );
+          final shortHash = cell.imageDigest!.substring(0, 8);
+          if (anchorCell != null) {
+            anchoredCells.putIfAbsent(anchorCell, () => cell);
+          }
           summaries.add(
             anchorCell != null
                 ? 'neo gần $anchorCell · SHA $shortHash'
@@ -313,5 +338,5 @@ List<String> _inspectSheetDrawings(
       }
     }
   }
-  return summaries;
+  return (summaries: summaries, anchoredCells: anchoredCells);
 }

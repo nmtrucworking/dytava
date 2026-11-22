@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -255,6 +256,7 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
     VoidCallback? tap,
     bool header = false,
     bool highlighted = false,
+    SourceCell? sourceCell,
   }) => InkWell(
     onTap: tap,
     child: Container(
@@ -269,21 +271,80 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
           width: highlighted ? 2.0 : 0.5,
         ),
       ),
-      child: Text(
-        value.isEmpty ? '—' : value,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style:
-            (header
-                    ? DytavaTypography.labelLarge
-                    : DytavaTypography.dataSmall)
-                .copyWith(
-                  fontSize: ((header ? 12.5 : 11.5) * _cellZoom).clamp(
-                    10.5,
-                    17.0,
+      child: (sourceCell != null &&
+              sourceCell.kind == CellKind.image &&
+              sourceCell.imageBytes != null &&
+              sourceCell.imageBytes!.isNotEmpty)
+          ? Row(
+              children: [
+                Container(
+                  width: (height - 10).clamp(24.0, 44.0),
+                  height: (height - 10).clamp(24.0, 44.0),
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: DytavaColors.border, width: 0.5),
+                  ),
+                  child: Image.memory(
+                    Uint8List.fromList(sourceCell.imageBytes!),
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.none,
+                    errorBuilder: (_, _, _) => const Icon(
+                      Icons.image_outlined,
+                      size: 16,
+                      color: DytavaColors.textSecondary,
+                    ),
                   ),
                 ),
-      ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        sourceCell.imagePlacement == 'drawingAnchor'
+                            ? 'Ảnh thủ công'
+                            : 'Ảnh trong ô',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DytavaTypography.labelSmall.copyWith(
+                          fontSize: (10.0 * _cellZoom).clamp(9.0, 13.0),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (sourceCell.imageDigest != null &&
+                          sourceCell.imageDigest!.length >= 8)
+                        Text(
+                          sourceCell.imageDigest!.substring(0, 8),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DytavaTypography.dataSmall.copyWith(
+                            fontSize: (9.5 * _cellZoom).clamp(8.5, 12.0),
+                            color: DytavaColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : Text(
+              value.isEmpty ? '—' : value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  (header
+                          ? DytavaTypography.labelLarge
+                          : DytavaTypography.dataSmall)
+                      .copyWith(
+                        fontSize: ((header ? 12.5 : 11.5) * _cellZoom).clamp(
+                          10.5,
+                          17.0,
+                        ),
+                      ),
+            ),
     ),
   );
 
@@ -386,16 +447,15 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                                         cellsByRow[i][(m.fieldA, m.fieldB)];
                                     final isFocused =
                                         _highlightedCoord == (i, colIdx);
+                                    final srcCell = record?.cells[
+                                      side == SourceSide.a ? m.fieldA : m.fieldB
+                                    ];
                                     return cell(
-                                      record
-                                              ?.cells[side == SourceSide.a
-                                                  ? m.fieldA
-                                                  : m.fieldB]
-                                              ?.rawLexeme ??
-                                          '',
+                                      srcCell?.rawLexeme ?? '',
                                       width: scaledColW,
                                       height: scaledRowH,
                                       highlighted: isFocused,
+                                      sourceCell: srcCell,
                                       bg: color(
                                         row.unresolved
                                             ? 'UNRESOLVED'

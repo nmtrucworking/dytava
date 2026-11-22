@@ -413,17 +413,17 @@ class _WorkflowPageState extends State<WorkflowPage>
         final scaffold = Scaffold(
           backgroundColor: DytavaColors.background,
           appBar: AppBar(
-            toolbarHeight: isRootHome ? 72 : (isOcrScreen ? 56 : 48),
-            titleSpacing: isRootHome ? 24 : 8,
+            toolbarHeight: isRootHome ? 60 : (isOcrScreen ? 56 : 48),
+            titleSpacing: isRootHome ? 20 : 8,
             title: isRootHome
                 ? Row(
                     children: [
                       SvgPicture.asset(
                         'assets/dytava/figma/home-logo.svg',
-                        width: 34,
-                        height: 31,
+                        width: 26,
+                        height: 24,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       Flexible(
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
@@ -434,8 +434,8 @@ class _WorkflowPageState extends State<WorkflowPage>
                               Text(
                                 'Dytava',
                                 style: DytavaTypography.titleLarge.copyWith(
-                                    fontSize: 26,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                               Text(
@@ -494,15 +494,15 @@ class _WorkflowPageState extends State<WorkflowPage>
             actions: [
               if (isRootHome)
                 Padding(
-                  padding: const EdgeInsets.only(right: 24),
+                  padding: const EdgeInsets.only(right: 12),
                   child: IconButton(
                     tooltip: 'Comparison settings',
                     onPressed: () =>
                         setState(() => _auxView = _AuxiliaryView.settings),
-                    icon: SvgPicture.asset(
-                      'assets/dytava/figma/home-settings.svg',
-                      width: 38,
-                      height: 38,
+                    icon: const Icon(
+                      Icons.settings_outlined,
+                      size: 22,
+                      color: DytavaColors.textPrimary,
                     ),
                   ),
                 ),

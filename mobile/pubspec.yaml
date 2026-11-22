@@ -31,10 +31,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
-
   excelcompare_core:
     path: ../packages/excelcompare_core
   flutter_svg: ^2.3.3
@@ -72,16 +68,11 @@ flutter:
 
   assets:
     - assets/fonts/Inter-OFL.txt
-    - assets/fonts/PlusJakartaSans-OFL.txt
     - assets/fonts/BeVietnamPro-OFL.txt
     - assets/fonts/IBMPlexMono-OFL.txt
     - assets/dytava/figma/
     - assets/dytava/brand/svg/
-    - assets/dytava/icons/svg/color/
     - assets/dytava/icons/svg/glyph/
-    - assets/dytava/icons/svg/outline/
-    - assets/dytava/icons/png_512/
-    - assets/dytava/icons/png_128/
     - assets/dytava/formats/svg/
     - assets/dytava/illustrations/svg/square/
     - assets/dytava/illustrations/svg/wide/
@@ -103,18 +94,6 @@ flutter:
           weight: 600
         - asset: assets/fonts/Inter.ttf
           weight: 700
-    - family: Plus Jakarta Sans
-      fonts:
-        - asset: assets/fonts/PlusJakartaSans-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/PlusJakartaSans-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/PlusJakartaSans-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
-          weight: 800
     - family: Be Vietnam Pro
       fonts:
         - asset: assets/fonts/BeVietnamPro-Regular.ttf

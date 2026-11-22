@@ -25,12 +25,12 @@ enum ReasonCode {
 }
 
 final class SourceCell {
-  const SourceCell(this.kind, {this.rawLexeme, this.ocrReviewed = true, this.imageBytes, this.imageDigest, this.mediaType, this.contentIssue});
+  const SourceCell(this.kind, {this.rawLexeme, this.ocrReviewed = true, this.imageBytes, this.imageDigest, this.mediaType, this.contentIssue, this.imagePlacement});
   final CellKind kind;
   final String? rawLexeme;
   final bool ocrReviewed;
   final List<int>? imageBytes;
-  final String? imageDigest, mediaType, contentIssue;
+  final String? imageDigest, mediaType, contentIssue, imagePlacement;
 }
 
 ComparisonDecision? compareCellContent(SourceCell a, SourceCell b) {
@@ -66,12 +66,18 @@ ComparisonDecision? compareCellContent(SourceCell a, SourceCell b) {
       }
     }
   }
+  final placementA = a.imagePlacement, placementB = b.imagePlacement;
+  final placementLabel = (placementA == 'drawingAnchor' || placementB == 'drawingAnchor')
+      ? (placementA == placementB
+          ? 'ảnh đặt thủ công (Place over Cells)'
+          : 'ảnh nhúng (${placementA == 'drawingAnchor' ? 'đặt thủ công' : 'trong ô'} ↔ ${placementB == 'drawingAnchor' ? 'đặt thủ công' : 'trong ô'})')
+      : 'ảnh nhúng';
   return result(
       same ? DecisionStatus.exact : DecisionStatus.different,
       'image/bytes',
       same
-          ? 'Nội dung nhị phân ảnh nhúng giống nhau.'
-          : 'Nội dung nhị phân ảnh nhúng khác nhau; chưa kết luận tương đương hình ảnh.');
+          ? 'Nội dung nhị phân $placementLabel giống nhau.'
+          : 'Nội dung nhị phân $placementLabel khác nhau; chưa kết luận tương đương hình ảnh.');
 }
 
 final class DecimalInputPolicy {

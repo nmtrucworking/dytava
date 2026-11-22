@@ -425,8 +425,15 @@ class App {
           const cmp = row.cellComparisons[h];
           const status = cmp?.status;
           const classes = { EXACT: 'cell-exact', EQUIVALENT: 'cell-equiv', DIFFERENT: 'cell-diff', UNRESOLVED: 'cell-unres' };
+          const imgDataUrl = side === 'A' ? cmp?.imageDataUrlA : cmp?.imageDataUrlB;
+          const imgPlacement = side === 'A' ? cmp?.imagePlacementA : cmp?.imagePlacementB;
+          const imgDigest = side === 'A' ? cmp?.imageDigestA : cmp?.imageDigestB;
           let content = value === '' ? '<i class="empty-cell">—</i>' : e(value);
-          if (status === 'DIFFERENT' && cmp) {
+          if (imgDataUrl) {
+            const pLabel = imgPlacement === 'drawingAnchor' ? 'Ảnh đặt thủ công' : 'Ảnh trong ô';
+            const shortSha = imgDigest ? imgDigest.slice(0, 8) : '';
+            content = `<div style="display:inline-flex;align-items:center;gap:6px"><img src="${e(imgDataUrl)}" alt="${e(pLabel)}" style="width:28px;height:28px;object-fit:contain;background:#fff;border:1px solid var(--outline);border-radius:4px;padding:2px"><span style="display:inline-flex;flex-direction:column;line-height:1.2"><strong style="font-size:0.74rem">${e(pLabel)}</strong>${shortSha ? `<small style="font-size:0.68rem;opacity:0.8">SHA ${e(shortSha)}</small>` : ''}</span></div>`;
+          } else if (status === 'DIFFERENT' && cmp) {
             const diffHtml = side === 'A' ? cmp.diffHtmlA : cmp.diffHtmlB;
             if (diffHtml) content = diffHtml;
           }
@@ -463,6 +470,16 @@ class App {
     for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value ?? '(Trống)';
     if (comparison.diffHtmlA) document.getElementById('insp-raw-a').innerHTML = comparison.diffHtmlA;
     if (comparison.diffHtmlB) document.getElementById('insp-raw-b').innerHTML = comparison.diffHtmlB;
+    for (const [side, id] of [['A', 'insp-raw-a'], ['B', 'insp-raw-b']]) {
+      const dataUrl = comparison[`imageDataUrl${side}`];
+      if (dataUrl) {
+        const pLabel = comparison[`imagePlacement${side}`] === 'drawingAnchor'
+          ? 'Ảnh đặt thủ công (Place over Cells)'
+          : 'Ảnh trong ô (Place in Cell)';
+        const rawText = comparison[`raw${side}`] ?? '';
+        document.getElementById(id).innerHTML = `<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:0.75rem;font-weight:700;color:var(--muted)">${e(pLabel)}</span><img src="${e(dataUrl)}" alt="${e(pLabel)}" style="max-width:100%;max-height:140px;object-fit:contain;background:#fff;border:1px solid var(--outline);border-radius:6px;padding:6px"><small style="font-size:0.72rem;word-break:break-all">${e(rawText)}</small></div>`;
+      }
+    }
     document.getElementById('insp-status-badge').dataset.status = comparison.status;
     this.openModal('cell-inspector-modal');
   }

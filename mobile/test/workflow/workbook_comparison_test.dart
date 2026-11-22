@@ -376,4 +376,160 @@ void main() {
       expect(decision.ruleId, 'formula/syntax_normalized');
     },
   );
+
+  testWidgets(
+    'place-in-cell and manual drawing-anchored images distinguish placement and render Image widgets in results and detail view',
+    (tester) async {
+      final baseBytes =
+          File('../tests/fixtures/workbook-a.xlsx').readAsBytesSync();
+      final decoded = ZipDecoder().decodeBytes(baseBytes);
+      final archive = Archive();
+      for (final file in decoded.files) {
+        if (file.name == 'xl/worksheets/sheet2.xml') {
+          final sheetXml = utf8.decode(file.content).replaceFirst(
+            '</worksheet>',
+            '<drawing xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rIdDrawing1"/></worksheet>',
+          );
+          final bytes = utf8.encode(sheetXml);
+          archive.addFile(ArchiveFile(file.name, bytes.length, bytes));
+        } else {
+          archive.addFile(ArchiveFile(file.name, file.size, file.content));
+        }
+      }
+      final relsBytes = utf8.encode(
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rIdDrawing1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>'
+        '</Relationships>',
+      );
+      archive.addFile(
+        ArchiveFile(
+          'xl/worksheets/_rels/sheet2.xml.rels',
+          relsBytes.length,
+          relsBytes,
+        ),
+      );
+      final drawingBytes = utf8.encode(
+        '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" '
+        'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        '<xdr:twoCellAnchor>'
+        '<xdr:from><xdr:col>1</xdr:col><xdr:row>1</xdr:row></xdr:from>'
+        '<xdr:pic><xdr:blipFill><a:blip r:embed="rIdImg1"/></xdr:blipFill></xdr:pic>'
+        '</xdr:twoCellAnchor>'
+        '</xdr:wsDr>',
+      );
+      archive.addFile(
+        ArchiveFile(
+          'xl/drawings/drawing1.xml',
+          drawingBytes.length,
+          drawingBytes,
+        ),
+      );
+      final drawingRelsBytes = utf8.encode(
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rIdImg1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image2.png"/>'
+        '</Relationships>',
+      );
+      archive.addFile(
+        ArchiveFile(
+          'xl/drawings/_rels/drawing1.xml.rels',
+          drawingRelsBytes.length,
+          drawingRelsBytes,
+        ),
+      );
+
+      final encoded = Uint8List.fromList(ZipEncoder().encode(archive)!);
+      final infoA = MobileFileUploadService.processFileBytes(
+        side: SourceSide.a,
+        fileName: 'drawing-a.xlsx',
+        bytes: encoded,
+      );
+      final snapA = MobileFileUploadService.snapshot(
+        infoA.privateRef,
+        SourceArtifact(
+          id: 'a',
+          label: 'drawing-a.xlsx',
+          format: SourceFormat.xlsx,
+          privateRef: infoA.privateRef,
+        ),
+        const ImportBinding('a', 0, 0, 1),
+      )!;
+      final snapB = load('workbook-b.xlsx', SourceSide.b);
+
+      // Verify Place in Cell on Sheet1
+      final sheet1A = snapA.workbookSheets.firstWhere(
+        (s) => s.sheetName == 'Sheet1',
+      );
+      final placeInCell = sheet1A.records[0].cells['Photo']!;
+      expect(placeInCell.kind, CellKind.image);
+      expect(placeInCell.imagePlacement, 'placeInCell');
+      expect(placeInCell.rawLexeme, contains('Ảnh trong ô'));
+      expect(placeInCell.imageBytes, isNotEmpty);
+
+      // Verify Manual Drawing Anchor on Sheet2 at B2 (col=1, row=1 -> column 'Name', row 0)
+      final sheet2A = snapA.workbookSheets.firstWhere(
+        (s) => s.sheetName == 'Sheet2',
+      );
+      final manualCell = sheet2A.records[0].cells['Name']!;
+      expect(manualCell.kind, CellKind.image);
+      expect(manualCell.imagePlacement, 'drawingAnchor');
+      expect(manualCell.rawLexeme, contains('Ảnh đặt thủ công'));
+      expect(manualCell.imageBytes, isNotEmpty);
+
+      // Run comparison and render ResultsScreenView + DifferenceDetailScreenView
+      final flow = createMobileWorkflow();
+      addTearDown(flow.dispose);
+      final result = compareMobileTables(
+        FrozenPlan('img-render', 1, snapA, snapB, config()),
+        (_, _, _) {},
+      );
+      flow.result = result;
+      flow.validity = ResultValidity.current;
+      flow.jobState = JobState.completed;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: DytavaTheme.lightTheme,
+          home: Scaffold(
+            body: ResultsScreenView(
+              flow: flow,
+              resultViewTab: 0,
+              onResultViewTabChanged: (_) {},
+              onOpenDetail: (id) => flow.detailId = id,
+              onOpenExport: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // List view renders Image.memory and placement badges for both Place in Cell and Place over Cells
+      expect(find.byType(Image), findsWidgets);
+      expect(find.text('Ảnh trong ô (Place in Cell)'), findsWidgets);
+      expect(find.text('Ảnh đặt thủ công (Place over Cells)'), findsWidgets);
+
+      // Open detail view on the modified Place in Cell photo cell
+      final diffPhotoCell = result.cells.firstWhere(
+        (c) =>
+            c.mapping.fieldA == 'Photo' &&
+            c.decision.status == DecisionStatus.different,
+      );
+      flow.detailId = diffPhotoCell.id;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: DytavaTheme.lightTheme,
+          home: Scaffold(
+            body: DifferenceDetailScreenView(
+              flow: flow,
+              onSelectCellId: (_) {},
+              onBackToResults: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Image value changed'), findsOneWidget);
+      expect(find.byType(Image), findsNWidgets(2));
+    },
+  );
 }

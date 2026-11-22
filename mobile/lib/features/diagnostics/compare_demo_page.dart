@@ -279,7 +279,7 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     DytavaAsset(
-                      'assets/dytava/icons/svg/color/privacy.svg',
+                      DytavaIcons.privacy,
                       size: 24,
                     ),
                     SizedBox(width: 8),

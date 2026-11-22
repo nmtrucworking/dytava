@@ -26,6 +26,9 @@ android {
         release {
             // Configure production signing before distributing release builds.
             signingConfig = signingConfigs.debug
+            minifyEnabled = true
+            shrinkResources = true
+            setProguardFiles([file('proguard-rules.pro')])
         }
     }
 }
