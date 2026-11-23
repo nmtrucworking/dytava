@@ -4,7 +4,6 @@ import 'package:dytava/domain/smart_proposal_engine.dart';
 import 'package:dytava/domain/workflow.dart';
 import 'package:dytava/main.dart';
 import 'package:excelcompare_core/excelcompare_core.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide ComparisonResult;
 
 Future<void> tap(WidgetTester tester, String text) async {

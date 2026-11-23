@@ -51,6 +51,9 @@ class _WorkflowPageState extends State<WorkflowPage>
   /// Mẫu quy tắc đang chọn trong mục Mẫu quy tắc
   String _selectedPolicyPreset = 'academic-records-v1';
 
+  /// Số lượng phiên so sánh đã lưu để hiển thị chính xác trên header lịch sử
+  int? _historyCount;
+
   @override
   void initState() {
     super.initState();
@@ -479,9 +482,13 @@ class _WorkflowPageState extends State<WorkflowPage>
                   padding: const EdgeInsets.only(right: 14),
                   child: Center(
                     child: Text(
-                      flow.lastSavedSession == null && !flow.resultCurrent
-                          ? 'No saved comparisons'
-                          : 'Saved comparisons',
+                      _historyCount == null
+                          ? (flow.lastSavedSession == null && !flow.resultCurrent
+                              ? 'No saved comparisons'
+                              : 'Saved comparisons')
+                          : (_historyCount == 0
+                              ? 'No saved comparisons'
+                              : '$_historyCount saved comparison${_historyCount == 1 ? '' : 's'}'),
                       style: const TextStyle(
                         fontFamily: DytavaTypography.primaryFont,
                         fontSize: 12,
@@ -725,11 +732,15 @@ class _WorkflowPageState extends State<WorkflowPage>
         flow.screen == WorkflowScreen.home && _auxView == _AuxiliaryView.none;
 
     if (_auxView == _AuxiliaryView.history) {
-      return SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: padHorizontal, vertical: 12),
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: padHorizontal, vertical: 8),
         child: WorkflowSessionHistoryView(
           flow: flow,
+          onCountChanged: (count) {
+            if (mounted && _historyCount != count) {
+              setState(() => _historyCount = count);
+            }
+          },
           onOpenResults: () => _go(WorkflowScreen.results),
           onStartNewComparison: () => _go(WorkflowScreen.sources),
           onRestoreSession: (id) async {

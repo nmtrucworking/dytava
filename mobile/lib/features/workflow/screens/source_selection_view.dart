@@ -342,7 +342,6 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
     SourceSide side,
   ) async {
     final isA = side == SourceSide.a;
-    final tag = side.name.toUpperCase();
 
     await showModalBottomSheet<void>(
       context: context,
@@ -546,7 +545,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                       onPressed: null,
                       style: ElevatedButton.styleFrom(
                         disabledBackgroundColor: const Color(0xFF9FB6A9),
-                        disabledForegroundColor: Colors.white.withOpacity(0.9),
+                        disabledForegroundColor: Colors.white.withValues(alpha: 0.9),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -820,9 +819,6 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
   @override
   Widget build(BuildContext context) {
     final flow = widget.flow;
-    final count = SourceSide.values
-        .where((s) => flow.slot(s).artifact != null)
-        .length;
     final isUncertain = flow.sheetMapping?.complete == false;
 
     final snapA = flow.slot(SourceSide.a).snapshot;

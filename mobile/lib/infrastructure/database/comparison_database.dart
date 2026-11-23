@@ -554,13 +554,26 @@ final class ComparisonDatabase {
     return count ?? 0;
   }
 
+  /// Returns total count of comparison sessions.
+  Future<int> countSessions() async {
+    final db = await database;
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM comparison_sessions'),
+    );
+    return count ?? 0;
+  }
+
   /// Retrieves summary of recent comparison sessions.
-  Future<List<SavedSessionSummary>> listRecentSessions({int limit = 10}) async {
+  Future<List<SavedSessionSummary>> listRecentSessions({
+    int limit = 10,
+    int offset = 0,
+  }) async {
     final db = await database;
     final rows = await db.query(
       'comparison_sessions',
       orderBy: 'created_at DESC',
       limit: limit,
+      offset: offset,
     );
 
     return rows.map((r) {

@@ -1036,9 +1036,33 @@ final class WorkflowController extends ChangeNotifier {
     _emit();
   }
 
+  /// Returns total count of persisted sessions in SQLite.
+  Future<int> countSavedSessions() =>
+      ComparisonDatabase.instance.countSessions();
+
   /// Queries persisted sessions from SQLite for the Home and History screens.
-  Future<List<SavedSessionSummary>> getRecentSavedSessions({int limit = 10}) =>
-      ComparisonDatabase.instance.listRecentSessions(limit: limit);
+  Future<List<SavedSessionSummary>> getRecentSavedSessions({
+    int limit = 10,
+    int offset = 0,
+  }) =>
+      ComparisonDatabase.instance.listRecentSessions(
+        limit: limit,
+        offset: offset,
+      );
+
+  /// Deletes a specific saved comparison session from SQLite.
+  Future<void> deleteSavedSession(String sessionId) async {
+    await ComparisonDatabase.instance.deleteSession(sessionId);
+    await loadLastSavedSession();
+    _emit();
+  }
+
+  /// Wipes all saved comparison sessions from SQLite.
+  Future<void> clearAllSavedSessions() async {
+    await ComparisonDatabase.instance.clearAll();
+    _lastSavedSession = null;
+    _emit();
+  }
 
   /// Restores a previously completed comparison session from SQLite.
   /// Survives app process death when multiple apps are running on the device.
