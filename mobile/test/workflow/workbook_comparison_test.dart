@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide ComparisonResult;
 import 'package:flutter/material.dart';
 import 'package:archive/archive.dart';
 import 'package:excel/excel.dart' as xlsx;
@@ -530,6 +530,139 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Image value changed'), findsOneWidget);
       expect(find.byType(Image), findsNWidgets(2));
+    },
+  );
+
+  testWidgets(
+    'floating objects and drawing image notices render in styled cards with Place over Cells badge',
+    (tester) async {
+      final a = load('workbook-a.xlsx', SourceSide.a),
+          b = load('workbook-b.xlsx', SourceSide.b);
+      final flow = createMobileWorkflow();
+      addTearDown(flow.dispose);
+      final warningText =
+          'Planned: có 1 ảnh/đối tượng nổi (neo gần A43) đặt thủ công trên sheet (Place over Cells).';
+      final baseResult = compareMobileTables(
+        FrozenPlan('widget-warn', 1, a, b, config()),
+        (_, _, _) {},
+      );
+      flow.result = ComparisonResult(
+        id: baseResult.id,
+        plan: baseResult.plan,
+        cells: baseResult.cells,
+        structural: baseResult.structural,
+        unresolvedRecords: baseResult.unresolvedRecords,
+        matchedRecords: baseResult.matchedRecords,
+        alignedRows: baseResult.alignedRows,
+        durationMs: baseResult.durationMs,
+        sheetResults: baseResult.sheetResults,
+        warnings: [warningText],
+      );
+      flow.validity = ResultValidity.current;
+      flow.jobState = JobState.completed;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: DytavaTheme.lightTheme,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ResultsScreenView(
+                flow: flow,
+                resultViewTab: 0,
+                onResultViewTabChanged: (_) {},
+                onOpenDetail: (_) {},
+                onOpenExport: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Card is rendered with title, badge and description
+      expect(find.byKey(ValueKey('warning-${warningText.hashCode}')), findsOneWidget);
+      expect(find.text('Planned'), findsWidgets);
+      expect(find.text('Place over Cells'), findsOneWidget);
+      expect(
+        find.text(
+          'có 1 ảnh/đối tượng nổi (neo gần A43) đặt thủ công trên sheet (Place over Cells).',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'DifferenceDetailScreenView focused difference viewer renders mobile-first delta, quick nav, and technical details bottom sheet',
+    (tester) async {
+      final a = load('workbook-a.xlsx', SourceSide.a),
+          b = load('workbook-b.xlsx', SourceSide.b);
+      final flow = createMobileWorkflow();
+      addTearDown(flow.dispose);
+      final result = compareMobileTables(
+        FrozenPlan('widget-detail', 1, a, b, config()),
+        (_, _, _) {},
+      );
+      flow.result = result;
+      flow.validity = ResultValidity.current;
+      flow.jobState = JobState.completed;
+
+      // Select numeric difference cell
+      final numDiffCell = result.cells.firstWhere(
+        (c) =>
+            c.mapping.fieldA == 'Cost' &&
+            c.decision.status == DecisionStatus.different,
+      );
+      flow.detailId = numDiffCell.id;
+
+      String? selectedNextId;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: DytavaTheme.lightTheme,
+          home: Scaffold(
+            body: DifferenceDetailScreenView(
+              flow: flow,
+              onSelectCellId: (id) => selectedNextId = id,
+              onBackToResults: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Title & metadata
+      expect(find.text('Numeric value changed'), findsOneWidget);
+      expect(find.textContaining('DIFFERENCE'), findsOneWidget);
+      expect(find.textContaining('% reviewed'), findsOneWidget);
+
+      // Delta label is calculated and displayed
+      expect(find.textContaining('Numeric difference:'), findsOneWidget);
+
+      // Comparison details button exists and opens bottom sheet
+      final compDetailsBtn = find.widgetWithText(OutlinedButton, 'Comparison details');
+      expect(compDetailsBtn, findsOneWidget);
+      await tester.tap(compDetailsBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Rule reference'), findsOneWidget);
+      expect(find.text('Matching mode'), findsOneWidget);
+
+      // Close bottom sheet
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+
+      // Quick navigation sheet opens when tapping difference counter
+      await tester.tap(find.textContaining('DIFFERENCE'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Jump to difference'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+
+      // Tap on an item in quick nav jumps to it
+      final firstTile = find.byType(ListTile).first;
+      await tester.tap(firstTile);
+      await tester.pumpAndSettle();
+      expect(selectedNextId, isNotNull);
     },
   );
 }

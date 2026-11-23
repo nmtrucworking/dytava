@@ -1,4 +1,5 @@
 import 'package:dytava/app/workflow_composition.dart';
+import 'package:dytava/application/workflow_controller.dart';
 import 'package:dytava/domain/smart_proposal_engine.dart';
 import 'package:dytava/domain/workflow.dart';
 import 'package:dytava/main.dart';
@@ -7,16 +8,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide ComparisonResult;
 
 Future<void> tap(WidgetTester tester, String text) async {
-  final target = find.text(text);
-  await tester.scrollUntilVisible(
-    target,
-    250,
-    scrollable: find.byType(Scrollable).first,
-  );
-  await tester.ensureVisible(target);
+  final target = find.text(text).first;
+  try {
+    await tester.ensureVisible(target);
+  } catch (_) {}
   await tester.pumpAndSettle();
   await tester.tap(target);
   await tester.pumpAndSettle();
+}
+
+Future<void> prepare(WorkflowController flow) async {
+  for (final side in SourceSide.values) {
+    await flow.selectSource(
+      side,
+      SourceFormat.csv,
+      'fixture:${side.name}',
+      'sample-${side.name}.csv',
+    );
+    await flow.importSource(side);
+    final slot = flow.slot(side);
+    if (slot.state == InputState.needsReview) {
+      await flow.confirmImport(side, expectedBinding: slot.binding);
+    }
+  }
 }
 
 void main() {
@@ -168,7 +182,8 @@ void main() {
     await tester.pumpWidget(ExcelCompareApp(controller: flow));
     await tester.tap(find.byTooltip('Compare files'));
     await tester.pumpAndSettle();
-    await tap(tester, 'Use sample files ›');
+    await tester.runAsync(() => prepare(flow));
+    await tester.pumpAndSettle();
     expect(flow.inputsReady, isTrue);
     expect(flow.result, isNull);
     await tap(tester, 'Compare files');

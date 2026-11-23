@@ -156,7 +156,6 @@ NV003,Lê Hoàng Nam,Kinh Doanh,12000000''';
               child: SourceSelectionView(
                 flow: flow,
                 quickProcessing: false,
-                onQuickPrepareBoth: () {},
                 onOpenPreview: (_) {},
                 onContinueMapping: () {},
               ),

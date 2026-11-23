@@ -111,6 +111,19 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
       _ => <StructuralChange>[],
     };
     final sheets = flow.result!.sheetResults;
+    final displayedWarnings = flow.selectedSheetPairId == null
+        ? flow.result!.warnings
+        : flow.result!.warnings.where((w) {
+            final colon = w.indexOf(':');
+            if (colon == -1) return true;
+            final name = w.substring(0, colon).trim();
+            final selectedPair = sheets
+                .where((s) => s.sheetPair?.id == flow.selectedSheetPairId)
+                .firstOrNull
+                ?.sheetPair;
+            if (selectedPair == null) return true;
+            return name == selectedPair.nameA || name == selectedPair.nameB;
+          }).toList();
     final isTableView = widget.resultViewTab == 1;
     final activeTableSheet = sheets.isEmpty
         ? result
@@ -161,39 +174,45 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: DytavaColors.primaryDark,
-                borderRadius: BorderRadius.circular(24),
+                color: const Color(0xFF0F5B38),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 166,
+                    width: 140,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                      horizontal: 8,
+                      vertical: 3.5,
                     ),
                     decoration: BoxDecoration(
-                      color: DytavaColors.primaryLight,
-                      borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFF1E7048),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text(
+                    alignment: Alignment.center,
+                    child: const Text(
                       'RESULTS READY',
-                      style: DytavaTypography.labelSmall.copyWith(
-                        fontSize: 10,
-                        color: DytavaColors.primaryDark,
+                      style: TextStyle(
+                        fontFamily: DytavaTypography.primaryFont,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Text(
                     '$total differences',
-                    style: DytavaTypography.displayLarge.copyWith(
-                      fontSize: 29,
+                    style: const TextStyle(
+                      fontFamily: DytavaTypography.primaryFont,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Wrap(
                     alignment: WrapAlignment.spaceBetween,
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -210,7 +229,7 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.zero,
-                            minimumSize: const Size(48, 32),
+                            minimumSize: const Size(48, 28),
                           ),
                           onPressed: () => _select(_ChangeFilter.unresolved),
                           child: Text(
@@ -223,14 +242,14 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Row(
               children: [
                 for (final item in [
                   (
                     modified,
                     'Modified',
-                    DytavaColors.modified,
+                    const Color(0xFFB45309),
                     _ChangeFilter.modified,
                   ),
                   (
@@ -259,22 +278,39 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                         onTap: () => _select(item.$4),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
+                            horizontal: 10,
                             vertical: 10,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              DytavaCountUpText(
-                                value: item.$1,
-                                style: DytavaTypography.metricNumber.copyWith(
-                                  color: item.$3,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w600,
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: DytavaCountUpText(
+                                  value: item.$1,
+                                  style: TextStyle(
+                                    fontFamily: DytavaTypography.primaryFont,
+                                    color: item.$3,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(item.$2, style: DytavaTypography.bodySmall),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  item.$2,
+                                  style: const TextStyle(
+                                    fontFamily: DytavaTypography.primaryFont,
+                                    fontSize: 12,
+                                    color: Color(0xFF64748B),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -284,7 +320,7 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                 ],
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
           ],
           Row(
             children: [
@@ -392,17 +428,18 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                         label: Text(item.$2),
                         onSelected: (_) => _select(item.$1),
                         selectedColor: DytavaColors.primary,
-                        backgroundColor: DytavaColors.primaryLight,
+                        backgroundColor: const Color(0xFFE8F5E9),
                         side: BorderSide.none,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         labelStyle: TextStyle(
-                          fontSize: 11,
+                          fontFamily: DytavaTypography.primaryFont,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: _filter == item.$1
                               ? Colors.white
-                              : DytavaColors.textSecondary,
+                              : const Color(0xFF334155),
                         ),
                       ),
                     ),
@@ -478,11 +515,8 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
               child: const Text('Show more changes'),
             ),
         ],
-        for (final warning in flow.result!.warnings)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(warning, style: DytavaTypography.bodySmall),
-          ),
+        for (final warning in displayedWarnings)
+          _warningCard(warning),
           const SizedBox(height: 16),
         ],
       ),
@@ -491,6 +525,154 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
           label: 'Export report',
           iconAsset: DytavaIcons.export,
           onPressed: widget.onOpenExport,
+        ),
+      ),
+    );
+  }
+
+  List<Uint8List> _findImagesForSheet(String sheetName) {
+    final images = <Uint8List>[];
+    final seen = <String>{};
+
+    void scanSnapshot(InputSnapshot? snap) {
+      if (snap == null) return;
+      final sheets =
+          snap.workbookSheets.isEmpty ? [snap] : snap.workbookSheets;
+      for (final s in sheets) {
+        if (s.sheetName == sheetName) {
+          for (final r in s.records) {
+            for (final c in r.cells.values) {
+              if (c.kind == CellKind.image &&
+                  c.imageBytes != null &&
+                  c.imageBytes!.isNotEmpty) {
+                final key = c.imageDigest ?? c.rawLexeme ?? '';
+                if (seen.add(key)) {
+                  images.add(Uint8List.fromList(c.imageBytes!));
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    scanSnapshot(flow.slot(SourceSide.a).snapshot);
+    scanSnapshot(flow.slot(SourceSide.b).snapshot);
+
+    if (images.isEmpty && flow.result != null) {
+      for (final diff in flow.result!.cells) {
+        for (final sideCell in [diff.a, diff.b]) {
+          if (sideCell.imagePlacement == 'drawingAnchor' &&
+              sideCell.imageBytes != null &&
+              sideCell.imageBytes!.isNotEmpty) {
+            final locA = diff.locationA ?? '';
+            final locB = diff.locationB ?? '';
+            if (locA.startsWith('$sheetName!') ||
+                locB.startsWith('$sheetName!')) {
+              final key = sideCell.imageDigest ?? sideCell.rawLexeme ?? '';
+              if (seen.add(key)) {
+                images.add(Uint8List.fromList(sideCell.imageBytes!));
+              }
+            }
+          }
+        }
+      }
+    }
+    return images;
+  }
+
+  Widget _warningCard(String warning) {
+    final isImageNotice = warning.contains('ảnh') ||
+        warning.contains('đối tượng nổi') ||
+        warning.contains('Place over Cells');
+    final colonIndex = warning.indexOf(':');
+    final String title;
+    final String description;
+    if (colonIndex != -1) {
+      title = warning.substring(0, colonIndex).trim();
+      description = warning.substring(colonIndex + 1).trim();
+    } else {
+      title = isImageNotice ? 'Ảnh / Đối tượng nổi' : 'Thông báo';
+      description = warning;
+    }
+
+    final images =
+        isImageNotice ? _findImagesForSheet(title) : const <Uint8List>[];
+
+    return Padding(
+      key: ValueKey('warning-${warning.hashCode}'),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: DytavaColors.border),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    isImageNotice ? Icons.layers_outlined : Icons.info_outline,
+                    size: 16,
+                    color: isImageNotice
+                        ? const Color(0xFFB45309)
+                        : DytavaColors.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: DytavaTypography.titleSmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isImageNotice)
+                    _badge(
+                      'Place over Cells',
+                      const Color(0xFFB45309),
+                      const Color(0xFFFEF3C7),
+                    )
+                  else
+                    _badge(
+                      'Notice',
+                      DytavaColors.primaryDark,
+                      DytavaColors.primaryLight,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: DytavaTypography.bodySmall.copyWith(
+                  color: DytavaColors.textSecondary,
+                ),
+              ),
+              if (images.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                for (final img in images)
+                  Container(
+                    height: 100,
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: DytavaColors.border),
+                    ),
+                    child: Image.memory(
+                      img,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.none,
+                    ),
+                  ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -520,7 +702,12 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                     Expanded(
                       child: Text(
                         _cellLocation(flow, cell, SourceSide.a),
-                        style: DytavaTypography.titleSmall,
+                        style: const TextStyle(
+                          fontFamily: DytavaTypography.primaryFont,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1E293B),
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -634,38 +821,43 @@ String _cellLocation(
       : _recordRowPattern.firstMatch(location)?.group(1);
   return row == null
       ? field
-      : '${source.sheetName ?? 'Sample'} · $letters${int.parse(row) + 1}';
+      : '${source.sheetName ?? 'Sheet1'} · $letters${int.parse(row) + 1}';
 }
 
 (String, Color, Color) _statusStyle(DecisionStatus status) => switch (status) {
   DecisionStatus.different => (
     'Modified',
-    DytavaColors.modified,
-    DytavaColors.modifiedBg,
+    const Color(0xFFB45309),
+    const Color(0xFFFEF3C7),
   ),
   DecisionStatus.unresolved => (
     'Unresolved',
-    DytavaColors.modified,
-    DytavaColors.modifiedBg,
+    const Color(0xFFB45309),
+    const Color(0xFFFEF3C7),
   ),
   DecisionStatus.equivalent => (
     'Equivalent',
     DytavaColors.primary,
-    DytavaColors.primaryLight,
+    const Color(0xFFE8F5E9),
   ),
   DecisionStatus.exact => (
     'Same',
-    DytavaColors.textSecondary,
-    DytavaColors.background,
+    const Color(0xFF64748B),
+    const Color(0xFFF1F5F2),
   ),
 };
 
 Widget _badge(String label, Color color, Color bg) => Container(
-  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-  decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+  decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
   child: Text(
     label,
-    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
+    style: TextStyle(
+      fontFamily: DytavaTypography.primaryFont,
+      fontSize: 11,
+      fontWeight: FontWeight.w700,
+      color: color,
+    ),
   ),
 );
 
@@ -783,13 +975,21 @@ Widget _value(
   Color color, {
   SourceCell? sourceCell,
 }) => Container(
-  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-  decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(9)),
+  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+  decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
   child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: DytavaTypography.bodySmall.copyWith(fontSize: 10)),
-      const SizedBox(height: 4),
+      Text(
+        label,
+        style: const TextStyle(
+          fontFamily: DytavaTypography.primaryFont,
+          fontSize: 10.5,
+          color: Color(0xFF64748B),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      const SizedBox(height: 3),
       if (sourceCell != null &&
           sourceCell.kind == CellKind.image &&
           sourceCell.imageBytes != null &&
@@ -800,386 +1000,16 @@ Widget _value(
           value,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: DytavaTypography.dataMedium.copyWith(
-            fontWeight: FontWeight.w600,
+          style: TextStyle(
+            fontFamily: DytavaTypography.primaryFont,
+            fontWeight: FontWeight.w700,
+            fontSize: 14.5,
             color: color,
           ),
         ),
     ],
   ),
 );
-
-class DifferenceDetailScreenView extends StatelessWidget {
-  final WorkflowController flow;
-  final ValueChanged<String> onSelectCellId;
-  final VoidCallback onBackToResults;
-  const DifferenceDetailScreenView({
-    super.key,
-    required this.flow,
-    required this.onSelectCellId,
-    required this.onBackToResults,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cell = flow.result!.cells.firstWhere((c) => c.id == flow.detailId);
-    final list = flow.selectedCells;
-    final index = list.indexWhere((c) => c.id == cell.id);
-
-    return WorkflowScreenLayout(
-      contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // DIFFERENCE X OF Y
-          Text(
-            'DIFFERENCE ${index < 0 ? 1 : index + 1} OF ${list.isEmpty ? 1 : list.length}',
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              color: Color(0xFF64748B),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Change Title
-          Text(
-            _changeTitle(cell),
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1E293B),
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          // Subtitle
-          Text(
-            _changeSubtitle(cell),
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF64748B),
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // File & Cell Location
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.grid_on_rounded,
-                  color: DytavaColors.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      flow.slot(SourceSide.a).artifact?.label ?? 'Workbook.xlsx',
-                      style: const TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1E293B),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _cellSheetAndAddress(flow, cell, SourceSide.a),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 36, thickness: 1, color: Color(0xFFE2E8F0)),
-
-          // Side-by-side comparison
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: child,
-            ),
-            child: IntrinsicHeight(
-              key: ValueKey('cell-diff-${cell.id}'),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ORIGINAL · A
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'ORIGINAL · A',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.6,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (cell.a.kind == CellKind.image &&
-                            cell.a.imageBytes != null &&
-                            cell.a.imageBytes!.isNotEmpty) ...[
-                          _renderedCellImage(cell.a, height: 132),
-                          const SizedBox(height: 6),
-                        ],
-                        SelectableText(
-                          cell.a.rawLexeme ?? '—',
-                          style: TextStyle(
-                            fontSize: cell.a.kind == CellKind.image ? 12 : 28,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1E293B),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            const Text(
-                              'Normalized: ',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                _normalizedLabel(
-                                  cell.decision.left,
-                                  cell.a.rawLexeme,
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  fontFamily: 'IBM Plex Mono',
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const VerticalDivider(
-                    width: 32,
-                    thickness: 1,
-                    color: Color(0xFFE2E8F0),
-                  ),
-                  // UPDATED · B
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'UPDATED · B',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.6,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (cell.b.kind == CellKind.image &&
-                            cell.b.imageBytes != null &&
-                            cell.b.imageBytes!.isNotEmpty) ...[
-                          _renderedCellImage(cell.b, height: 132),
-                          const SizedBox(height: 6),
-                        ],
-                        SelectableText(
-                          cell.b.rawLexeme ?? '—',
-                          style: TextStyle(
-                            fontSize: cell.b.kind == CellKind.image ? 12 : 28,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1E293B),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            const Text(
-                              'Normalized: ',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                _normalizedLabel(
-                                  cell.decision.right,
-                                  cell.b.rawLexeme,
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  fontFamily: 'IBM Plex Mono',
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Divider(height: 36, thickness: 1, color: Color(0xFFE2E8F0)),
-
-          // Info row
-            Row(
-              children: [
-                const Icon(
-                  Icons.info_outline_rounded,
-                  color: DytavaColors.primary,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Compared as ${_ruleTypeLabel(cell)} values.',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF1E293B),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(height: 20),
-
-          // Technical Details collapsible card
-          _TechnicalDetailsCard(
-            cell: cell,
-            flow: flow,
-            onBackToResults: onBackToResults,
-          ),
-          const SizedBox(height: 16),
-
-          // Back to differences subtle button
-          Center(
-            child: TextButton.icon(
-              onPressed: onBackToResults,
-              icon: const Icon(
-                Icons.arrow_back_rounded,
-                size: 16,
-                color: DytavaColors.textSecondary,
-              ),
-              label: const Text(
-                'Back to differences',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: DytavaColors.textSecondary,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-      bottomBar: StickyBottomBar(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TextButton.icon(
-              onPressed: index > 0
-                  ? () => onSelectCellId(list[index - 1].id)
-                  : null,
-              icon: const Icon(Icons.arrow_back_rounded, size: 18),
-              label: const Text('Previous'),
-              style: TextButton.styleFrom(
-                foregroundColor: DytavaColors.primary,
-                disabledForegroundColor:
-                    DytavaColors.textSecondary.withValues(alpha: 0.35),
-                textStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-            Text(
-              '${index < 0 ? 1 : index + 1} / ${list.isEmpty ? 1 : list.length}',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF334155),
-              ),
-            ),
-            Directionality(
-              textDirection: TextDirection.rtl,
-              child: TextButton.icon(
-                onPressed: index >= 0 && index < list.length - 1
-                    ? () => onSelectCellId(list[index + 1].id)
-                    : null,
-                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                label: const Text('Next'),
-                style: TextButton.styleFrom(
-                  foregroundColor: DytavaColors.primary,
-                  disabledForegroundColor:
-                      DytavaColors.textSecondary.withValues(alpha: 0.35),
-                  textStyle: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 String _changeTitle(CellDifference cell) {
   final rule = cell.decision.ruleId.toLowerCase();
@@ -1212,36 +1042,6 @@ bool _isBooleanString(String? s) {
   if (s == null) return false;
   final l = s.trim().toLowerCase();
   return l == 'true' || l == 'false' || l == 'yes' || l == 'no';
-}
-
-String _changeSubtitle(CellDifference cell) {
-  if (cell.a.kind == CellKind.image || cell.b.kind == CellKind.image) {
-    if (cell.decision.explanation != null &&
-        cell.decision.explanation!.trim().isNotEmpty) {
-      return cell.decision.explanation!;
-    }
-  }
-  return switch (cell.decision.status) {
-    DecisionStatus.different => 'The original and updated values are different.',
-    DecisionStatus.equivalent =>
-      'The values differ in format but have identical meaning.',
-    DecisionStatus.unresolved => 'Could not reliably determine equivalence.',
-    DecisionStatus.exact =>
-      'The original and updated values are exactly identical.',
-  };
-}
-
-String _cellSheetAndAddress(
-  WorkflowController flow,
-  CellDifference cell,
-  SourceSide side,
-) {
-  final loc = _cellLocation(flow, cell, side);
-  final parts = loc.split(' · ');
-  if (parts.length >= 2) {
-    return 'Sheet: ${parts[0]}  ·  Cell: ${parts[1]}';
-  }
-  return 'Cell: $loc';
 }
 
 String _normalizedLabel(CanonicalValue? canonical, String? raw) {
@@ -1279,157 +1079,875 @@ String _ruleTypeLabel(CellDifference cell) {
   return 'Semantic';
 }
 
-class _TechnicalDetailsCard extends StatefulWidget {
-  final CellDifference cell;
+class DifferenceDetailScreenView extends StatelessWidget {
   final WorkflowController flow;
+  final ValueChanged<String> onSelectCellId;
   final VoidCallback onBackToResults;
-
-  const _TechnicalDetailsCard({
-    required this.cell,
+  const DifferenceDetailScreenView({
+    super.key,
     required this.flow,
+    required this.onSelectCellId,
     required this.onBackToResults,
   });
 
-  @override
-  State<_TechnicalDetailsCard> createState() => _TechnicalDetailsCardState();
-}
+  String _pad2(int n) => n < 10 ? '0$n' : '$n';
 
-class _TechnicalDetailsCardState extends State<_TechnicalDetailsCard> {
-  bool _expanded = false;
+  ({String label, bool isNegative})? _calculateNumericDelta(
+    String? a,
+    String? b,
+  ) {
+    if (a == null || b == null) return null;
+    final numA = num.tryParse(a.replaceAll(',', '').trim());
+    final numB = num.tryParse(b.replaceAll(',', '').trim());
+    if (numA == null || numB == null) return null;
+    final delta = numB - numA;
+    final isNeg = delta < 0;
+    final deltaStr = delta == 0
+        ? '0'
+        : (isNeg ? '−' : '+') +
+            (delta.abs() % 1 == 0
+                ? delta.abs().toInt().toString()
+                : delta.abs().toStringAsFixed(2));
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDCFCE7), width: 1),
+    if (numA != 0) {
+      final pct = ((delta / numA.abs()) * 100);
+      final pctVal = pct.abs() % 1 == 0
+          ? pct.abs().toInt().toString()
+          : pct.abs().toStringAsFixed(1);
+      final pctStr = '${pct >= 0 ? '+' : '−'}$pctVal%';
+      return (label: '$deltaStr ($pctStr)', isNegative: isNeg);
+    }
+    return (label: deltaStr, isNegative: isNeg);
+  }
+
+  void _openQuickNav(
+    BuildContext context,
+    List<CellDifference> list,
+    int currentIndex,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () => setState(() => _expanded = !_expanded),
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
+      builder: (ctx) => _QuickNavBottomSheet(
+        list: list,
+        currentIndex: currentIndex,
+        flow: flow,
+        onSelectCellId: (id) {
+          Navigator.pop(ctx);
+          onSelectCellId(id);
+        },
+      ),
+    );
+  }
+
+  void _openComparisonDetailsSheet(BuildContext context, CellDifference cell) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.58,
+        minChildSize: 0.35,
+        maxChildSize: 0.88,
+        expand: false,
+        builder: (ctx, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
                 children: [
                   const Icon(
-                    Icons.code_rounded,
+                    Icons.tune_rounded,
                     color: DytavaColors.primary,
                     size: 20,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   const Text(
-                    'Technical details',
+                    'Comparison details',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
                       color: Color(0xFF1E293B),
                     ),
                   ),
                   const Spacer(),
-                  Icon(
-                    _expanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: const Color(0xFF64748B),
-                    size: 22,
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
               ),
+              const SizedBox(height: 14),
+              _techRow('Rule reference', cell.decision.ruleId),
+              _techRow('Comparison type', _ruleTypeLabel(cell)),
+              _techRow('Matching mode', switch (flow.config.mode) {
+                MatchingMode.positional => 'By position',
+                MatchingMode.key => 'By key column',
+                MatchingMode.orderedSequence => 'Sequence alignment',
+              }),
+              if (cell.a.kind == CellKind.image)
+                _techRow(
+                  'Original image placement',
+                  cell.a.imagePlacement == 'drawingAnchor'
+                      ? 'Place over Cells (Drawing Anchor)'
+                      : 'Place in Cell (RichData)',
+                ),
+              if (cell.b.kind == CellKind.image)
+                _techRow(
+                  'Updated image placement',
+                  cell.b.imagePlacement == 'drawingAnchor'
+                      ? 'Place over Cells (Drawing Anchor)'
+                      : 'Place in Cell (RichData)',
+                ),
+              _techRow(
+                'Original source',
+                '${flow.slot(SourceSide.a).artifact?.label ?? "File A"} · ${_cellLocation(flow, cell, SourceSide.a)}',
+              ),
+              _techRow(
+                'Updated source',
+                '${flow.slot(SourceSide.b).artifact?.label ?? "File B"} · ${_cellLocation(flow, cell, SourceSide.b)}',
+              ),
+              _techRow(
+                'Original normalized',
+                cell.decision.left?.label ?? '—',
+              ),
+              _techRow(
+                'Updated normalized',
+                cell.decision.right?.label ?? '—',
+              ),
+              if (cell.a.rawLexeme != null &&
+                  cell.b.rawLexeme != null &&
+                  cell.a.rawLexeme != cell.b.rawLexeme &&
+                  cell.a.kind != CellKind.image &&
+                  cell.b.kind != CellKind.image)
+                Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Character difference:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextDifferenceEvidence(
+                        a: cell.a.rawLexeme!,
+                        b: cell.b.rawLexeme!,
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sideValueBox({
+    required String label,
+    required SourceCell cell,
+    required CanonicalValue? canonical,
+    required Color accentColor,
+    required Color bgColor,
+    required Color borderColor,
+  }) {
+    final norm = _normalizedLabel(canonical, cell.rawLexeme);
+    final showNorm =
+        norm != '—' && norm.trim() != (cell.rawLexeme ?? '').trim();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: accentColor,
             ),
           ),
-          if (_expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Divider(height: 16, color: Color(0xFFDCFCE7)),
-                  _techRow('Rule reference', widget.cell.decision.ruleId),
-                  if (widget.cell.a.kind == CellKind.image)
-                    _techRow(
-                      'Original image placement',
-                      widget.cell.a.imagePlacement == 'drawingAnchor'
-                          ? 'Place over Cells (Drawing Anchor)'
-                          : 'Place in Cell (RichData)',
-                    ),
-                  if (widget.cell.b.kind == CellKind.image)
-                    _techRow(
-                      'Updated image placement',
-                      widget.cell.b.imagePlacement == 'drawingAnchor'
-                          ? 'Place over Cells (Drawing Anchor)'
-                          : 'Place in Cell (RichData)',
-                    ),
-                  _techRow(
-                    'Original cell',
-                    _cellLocation(widget.flow, widget.cell, SourceSide.a),
-                  ),
-                  _techRow(
-                    'Updated cell',
-                    _cellLocation(widget.flow, widget.cell, SourceSide.b),
-                  ),
-                  _techRow(
-                    'Original normalized',
-                    widget.cell.decision.left?.label ?? 'Unresolved',
-                  ),
-                  _techRow(
-                    'Updated normalized',
-                    widget.cell.decision.right?.label ?? 'Unresolved',
-                  ),
-                  _techRow('Matching mode', switch (widget.flow.config.mode) {
-                    MatchingMode.positional => 'By position',
-                    MatchingMode.key => 'By key column',
-                    MatchingMode.orderedSequence => 'Sequence alignment',
-                  }),
-                  if (widget.cell.a.rawLexeme != null &&
-                      widget.cell.b.rawLexeme != null &&
-                      widget.cell.a.rawLexeme != widget.cell.b.rawLexeme)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: TextDifferenceEvidence(
-                        a: widget.cell.a.rawLexeme!,
-                        b: widget.cell.b.rawLexeme!,
-                      ),
-                    ),
-                ],
+          const SizedBox(height: 8),
+          if (cell.kind == CellKind.image &&
+              cell.imageBytes != null &&
+              cell.imageBytes!.isNotEmpty) ...[
+            _renderedCellImage(cell, height: 110),
+            const SizedBox(height: 6),
+          ],
+          SelectableText(
+            cell.rawLexeme ?? '—',
+            style: TextStyle(
+              fontSize: cell.kind == CellKind.image ? 12 : 24,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF1E293B),
+              height: 1.15,
+            ),
+          ),
+          if (showNorm) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: borderColor),
+              ),
+              child: Text(
+                'Norm: $norm',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontFamily: 'IBM Plex Mono',
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF475569),
+                ),
               ),
             ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _techRow(String label, String value) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF64748B),
+  @override
+  Widget build(BuildContext context) {
+    final cell = flow.result!.cells.firstWhere((c) => c.id == flow.detailId);
+    final list = flow.selectedCells;
+    final index = list.indexWhere((c) => c.id == cell.id);
+    final reviewedPercent = list.isEmpty
+        ? 100
+        : (((index < 0 ? 0 : index + 1) / list.length) * 100).round();
+
+    final fileA = flow.slot(SourceSide.a).artifact?.label ?? 'File A';
+    final fileB = flow.slot(SourceSide.b).artifact?.label ?? 'File B';
+    final locA = _cellLocation(flow, cell, SourceSide.a);
+    final locB = _cellLocation(flow, cell, SourceSide.b);
+    final numDelta = _calculateNumericDelta(
+      cell.a.rawLexeme,
+      cell.b.rawLexeme,
+    );
+
+    return WorkflowScreenLayout(
+      contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      content: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity == null) return;
+          if (details.primaryVelocity! < -200) {
+            // Swipe left -> Next difference
+            if (index >= 0 && index < list.length - 1) {
+              HapticFeedback.lightImpact();
+              onSelectCellId(list[index + 1].id);
+            }
+          } else if (details.primaryVelocity! > 200) {
+            // Swipe right -> Previous difference
+            if (index > 0) {
+              HapticFeedback.lightImpact();
+              onSelectCellId(list[index - 1].id);
+            }
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Top Row: DIFFERENCE 04 / 40 · 10% reviewed
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: InkWell(
+                    onTap: () => _openQuickNav(context, list, index),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 2,
+                        horizontal: 2,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'DIFFERENCE ${_pad2(index < 0 ? 1 : index + 1)} / ${_pad2(list.isEmpty ? 1 : list.length)}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: Color(0xFF64748B),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.unfold_more_rounded,
+                            size: 14,
+                            color: Color(0xFF64748B),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '$reviewedPercent% reviewed',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: DytavaColors.primary,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF1E293B),
+            const SizedBox(height: 10),
+
+            // Change Title
+            Text(
+              _changeTitle(cell),
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1E293B),
+                height: 1.2,
+              ),
             ),
-          ),
+            const SizedBox(height: 8),
+
+            // File & Location source strip (e.g. Combined!D4 → sheet4!D4)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.description_outlined,
+                        size: 13,
+                        color: Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          fileA == fileB ? fileA : '$fileA  ↔  $fileB',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF475569),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.pin_drop_outlined,
+                        size: 13,
+                        color: DytavaColors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          locA == locB ? locA : '$locA  →  $locB',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontFamily: 'IBM Plex Mono',
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1E293B),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Value comparison boxes: ORIGINAL · A vs UPDATED · B
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
+              child: IntrinsicHeight(
+                key: ValueKey('cell-diff-${cell.id}'),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ORIGINAL · A
+                    Expanded(
+                      child: _sideValueBox(
+                        label: 'ORIGINAL · A',
+                        cell: cell.a,
+                        canonical: cell.decision.left,
+                        accentColor: const Color(0xFF64748B),
+                        bgColor: const Color(0xFFF8FAFC),
+                        borderColor: const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // UPDATED · B
+                    Expanded(
+                      child: _sideValueBox(
+                        label: 'UPDATED · B',
+                        cell: cell.b,
+                        canonical: cell.decision.right,
+                        accentColor: DytavaColors.primary,
+                        bgColor: const Color(0xFFF0FDF4),
+                        borderColor: const Color(0xFFBBF7D0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Numeric difference delta if both are numeric
+            if (numDelta != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: numDelta.isNegative
+                      ? const Color(0xFFFEF2F2)
+                      : const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: numDelta.isNegative
+                        ? const Color(0xFFFECACA)
+                        : const Color(0xFFBBF7D0),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      numDelta.isNegative
+                          ? Icons.trending_down_rounded
+                          : Icons.trending_up_rounded,
+                      size: 16,
+                      color: numDelta.isNegative
+                          ? const Color(0xFFDC2626)
+                          : const Color(0xFF16A34A),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'Numeric difference: ${numDelta.label}',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: numDelta.isNegative
+                              ? const Color(0xFFDC2626)
+                              : const Color(0xFF16A34A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 24),
+
+            // Comparison details button
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: () => _openComparisonDetailsSheet(context, cell),
+                icon: const Icon(Icons.tune_rounded, size: 16),
+                label: const Text('Comparison details'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF334155),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  minimumSize: const Size(0, 42),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Back to differences subtle link
+            Center(
+              child: TextButton.icon(
+                onPressed: onBackToResults,
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  size: 15,
+                  color: DytavaColors.textSecondary,
+                ),
+                label: const Text(
+                  'Back to differences',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: DytavaColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
         ),
-      ],
-    ),
-  );
+      ),
+      bottomBar: StickyBottomBar(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton(
+              onPressed: index > 0
+                  ? () => onSelectCellId(list[index - 1].id)
+                  : null,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(44, 44),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 6,
+                ),
+                foregroundColor: DytavaColors.primary,
+                disabledForegroundColor:
+                    DytavaColors.textSecondary.withValues(alpha: 0.35),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.arrow_back_rounded, size: 16),
+                  SizedBox(width: 4),
+                  Text('Previous'),
+                ],
+              ),
+            ),
+            Flexible(
+              child: InkWell(
+                onTap: () => _openQuickNav(context, list, index),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${index < 0 ? 1 : index + 1} / ${list.isEmpty ? 1 : list.length}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.unfold_more_rounded,
+                        size: 14,
+                        color: Color(0xFF64748B),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: index >= 0 && index < list.length - 1
+                  ? () => onSelectCellId(list[index + 1].id)
+                  : null,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(44, 44),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 6,
+                ),
+                foregroundColor: DytavaColors.primary,
+                disabledForegroundColor:
+                    DytavaColors.textSecondary.withValues(alpha: 0.35),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Next'),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_rounded, size: 16),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
+class _QuickNavBottomSheet extends StatefulWidget {
+  final List<CellDifference> list;
+  final int currentIndex;
+  final WorkflowController flow;
+  final ValueChanged<String> onSelectCellId;
+
+  const _QuickNavBottomSheet({
+    required this.list,
+    required this.currentIndex,
+    required this.flow,
+    required this.onSelectCellId,
+  });
+
+  @override
+  State<_QuickNavBottomSheet> createState() => _QuickNavBottomSheetState();
+}
+
+class _QuickNavBottomSheetState extends State<_QuickNavBottomSheet> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _query.isEmpty
+        ? widget.list
+        : widget.list.where((c) {
+            final q = _query.toLowerCase();
+            final locA =
+                _cellLocation(widget.flow, c, SourceSide.a).toLowerCase();
+            final locB =
+                _cellLocation(widget.flow, c, SourceSide.b).toLowerCase();
+            final valA = (c.a.rawLexeme ?? '').toLowerCase();
+            final valB = (c.b.rawLexeme ?? '').toLowerCase();
+            final title = _changeTitle(c).toLowerCase();
+            return locA.contains(q) ||
+                locB.contains(q) ||
+                valA.contains(q) ||
+                valB.contains(q) ||
+                title.contains(q);
+          }).toList();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.65,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (ctx, scrollController) => Column(
+        children: [
+          Container(
+            width: 36,
+            height: 4,
+            margin: const EdgeInsets.only(top: 12, bottom: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFCBD5E1),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                const Text(
+                  'Jump to difference',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${widget.list.length} total',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: TextField(
+              onChanged: (v) => setState(() => _query = v),
+              decoration: InputDecoration(
+                hintText: 'Search cell, sheet, or value...',
+                hintStyle: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF94A3B8),
+                ),
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                filled: true,
+                fillColor: const Color(0xFFF1F5F9),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: ListView.separated(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              itemCount: filtered.length,
+              separatorBuilder: (_, _) =>
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              itemBuilder: (ctx, i) {
+                final item = filtered[i];
+                final originalIndex = widget.list.indexOf(item);
+                final isSelected = originalIndex == widget.currentIndex;
+                final locA = _cellLocation(widget.flow, item, SourceSide.a);
+
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  selected: isSelected,
+                  selectedTileColor: DytavaColors.primaryLight,
+                  leading: Text(
+                    '#${originalIndex + 1}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected
+                          ? DytavaColors.primary
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                  title: Text(
+                    locA,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected
+                          ? DytavaColors.primaryDark
+                          : const Color(0xFF1E293B),
+                    ),
+                  ),
+                  subtitle: Text(
+                    '${item.a.rawLexeme ?? "—"} → ${item.b.rawLexeme ?? "—"}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: isSelected
+                      ? const Icon(
+                          Icons.check_circle_rounded,
+                          color: DytavaColors.primary,
+                          size: 18,
+                        )
+                      : const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Color(0xFF94A3B8),
+                          size: 18,
+                        ),
+                  onTap: () => widget.onSelectCellId(item.id),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _techRow(String label, String value) => Padding(
+  padding: const EdgeInsets.symmetric(vertical: 5),
+  child: Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SizedBox(
+        width: 125,
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF64748B),
+          ),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          value,
+          style: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+      ),
+    ],
+  ),
+);
 
 class ExportScreenView extends StatelessWidget {
   final WorkflowController flow;

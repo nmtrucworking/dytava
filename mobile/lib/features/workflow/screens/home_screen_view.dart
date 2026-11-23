@@ -10,7 +10,6 @@ class HomeScreenView extends StatelessWidget {
   final WorkflowController flow;
   final bool quickProcessing;
   final VoidCallback onStartNewSession;
-  final VoidCallback onQuickRun;
   final VoidCallback onResumeSession;
   final VoidCallback onCloseSession;
   final VoidCallback? onViewHistory;
@@ -20,7 +19,6 @@ class HomeScreenView extends StatelessWidget {
     required this.flow,
     required this.quickProcessing,
     required this.onStartNewSession,
-    required this.onQuickRun,
     required this.onResumeSession,
     required this.onCloseSession,
     this.onViewHistory,
@@ -43,7 +41,7 @@ class HomeScreenView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'WORKSPACE / 01',
+                    'COMPARE WITH CLARITY',
                     style: DytavaTypography.labelSmall.copyWith(
                       color: DytavaColors.primary,
                     ),
@@ -80,20 +78,20 @@ class HomeScreenView extends StatelessWidget {
                     top: 0,
                     left: 0,
                     child: Container(
-                      width: 151 * scale,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 3,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10 * scale,
+                        vertical: 3.5 * scale,
                       ),
                       decoration: BoxDecoration(
                         color: DytavaColors.primaryLight,
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        'WORKSPACE / 01',
+                        'COMPARE WITH CLARITY',
                         style: DytavaTypography.labelSmall.copyWith(
-                          fontSize: 10 * scale,
-                          letterSpacing: 1.6,
+                          fontSize: 9.5 * scale,
+                          letterSpacing: 0.8,
+                          fontWeight: FontWeight.w700,
                           color: DytavaColors.primaryDark,
                         ),
                       ),
@@ -166,59 +164,6 @@ class HomeScreenView extends StatelessWidget {
           },
         ),
         const SizedBox(height: 10),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (final item in [
-              ('Same', DytavaColors.white),
-              ('Changed', DytavaColors.primary),
-              ('Different', DytavaColors.primaryDark),
-            ])
-              Flexible(
-                flex: MediaQuery.textScalerOf(context).scale(1) > 1.3 ? 1 : 0,
-                child: SizedBox(
-                  width: MediaQuery.textScalerOf(context).scale(1) > 1.3
-                      ? null
-                      : 58,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: item.$2,
-                            border: Border.all(
-                              color: item.$2 == DytavaColors.white
-                                  ? DytavaColors.border
-                                  : item.$2,
-                            ),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          item.$1,
-                          style: DytavaTypography.bodySmall.copyWith(
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            Expanded(
-              child: Text(
-                'A1:Z200 · 2 files',
-                style: DytavaTypography.bodySmall.copyWith(fontSize: 10),
-                textAlign: TextAlign.right,
-              ),
-            ),
-          ],
-        ),
         const Divider(height: 20),
         Row(
           children: [
@@ -238,37 +183,39 @@ class HomeScreenView extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        if (hasSession)
-          DytavaFadeSlide(
-            duration: const Duration(milliseconds: 220),
-            child: Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              child: ListTile(
-                dense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 2,
-                ),
-                leading: const _WorkbookMark(),
-                title: Text(
-                  flow.slot(SourceSide.a).artifact?.label ?? 'Current comparison',
-                  style: DytavaTypography.titleMedium.copyWith(fontSize: 13),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  flow.resultCurrent
-                      ? 'Results ready · 2 files'
-                      : 'In progress · Continue setup',
-                  style: DytavaTypography.bodySmall.copyWith(fontSize: 11),
-                ),
-                trailing: const Icon(Icons.chevron_right, size: 18),
-                onTap: onResumeSession,
-              ),
+        if (hasSession) ...[
+          _buildSessionCard(
+            title: flow.slot(SourceSide.a).artifact?.label ?? 'Spreadsheet comparison',
+            subtitle: flow.resultCurrent
+                ? 'Completed · 2 workbooks'
+                : 'In progress · 2 workbooks',
+            onTap: onResumeSession,
+          ),
+          if (flow.lastSavedSession != null)
+            _buildSessionCard(
+              title: flow.lastSavedSession!.labelA.isNotEmpty
+                  ? flow.lastSavedSession!.labelA
+                  : 'Saved comparison',
+              subtitle:
+                  '${flow.lastSavedSession!.totalCells} cells · ${flow.lastSavedSession!.differentCount} diffs',
+              onTap: () async {
+                await flow.restoreSavedSession(flow.lastSavedSession!.sessionId);
+                onResumeSession();
+              },
             ),
-          )
-        else
+        ] else if (flow.lastSavedSession != null) ...[
+          _buildSessionCard(
+            title: flow.lastSavedSession!.labelA.isNotEmpty
+                ? flow.lastSavedSession!.labelA
+                : 'Saved comparison',
+            subtitle:
+                '${flow.lastSavedSession!.totalCells} cells · ${flow.lastSavedSession!.differentCount} diffs',
+            onTap: () async {
+              await flow.restoreSavedSession(flow.lastSavedSession!.sessionId);
+              onResumeSession();
+            },
+          ),
+        ] else ...[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
             child: Text(
@@ -276,18 +223,89 @@ class HomeScreenView extends StatelessWidget {
               style: DytavaTypography.bodyMedium.copyWith(fontSize: 12),
             ),
           ),
-        const Divider(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            onPressed: quickProcessing ? null : onQuickRun,
-            child: Text(
-              quickProcessing ? 'Preparing sample…' : 'Try sample comparison ›',
-              style: const TextStyle(fontSize: 12),
+        ],
+      ],
+    );
+  }
+  Widget _buildSessionCard({
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF7FBF8), Color(0xFFEFF7F2)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDCEADD), width: 1.0),
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            child: Row(
+              children: [
+                const _WorkbookMark(),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontFamily: DytavaTypography.primaryFont,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1E293B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 11.5,
+                            color: Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              subtitle,
+                              style: const TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 11.5,
+                                color: Color(0xFF64748B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: Color(0xFF94A3B8),
+                ),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -296,17 +314,18 @@ class _WorkbookMark extends StatelessWidget {
   const _WorkbookMark();
   @override
   Widget build(BuildContext context) => Container(
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     alignment: Alignment.center,
     decoration: BoxDecoration(
-      color: DytavaColors.primaryLight,
+      color: const Color(0xFFE1F2E8),
       borderRadius: BorderRadius.circular(10),
     ),
     child: const Text(
       'X',
       style: TextStyle(
-        fontWeight: FontWeight.w700,
+        fontFamily: DytavaTypography.primaryFont,
+        fontWeight: FontWeight.w800,
         fontSize: 14,
         color: DytavaColors.primary,
       ),

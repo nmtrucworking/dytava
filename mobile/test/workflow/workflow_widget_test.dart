@@ -49,7 +49,8 @@ void main() {
     expect(find.text('Import files'), findsOneWidget);
     final compare = find.widgetWithText(FilledButton, 'Compare files');
     expect(tester.widget<FilledButton>(compare).onPressed, isNull);
-    await tap(tester, 'Use sample files ›');
+    await tester.runAsync(() => prepare(flow));
+    await tester.pumpAndSettle();
     expect(flow.inputsReady, isTrue);
     await tap(tester, 'Compare files');
     expect(flow.resultCurrent, isTrue);

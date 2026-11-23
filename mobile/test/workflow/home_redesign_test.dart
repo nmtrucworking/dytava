@@ -30,7 +30,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Spot the\ndifference.'), findsOneWidget);
-      expect(find.text('WORKSPACE / 01'), findsOneWidget);
+      expect(find.text('COMPARE WITH CLARITY'), findsOneWidget);
       expect(find.byType(NavigationBar), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.tap(find.byTooltip('Compare files'));

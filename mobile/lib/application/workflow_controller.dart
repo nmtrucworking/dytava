@@ -6,8 +6,11 @@ import 'package:flutter/foundation.dart';
 import '../domain/smart_proposal_engine.dart';
 import '../domain/workflow.dart';
 import '../domain/workbook_comparison.dart';
+import '../infrastructure/database/comparison_database.dart';
 import '../infrastructure/file_upload_service.dart';
 import '../ocr/infrastructure/ocr_capture_service.dart';
+
+export '../infrastructure/database/comparison_database.dart' show SavedSessionSummary;
 
 final class _Work {
   final cancel = Cancellation();
@@ -822,6 +825,20 @@ final class WorkflowController extends ChangeNotifier {
       page = 0;
       detailId = null;
       screen = WorkflowScreen.results;
+      // Persist in SQLite asynchronously for multi-app resilience & crash recovery
+      unawaited(
+        ComparisonDatabase.instance.saveSession(
+          result: output,
+          labelA: slot(SourceSide.a).artifact?.label ?? 'Nguồn A',
+          labelB: slot(SourceSide.b).artifact?.label ?? 'Nguồn B',
+          formatA: slot(SourceSide.a).artifact?.format ?? SourceFormat.csv,
+          formatB: slot(SourceSide.b).artifact?.format ?? SourceFormat.csv,
+          config: config,
+        ).then((_) async {
+          _lastSavedSession = await ComparisonDatabase.instance.getActiveSessionSummary();
+          _emit();
+        }).catchError((_) {}),
+      );
     } on WorkCancelled {
       jobState = JobState.cancelled;
     } catch (error) {
@@ -1008,6 +1025,36 @@ final class WorkflowController extends ChangeNotifier {
     exportState = ExportState.cancelling;
     _emit();
     await work.stop();
+  }
+
+  SavedSessionSummary? _lastSavedSession;
+  SavedSessionSummary? get lastSavedSession => _lastSavedSession;
+
+  /// Loads the most recent persisted session summary from SQLite.
+  Future<void> loadLastSavedSession() async {
+    _lastSavedSession = await ComparisonDatabase.instance.getActiveSessionSummary();
+    _emit();
+  }
+
+  /// Queries persisted sessions from SQLite for the Home and History screens.
+  Future<List<SavedSessionSummary>> getRecentSavedSessions({int limit = 10}) =>
+      ComparisonDatabase.instance.listRecentSessions(limit: limit);
+
+  /// Restores a previously completed comparison session from SQLite.
+  /// Survives app process death when multiple apps are running on the device.
+  Future<bool> restoreSavedSession(String sessionId) async {
+    if (!usable || busy) return false;
+    final restored = await ComparisonDatabase.instance.loadSession(sessionId);
+    if (restored == null) return false;
+    result = restored;
+    validity = ResultValidity.current;
+    jobState = JobState.completed;
+    resultFilter = null;
+    page = 0;
+    detailId = null;
+    screen = WorkflowScreen.results;
+    _emit();
+    return true;
   }
 
   /// Session close is awaited by the UI. No automatic background resume.

@@ -140,11 +140,11 @@ class _WorkflowPageState extends State<WorkflowPage>
       case WorkflowScreen.mapping:
         _go(WorkflowScreen.sources);
       case WorkflowScreen.policy:
-        _go(WorkflowScreen.mapping);
+        _go(WorkflowScreen.sources);
       case WorkflowScreen.progress:
-        _go(WorkflowScreen.policy);
+        _go(WorkflowScreen.sources);
       case WorkflowScreen.results:
-        _go(WorkflowScreen.policy);
+        _go(WorkflowScreen.sources);
       case WorkflowScreen.detail || WorkflowScreen.export:
         _go(WorkflowScreen.results);
     }
@@ -153,31 +153,6 @@ class _WorkflowPageState extends State<WorkflowPage>
   // ==========================================
   // UX OPTIMIZATIONS: Fast-Track Actions
   // ==========================================
-
-  Future<void> _quickPrepareBoth() async {
-    setState(() => _quickProcessing = true);
-    try {
-      for (final side in SourceSide.values) {
-        if (flow.slot(side).artifact == null) {
-          await flow.selectSource(
-            side,
-            SourceFormat.csv,
-            side == SourceSide.a ? 'fixture:a' : 'fixture:b',
-            'sample.csv',
-          );
-        }
-        if (flow.slot(side).state == InputState.selected) {
-          await flow.importSource(side);
-        }
-        final s = flow.slot(side);
-        if (s.state == InputState.needsReview && s.review!.cells.isEmpty) {
-          await flow.confirmImport(side, expectedBinding: s.binding);
-        }
-      }
-    } finally {
-      if (mounted) setState(() => _quickProcessing = false);
-    }
-  }
 
   void _autoMapFields() {
     final a = flow.slot(SourceSide.a).snapshot;
@@ -347,17 +322,6 @@ class _WorkflowPageState extends State<WorkflowPage>
     flow.analyzeAndPropose();
     flow.applyProposal(run: false);
     flow.configure(flow.config.copyWith(webPolicy: policy));
-    if (flow.sheetMapping?.complete == false ||
-        flow.proposal?.isHighConfidence != true) {
-      _go(WorkflowScreen.policy);
-    } else {
-      _applyApprovedConfigAndRun();
-    }
-  }
-
-  Future<void> _oneTapQuickRun() async {
-    await _quickPrepareBoth();
-    if (!flow.inputsReady) return;
     _autoMapFields();
     _applyApprovedConfigAndRun();
   }
@@ -413,35 +377,37 @@ class _WorkflowPageState extends State<WorkflowPage>
         final scaffold = Scaffold(
           backgroundColor: DytavaColors.background,
           appBar: AppBar(
-            toolbarHeight: isRootHome ? 60 : (isOcrScreen ? 56 : 48),
-            titleSpacing: isRootHome ? 20 : 8,
+            toolbarHeight: isRootHome ? 48 : (isOcrScreen ? 48 : 44),
+            titleSpacing: isRootHome ? 16 : 6,
             title: isRootHome
                 ? Row(
                     children: [
                       SvgPicture.asset(
                         'assets/dytava/figma/home-logo.svg',
-                        width: 26,
-                        height: 24,
+                        width: 24,
+                        height: 22,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Flexible(
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 'Dytava',
                                 style: DytavaTypography.titleLarge.copyWith(
-                                  fontSize: 20,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               Text(
                                 'Excel Compare',
                                 style: DytavaTypography.bodySmall.copyWith(
-                                  fontSize: 11,
+                                  fontSize: 10.5,
+                                  color: DytavaColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -453,40 +419,33 @@ class _WorkflowPageState extends State<WorkflowPage>
                 : Text(
                     _appBarTitle(),
                     style: DytavaTypography.titleLarge.copyWith(
-                      fontSize: 18,
+                      fontSize: 16.5,
                       fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1E293B),
                     ),
                   ),
             backgroundColor: DytavaColors.background,
             elevation: 0,
-            leadingWidth: 50,
+            leadingWidth: 46,
             leading: isRootHome || flow.screen == WorkflowScreen.progress
                 ? null
                 : Padding(
-                    padding: const EdgeInsets.only(left: 14),
+                    padding: const EdgeInsets.only(left: 12),
                     child: Center(
                       child: IconButton(
                         tooltip: 'Back',
                         onPressed: flow.busy ? null : _back,
                         style: IconButton.styleFrom(
-                          backgroundColor: DytavaColors.white,
+                          backgroundColor: DytavaColors.primaryLight,
                           padding: EdgeInsets.zero,
-                          fixedSize: const Size(34, 34),
+                          fixedSize: const Size(32, 32),
+                          minimumSize: const Size(32, 32),
+                          shape: const CircleBorder(),
                         ),
-                        icon: SizedBox(
-                          width: 34,
-                          height: 34,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/dytava/figma/back.svg',
-                                width: 34,
-                                height: 34,
-                              ),
-                              const Icon(Icons.arrow_back, size: 18),
-                            ],
-                          ),
+                        icon: const Icon(
+                          Icons.chevron_left_rounded,
+                          size: 20,
+                          color: DytavaColors.primary,
                         ),
                       ),
                     ),
@@ -495,14 +454,40 @@ class _WorkflowPageState extends State<WorkflowPage>
               if (isRootHome)
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
-                  child: IconButton(
-                    tooltip: 'Comparison settings',
-                    onPressed: () =>
-                        setState(() => _auxView = _AuxiliaryView.settings),
-                    icon: const Icon(
-                      Icons.settings_outlined,
-                      size: 22,
-                      color: DytavaColors.textPrimary,
+                  child: Center(
+                    child: IconButton(
+                      tooltip: 'Comparison settings',
+                      onPressed: () =>
+                          setState(() => _auxView = _AuxiliaryView.settings),
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFF1F5F2),
+                        padding: EdgeInsets.zero,
+                        fixedSize: const Size(32, 32),
+                        minimumSize: const Size(32, 32),
+                        shape: const CircleBorder(),
+                      ),
+                      icon: const Icon(
+                        Icons.settings_outlined,
+                        size: 18,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                  ),
+                ),
+              if (_auxView == _AuxiliaryView.history)
+                Padding(
+                  padding: const EdgeInsets.only(right: 14),
+                  child: Center(
+                    child: Text(
+                      flow.lastSavedSession == null && !flow.resultCurrent
+                          ? 'No saved comparisons'
+                          : 'Saved comparisons',
+                      style: const TextStyle(
+                        fontFamily: DytavaTypography.primaryFont,
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
@@ -510,27 +495,48 @@ class _WorkflowPageState extends State<WorkflowPage>
                   !isOcrScreen &&
                   flow.screen != WorkflowScreen.progress &&
                   _auxView == _AuxiliaryView.none)
-                PopupMenuButton<String>(
-                  tooltip: 'Session actions',
-                  onSelected: (action) async {
-                    if (action == 'home') {
-                      _go(WorkflowScreen.home);
-                    } else {
-                      await flow.closeSession();
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    PopupMenuItem(
-                      value: 'home',
-                      enabled: !flow.busy,
-                      child: const Text('Home'),
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Center(
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF1F5F2),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: PopupMenuButton<String>(
+                        tooltip: 'Session actions',
+                        padding: EdgeInsets.zero,
+                        iconSize: 18,
+                        icon: const Icon(
+                          Icons.more_vert_rounded,
+                          size: 18,
+                          color: Color(0xFF334155),
+                        ),
+                        onSelected: (action) async {
+                          if (action == 'home') {
+                            _go(WorkflowScreen.home);
+                          } else {
+                            await flow.closeSession();
+                          }
+                        },
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'home',
+                            enabled: !flow.busy,
+                            child: const Text('Home'),
+                          ),
+                          PopupMenuItem(
+                            value: 'close',
+                            enabled: flow.usable && !flow.busy,
+                            child: const Text('Close comparison'),
+                          ),
+                        ],
+                      ),
                     ),
-                    PopupMenuItem(
-                      value: 'close',
-                      enabled: flow.usable && !flow.busy,
-                      child: const Text('Close comparison'),
-                    ),
-                  ],
+                  ),
                 ),
             ],
           ),
@@ -591,54 +597,59 @@ class _WorkflowPageState extends State<WorkflowPage>
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: isRootHome
               ? Padding(
-                  padding: const EdgeInsets.only(right: 8, bottom: 24),
+                  padding: const EdgeInsets.only(right: 8, bottom: 20),
                   child: SizedBox(
                     width: MediaQuery.textScalerOf(context).scale(1) > 1.3
                         ? 276
-                        : 224,
+                        : 236,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Tap to compare',
-                                  style: DytavaTypography.titleLarge.copyWith(
-                                    fontSize: 17,
-                                  ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Tap to compare',
+                                style: DytavaTypography.titleLarge.copyWith(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  'Select two files to begin',
-                                  style: DytavaTypography.bodySmall.copyWith(
-                                    fontSize: 11,
-                                  ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Select two files to begin',
+                                style: DytavaTypography.bodySmall.copyWith(
+                                  fontSize: 11,
+                                  color: const Color(0xFF64748B),
                                 ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 3),
+                              SvgPicture.asset(
+                                'assets/dytava/figma/home-underline.svg',
+                                width: 88,
+                                height: 4,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 24),
+                        const SizedBox(width: 14),
                         SizedBox(
-                          width: 72,
-                          height: 72,
+                          width: 58,
+                          height: 58,
                           child: FloatingActionButton(
                             heroTag: 'compare-files',
                             tooltip: 'Compare files',
                             onPressed: () => _go(WorkflowScreen.sources),
                             backgroundColor: DytavaColors.primary,
                             shape: const CircleBorder(),
-                            elevation: 6,
+                            elevation: 4,
                             child: SvgPicture.asset(
                               'assets/dytava/figma/compare-action.svg',
-                              width: 34,
-                              height: 34,
+                              width: 28,
+                              height: 28,
                             ),
                           ),
                         ),
@@ -720,7 +731,11 @@ class _WorkflowPageState extends State<WorkflowPage>
         child: WorkflowSessionHistoryView(
           flow: flow,
           onOpenResults: () => _go(WorkflowScreen.results),
-          onQuickRun: _oneTapQuickRun,
+          onStartNewComparison: () => _go(WorkflowScreen.sources),
+          onRestoreSession: (id) async {
+            final ok = await flow.restoreSavedSession(id);
+            if (ok) _go(WorkflowScreen.results);
+          },
         ),
       );
     }
@@ -826,7 +841,6 @@ class _WorkflowPageState extends State<WorkflowPage>
             flow: flow,
             quickProcessing: _quickProcessing,
             onStartNewSession: () => _go(WorkflowScreen.sources),
-            onQuickRun: _oneTapQuickRun,
             onResumeSession: _resumeCurrentSession,
             onViewHistory: () =>
                 setState(() => _auxView = _AuxiliaryView.history),
@@ -840,7 +854,6 @@ class _WorkflowPageState extends State<WorkflowPage>
         content = SourceSelectionView(
           flow: flow,
           quickProcessing: _quickProcessing,
-          onQuickPrepareBoth: _quickPrepareBoth,
           onOpenPreview: (side) => _go(WorkflowScreen.preview, side: side),
           onContinueMapping: () => _go(WorkflowScreen.mapping),
           onContinueToProposal: _compareAutomatically,

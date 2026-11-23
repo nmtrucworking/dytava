@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
+import '../../../infrastructure/database/comparison_database.dart';
 
 /// Các hàm tiện ích và thành phần giao diện dùng chung cho tầng Presentation của Workflow.
 abstract final class WorkflowUiHelpers {
@@ -628,88 +629,291 @@ class DytavaGuidedStepHeader extends StatelessWidget {
   }
 }
 
-/// Giao diện phụ trợ: Lịch sử phiên trong bộ nhớ tạm (chỉ hiển thị phiên đang mở theo chính sách P0)
+/// Giao diện phụ trợ: Lịch sử phiên so sánh (hỗ trợ đọc từ bộ nhớ SQLite bền vững)
 class WorkflowSessionHistoryView extends StatelessWidget {
   final WorkflowController flow;
   final VoidCallback onOpenResults;
-  final VoidCallback onQuickRun;
+  final VoidCallback? onStartNewComparison;
+  final ValueChanged<String>? onRestoreSession;
+
   const WorkflowSessionHistoryView({
     super.key,
     required this.flow,
     required this.onOpenResults,
-    required this.onQuickRun,
+    this.onStartNewComparison,
+    this.onRestoreSession,
   });
+
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const SizedBox(height: 20),
-      Text(
-        flow.resultCurrent
-            ? '1 current comparison'
-            : 'No completed comparisons',
-        style: DytavaTypography.bodyMedium,
-      ),
-      const SizedBox(height: 24),
-      if (flow.resultCurrent)
-        Card(
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
+  Widget build(BuildContext context) => FutureBuilder<List<SavedSessionSummary>>(
+    future: flow.getRecentSavedSessions(limit: 20),
+    builder: (context, snapshot) {
+      final savedSessions = snapshot.data ?? const [];
+      final hasItems = flow.resultCurrent || savedSessions.isNotEmpty;
+
+      if (!hasItems) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 30),
+                Image.asset(
+                  'assets/dytava/figma/recent-empty-illustration.webp',
+                  width: 210,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 28),
+                const Text(
+                  'No comparisons yet',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: DytavaTypography.primaryFont,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Compare two spreadsheets to find changes,\nreview differences, and save your results here.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: DytavaTypography.primaryFont,
+                    fontSize: 13.5,
+                    color: Color(0xFF64748B),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => onStartNewComparison != null
+                        ? onStartNewComparison!()
+                        : flow.navigate(WorkflowScreen.sources),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DytavaColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: const Text(
+                      '+ New Comparison',
+                      style: TextStyle(
+                        fontFamily: DytavaTypography.primaryFont,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            leading: Container(
-              width: 38,
-              height: 38,
-              alignment: Alignment.center,
+          ),
+        );
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 8),
+          if (flow.resultCurrent) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
-                color: DytavaColors.primaryLight,
-                borderRadius: BorderRadius.circular(10),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF7FBF8), Color(0xFFEFF7F2)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFDCEADD), width: 1.0),
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: onOpenResults,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE1F2E8),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            'X',
+                            style: TextStyle(
+                              fontFamily: DytavaTypography.primaryFont,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                              color: DytavaColors.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                flow.slot(SourceSide.a).artifact?.label ?? 'Current active comparison',
+                                style: const TextStyle(
+                                  fontFamily: DytavaTypography.primaryFont,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1E293B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${flow.result!.cells.length} cells · ${flow.result!.count(DecisionStatus.different)} modified · Active now',
+                                style: const TextStyle(
+                                  fontFamily: DytavaTypography.primaryFont,
+                                  fontSize: 11.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          for (final s in savedSessions)
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF7FBF8), Color(0xFFEFF7F2)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFDCEADD), width: 1.0),
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () async {
+                    if (onRestoreSession != null) {
+                      onRestoreSession!(s.sessionId);
+                    } else {
+                      await flow.restoreSavedSession(s.sessionId);
+                      onOpenResults();
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE1F2E8),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            'X',
+                            style: TextStyle(
+                              fontFamily: DytavaTypography.primaryFont,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                              color: DytavaColors.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${s.labelA} ↔ ${s.labelB}',
+                                style: const TextStyle(
+                                  fontFamily: DytavaTypography.primaryFont,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1E293B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${s.totalCells} cells · ${s.differentCount} diffs · 2 workbooks',
+                                style: const TextStyle(
+                                  fontFamily: DytavaTypography.primaryFont,
+                                  fontSize: 11.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () => onStartNewComparison != null
+                  ? onStartNewComparison!()
+                  : flow.navigate(WorkflowScreen.sources),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: DytavaColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
               ),
               child: const Text(
-                'X',
+                '+ New Comparison',
                 style: TextStyle(
-                  color: DytavaColors.primary,
+                  fontFamily: DytavaTypography.primaryFont,
+                  fontSize: 14.5,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
-            title: Text(
-              flow.slot(SourceSide.a).artifact?.label ?? 'Current comparison',
-              style: DytavaTypography.titleSmall,
-            ),
-            subtitle: Text(
-              '${flow.result!.cells.length} cells · ${flow.result!.count(DecisionStatus.different)} modified',
-              style: DytavaTypography.bodySmall,
-            ),
-            trailing: const Icon(Icons.chevron_right, size: 18),
-            onTap: onOpenResults,
           ),
-        )
-      else ...[
-        const SizedBox(height: 40),
-        const Center(
-          child: Icon(Icons.history, color: DytavaColors.primary, size: 44),
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          'Your results will appear here.',
-          textAlign: TextAlign.center,
-          style: DytavaTypography.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'Comparisons stay in memory until you close the session.',
-          textAlign: TextAlign.center,
-          style: DytavaTypography.bodyMedium,
-        ),
-        const SizedBox(height: 24),
-        TextButton(
-          onPressed: onQuickRun,
-          child: const Text('Try a sample comparison →'),
-        ),
-      ],
-    ],
+        ],
+      );
+    },
   );
 }
 

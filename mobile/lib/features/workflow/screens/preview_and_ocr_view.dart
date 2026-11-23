@@ -355,7 +355,7 @@ class OcrReviewScreenView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            source.artifact?.label ?? 'Sample image',
+            source.artifact?.label ?? 'Bảng tính ảnh',
             style: DytavaTypography.bodyMedium,
           ),
           const SizedBox(height: 16),
@@ -363,10 +363,10 @@ class OcrReviewScreenView extends StatelessWidget {
             color: DytavaColors.modifiedBg,
             border: Border.all(color: Colors.transparent),
             children: const [
-              Text('Sample OCR review', style: DytavaTypography.titleSmall),
+              Text('Kiểm tra OCR', style: DytavaTypography.titleSmall),
               SizedBox(height: 8),
               Text(
-                'This sample tests the review flow. Every uncertain value must be confirmed before comparison.',
+                'Xác nhận các ô cần kiểm tra trước khi tiến hành so sánh.',
                 style: DytavaTypography.bodySmall,
               ),
             ],
