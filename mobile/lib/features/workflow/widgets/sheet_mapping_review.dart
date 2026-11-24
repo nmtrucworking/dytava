@@ -4,6 +4,7 @@ import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/workbook_comparison.dart';
 import '../../../domain/workflow.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Thẻ hiển thị và điều chỉnh ánh xạ sheet trong toàn bộ workbook (Precision Workspace v3.2).
 /// Khi tất cả sheet đã khớp tự động, thu gọn mặc định thành 1 dòng trạng thái trực quan,
@@ -78,8 +79,8 @@ class _SheetMappingReviewState extends State<SheetMappingReview> {
                         children: [
                           Text(
                             plan.complete
-                                ? 'Đã ghép ${plan.pairs.length} cặp sheet'
-                                : 'Cần xác nhận ${plan.unresolvedA.length} cặp sheet',
+                                ? context.l10n.sheetPairsMapped(plan.pairs.length)
+                                : context.l10n.sheetPairsUnresolved(plan.unresolvedA.length),
                             style: DytavaTypography.titleSmall.copyWith(
                               color: DytavaColors.primaryDark,
                               fontWeight: FontWeight.w600,
@@ -87,7 +88,7 @@ class _SheetMappingReviewState extends State<SheetMappingReview> {
                             ),
                           ),
                           Text(
-                            '${a.length} sheet A · ${b.length} sheet B${plan.complete ? ' · Khớp tự động' : ''}',
+                            context.l10n.sheetCountSummary(a.length, b.length, plan.complete),
                             style: DytavaTypography.bodySmall.copyWith(
                               fontSize: 10,
                               color: DytavaColors.textSecondary,
@@ -158,9 +159,9 @@ class _SheetMappingReviewState extends State<SheetMappingReview> {
                     ),
                   if (!plan.complete) ...[
                     const SizedBox(height: 6),
-                    const Text(
-                      'Chọn các cặp còn mơ hồ. Không dùng thứ tự tab để ghép.',
-                      style: TextStyle(
+                    Text(
+                      context.l10n.sheetMappingHint,
+                      style: const TextStyle(
                         fontSize: 11,
                         color: DytavaColors.textSecondary,
                       ),
@@ -173,7 +174,7 @@ class _SheetMappingReviewState extends State<SheetMappingReview> {
                             '${flow.slot(SourceSide.a).generation}:${a[i].sheetName}:${flow.sheetOverrides.length}',
                           ),
                           decoration: InputDecoration(
-                            labelText: '${a[i].sheetName ?? 'Bảng A'} (A)',
+                            labelText: '${a[i].sheetName ?? (context.l10n.isVietnamese ? "Bảng A" : "Sheet A")} (A)',
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 10,
                               vertical: 6,
@@ -186,15 +187,15 @@ class _SheetMappingReviewState extends State<SheetMappingReview> {
                               DropdownMenuItem(
                                 value: '$j',
                                 child: Text(
-                                  b[j].sheetName ?? 'Bảng B',
+                                  b[j].sheetName ?? (context.l10n.isVietnamese ? 'Bảng B' : 'Sheet B'),
                                   style: const TextStyle(fontSize: 12),
                                 ),
                               ),
-                            const DropdownMenuItem(
+                            DropdownMenuItem(
                               value: 'NONE',
                               child: Text(
-                                'Chỉ có ở A',
-                                style: TextStyle(fontSize: 12),
+                                context.l10n.isVietnamese ? 'Chỉ có ở A' : 'Only in A',
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ),
                           ],
@@ -231,9 +232,9 @@ class _SheetMappingReviewState extends State<SheetMappingReview> {
                                 flow.resolveSheetPair(null, name);
                               }
                             },
-                      child: const Text(
-                        'Giữ riêng tất cả sheet chưa ghép',
-                        style: TextStyle(fontSize: 11),
+                      child: Text(
+                        context.l10n.isVietnamese ? 'Giữ riêng tất cả sheet chưa ghép' : 'Keep all unpaired sheets separate',
+                        style: const TextStyle(fontSize: 11),
                       ),
                     ),
                   ],

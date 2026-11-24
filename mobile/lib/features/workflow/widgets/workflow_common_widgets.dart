@@ -1,40 +1,59 @@
 import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Các hàm tiện ích và thành phần giao diện dùng chung cho tầng Presentation của Workflow.
 abstract final class WorkflowUiHelpers {
-  static String formatEnumName(Enum value) =>
-      value == MatchingMode.orderedSequence
-      ? 'Căn chỉnh chuỗi (chèn/xóa)'
-      : value.name
-            .replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]}')
-            .toUpperCase();
+  static String formatEnumName(Enum value, [AppLocalizations? l10n]) {
+    final loc = l10n ?? AppLocalizations.current;
+    return value == MatchingMode.orderedSequence
+        ? (loc.isVietnamese ? 'Căn chỉnh chuỗi (chèn/xóa)' : 'Sequence alignment (insert/delete)')
+        : value.name
+              .replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]}')
+              .toUpperCase();
+  }
 
-  static String remediationForIssue(WorkflowIssue issue) {
+  static String remediationForIssue(WorkflowIssue issue, [AppLocalizations? l10n]) {
+    final loc = l10n ?? AppLocalizations.current;
     final code = issue.code.toUpperCase();
     if (code.contains('KEY')) {
-      return 'Hướng xử lý: Chọn ít nhất 1 cột khóa kiểu IDENTIFIER và xác nhận chế độ ghép hàng.';
+      return loc.isVietnamese
+          ? 'Hướng xử lý: Chọn ít nhất 1 cột khóa kiểu IDENTIFIER và xác nhận chế độ ghép hàng.'
+          : 'Action: Choose at least one IDENTIFIER key column and confirm row matching mode.';
     }
     if (code.contains('MAP')) {
-      return 'Hướng xử lý: Ghép ít nhất 1 cặp cột 1:1 giữa Nguồn A và Nguồn B rồi bấm xác nhận ánh xạ.';
+      return loc.isVietnamese
+          ? 'Hướng xử lý: Ghép ít nhất 1 cặp cột 1:1 giữa Nguồn A và Nguồn B rồi bấm xác nhận ánh xạ.'
+          : 'Action: Pair at least one 1:1 column pair between Source A and Source B, then confirm mapping.';
     }
     if (code.contains('POLICY') || code.contains('RULE')) {
-      return 'Hướng xử lý: Kiểm tra kiểu dữ liệu từng cột và đánh dấu xác nhận toàn bộ policy.';
+      return loc.isVietnamese
+          ? 'Hướng xử lý: Kiểm tra kiểu dữ liệu từng cột và đánh dấu xác nhận toàn bộ policy.'
+          : 'Action: Check column data types and confirm all policies.';
     }
     if (code.contains('DIRECTION')) {
-      return 'Hướng xử lý: Chọn chiều đối chiếu (A → B hoặc B → A) và đánh dấu xác nhận.';
+      return loc.isVietnamese
+          ? 'Hướng xử lý: Chọn chiều đối chiếu (A → B hoặc B → A) và đánh dấu xác nhận.'
+          : 'Action: Choose comparison direction (A → B or B → A) and confirm.';
     }
     if (code.contains('OCR') || code.contains('REVIEW')) {
-      return 'Hướng xử lý: Mở màn hình Review để duyệt đầy đủ từng ô nhận dạng trước khi tiếp tục.';
+      return loc.isVietnamese
+          ? 'Hướng xử lý: Mở màn hình Review để duyệt đầy đủ từng ô nhận dạng trước khi tiếp tục.'
+          : 'Action: Open the Review screen to inspect all recognized cells before proceeding.';
     }
     if (code.contains('DUPLICATE')) {
-      return 'Hướng xử lý: Hai tệp A và B hoàn toàn giống nhau. Hãy chọn bản cập nhật khác nếu bạn muốn tìm sai khác.';
+      return loc.isVietnamese
+          ? 'Hướng xử lý: Hai tệp A và B hoàn toàn giống nhau. Hãy chọn bản cập nhật khác nếu bạn muốn tìm sai khác.'
+          : 'Action: File A and File B are identical. Choose a different updated file if you wish to find differences.';
     }
-    return 'Hướng xử lý: Kiểm tra lại trạng thái nguồn dữ liệu hoặc thử nạp lại nguồn hợp lệ.';
+    return loc.isVietnamese
+        ? 'Hướng xử lý: Kiểm tra lại trạng thái nguồn dữ liệu hoặc thử nạp lại nguồn hợp lệ.'
+        : 'Action: Check source data status or re-import valid sources.';
   }
 }
 
@@ -719,21 +738,22 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
   }
 
   Future<bool> _confirmDeleteItem(BuildContext context, SavedSessionSummary session) async {
-    final label = session.labelA.isNotEmpty ? session.labelA : 'Comparison session';
+    final l10n = context.l10n;
+    final label = session.labelA.isNotEmpty ? session.labelA : (l10n.isVietnamese ? 'Phiên đối chiếu' : 'Comparison session');
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Delete comparison?',
-          style: TextStyle(
+        title: Text(
+          l10n.deleteComparisonTitle,
+          style: const TextStyle(
             fontFamily: DytavaTypography.primaryFont,
             fontWeight: FontWeight.w700,
             fontSize: 18,
           ),
         ),
         content: Text(
-          'Are you sure you want to delete "$label" from your comparison history?',
+          l10n.deleteComparisonContent(label),
           style: const TextStyle(
             fontFamily: DytavaTypography.primaryFont,
             fontSize: 14,
@@ -743,7 +763,7 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             key: const Key('confirm-delete-item'),
@@ -755,7 +775,7 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -764,21 +784,22 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
   }
 
   Future<void> _confirmClearAll(BuildContext context) async {
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Clear all history?',
-          style: TextStyle(
+        title: Text(
+          l10n.clearAllHistoryTitle,
+          style: const TextStyle(
             fontFamily: DytavaTypography.primaryFont,
             fontWeight: FontWeight.w700,
             fontSize: 18,
           ),
         ),
-        content: const Text(
-          'All saved comparison sessions will be permanently removed. This action cannot be undone.',
-          style: TextStyle(
+        content: Text(
+          l10n.clearAllHistoryContent,
+          style: const TextStyle(
             fontFamily: DytavaTypography.primaryFont,
             fontSize: 14,
             color: Color(0xFF475569),
@@ -787,7 +808,7 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             key: const Key('confirm-clear-all'),
@@ -799,7 +820,7 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Clear all'),
+            child: Text(l10n.clearAll),
           ),
         ],
       ),
@@ -821,6 +842,23 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2, bottom: 8),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                context.l10n.isVietnamese
+                    ? 'Chưa có đối chiếu đã lưu'
+                    : 'No saved comparisons',
+                style: const TextStyle(
+                  fontFamily: DytavaTypography.primaryFont,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: Center(
               child: SingleChildScrollView(
@@ -836,10 +874,10 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 28),
-                      const Text(
-                        'No comparisons yet',
+                      Text(
+                        context.l10n.noComparisonsYet,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
@@ -847,10 +885,10 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Compare two spreadsheets to find changes,\nreview differences, and save your results here.',
+                      Text(
+                        context.l10n.noComparisonsSubtitle,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 13.5,
                           color: Color(0xFF64748B),
@@ -882,9 +920,9 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  child: const Text(
-                    '+ New Comparison',
-                    style: TextStyle(
+                  child: Text(
+                    context.l10n.newComparison,
+                    style: const TextStyle(
                       fontFamily: DytavaTypography.primaryFont,
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
@@ -910,7 +948,7 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '$_totalCount saved comparison${_totalCount == 1 ? '' : 's'}',
+                context.l10n.savedComparisonsCount(_totalCount),
                 style: const TextStyle(
                   fontFamily: DytavaTypography.primaryFont,
                   fontSize: 13,
@@ -922,20 +960,20 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
                 key: const Key('history-clear-all-button'),
                 onTap: () => _confirmClearAll(context),
                 borderRadius: BorderRadius.circular(8),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.delete_sweep_outlined,
                         size: 16,
                         color: Color(0xFFDC2626),
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
-                        'Clear all',
-                        style: TextStyle(
+                        context.l10n.clearAll,
+                        style: const TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
@@ -968,14 +1006,14 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
                     color: const Color(0xFFFEE2E2),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.delete_outline, color: Color(0xFFDC2626), size: 22),
-                      SizedBox(width: 4),
+                      const Icon(Icons.delete_outline, color: Color(0xFFDC2626), size: 22),
+                      const SizedBox(width: 4),
                       Text(
-                        'Delete',
-                        style: TextStyle(
+                        context.l10n.delete,
+                        style: const TextStyle(
                           color: Color(0xFFDC2626),
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
@@ -989,140 +1027,170 @@ class _WorkflowSessionHistoryViewState extends State<WorkflowSessionHistoryView>
                   await widget.flow.deleteSavedSession(s.sessionId);
                   await _loadPage(page: _currentPage);
                 },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFF1F8F4), Color(0xFFE4F2EA)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFD6E8DC), width: 1.0),
-                  ),
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () async {
-                        if (widget.onRestoreSession != null) {
-                          widget.onRestoreSession!(s.sessionId);
-                        } else {
-                          await widget.flow.restoreSavedSession(s.sessionId);
-                          widget.onOpenResults();
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE2F3E9),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Text(
-                                'X',
-                                style: TextStyle(
-                                  fontFamily: DytavaTypography.primaryFont,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                  color: Color(0xFF107C41),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE6F2EA),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          'X',
+                          style: TextStyle(
+                            fontFamily: DytavaTypography.primaryFont,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            color: Color(0xFF107C41),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFF6FAF7),
+                                Color(0xFFE4F2E9),
+                                Color(0xFFBDE0C9),
+                              ],
+                              stops: [0.0, 0.55, 1.0],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(14),
+                              onTap: () async {
+                                if (widget.onRestoreSession != null) {
+                                  widget.onRestoreSession!(s.sessionId);
+                                } else {
+                                  await widget.flow.restoreSavedSession(s.sessionId);
+                                  widget.onOpenResults();
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 11,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            s.labelA.isNotEmpty
+                                                ? s.labelA
+                                                : (context.l10n.isVietnamese
+                                                      ? 'Phiên đối chiếu'
+                                                      : 'Comparison Session'),
+                                            style: const TextStyle(
+                                              fontFamily: DytavaTypography.primaryFont,
+                                              fontSize: 14.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF1E293B),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.calendar_today_outlined,
+                                                size: 12,
+                                                color: Color(0xFF64748B),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Flexible(
+                                                child: Text(
+                                                  _formatSessionDate(s.createdAt),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontFamily: DytavaTypography.primaryFont,
+                                                    fontSize: 11.5,
+                                                    color: Color(0xFF64748B),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              const Text(
+                                                '·',
+                                                style: TextStyle(
+                                                  color: Color(0xFF94A3B8),
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              const Icon(
+                                                Icons.layers_outlined,
+                                                size: 13,
+                                                color: Color(0xFF64748B),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Flexible(
+                                                child: Text(
+                                                  context.l10n.workbooksCount(2),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontFamily: DytavaTypography.primaryFont,
+                                                    fontSize: 11.5,
+                                                    color: Color(0xFF64748B),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline_rounded,
+                                        size: 17,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                      splashRadius: 16,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(
+                                        minWidth: 28,
+                                        minHeight: 28,
+                                      ),
+                                      tooltip: 'Delete',
+                                      onPressed: () async {
+                                        final ok = await _confirmDeleteItem(context, s);
+                                        if (ok) {
+                                          await widget.flow.deleteSavedSession(s.sessionId);
+                                          await _loadPage(page: _currentPage);
+                                        }
+                                      },
+                                    ),
+                                    const SizedBox(width: 2),
+                                    const Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 18,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    s.labelA.isNotEmpty ? s.labelA : 'Comparison Session',
-                                    style: const TextStyle(
-                                      fontFamily: DytavaTypography.primaryFont,
-                                      fontSize: 14.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF1E293B),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.calendar_today_outlined,
-                                        size: 12,
-                                        color: Color(0xFF64748B),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        _formatSessionDate(s.createdAt),
-                                        style: const TextStyle(
-                                          fontFamily: DytavaTypography.primaryFont,
-                                          fontSize: 11.5,
-                                          color: Color(0xFF64748B),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      const Text(
-                                        '·',
-                                        style: TextStyle(
-                                          color: Color(0xFF94A3B8),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      const Icon(
-                                        Icons.layers_outlined,
-                                        size: 13,
-                                        color: Color(0xFF64748B),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Text(
-                                        '2 workbooks',
-                                        style: TextStyle(
-                                          fontFamily: DytavaTypography.primaryFont,
-                                          fontSize: 11.5,
-                                          color: Color(0xFF64748B),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete_outline_rounded,
-                                size: 18,
-                                color: Color(0xFF94A3B8),
-                              ),
-                              splashRadius: 16,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                              tooltip: 'Delete',
-                              onPressed: () async {
-                                final ok = await _confirmDeleteItem(context, s);
-                                if (ok) {
-                                  await widget.flow.deleteSavedSession(s.sessionId);
-                                  await _loadPage(page: _currentPage);
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.chevron_right_rounded,
-                              size: 18,
-                              color: Color(0xFF107C41),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               );
@@ -1212,6 +1280,7 @@ class WorkflowLearnAndPresetsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1223,7 +1292,9 @@ class WorkflowLearnAndPresetsView extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Mẫu quy tắc chuẩn hóa (Policy Presets)',
+                    l10n.isVietnamese
+                        ? 'Mẫu quy tắc chuẩn hóa (Policy Presets)'
+                        : 'Policy Presets',
                     style: DytavaTypography.titleLarge.copyWith(
                       color: DytavaColors.textPrimary,
                     ),
@@ -1233,27 +1304,33 @@ class WorkflowLearnAndPresetsView extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Các bộ quy tắc chuẩn hóa định dạng số thập phân, khoảng trắng, định danh và sai số tuyệt đối.',
+              l10n.isVietnamese
+                  ? 'Các bộ quy tắc chuẩn hóa định dạng số thập phân, khoảng trắng, định danh và sai số tuyệt đối.'
+                  : 'Standard rule sets for decimals, whitespaces, identifiers, and absolute tolerance.',
               style: DytavaTypography.bodyMedium,
             ),
             const SizedBox(height: 10),
             DytavaPolicyCard(
               policyId: 'academic-records-v1',
-              subtitle:
-                  'v1.0.0 • 2 trường • Khóa: id • Dấu thập phân A(.) / B(,)',
+              subtitle: l10n.isVietnamese
+                  ? 'v1.0.0 • 2 trường • Khóa: id • Dấu thập phân A(.) / B(,)'
+                  : 'v1.0.0 • 2 fields • Key: id • Decimal point A(.) / B(,)',
               active: selectedPreset == 'academic-records-v1',
               onTap: () => onSelectPreset('academic-records-v1'),
             ),
             DytavaPolicyCard(
               policyId: 'financial-reconcile-v1',
-              subtitle: 'v1.0.0 • Đối soát kế toán • Sai số tuyệt đối: 0.01',
+              subtitle: l10n.isVietnamese
+                  ? 'v1.0.0 • Đối soát kế toán • Sai số tuyệt đối: 0.01'
+                  : 'v1.0.0 • Accounting reconciliation • Tolerance: 0.01',
               active: selectedPreset == 'financial-reconcile-v1',
               onTap: () => onSelectPreset('financial-reconcile-v1'),
             ),
             DytavaPolicyCard(
               policyId: 'inventory-sku-strict',
-              subtitle:
-                  'v1.0.0 • Mã SKU strict identifier • Giữ số 0 đầu (00123)',
+              subtitle: l10n.isVietnamese
+                  ? 'v1.0.0 • Mã SKU strict identifier • Giữ số 0 đầu (00123)'
+                  : 'v1.0.0 • SKU strict identifier • Preserve leading zeros (00123)',
               active: selectedPreset == 'inventory-sku-strict',
               onTap: () => onSelectPreset('inventory-sku-strict'),
             ),
@@ -1269,7 +1346,9 @@ class WorkflowLearnAndPresetsView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Ý nghĩa 4 trạng thái đối chiếu',
+              l10n.isVietnamese
+                  ? 'Ý nghĩa 4 trạng thái đối chiếu'
+                  : 'Understanding comparison statuses',
               style: DytavaTypography.titleLarge.copyWith(
                 color: DytavaColors.textPrimary,
               ),
@@ -1289,22 +1368,30 @@ class WorkflowLearnAndPresetsView extends StatelessWidget {
             ),
             const Divider(height: 24),
             Text(
-              '• Trùng khớp (EXACT): Giống nhau cả ký tự gốc và giá trị ngữ nghĩa.',
+              l10n.isVietnamese
+                  ? '• Trùng khớp (EXACT): Giống nhau cả ký tự gốc và giá trị ngữ nghĩa.'
+                  : '• Exact match (EXACT): Identical raw characters and semantic value.',
               style: DytavaTypography.bodyMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              '• Tương đương (EQUIVALENT): Khác cách viết (ví dụ 8.5 và 8,5) nhưng bằng nhau sau khi chuẩn hóa.',
+              l10n.isVietnamese
+                  ? '• Tương đương (EQUIVALENT): Khác cách viết (ví dụ 8.5 và 8,5) nhưng bằng nhau sau khi chuẩn hóa.'
+                  : '• Equivalent (EQUIVALENT): Different format (e.g. 8.5 vs 8,5) but identical normalized value.',
               style: DytavaTypography.bodyMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              '• Khác biệt (DIFFERENT): Hai ô có giá trị khác nhau sau khi chuẩn hóa.',
+              l10n.isVietnamese
+                  ? '• Khác biệt (DIFFERENT): Hai ô có giá trị khác nhau sau khi chuẩn hóa.'
+                  : '• Different (DIFFERENT): Values differ after normalization.',
               style: DytavaTypography.bodyMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              '• Chưa kết luận (UNRESOLVED): Không đủ căn cứ kết luận (ví dụ lỗi kiểu dữ liệu abc vs 9, hoặc trùng/rỗng khóa).',
+              l10n.isVietnamese
+                  ? '• Chưa kết luận (UNRESOLVED): Không đủ căn cứ kết luận (ví dụ lỗi kiểu dữ liệu abc vs 9, hoặc trùng/rỗng khóa).'
+                  : '• Unresolved (UNRESOLVED): Inconclusive (e.g. type conflict or duplicate/empty key).',
               style: DytavaTypography.bodyMedium,
             ),
           ],
@@ -1314,7 +1401,7 @@ class WorkflowLearnAndPresetsView extends StatelessWidget {
   }
 }
 
-/// Giao diện phụ trợ: Cài đặt & Quyền riêng tư
+/// Giao diện phụ trợ: Cài đặt & Quyền riêng tư (Nâng cấp theo thiết kế P1 · 11 App settings)
 class WorkflowSettingsView extends StatelessWidget {
   const WorkflowSettingsView({
     super.key,
@@ -1323,88 +1410,468 @@ class WorkflowSettingsView extends StatelessWidget {
   });
   final WorkflowController flow;
   final VoidCallback onOpenPresets;
+
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      _label('COMPARISON'),
-      _tile(
-        'Compare mode',
-        'Quick Compare',
-        'Propose mappings; confirm uncertain matches.',
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 1. Header Brand Identity: App Logo, Dytava, Excel Compare · v0.1.0 & Help & support ->
+        DytavaFadeSlide.staggered(
+          index: 0,
+          child: _buildBrandHeader(context),
+        ),
+        // 2. NGÔN NGỮ / LANGUAGE
+        DytavaFadeSlide.staggered(
+          index: 1,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _label(l10n.sectionLanguage),
+              _languageTile(context),
+            ],
+          ),
+        ),
+        // 3. ĐỐI SOÁT / COMPARISON
+        DytavaFadeSlide.staggered(
+          index: 2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _label(l10n.sectionComparison),
+              _compareModeTile(context),
+            ],
+          ),
+        ),
+        DytavaFadeSlide.staggered(
+          index: 3,
+          child: _actionTile(
+            title: l10n.comparisonRulesSetting,
+            subtitle: l10n.comparisonRulesSummary,
+            trailing: _circleIconBadge(Icons.tune_rounded),
+            onTap: () => _rules(context),
+          ),
+        ),
+        DytavaFadeSlide.staggered(
+          index: 4,
+          child: _actionTile(
+            title: l10n.rulePresetsSetting,
+            subtitle: l10n.rulePresetsDesc,
+            trailing: _circleIconBadge(Icons.tune_rounded),
+            onTap: onOpenPresets,
+          ),
+        ),
+        // 4. DEVICE & DATA
+        DytavaFadeSlide.staggered(
+          index: 5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _label(l10n.sectionDeviceData),
+              _actionTile(
+                title: l10n.localStorageSetting,
+                subtitle: l10n.localStorageDesc,
+                trailing: const Text(
+                  '12.4 MB',
+                  style: TextStyle(
+                    fontFamily: DytavaTypography.primaryFont,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: DytavaColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        DytavaFadeSlide.staggered(
+          index: 6,
+          child: _actionTile(
+            title: l10n.privacySetting,
+            subtitle: l10n.privacyShortDesc,
+            trailing: _circleIconBadge(Icons.menu_book_rounded),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildBrandHeader(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: Column(
+        children: [
+          Container(
+            width: 82,
+            height: 82,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE7F3EC),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF14532D).withValues(alpha: 0.06),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: SvgPicture.asset(
+              'assets/dytava/figma/launch-mark.svg',
+              width: 46,
+              height: 42,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Dytava',
+            style: TextStyle(
+              fontFamily: DytavaTypography.primaryFont,
+              fontSize: 27,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF165B33),
+              letterSpacing: -0.5,
+              height: 1.15,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${l10n.appSubtitle} · v0.1.0',
+            style: const TextStyle(
+              fontFamily: DytavaTypography.primaryFont,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2D6A4F),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: onOpenPresets,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.helpAndSupport,
+                      style: const TextStyle(
+                        fontFamily: DytavaTypography.primaryFont,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: DytavaColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 15,
+                      color: DytavaColors.primary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-      _tile(
-        'Comparison rules',
-        'Configure ›',
-        'Values, spaces and text case.',
-        onTap: () => _rules(context),
+    );
+  }
+
+  Widget _languageTile(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.025),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.languageTitle,
+              style: const TextStyle(
+                fontFamily: DytavaTypography.primaryFont,
+                fontSize: 15.5,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.languageSubtitle,
+              style: const TextStyle(
+                fontFamily: DytavaTypography.primaryFont,
+                fontSize: 12.5,
+                color: Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _languagePillButton(
+                    key: const ValueKey('settings-language-en'),
+                    label: 'English',
+                    selected: !l10n.isVietnamese,
+                    onTap: () => flow.setLocale(const Locale('en')),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _languagePillButton(
+                    key: const ValueKey('settings-language-vi'),
+                    label: 'Tiếng Việt',
+                    selected: l10n.isVietnamese,
+                    onTap: () => flow.setLocale(const Locale('vi')),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-      _tile(
-        'Rule presets',
-        'View ›',
-        'Explore the available comparison rules.',
-        onTap: onOpenPresets,
+    );
+  }
+
+  Widget _languagePillButton({
+    required Key key,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      height: 38,
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFFE3F2E8) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: selected ? const Color(0xFFC8E3D2) : const Color(0xFFE2E8F0),
+          width: 1.1,
+        ),
       ),
-      _label('DEVICE & DATA'),
-      _tile(
-        'Session storage',
-        'In memory',
-        'Data is cleared when you close the comparison.',
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          key: key,
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            DytavaAudioFeedback.playClick();
+            onTap();
+          },
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: DytavaTypography.primaryFont,
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                color: selected
+                    ? const Color(0xFF166534)
+                    : const Color(0xFF475569),
+              ),
+            ),
+          ),
+        ),
       ),
-      _tile(
-        'Privacy',
-        'On this device',
-        'Files are processed locally. Reports save to a location you choose.',
+    );
+  }
+
+  Widget _compareModeTile(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.025),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    l10n.compareModeSetting,
+                    style: const TextStyle(
+                      fontFamily: DytavaTypography.primaryFont,
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEDF7F0),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF107C41).withValues(alpha: 0.06),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    l10n.quickBadge,
+                    style: const TextStyle(
+                      fontFamily: DytavaTypography.primaryFont,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: DytavaColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              l10n.compareModeDesc,
+              style: const TextStyle(
+                fontFamily: DytavaTypography.primaryFont,
+                fontSize: 12.5,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
       ),
-      _label('ABOUT DYTAVA'),
-      _tile('Dytava', 'Version 1.0.0', 'Two spreadsheets. One clear view.'),
-    ],
-  );
+    );
+  }
+
+  Widget _circleIconBadge(IconData icon) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEDF7F0),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        icon,
+        size: 19,
+        color: const Color(0xFF166534),
+      ),
+    );
+  }
 
   Widget _label(String text) => Padding(
-    padding: const EdgeInsets.only(top: 16, bottom: 12),
+    padding: const EdgeInsets.only(top: 12, bottom: 10),
     child: Text(
       text,
       style: DytavaTypography.labelSmall.copyWith(
         color: DytavaColors.primary,
-        fontSize: 11,
+        fontSize: 11.5,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.3,
       ),
     ),
   );
-  Widget _tile(
-    String title,
-    String value,
-    String subtitle, {
+
+  Widget _actionTile({
+    required String title,
+    required String subtitle,
+    required Widget trailing,
     VoidCallback? onTap,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
-    child: Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  Text(title, style: DytavaTypography.titleSmall),
-                  Text(
-                    value,
-                    style: DytavaTypography.bodyMedium.copyWith(
-                      color: DytavaColors.primary,
-                    ),
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.025),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap == null
+              ? null
+              : () {
+                  DytavaAudioFeedback.playClick();
+                  onTap();
+                },
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontFamily: DytavaTypography.primaryFont,
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontFamily: DytavaTypography.primaryFont,
+                          fontSize: 12.5,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(subtitle, style: DytavaTypography.bodySmall),
-            ],
+                ),
+                const SizedBox(width: 12),
+                trailing,
+              ],
+            ),
           ),
         ),
       ),
@@ -1412,6 +1879,7 @@ class WorkflowSettingsView extends StatelessWidget {
   );
 
   Future<void> _rules(BuildContext context) async {
+    final l10n = context.l10n;
     var policy = flow.config.webPolicy;
     await showModalBottomSheet<void>(
       context: context,
@@ -1424,13 +1892,13 @@ class WorkflowSettingsView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Comparison settings',
+                Text(
+                  l10n.isVietnamese ? 'Cài đặt đối chiếu' : 'Comparison settings',
                   style: DytavaTypography.displayMedium,
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Choose what counts as a difference.',
+                Text(
+                  l10n.chooseWhatCounts,
                   style: DytavaTypography.bodyMedium,
                 ),
                 const SizedBox(height: 24),
@@ -1440,12 +1908,14 @@ class WorkflowSettingsView extends StatelessWidget {
                   child: Column(
                     children: [
                       SwitchListTile(
-                        title: const Text(
-                          'Ignore text case',
+                        title: Text(
+                          l10n.ignoreCase,
                           style: DytavaTypography.titleSmall,
                         ),
-                        subtitle: const Text(
-                          'Treat “Excel” and “excel” as equal.',
+                        subtitle: Text(
+                          l10n.isVietnamese
+                              ? 'Coi “Excel” và “excel” là bằng nhau.'
+                              : 'Treat “Excel” and “excel” as equal.',
                           style: DytavaTypography.bodySmall,
                         ),
                         value: !policy.caseSensitiveText,
@@ -1464,12 +1934,14 @@ class WorkflowSettingsView extends StatelessWidget {
                       ),
                       const Divider(indent: 16, endIndent: 16, height: 1),
                       SwitchListTile(
-                        title: const Text(
-                          'Trim spaces',
+                        title: Text(
+                          l10n.ignoreWhitespace,
                           style: DytavaTypography.titleSmall,
                         ),
-                        subtitle: const Text(
-                          'Ignore spaces around text.',
+                        subtitle: Text(
+                          l10n.isVietnamese
+                              ? 'Bỏ qua khoảng trắng xung quanh văn bản.'
+                              : 'Ignore spaces around text.',
                           style: DytavaTypography.bodySmall,
                         ),
                         value: policy.trimText,
@@ -1488,12 +1960,14 @@ class WorkflowSettingsView extends StatelessWidget {
                       ),
                       const Divider(indent: 16, endIndent: 16, height: 1),
                       SwitchListTile(
-                        title: const Text(
-                          'Preserve leading zeros',
+                        title: Text(
+                          l10n.isVietnamese ? 'Giữ số 0 ở đầu' : 'Preserve leading zeros',
                           style: DytavaTypography.titleSmall,
                         ),
-                        subtitle: const Text(
-                          'Keep “001” distinct from “1”.',
+                        subtitle: Text(
+                          l10n.isVietnamese
+                              ? 'Phân biệt rõ “001” với “1”.'
+                              : 'Keep “001” distinct from “1”.',
                           style: DytavaTypography.bodySmall,
                         ),
                         value: policy.preserveLeadingZeros,
@@ -1514,12 +1988,15 @@ class WorkflowSettingsView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'These rules apply to the current session.',
+                Text(
+                  l10n.isVietnamese
+                      ? 'Các quy tắc này áp dụng cho phiên hiện tại.'
+                      : 'These rules apply to the current session.',
                   style: DytavaTypography.bodySmall,
+                  textAlign: TextAlign.center,
                 ),
                 WorkflowPrimaryButton(
-                  label: 'Save settings',
+                  label: l10n.saveSettings,
                   onPressed: () {
                     flow.configure(flow.config.copyWith(webPolicy: policy));
                     Navigator.pop(context);
@@ -1527,7 +2004,7 @@ class WorkflowSettingsView extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.cancel),
                 ),
               ],
             ),

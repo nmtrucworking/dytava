@@ -130,6 +130,66 @@ final class ComparisonDatabase {
     );
   }
 
+  /// Calculates actual local storage usage in bytes (on-disk SQLite files + stored records).
+  Future<int> getStorageUsageBytes() async {
+    final db = await database;
+    int diskBytes = 0;
+
+    final path = db.path;
+    if (path != inMemoryDatabasePath && !kIsWeb) {
+      for (final suffix in ['', '-wal', '-shm']) {
+        try {
+          final file = File('$path$suffix');
+          if (await file.exists()) {
+            diskBytes += await file.length();
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (diskBytes > 0) {
+      final sessionCount = await countSessions();
+      if (sessionCount == 0) return 0;
+      return diskBytes;
+    }
+
+    // Fallback for in-memory or Web database: compute actual payload size from stored rows
+    int payloadBytes = 0;
+    try {
+      final sessionRows = await db.rawQuery('''
+        SELECT
+          COUNT(*) AS cnt,
+          COALESCE(SUM(LENGTH(session_id) + LENGTH(label_a) + LENGTH(label_b) + COALESCE(LENGTH(plan_json), 0) + 128), 0) AS sz
+        FROM comparison_sessions
+      ''');
+      final sessionCnt = (sessionRows.first['cnt'] as num?)?.toInt() ?? 0;
+      if (sessionCnt == 0) return 0;
+      payloadBytes += (sessionRows.first['sz'] as num?)?.toInt() ?? 0;
+
+      final cellRows = await db.rawQuery('''
+        SELECT COALESCE(SUM(
+          LENGTH(id) + LENGTH(row_a) + LENGTH(row_b) + LENGTH(field_a) + LENGTH(field_b) +
+          COALESCE(LENGTH(raw_a), 0) + COALESCE(LENGTH(raw_b), 0) +
+          COALESCE(LENGTH(normalized_a), 0) + COALESCE(LENGTH(normalized_b), 0) +
+          COALESCE(LENGTH(explanation), 0) + COALESCE(LENGTH(location_a), 0) +
+          COALESCE(LENGTH(location_b), 0) + 96
+        ), 0) AS sz
+        FROM cell_differences
+      ''');
+      payloadBytes += (cellRows.first['sz'] as num?)?.toInt() ?? 0;
+
+      final alignedRows = await db.rawQuery('''
+        SELECT COALESCE(SUM(
+          COALESCE(LENGTH(data_a_json), 0) + COALESCE(LENGTH(data_b_json), 0) + LENGTH(rationale) + 64
+        ), 0) AS sz
+        FROM aligned_rows
+      ''');
+      payloadBytes += (alignedRows.first['sz'] as num?)?.toInt() ?? 0;
+    } catch (_) {}
+
+    return payloadBytes;
+  }
+
   /// Critical mobile performance tuning PRAGMAs:
   /// - WAL: Write-Ahead Logging allows simultaneous non-blocking reads during background writes.
   /// - synchronous = NORMAL: safe against app crashes, drastically reduces flash write wear & battery drain.

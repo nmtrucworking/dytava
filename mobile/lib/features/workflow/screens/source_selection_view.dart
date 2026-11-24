@@ -10,6 +10,7 @@ import '../../../infrastructure/file_upload_service.dart';
 import '../../../ocr/infrastructure/ocr_capture_service.dart';
 import '../widgets/workflow_common_widgets.dart';
 import '../widgets/sheet_mapping_review.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Màn hình Nhập tệp (`SCR-02` / `Import files`):
 /// - Thẻ A/B tinh gọn với mã nguồn A/B và nút đổi tệp (Swap) màu xanh.
@@ -67,10 +68,12 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Đối chiếu cặp Sheet',
-                          style: TextStyle(
+                          context.l10n.isVietnamese
+                              ? 'Đối chiếu cặp Sheet'
+                              : 'Sheet matches',
+                          style: const TextStyle(
                             fontFamily: DytavaTypography.primaryFont,
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -89,7 +92,9 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                   const SizedBox(height: 12),
                   WorkflowPrimaryButton(
                     key: const ValueKey('sheet-matches-modal-done'),
-                    label: isComplete ? 'Hoàn tất ghép sheet' : 'Đóng',
+                    label: isComplete
+                        ? (context.l10n.isVietnamese ? 'Hoàn tất ghép sheet' : 'Done')
+                        : context.l10n.close,
                     onPressed: () => Navigator.pop(sheetContext),
                   ),
                 ],
@@ -101,15 +106,19 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
     );
   }
 
-  String _matchingSubtitle() {
+  String _matchingSubtitle(BuildContext context) {
     final policy = widget.flow.config.webPolicy;
     if (policy.caseSensitiveText) {
-      return 'Exact values · Case sensitive';
+      return context.l10n.isVietnamese
+          ? 'Giá trị chính xác · Phân biệt chữ hoa/thường'
+          : 'Exact values · Case sensitive';
     }
     return switch (widget.flow.config.mode) {
-      MatchingMode.key => 'By key column',
-      MatchingMode.orderedSequence => 'Sequence alignment',
-      MatchingMode.positional => 'Auto match · Exact values',
+      MatchingMode.key => context.l10n.byKeyColumn,
+      MatchingMode.orderedSequence => context.l10n.sequenceAlignment,
+      MatchingMode.positional => context.l10n.isVietnamese
+          ? 'Tự động khớp · Giá trị chính xác'
+          : 'Auto match · Exact values',
     };
   }
 
@@ -138,20 +147,10 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Matching settings',
-                  style: TextStyle(
+                const SizedBox(height: 6),
+                Text(
+                  context.l10n.matchingSettings,
+                  style: const TextStyle(
                     fontFamily: DytavaTypography.primaryFont,
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -159,9 +158,11 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Select row comparison mode & data matching rules.',
-                  style: TextStyle(
+                Text(
+                  context.l10n.isVietnamese
+                      ? 'Chọn chế độ đối chiếu hàng & quy tắc so khớp.'
+                      : 'Select row comparison mode & data matching rules.',
+                  style: const TextStyle(
                     fontFamily: DytavaTypography.primaryFont,
                     fontSize: 13,
                     color: Color(0xFF64748B),
@@ -169,9 +170,10 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                 ),
                 const SizedBox(height: 16),
                 _buildMatchingOption(
-                  title: 'Auto match',
-                  subtitle:
-                      'Smart heuristic matching based on headers and data types',
+                  title: context.l10n.isVietnamese ? 'Tự động khớp' : 'Auto match',
+                  subtitle: context.l10n.isVietnamese
+                      ? 'Khớp thông minh dựa trên tiêu đề và kiểu dữ liệu'
+                      : 'Smart heuristic matching based on headers and data types',
                   isSelected: mode == MatchingMode.positional && !isStrict,
                   onTap: () {
                     flow.configure(
@@ -185,9 +187,12 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                   },
                 ),
                 _buildMatchingOption(
-                  title: 'Exact values (Case-sensitive)',
-                  subtitle:
-                      'Exact value equality with strict case matching',
+                  title: context.l10n.isVietnamese
+                      ? 'Giá trị chính xác (Phân biệt hoa/thường)'
+                      : 'Exact values (Case-sensitive)',
+                  subtitle: context.l10n.isVietnamese
+                      ? 'So khớp bằng nhau chính xác từng chữ hoa/thường'
+                      : 'Exact value equality with strict case matching',
                   isSelected: isStrict,
                   onTap: () {
                     flow.configure(
@@ -201,9 +206,10 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                   },
                 ),
                 _buildMatchingOption(
-                  title: 'By key column',
-                  subtitle:
-                      'Match rows using primary key columns (ID, Code, SKU)',
+                  title: context.l10n.byKeyColumn,
+                  subtitle: context.l10n.isVietnamese
+                      ? 'Khớp hàng qua cột khóa chính (ID, Mã, SKU)'
+                      : 'Match rows using primary key columns (ID, Code, SKU)',
                   isSelected: mode == MatchingMode.key,
                   onTap: () {
                     flow.configure(
@@ -216,8 +222,10 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                   },
                 ),
                 _buildMatchingOption(
-                  title: 'Sequence alignment',
-                  subtitle: 'Match ordered sequences using LCS alignment',
+                  title: context.l10n.sequenceAlignment,
+                  subtitle: context.l10n.isVietnamese
+                      ? 'Khớp tuần tự bằng thuật toán căn chỉnh LCS'
+                      : 'Match ordered sequences using LCS alignment',
                   isSelected: mode == MatchingMode.orderedSequence,
                   onTap: () {
                     flow.configure(
@@ -237,7 +245,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                       widget.onContinueMapping();
                     },
                     icon: const Icon(Icons.tune_rounded, size: 18),
-                    label: const Text('Advanced column mapping ›'),
+                    label: Text(context.l10n.advancedColumnMapping),
                   ),
                 ],
                 const SizedBox(height: 12),
@@ -253,9 +261,9 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      'Done',
-                      style: TextStyle(
+                    child: Text(
+                      context.l10n.done,
+                      style: const TextStyle(
                         fontFamily: DytavaTypography.primaryFont,
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
@@ -358,137 +366,104 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
           final artifact = slot.artifact;
           final hasFile = artifact != null;
 
-          return Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              12,
-              20,
-              20 + MediaQuery.viewInsetsOf(context).bottom,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(2),
+          return SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                4,
+                20,
+                16 + MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    isA
+                        ? (context.l10n.isVietnamese
+                              ? 'Chọn tệp gốc (A)'
+                              : 'Choose original file')
+                        : (context.l10n.isVietnamese
+                              ? 'Chọn tệp cập nhật (B)'
+                              : 'Choose updated file'),
+                    style: const TextStyle(
+                      fontFamily: DytavaTypography.primaryFont,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E293B),
                     ),
                   ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  isA ? 'Choose original file' : 'Choose updated file',
-                  style: const TextStyle(
-                    fontFamily: DytavaTypography.primaryFont,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Choose a workbook to continue.',
-                  style: TextStyle(
-                    fontFamily: DytavaTypography.primaryFont,
-                    fontSize: 13,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (hasFile) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAF9),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          artifact.format.name.toUpperCase(),
-                          style: const TextStyle(
-                            fontFamily: DytavaTypography.primaryFont,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: DytavaColors.primary,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          artifact.label,
-                          style: const TextStyle(
-                            fontFamily: DytavaTypography.primaryFont,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${artifact.format.name.toUpperCase()} · ${slot.snapshot == null ? '245 KB' : '${slot.snapshot!.records.length} rows · ${slot.snapshot!.fields.length} cols'}',
-                          style: const TextStyle(
-                            fontFamily: DytavaTypography.primaryFont,
-                            fontSize: 11.5,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 4),
+                  Text(
+                    context.l10n.isVietnamese
+                        ? 'Chọn một bảng tính để tiếp tục.'
+                        : 'Choose a workbook to continue.',
+                    style: const TextStyle(
+                      fontFamily: DytavaTypography.primaryFont,
+                      fontSize: 13,
+                      color: Color(0xFF64748B),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(sheetContext),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: DytavaColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
+                  if (hasFile) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
                       ),
-                      child: const Text(
-                        'Use this workbook',
-                        style: TextStyle(
-                          fontFamily: DytavaTypography.primaryFont,
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAF9),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            artifact.format.name.toUpperCase(),
+                            style: const TextStyle(
+                              fontFamily: DytavaTypography.primaryFont,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: DytavaColors.primary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            artifact.label,
+                            style: const TextStyle(
+                              fontFamily: DytavaTypography.primaryFont,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1E293B),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${artifact.format.name.toUpperCase()} · ${slot.snapshot == null ? '245 KB' : '${slot.snapshot!.records.length} ${context.l10n.rows} · ${slot.snapshot!.fields.length} ${context.l10n.columns}'}',
+                            style: const TextStyle(
+                              fontFamily: DytavaTypography.primaryFont,
+                              fontSize: 11.5,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => Navigator.pop(sheetContext),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontFamily: DytavaTypography.primaryFont,
-                        fontSize: 14,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ] else ...[
+                    const SizedBox(height: 14),
+                  ],
                   SizedBox(
                     height: 48,
                     child: ElevatedButton.icon(
                       onPressed: () async {
-                        await _handleFileUpload(context, side);
+                        final loaded = await _handleFileUpload(context, side);
+                        if (loaded && sheetContext.mounted) {
+                          Navigator.pop(sheetContext);
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: DytavaColors.primary,
@@ -499,9 +474,15 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                         ),
                       ),
                       icon: const Icon(Icons.file_upload_outlined, size: 20),
-                      label: const Text(
-                        'Upload File',
-                        style: TextStyle(
+                      label: Text(
+                        hasFile
+                            ? (context.l10n.isVietnamese
+                                  ? 'Tải tệp khác lên'
+                                  : 'Upload another file')
+                            : (context.l10n.isVietnamese
+                                  ? 'Tải tệp lên'
+                                  : 'Upload File'),
+                        style: const TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 14.5,
                           fontWeight: FontWeight.w700,
@@ -526,9 +507,9 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                         ),
                       ),
                       icon: const Icon(Icons.document_scanner_outlined, size: 20),
-                      label: const Text(
-                        'Scan Image',
-                        style: TextStyle(
+                      label: Text(
+                        context.l10n.isVietnamese ? 'Quét ảnh' : 'Scan Image',
+                        style: const TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 14.5,
                           fontWeight: FontWeight.w700,
@@ -536,46 +517,21 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  const Divider(color: Color(0xFFE2E8F0)),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: null,
-                      style: ElevatedButton.styleFrom(
-                        disabledBackgroundColor: const Color(0xFF9FB6A9),
-                        disabledForegroundColor: Colors.white.withValues(alpha: 0.9),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: const Text(
-                        'Use this workbook',
-                        style: TextStyle(
-                          fontFamily: DytavaTypography.primaryFont,
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                        ),
+                  const SizedBox(height: 6),
+                  TextButton(
+                    onPressed: () => Navigator.pop(sheetContext),
+                    child: Text(
+                      context.l10n.cancel,
+                      style: const TextStyle(
+                        fontFamily: DytavaTypography.primaryFont,
+                        fontSize: 14,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ],
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => Navigator.pop(sheetContext),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
-                      fontFamily: DytavaTypography.primaryFont,
-                      fontSize: 14,
-                      color: Color(0xFF64748B),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           );
         },
@@ -598,7 +554,12 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
         gradient: isDuplicateSlot
             ? null
             : const LinearGradient(
-                colors: [Color(0xFFF1F8F4), Color(0xFFE4F2EA)],
+                colors: [
+                  Color(0xFFFFFFFF),
+                  Color(0xFFEBF6EF),
+                  Color(0xFFCDE7D7),
+                ],
+                stops: [0.0, 0.55, 1.0],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
@@ -607,7 +568,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
         border: Border.all(
           color: isDuplicateSlot
               ? const Color(0xFFF59E0B)
-              : const Color(0xFFD4E7DC),
+              : const Color(0xFFD0E6D8),
           width: isDuplicateSlot ? 1.4 : 1.0,
         ),
       ),
@@ -653,7 +614,13 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        isA ? 'ORIGINAL FILE' : 'UPDATED FILE',
+                        isA
+                            ? (context.l10n.isVietnamese
+                                  ? 'TỆP GỐC'
+                                  : 'ORIGINAL FILE')
+                            : (context.l10n.isVietnamese
+                                  ? 'TỆP CẬP NHẬT'
+                                  : 'UPDATED FILE'),
                         style: TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 10,
@@ -666,7 +633,10 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        artifact?.label ?? 'Choose file $tag',
+                        artifact?.label ??
+                            (isA
+                                ? context.l10n.chooseFileA
+                                : context.l10n.chooseFileB),
                         style: const TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 14.5,
@@ -679,10 +649,12 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                       const SizedBox(height: 2),
                       Text(
                         isDuplicateSlot
-                            ? 'Trùng với tệp $otherTag · Chạm để chọn tệp khác'
+                            ? (context.l10n.isVietnamese
+                                  ? 'Trùng với tệp $otherTag · Chạm để chọn tệp khác'
+                                  : 'Same as file $otherTag · Tap to change')
                             : (artifact == null
                                   ? 'XLSX, CSV, TSV, TXT, JSON, IMG'
-                                  : '${artifact.format.name.toUpperCase()}  ·  ${slot.snapshot == null ? '248 KB' : '${slot.snapshot!.records.length} rows  ·  ${slot.snapshot!.fields.length} cols'}'),
+                                  : '${artifact.format.name.toUpperCase()}  ·  ${slot.snapshot == null ? '248 KB' : '${slot.snapshot!.records.length} ${context.l10n.rows}  ·  ${slot.snapshot!.fields.length} ${context.l10n.columns}'}'),
                         style: TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 11.5,
@@ -721,9 +693,9 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                         height: 36,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         alignment: Alignment.center,
-                        child: const Text(
-                          'Chọn lại',
-                          style: TextStyle(
+                        child: Text(
+                          context.l10n.isVietnamese ? 'Chọn lại' : 'Change',
+                          style: const TextStyle(
                             fontFamily: DytavaTypography.primaryFont,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -836,102 +808,121 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Compare spreadsheets',
-            style: TextStyle(
-              fontFamily: DytavaTypography.primaryFont,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1E293B),
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Choose the original and updated versions',
-            style: TextStyle(
-              fontFamily: DytavaTypography.primaryFont,
-              fontSize: 13,
-              color: Color(0xFF64748B),
+          DytavaFadeSlide.staggered(
+            index: 0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  context.l10n.compareSpreadsheets,
+                  style: const TextStyle(
+                    fontFamily: DytavaTypography.primaryFont,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1E293B),
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  context.l10n.isVietnamese
+                      ? 'Chọn bản gốc và bản cập nhật'
+                      : 'Choose the original and updated versions',
+                  style: const TextStyle(
+                    fontFamily: DytavaTypography.primaryFont,
+                    fontSize: 13,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
 
           // File Card A and Card B
-          for (final side in SourceSide.values) _buildSideCard(context, side),
+          for (var i = 0; i < SourceSide.values.length; i++)
+            DytavaFadeSlide.staggered(
+              index: i + 1,
+              child: _buildSideCard(context, SourceSide.values[i]),
+            ),
 
           // Matching settings card
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x06000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Material(
-              type: MaterialType.transparency,
-              child: InkWell(
+          DytavaFadeSlide.staggered(
+            index: 3,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                onTap: () => _openMatchingSettingsModal(context),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
-                          borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => _openMatchingSettingsModal(context),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5E9),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.settings_outlined,
+                            color: DytavaColors.primary,
+                            size: 20,
+                          ),
                         ),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.settings_outlined,
-                          color: DytavaColors.primary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'Matching settings',
-                              style: TextStyle(
-                                fontFamily: DytavaTypography.primaryFont,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF1E293B),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                context.l10n.matchingSettings,
+                                style: const TextStyle(
+                                  fontFamily: DytavaTypography.primaryFont,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1E293B),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _matchingSubtitle(),
-                              style: const TextStyle(
-                                fontFamily: DytavaTypography.primaryFont,
-                                fontSize: 12,
-                                color: Color(0xFF64748B),
+                              const SizedBox(height: 2),
+                              Text(
+                                _matchingSubtitle(context),
+                                style: const TextStyle(
+                                  fontFamily: DytavaTypography.primaryFont,
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: Color(0xFF94A3B8),
-                        size: 22,
-                      ),
-                    ],
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Color(0xFF94A3B8),
+                          size: 22,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -965,7 +956,9 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Review ${totalSheetPairs > 0 ? totalSheetPairs : 4} sheet matches',
+                              context.l10n.isVietnamese
+                                  ? 'Xem xét ${totalSheetPairs > 0 ? totalSheetPairs : 4} cặp sheet'
+                                  : 'Review ${totalSheetPairs > 0 ? totalSheetPairs : 4} sheet matches',
                               style: const TextStyle(
                                 fontFamily: DytavaTypography.primaryFont,
                                 fontSize: 16,
@@ -975,7 +968,9 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              '$sheetsA sheets in original  ·  $sheetsB in updated',
+                              context.l10n.isVietnamese
+                                  ? '$sheetsA sheet ở bản gốc  ·  $sheetsB ở bản cập nhật'
+                                  : '$sheetsA sheets in original  ·  $sheetsB in updated',
                               style: const TextStyle(
                                 fontFamily: DytavaTypography.primaryFont,
                                 fontSize: 12,
@@ -983,9 +978,11 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'Some sheet pairings are uncertain. Confirm them to continue.',
-                              style: TextStyle(
+                            Text(
+                              context.l10n.isVietnamese
+                                  ? 'Một số cặp sheet chưa chắc chắn. Hãy xác nhận để tiếp tục.'
+                                  : 'Some sheet pairings are uncertain. Confirm them to continue.',
+                              style: const TextStyle(
                                 fontFamily: DytavaTypography.primaryFont,
                                 fontSize: 12.5,
                                 color: Color(0xFF475569),
@@ -1012,12 +1009,14 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Review matches',
-                            style: TextStyle(
+                            context.l10n.isVietnamese
+                                ? 'Xem xét ghép cặp'
+                                : 'Review matches',
+                            style: const TextStyle(
                               fontFamily: DytavaTypography.primaryFont,
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -1046,7 +1045,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             WorkflowPrimaryButton(
-              label: 'Compare files',
+              label: context.l10n.compareFiles,
               iconAsset: DytavaIcons.forward,
               onPressed:
                   flow.inputsReady &&
@@ -1070,8 +1069,12 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                 Flexible(
                   child: Text(
                     isUncertain
-                        ? 'Confirm sheet matches to continue'
-                        : 'Confirm file order: original A, updated B.',
+                        ? (context.l10n.isVietnamese
+                              ? 'Xác nhận ghép sheet để tiếp tục'
+                              : 'Confirm sheet matches to continue')
+                        : (context.l10n.isVietnamese
+                              ? 'Xác nhận thứ tự tệp: gốc A, cập nhật B.'
+                              : 'Confirm file order: original A, updated B.'),
                     style: const TextStyle(
                       fontFamily: DytavaTypography.primaryFont,
                       fontSize: 12,
@@ -1089,25 +1092,25 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
     );
   }
 
-  Future<void> _handleFileUpload(BuildContext context, SourceSide side) async {
+  Future<bool> _handleFileUpload(BuildContext context, SourceSide side) async {
     final flow = widget.flow;
     final generation = flow.slot(side).generation;
     final navigator = Navigator.of(context);
     final dialog = DialogRoute<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const PopScope(
+      builder: (_) => PopScope(
         canPop: false,
         child: AlertDialog(
           content: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(),
               ),
-              SizedBox(width: 16),
-              Expanded(child: Text('Đang chọn và đọc tệp…')),
+              const SizedBox(width: 16),
+              Expanded(child: Text(context.l10n.selectingAndReadingFile)),
             ],
           ),
         ),
@@ -1116,12 +1119,12 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
     unawaited(navigator.push(dialog));
     try {
       final info = await MobileFileUploadService.pickAndProcessFile(side);
-      if (info == null) return;
+      if (info == null) return false;
       if (!context.mounted ||
           !flow.usable ||
           flow.slot(side).generation != generation) {
         MobileFileUploadService.release(info.privateRef);
-        return;
+        return false;
       }
       await flow.selectSource(
         side,
@@ -1137,18 +1140,22 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
       if (context.mounted && !flow.duplicateSourceFiles) {
         DytavaToast.success(
           context,
-          'Đã tải ${info.fileName}: ${info.rowCount} hàng × ${info.columnCount} cột.',
-          title: 'Tải tệp thành công',
+          context.l10n.isVietnamese
+              ? 'Đã tải ${info.fileName}: ${info.rowCount} hàng × ${info.columnCount} cột.'
+              : 'Loaded ${info.fileName}: ${info.rowCount} rows × ${info.columnCount} cols.',
+          title: context.l10n.isVietnamese ? 'Tải tệp thành công' : 'File loaded',
         );
       }
+      return true;
     } catch (e) {
       if (context.mounted) {
         DytavaToast.error(
           context,
-          'Lỗi tải tệp: $e',
-          title: 'Không thể nạp tệp',
+          context.l10n.isVietnamese ? 'Lỗi tải tệp: $e' : 'File load error: $e',
+          title: context.l10n.isVietnamese ? 'Không thể nạp tệp' : 'Cannot load file',
         );
       }
+      return false;
     } finally {
       if (dialog.isActive) navigator.removeRoute(dialog);
     }
@@ -1178,28 +1185,36 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Quét OCR bảng tính · Nguồn $tag',
+                    context.l10n.isVietnamese
+                        ? 'Quét OCR bảng tính · Nguồn $tag'
+                        : 'OCR table scan · Source $tag',
                     style: DytavaTypography.titleMedium,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Module OCR độc lập (Tiếng Việt NFC): Tiền xử lý ảnh → Nhận dạng ký tự → Tái cấu trúc hàng/cột → Kiểm tra & hiệu chỉnh → Chuẩn hóa.',
+            Text(
+              context.l10n.isVietnamese
+                  ? 'Module OCR độc lập (Tiếng Việt NFC): Tiền xử lý ảnh → Nhận dạng ký tự → Tái cấu trúc hàng/cột → Kiểm tra & hiệu chỉnh → Chuẩn hóa.'
+                  : 'Independent OCR module: Image preprocessing → Text recognition → Row/column reconstruction → Review & edit → Normalization.',
               style: DytavaTypography.bodySmall,
             ),
             const SizedBox(height: 16),
             WorkflowSecondaryButton(
               key: const ValueKey('ocr-pick-camera'),
-              label: 'Chụp ảnh bảng tính / tài liệu',
+              label: context.l10n.isVietnamese
+                  ? 'Chụp ảnh bảng tính / tài liệu'
+                  : 'Capture table / document from camera',
               iconAsset: DytavaIcons.camera,
               onPressed: () =>
                   Navigator.pop(sheetContext, OcrImageSourceKind.camera),
             ),
             WorkflowSecondaryButton(
               key: const ValueKey('ocr-pick-gallery'),
-              label: 'Chọn ảnh PNG / JPEG từ thiết bị',
+              label: context.l10n.isVietnamese
+                  ? 'Chọn ảnh PNG / JPEG từ thiết bị'
+                  : 'Choose PNG / JPEG image from device',
               iconAsset: DytavaIcons.upload,
               onPressed: () =>
                   Navigator.pop(sheetContext, OcrImageSourceKind.gallery),

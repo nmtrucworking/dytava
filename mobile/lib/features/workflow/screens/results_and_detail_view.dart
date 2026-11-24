@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:file_picker/file_picker.dart';
@@ -12,6 +13,7 @@ import '../../../domain/workflow.dart';
 import '../../shared/text_difference_evidence.dart';
 import '../widgets/mobile_aligned_grid.dart';
 import '../widgets/workflow_common_widgets.dart';
+import '../../../l10n/app_localizations.dart';
 
 enum _ChangeFilter {
   all,
@@ -21,6 +23,27 @@ enum _ChangeFilter {
   unresolved,
   equivalent,
   same,
+}
+
+enum DiffCategory { modified, added, removed, unresolved, equivalent, same }
+
+sealed class DifferenceDisplayItem {}
+
+class CellDifferenceItem extends DifferenceDisplayItem {
+  final CellDifference cell;
+  final DiffCategory category;
+  CellDifferenceItem(this.cell, this.category);
+}
+
+class StructuralDifferenceItem extends DifferenceDisplayItem {
+  final StructuralChange change;
+  final DiffCategory category;
+  StructuralDifferenceItem(this.change, this.category);
+}
+
+class UnresolvedRecordItem extends DifferenceDisplayItem {
+  final RecordUnresolved record;
+  UnresolvedRecordItem(this.record);
 }
 
 class ResultsScreenView extends StatefulWidget {
@@ -47,7 +70,10 @@ class ResultsScreenView extends StatefulWidget {
 
 class _ResultsScreenViewState extends State<ResultsScreenView> {
   _ChangeFilter _filter = _ChangeFilter.all;
-  int _limit = 30;
+  int _currentPage = 1;
+  static const int _pageSize = 5;
+  final GlobalKey _cardsSectionKey = GlobalKey();
+
   WorkflowController get flow => widget.flow;
 
   @override
@@ -62,10 +88,50 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
     };
   }
 
+  bool _autoFocusingScroll = false;
+
+  void _scrollToCards() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = _cardsSectionKey.currentContext;
+      if (ctx != null) {
+        _autoFocusingScroll = true;
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+          alignment: 0.0,
+        ).whenComplete(() {
+          _autoFocusingScroll = false;
+        });
+      }
+    });
+  }
+
+  bool _onScrollEnd(ScrollEndNotification notification) {
+    if (_autoFocusingScroll || widget.resultViewTab == 1) return false;
+    if (MediaQuery.maybeOf(context)?.disableAnimations == true) return false;
+    final metrics = notification.metrics;
+    if (metrics.axis != Axis.vertical) return false;
+    // When user scrolls down from the top header into the transition area,
+    // auto-focus onto the difference cards section so the page fits the screen.
+    if (metrics.pixels >= 48 && metrics.pixels <= 190 && metrics.maxScrollExtent > 190) {
+      _scrollToCards();
+    }
+    return false;
+  }
+
+  void _goToPage(int page) {
+    setState(() {
+      _currentPage = page;
+    });
+    _scrollToCards();
+  }
+
   void _select(_ChangeFilter value) {
     setState(() {
       _filter = value;
-      _limit = 30;
+      _currentPage = 1;
     });
     flow.filterResults(switch (value) {
       _ChangeFilter.modified => DecisionStatus.different,
@@ -74,42 +140,98 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
       _ChangeFilter.same => DecisionStatus.exact,
       _ => null,
     });
+    _scrollToCards();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final result = flow.displayedResult!;
-    final modified = result.count(DecisionStatus.different);
-    final added = result.structural
+
+    // Classify all cells into Added, Removed, Modified, etc., while preserving
+    // natural worksheet order in [allCellItems] so Sheet 1 (e.g. Planned) stays first.
+    final allCellItems = <CellDifferenceItem>[];
+    final modifiedCells = <CellDifference>[];
+    final addedCells = <CellDifference>[];
+    final removedCells = <CellDifference>[];
+    final unresolvedCells = <CellDifference>[];
+    final equivalentCells = <CellDifference>[];
+    final exactCells = <CellDifference>[];
+
+    for (final cell in result.cells) {
+      if (cell.decision.status == DecisionStatus.unresolved) {
+        unresolvedCells.add(cell);
+      } else if (cell.decision.status == DecisionStatus.equivalent) {
+        equivalentCells.add(cell);
+      } else if (cell.decision.status == DecisionStatus.exact) {
+        exactCells.add(cell);
+      } else {
+        final aEmpty = _isCellEmpty(cell.a);
+        final bEmpty = _isCellEmpty(cell.b);
+        if (aEmpty && !bEmpty) {
+          addedCells.add(cell);
+          allCellItems.add(CellDifferenceItem(cell, DiffCategory.added));
+        } else if (!aEmpty && bEmpty) {
+          removedCells.add(cell);
+          allCellItems.add(CellDifferenceItem(cell, DiffCategory.removed));
+        } else {
+          modifiedCells.add(cell);
+          allCellItems.add(CellDifferenceItem(cell, DiffCategory.modified));
+        }
+      }
+    }
+
+    final addedStructural = result.structural
         .where((s) => s.kind.contains('ADDED'))
         .toList();
-    final removed = result.structural
+    final removedStructural = result.structural
         .where((s) => s.kind.contains('REMOVED'))
         .toList();
-    final unresolved =
+
+    final modifiedCount = modifiedCells.length;
+    final addedCount = addedCells.length + addedStructural.length;
+    final removedCount = removedCells.length + removedStructural.length;
+    final unresolvedCount = unresolvedCells.length +
         result.count(DecisionStatus.unresolved) +
         result.unresolvedRecords.length;
-    final total = modified + added.length + removed.length;
-    final cells = result.cells
-        .where(
-          (c) => switch (_filter) {
-            _ChangeFilter.all || _ChangeFilter.modified =>
-              c.decision.status == DecisionStatus.different,
-            _ChangeFilter.unresolved =>
-              c.decision.status == DecisionStatus.unresolved,
-            _ChangeFilter.equivalent =>
-              c.decision.status == DecisionStatus.equivalent,
-            _ChangeFilter.same => c.decision.status == DecisionStatus.exact,
-            _ => false,
-          },
-        )
-        .toList();
-    final structural = switch (_filter) {
-      _ChangeFilter.all => [...added, ...removed],
-      _ChangeFilter.added => added,
-      _ChangeFilter.removed => removed,
-      _ => <StructuralChange>[],
+    final total = modifiedCount + addedCount + removedCount;
+
+    // Filter items based on selected category
+    final List<DifferenceDisplayItem> items = switch (_filter) {
+      _ChangeFilter.all => [
+        ...allCellItems,
+        for (final s in addedStructural) StructuralDifferenceItem(s, DiffCategory.added),
+        for (final s in removedStructural) StructuralDifferenceItem(s, DiffCategory.removed),
+        for (final c in unresolvedCells) CellDifferenceItem(c, DiffCategory.unresolved),
+      ],
+      _ChangeFilter.modified => [
+        for (final c in modifiedCells) CellDifferenceItem(c, DiffCategory.modified),
+      ],
+      _ChangeFilter.added => [
+        for (final c in addedCells) CellDifferenceItem(c, DiffCategory.added),
+        for (final s in addedStructural) StructuralDifferenceItem(s, DiffCategory.added),
+      ],
+      _ChangeFilter.removed => [
+        for (final c in removedCells) CellDifferenceItem(c, DiffCategory.removed),
+        for (final s in removedStructural) StructuralDifferenceItem(s, DiffCategory.removed),
+      ],
+      _ChangeFilter.unresolved => [
+        for (final c in unresolvedCells) CellDifferenceItem(c, DiffCategory.unresolved),
+        for (final r in result.unresolvedRecords) UnresolvedRecordItem(r),
+      ],
+      _ChangeFilter.equivalent => [
+        for (final c in equivalentCells) CellDifferenceItem(c, DiffCategory.equivalent),
+      ],
+      _ChangeFilter.same => [
+        for (final c in exactCells) CellDifferenceItem(c, DiffCategory.same),
+      ],
     };
+
+    final totalItems = items.length;
+    final totalPages = (totalItems / _pageSize).ceil().clamp(1, 999999);
+    final safePage = _currentPage.clamp(1, totalPages);
+    final pagedItems = items.skip((safePage - 1) * _pageSize).take(_pageSize).toList();
+
     final sheets = flow.result!.sheetResults;
     final displayedWarnings = flow.selectedSheetPairId == null
         ? flow.result!.warnings
@@ -134,8 +256,10 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                 )
               : sheets.first);
 
-    return WorkflowScreenLayout(
-      content: Column(
+    return NotificationListener<ScrollEndNotification>(
+      onNotification: _onScrollEnd,
+      child: WorkflowScreenLayout(
+        content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (flow.duplicateSourceFiles)
@@ -148,18 +272,18 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFFED7AA)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.copy_all_rounded,
                     color: Color(0xFFD97706),
                     size: 22,
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Hai tệp A và B hoàn toàn giống nhau.',
-                      style: TextStyle(
+                      l10n.identicalFilesTitle,
+                      style: const TextStyle(
                         fontFamily: DytavaTypography.primaryFont,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -171,147 +295,246 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
               ),
             ),
           if (!isTableView) ...[
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F5B38),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 140,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E7048),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'RESULTS READY',
-                      style: TextStyle(
-                        fontFamily: DytavaTypography.primaryFont,
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                        color: Colors.white,
-                      ),
-                    ),
+            DytavaFadeSlide.staggered(
+              index: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0E5332), Color(0xFF1A6E45)],
+                    begin: Alignment.bottomLeft,
+                    end: Alignment.topRight,
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '$total differences',
-                    style: const TextStyle(
-                      fontFamily: DytavaTypography.primaryFont,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0F5B38).withValues(alpha: 0.20),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 12,
-                    children: [
-                      Text(
-                        '${sheets.isEmpty ? 1 : sheets.length} sheets compared · ${result.cells.length} cells',
-                        style: DytavaTypography.bodySmall.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
-                      if (unresolved > 0)
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(48, 28),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF14633C),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              l10n.resultsReadyUpper,
+                              style: const TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                          onPressed: () => _select(_ChangeFilter.unresolved),
-                          child: Text(
-                            '$unresolved unresolved ›',
-                            style: const TextStyle(fontSize: 12),
+                          const SizedBox(height: 4),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              l10n.totalDifferencesCount(total),
+                              style: const TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 22,
+                                height: 1.1,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                for (final item in [
-                  (
-                    modified,
-                    'Modified',
-                    const Color(0xFFB45309),
-                    _ChangeFilter.modified,
-                  ),
-                  (
-                    added.length,
-                    'Added',
-                    DytavaColors.primary,
-                    _ChangeFilter.added,
-                  ),
-                  (
-                    removed.length,
-                    'Removed',
-                    DytavaColors.removed,
-                    _ChangeFilter.removed,
-                  ),
-                ]) ...[
-                  if (item.$2 != 'Modified') const SizedBox(width: 8),
-                  Expanded(
-                    child: Material(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: DytavaColors.border),
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () => _select(item.$4),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 10,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: DytavaCountUpText(
-                                  value: item.$1,
-                                  style: TextStyle(
+                          if (unresolvedCount > 0) ...[
+                            const SizedBox(height: 5),
+                            InkWell(
+                              onTap: () => _select(_ChangeFilter.unresolved),
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.16),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  l10n.reviewUnresolvedCount(unresolvedCount),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
                                     fontFamily: DytavaTypography.primaryFont,
-                                    color: item.$3,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 10.5,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              const Icon(
+                                Icons.description_outlined,
+                                size: 13,
+                                color: Colors.white70,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
                                 child: Text(
-                                  item.$2,
+                                  l10n.isVietnamese
+                                      ? '${sheets.isEmpty ? 1 : sheets.length} sheet đã so sánh'
+                                      : '${sheets.isEmpty ? 1 : sheets.length} sheets compared',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontFamily: DytavaTypography.primaryFont,
-                                    fontSize: 12,
-                                    color: Color(0xFF64748B),
+                                    fontSize: 11.5,
+                                    color: Colors.white,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            l10n.isVietnamese
+                                ? '${result.cells.length} ô'
+                                : '${result.cells.length} cells',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: DytavaTypography.primaryFont,
+                              fontSize: 11.5,
+                              color: Colors.white.withValues(alpha: 0.88),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            DytavaFadeSlide.staggered(
+              index: 1,
+              child: Row(
+                children: [
+                for (final item in [
+                  (
+                    modifiedCount,
+                    l10n.modifiedFilter,
+                    const Color(0xFF92400E),
+                    _ChangeFilter.modified,
+                  ),
+                  (
+                    addedCount,
+                    l10n.addedFilter,
+                    const Color(0xFF0E7A3E),
+                    _ChangeFilter.added,
+                  ),
+                  (
+                    removedCount,
+                    l10n.deletedFilter,
+                    const Color(0xFFB93829),
+                    _ChangeFilter.removed,
+                  ),
+                ]) ...[
+                  if (item.$4 != _ChangeFilter.modified) const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFFFFF), Color(0xFFF7FBF8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2EAE4)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x04000000),
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () => _select(item.$4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 7,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: DytavaCountUpText(
+                                      value: item.$1,
+                                      style: TextStyle(
+                                        fontFamily: DytavaTypography.primaryFont,
+                                        color: item.$3,
+                                        fontSize: 20,
+                                        height: 1.05,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerRight,
+                                    child: Text(
+                                      item.$2,
+                                      style: const TextStyle(
+                                        fontFamily: DytavaTypography.primaryFont,
+                                        fontSize: 11,
+                                        color: Color(0xFF64748B),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -320,84 +543,103 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                 ],
               ],
             ),
-            const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 10),
           ],
-          Row(
-            children: [
-              Expanded(
-                child: sheets.isEmpty
-                    ? const Text(
-                        'All sheets (1)',
-                        style: DytavaTypography.titleMedium,
-                      )
-                    : DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: isTableView
-                              ? (activeTableSheet.sheetPair?.id ?? 'ALL')
-                              : (flow.selectedSheetPairId ?? 'ALL'),
+          Container(
+            key: _cardsSectionKey,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: sheets.isEmpty
+                      ? Text(
+                          l10n.allSheetsCount(1),
                           style: DytavaTypography.titleMedium,
-                          items: [
-                            if (!isTableView)
-                              DropdownMenuItem(
-                                value: 'ALL',
-                                child: Text('All sheets (${sheets.length})'),
+                        )
+                      : ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 195),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              isDense: true,
+                              value: isTableView
+                                  ? (activeTableSheet.sheetPair?.id ?? 'ALL')
+                                  : (flow.selectedSheetPairId ?? 'ALL'),
+                              style: DytavaTypography.titleMedium,
+                              icon: const Icon(
+                                Icons.arrow_drop_down_rounded,
+                                color: Color(0xFF1E293B),
+                                size: 22,
                               ),
-                            for (final sheet in sheets)
-                              DropdownMenuItem(
-                                value: sheet.sheetPair!.id,
-                                child: Text(
-                                  sheet.sheetPair!.label,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                          ],
-                          onChanged: (value) {
-                            setState(() => _limit = 30);
-                            flow.selectResultSheet(
-                              value == 'ALL' ? null : value,
-                            );
-                          },
-                        ),
-                      ),
-              ),
-              Flexible(
-                child: TextButton(
-                  onPressed: () {
-                    final nextTab = widget.resultViewTab == 1 ? 0 : 1;
-                    if (nextTab == 1 &&
-                        sheets.isNotEmpty &&
-                        flow.selectedSheetPairId == null) {
-                      flow.selectResultSheet(sheets.first.sheetPair!.id);
-                    }
-                    widget.onResultViewTabChanged(nextTab);
-                    unawaited(
-                      SystemChrome.setPreferredOrientations(
-                        nextTab == 1
-                            ? const [
-                                DeviceOrientation.landscapeLeft,
-                                DeviceOrientation.landscapeRight,
-                                DeviceOrientation.portraitUp,
-                              ]
-                            : const [
-                                DeviceOrientation.portraitUp,
-                                DeviceOrientation.portraitDown,
-                                DeviceOrientation.landscapeLeft,
-                                DeviceOrientation.landscapeRight,
+                              items: [
+                                if (!isTableView)
+                                  DropdownMenuItem(
+                                    value: 'ALL',
+                                    child: Text(
+                                      l10n.allSheetsCount(sheets.length),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                for (final sheet in sheets)
+                                  DropdownMenuItem(
+                                    value: sheet.sheetPair!.id,
+                                    child: Text(
+                                      sheet.sheetPair!.label,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
                               ],
+                              onChanged: (value) {
+                                setState(() => _currentPage = 1);
+                                flow.selectResultSheet(
+                                  value == 'ALL' ? null : value,
+                                );
+                                _scrollToCards();
+                              },
+                            ),
+                          ),
+                        ),
+                ),
+                Flexible(
+                  child: TextButton(
+                    onPressed: () {
+                      final nextTab = widget.resultViewTab == 1 ? 0 : 1;
+                      if (nextTab == 1 &&
+                          sheets.isNotEmpty &&
+                          flow.selectedSheetPairId == null) {
+                        flow.selectResultSheet(sheets.first.sheetPair!.id);
+                      }
+                      widget.onResultViewTabChanged(nextTab);
+                      unawaited(
+                        SystemChrome.setPreferredOrientations(
+                          nextTab == 1
+                              ? const [
+                                  DeviceOrientation.landscapeLeft,
+                                  DeviceOrientation.landscapeRight,
+                                  DeviceOrientation.portraitUp,
+                                ]
+                              : const [
+                                  DeviceOrientation.portraitUp,
+                                  DeviceOrientation.portraitDown,
+                                  DeviceOrientation.landscapeLeft,
+                                  DeviceOrientation.landscapeRight,
+                                ],
+                        ),
+                      );
+                    },
+                    child: Text(
+                      isTableView ? l10n.listViewToggle : l10n.tableViewToggle,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: DytavaColors.textSecondary,
+                        fontWeight: FontWeight.w500,
                       ),
-                    );
-                  },
-                  child: Text(
-                    isTableView ? 'List view ›' : 'Table view ›',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: DytavaColors.textSecondary,
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           if (!isTableView) ...[
             const SizedBox(height: 10),
@@ -406,18 +648,18 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
               child: Row(
                 children: [
                   for (final item in [
-                    (_ChangeFilter.all, 'All $total'),
-                    (_ChangeFilter.modified, 'Modified $modified'),
-                    (_ChangeFilter.added, 'Added ${added.length}'),
-                    (_ChangeFilter.removed, 'Removed ${removed.length}'),
-                    (_ChangeFilter.unresolved, 'Unresolved $unresolved'),
+                    (_ChangeFilter.all, '${l10n.all} $total'),
+                    (_ChangeFilter.modified, '${l10n.modifiedFilter} $modifiedCount'),
+                    (_ChangeFilter.added, '${l10n.addedFilter} $addedCount'),
+                    (_ChangeFilter.removed, '${l10n.deletedFilter} $removedCount'),
+                    (_ChangeFilter.unresolved, '${l10n.needsReviewVerdict} $unresolvedCount'),
                     (
                       _ChangeFilter.equivalent,
-                      'Equivalent ${result.count(DecisionStatus.equivalent)}',
+                      '${l10n.isVietnamese ? "Tương đương" : "Equivalent"} ${equivalentCells.length}',
                     ),
                     (
                       _ChangeFilter.same,
-                      'Same ${result.count(DecisionStatus.exact)}',
+                      '${l10n.matchingVerdict} ${exactCells.length}',
                     ),
                   ])
                     Padding(
@@ -428,14 +670,14 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
                         label: Text(item.$2),
                         onSelected: (_) => _select(item.$1),
                         selectedColor: DytavaColors.primary,
-                        backgroundColor: const Color(0xFFE8F5E9),
+                        backgroundColor: const Color(0xFFE6F0EA),
                         side: BorderSide.none,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         labelStyle: TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                           color: _filter == item.$1
                               ? Colors.white
@@ -455,78 +697,76 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
               onOpenCell: widget.onOpenDetail,
             )
           else ...[
-          for (final cell in cells.take(_limit)) _cellCard(cell),
-          for (final change in structural.take(
-            (_limit - cells.length).clamp(0, _limit),
-          ))
-            _structuralCard(change),
-          if (_filter == _ChangeFilter.unresolved)
-            for (final record in result.unresolvedRecords.take(_limit))
-              WorkflowSectionCard(
-                color: DytavaColors.modifiedBg,
-                children: [
-                  const Text(
-                    'No reliable one-to-one match',
-                    style: DytavaTypography.titleSmall,
+            for (final item in pagedItems)
+              switch (item) {
+                CellDifferenceItem(:final cell, :final category) =>
+                  _cellCard(cell, category),
+                StructuralDifferenceItem(:final change, :final category) =>
+                  _structuralCard(change, category),
+                UnresolvedRecordItem(:final record) =>
+                  WorkflowSectionCard(
+                    color: DytavaColors.modifiedBg,
+                    children: [
+                      Text(
+                        l10n.noReliableMatch,
+                        style: DytavaTypography.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(record.reason, style: DytavaTypography.bodySmall),
+                      Text(
+                        'A: ${record.recordsA.join(', ')}\nB: ${record.recordsB.join(', ')}',
+                        style: DytavaTypography.bodySmall,
+                      ),
+                      Text(
+                        l10n.keptUnresolvedNotice,
+                        style: DytavaTypography.bodySmall,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(record.reason, style: DytavaTypography.bodySmall),
-                  Text(
-                    'A: ${record.recordsA.join(', ')}\nB: ${record.recordsB.join(', ')}',
-                    style: DytavaTypography.bodySmall,
-                  ),
-                  const Text(
-                    'Kept unresolved. No changes are inferred.',
-                    style: DytavaTypography.bodySmall,
-                  ),
-                ],
-              ),
-          if (cells.isEmpty &&
-              structural.isEmpty &&
-              !(_filter == _ChangeFilter.unresolved &&
-                  result.unresolvedRecords.isNotEmpty))
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 36),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.check_circle_outline,
-                    color: DytavaColors.primary,
-                    size: 40,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _filter == _ChangeFilter.all
-                        ? 'No differences found'
-                        : 'No changes in this filter',
-                    style: DytavaTypography.titleMedium,
-                  ),
-                  if (unresolved > 0)
-                    TextButton(
-                      onPressed: () => _select(_ChangeFilter.unresolved),
-                      child: Text('Review $unresolved unresolved ›'),
+              },
+            if (items.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 36),
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline,
+                      color: DytavaColors.primary,
+                      size: 40,
                     ),
-                ],
+                    const SizedBox(height: 12),
+                    Text(
+                      _filter == _ChangeFilter.all
+                          ? l10n.noDifferencesFound
+                          : l10n.noChangesInFilter,
+                      style: DytavaTypography.titleMedium,
+                    ),
+                    if (unresolvedCount > 0)
+                      TextButton(
+                        onPressed: () => _select(_ChangeFilter.unresolved),
+                        child: Text(l10n.reviewUnresolvedCount(unresolvedCount)),
+                      ),
+                  ],
+                ),
               ),
-            ),
-          if (cells.length + structural.length > _limit)
-            TextButton(
-              onPressed: () => setState(() => _limit += 30),
-              child: const Text('Show more changes'),
-            ),
-        ],
-        for (final warning in displayedWarnings)
-          _warningCard(warning),
-          const SizedBox(height: 16),
+            for (final warning in displayedWarnings)
+              _warningCard(warning),
+            _buildPaginationBar(totalItems, totalPages),
+          ],
+          if (isTableView)
+            for (final warning in displayedWarnings)
+              _warningCard(warning),
+          const SizedBox(height: 12),
         ],
       ),
       bottomBar: StickyBottomBar(
         child: WorkflowPrimaryButton(
-          label: 'Export report',
+          label: l10n.exportReport,
           iconAsset: DytavaIcons.export,
           onPressed: widget.onOpenExport,
         ),
       ),
+    ),
     );
   }
 
@@ -534,7 +774,7 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
     final images = <Uint8List>[];
     final seen = <String>{};
 
-    void scanSnapshot(InputSnapshot? snap) {
+    void scanSnapshot(InputSnapshot? snap, {required bool drawingOnly}) {
       if (snap == null) return;
       final sheets =
           snap.workbookSheets.isEmpty ? [snap] : snap.workbookSheets;
@@ -543,6 +783,7 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
           for (final r in s.records) {
             for (final c in r.cells.values) {
               if (c.kind == CellKind.image &&
+                  (!drawingOnly || c.imagePlacement == 'drawingAnchor') &&
                   c.imageBytes != null &&
                   c.imageBytes!.isNotEmpty) {
                 final key = c.imageDigest ?? c.rawLexeme ?? '';
@@ -556,8 +797,9 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
       }
     }
 
-    scanSnapshot(flow.slot(SourceSide.a).snapshot);
-    scanSnapshot(flow.slot(SourceSide.b).snapshot);
+    // Prefer Place over Cells (drawingAnchor) images for this sheet
+    scanSnapshot(flow.slot(SourceSide.a).snapshot, drawingOnly: true);
+    scanSnapshot(flow.slot(SourceSide.b).snapshot, drawingOnly: true);
 
     if (images.isEmpty && flow.result != null) {
       for (final diff in flow.result!.cells) {
@@ -582,6 +824,7 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
   }
 
   Widget _warningCard(String warning) {
+    final l10n = context.l10n;
     final isImageNotice = warning.contains('ảnh') ||
         warning.contains('đối tượng nổi') ||
         warning.contains('Place over Cells');
@@ -592,7 +835,9 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
       title = warning.substring(0, colonIndex).trim();
       description = warning.substring(colonIndex + 1).trim();
     } else {
-      title = isImageNotice ? 'Ảnh / Đối tượng nổi' : 'Thông báo';
+      title = isImageNotice
+          ? (l10n.isVietnamese ? 'Ảnh / Đối tượng nổi' : 'Image / Floating object')
+          : (l10n.isVietnamese ? 'Thông báo' : 'Notice');
       description = warning;
     }
 
@@ -601,189 +846,877 @@ class _ResultsScreenViewState extends State<ResultsScreenView> {
 
     return Padding(
       key: ValueKey('warning-${warning.hashCode}'),
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: DytavaColors.border),
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFCF5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFDE68A)),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    isImageNotice ? Icons.layers_outlined : Icons.info_outline,
-                    size: 16,
-                    color: isImageNotice
-                        ? const Color(0xFFB45309)
-                        : DytavaColors.textSecondary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: DytavaTypography.titleSmall,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (isImageNotice)
-                    _badge(
-                      'Place over Cells',
-                      const Color(0xFFB45309),
-                      const Color(0xFFFEF3C7),
-                    )
-                  else
-                    _badge(
-                      'Notice',
-                      DytavaColors.primaryDark,
-                      DytavaColors.primaryLight,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                style: DytavaTypography.bodySmall.copyWith(
-                  color: DytavaColors.textSecondary,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isImageNotice ? Icons.layers_outlined : Icons.info_outline,
+                  size: 14,
+                  color: isImageNotice
+                      ? const Color(0xFFB45309)
+                      : DytavaColors.textSecondary,
                 ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontFamily: DytavaTypography.primaryFont,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1E293B),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (isImageNotice)
+                  _badge(
+                    l10n.placeOverCellsBadge,
+                    const Color(0xFFB45309),
+                    const Color(0xFFFEF3C7),
+                  )
+                else
+                  _badge(
+                    l10n.isVietnamese ? 'Thông báo' : 'Notice',
+                    DytavaColors.primaryDark,
+                    DytavaColors.primaryLight,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 3),
+            Text(
+              description,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: DytavaTypography.primaryFont,
+                fontSize: 11.5,
+                color: Color(0xFF64748B),
               ),
-              if (images.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                for (final img in images)
-                  Container(
-                    height: 100,
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.all(6),
+            ),
+            if (images.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 48,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: images.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (_, idx) => Container(
+                    width: 88,
+                    height: 48,
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: DytavaColors.border),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
                     child: Image.memory(
-                      img,
+                      images[idx],
                       fit: BoxFit.contain,
                       filterQuality: FilterQuality.none,
                     ),
                   ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaginationBar(int totalItems, int totalPages) {
+    if (totalItems <= _pageSize) return const SizedBox.shrink();
+    final l10n = context.l10n;
+    final safePage = _currentPage.clamp(1, totalPages);
+
+    // Compute visible page window (up to 5 page buttons)
+    const maxButtons = 5;
+    int startPage = (safePage - 2).clamp(1, totalPages);
+    int endPage = (startPage + maxButtons - 1).clamp(1, totalPages);
+    if (endPage - startPage + 1 < maxButtons) {
+      startPage = (endPage - maxButtons + 1).clamp(1, totalPages);
+    }
+
+    final startItem = (safePage - 1) * _pageSize + 1;
+    final endItem = (safePage * _pageSize).clamp(1, totalItems);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  key: const ValueKey('results-prev-page'),
+                  icon: const Icon(Icons.chevron_left_rounded, size: 22),
+                  onPressed: safePage > 1 ? () => _goToPage(safePage - 1) : null,
+                  tooltip: l10n.previousPage,
+                  visualDensity: VisualDensity.compact,
+                ),
+                const SizedBox(width: 2),
+                for (int p = startPage; p <= endPage; p++) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: InkWell(
+                      key: ValueKey('results-page-$p'),
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: p == safePage ? null : () => _goToPage(p),
+                      child: Container(
+                        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: p == safePage
+                              ? DytavaColors.primary
+                              : const Color(0xFFE8F2EC),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$p',
+                          style: TextStyle(
+                            fontFamily: DytavaTypography.primaryFont,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: p == safePage
+                                ? Colors.white
+                                : const Color(0xFF334155),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 2),
+                IconButton(
+                  key: const ValueKey('results-next-page'),
+                  icon: const Icon(Icons.chevron_right_rounded, size: 22),
+                  onPressed: safePage < totalPages ? () => _goToPage(safePage + 1) : null,
+                  tooltip: l10n.nextPage,
+                  visualDensity: VisualDensity.compact,
+                ),
               ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.isVietnamese
+                ? 'Hiển thị $startItem–$endItem / $totalItems thay đổi · Trang $safePage/$totalPages'
+                : 'Showing $startItem–$endItem of $totalItems · Page $safePage of $totalPages',
+            style: const TextStyle(
+              fontFamily: DytavaTypography.primaryFont,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cellCard(CellDifference cell, DiffCategory category) {
+    final l10n = context.l10n;
+    final (label, color, bg) = switch (category) {
+      DiffCategory.added => (
+        l10n.isVietnamese ? 'Thêm mới' : 'Added',
+        const Color(0xFF15803D),
+        const Color(0xFFE6F2EA),
+      ),
+      DiffCategory.removed => (
+        l10n.isVietnamese ? 'Đã xóa' : 'Removed',
+        const Color(0xFFB93829),
+        const Color(0xFFFBE9E7),
+      ),
+      DiffCategory.modified => (
+        l10n.isVietnamese ? 'Đã sửa' : 'Modified',
+        const Color(0xFF8D5411),
+        const Color(0xFFFBF0D9),
+      ),
+      DiffCategory.unresolved => (
+        l10n.isVietnamese ? 'Cần xem xét' : 'Unresolved',
+        const Color(0xFF8D5411),
+        const Color(0xFFFBF0D9),
+      ),
+      DiffCategory.equivalent => (
+        l10n.isVietnamese ? 'Tương đương' : 'Equivalent',
+        DytavaColors.primary,
+        const Color(0xFFE8F5E9),
+      ),
+      DiffCategory.same => (
+        l10n.isVietnamese ? 'Trùng khớp' : 'Same',
+        const Color(0xFF64748B),
+        const Color(0xFFF1F5F2),
+      ),
+    };
+
+    return Padding(
+      key: ValueKey('change-${cell.id}'),
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE2EAE4)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x05000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () => widget.onOpenDetail(cell.id),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _cellLocation(flow, cell, SourceSide.a),
+                          style: const TextStyle(
+                            fontFamily: DytavaTypography.primaryFont,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      _badge(label, color, bg),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCellCardBody(cell, category),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCellCardBody(CellDifference cell, DiffCategory category) {
+    final l10n = context.l10n;
+    final isAImage = cell.a.kind == CellKind.image &&
+        cell.a.imageBytes != null &&
+        cell.a.imageBytes!.isNotEmpty;
+    final isBImage = cell.b.kind == CellKind.image &&
+        cell.b.imageBytes != null &&
+        cell.b.imageBytes!.isNotEmpty;
+
+    // Requirement 2a: ADDED -> ONLY show Updated box (original is omitted)
+    if (category == DiffCategory.added) {
+      return _singleValueBox(
+        label: l10n.isVietnamese ? 'Cập nhật' : 'Updated',
+        labelColor: const Color(0xFF5B7065),
+        bg: const Color(0xFFE8F2EC),
+        child: isBImage
+            ? _renderedCellImage(cell.b, height: 68)
+            : Text(
+                cell.b.rawLexeme ?? '',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: DytavaTypography.primaryFont,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: Color(0xFF15803D),
+                ),
+              ),
+      );
+    }
+
+    // REMOVED -> show Original and Updated with red dash
+    if (category == DiffCategory.removed) {
+      return Row(
+        children: [
+          Expanded(
+            child: _value(
+              l10n.isVietnamese ? 'Gốc' : 'Original',
+              cell.a.rawLexeme ?? '—',
+              const Color(0xFFF3F5F4),
+              const Color(0xFF1E293B),
+              sourceCell: cell.a,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _singleValueBox(
+              label: l10n.isVietnamese ? 'Cập nhật' : 'Updated',
+              labelColor: const Color(0xFF64748B),
+              bg: const Color(0xFFFCECEB),
+              child: const Text(
+                '—',
+                style: TextStyle(
+                  fontFamily: DytavaTypography.primaryFont,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Color(0xFFB93829),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // MODIFIED / other
+    if (isAImage || isBImage) {
+      return Row(
+        children: [
+          Expanded(
+            child: _value(
+              l10n.isVietnamese ? 'Gốc' : 'Original',
+              cell.a.rawLexeme ?? '—',
+              const Color(0xFFF3F5F4),
+              const Color(0xFF1E293B),
+              sourceCell: cell.a,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _value(
+              l10n.isVietnamese ? 'Cập nhật' : 'Updated',
+              cell.b.rawLexeme ?? '—',
+              const Color(0xFFFDF3DC),
+              const Color(0xFF8D5411),
+              sourceCell: cell.b,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final rawA = cell.a.rawLexeme ?? '';
+    final rawB = cell.b.rawLexeme ?? '';
+
+    // Requirement 2b: Numeric or similar atomic types -> render original and updated side-by-side
+    if (_isNumericOrAtomic(rawA, rawB)) {
+      return Row(
+        children: [
+          Expanded(
+            child: _value(
+              l10n.isVietnamese ? 'Gốc' : 'Original',
+              rawA.isEmpty ? '—' : rawA,
+              const Color(0xFFF3F5F4),
+              const Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _value(
+              l10n.isVietnamese ? 'Cập nhật' : 'Updated',
+              rawB.isEmpty ? '—' : rawB,
+              const Color(0xFFFDF3DC),
+              const Color(0xFF8D5411),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Requirement 2b: Text editing -> single Updated box with inline diff:
+    // Italicized content, red strikethrough old content, green new content,
+    // prioritizing changed points, multiple change points separated by "|".
+    return _singleValueBox(
+      label: l10n.isVietnamese ? 'Cập nhật' : 'Updated',
+      labelColor: const Color(0xFF64748B),
+      bg: const Color(0xFFFDF3DC),
+      child: _buildInlineTextDiff(rawA, rawB),
+    );
+  }
+
+  String _structuralLabel(StructuralChange change) {
+    final l10n = context.l10n;
+    if (!change.kind.startsWith('ROW_')) return change.recordId;
+    final info =
+        flow.displayedResult?.recordInfo(change.side, change.recordId) ??
+        flow.result?.recordInfo(change.side, change.recordId);
+    if (info != null) {
+      return '${info.$1 ?? l10n.sheet} · ${l10n.isVietnamese ? "Hàng" : "Row"} ${info.$2 + 2}';
+    }
+    return l10n.unpairedRow;
+  }
+
+  Widget _structuralCard(StructuralChange change, DiffCategory category) {
+    final l10n = context.l10n;
+    final isAdded = category == DiffCategory.added;
+    final (label, color, bg) = isAdded
+        ? (
+            l10n.isVietnamese ? 'Thêm mới' : 'Added',
+            const Color(0xFF15803D),
+            const Color(0xFFE6F2EA),
+          )
+        : (
+            l10n.isVietnamese ? 'Đã xóa' : 'Removed',
+            const Color(0xFFB93829),
+            const Color(0xFFFBE9E7),
+          );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE2EAE4)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x05000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _structuralLabel(change),
+                      style: const TextStyle(
+                        fontFamily: DytavaTypography.primaryFont,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1E293B),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  _badge(label, color, bg),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (isAdded)
+                _singleValueBox(
+                  label: l10n.isVietnamese ? 'Cập nhật' : 'Updated',
+                  labelColor: const Color(0xFF5B7065),
+                  bg: const Color(0xFFE8F2EC),
+                  child: Text(
+                    '${change.kind.replaceAll('_', ' ').toLowerCase()} · File ${change.side.name.toUpperCase()}',
+                    style: const TextStyle(
+                      fontFamily: DytavaTypography.primaryFont,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: Color(0xFF15803D),
+                    ),
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _value(
+                        l10n.isVietnamese ? 'Gốc' : 'Original',
+                        '${change.kind.replaceAll('_', ' ').toLowerCase()} · File ${change.side.name.toUpperCase()}',
+                        const Color(0xFFF3F5F4),
+                        const Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _singleValueBox(
+                        label: l10n.isVietnamese ? 'Cập nhật' : 'Updated',
+                        labelColor: const Color(0xFF64748B),
+                        bg: const Color(0xFFFCECEB),
+                        child: const Text(
+                          '—',
+                          style: TextStyle(
+                            fontFamily: DytavaTypography.primaryFont,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: Color(0xFFB93829),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _cellCard(CellDifference cell) {
-    final status = cell.decision.status;
-    final (label, color, bg) = _statusStyle(status);
-    return Padding(
-      key: ValueKey('change-${cell.id}'),
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: DytavaColors.border),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => widget.onOpenDetail(cell.id),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _cellLocation(flow, cell, SourceSide.a),
-                        style: const TextStyle(
-                          fontFamily: DytavaTypography.primaryFont,
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1E293B),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    _badge(label, color, bg),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _value(
-                        'Original',
-                        cell.a.rawLexeme ?? '—',
-                        DytavaColors.background,
-                        DytavaColors.textPrimary,
-                        sourceCell: cell.a,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _value(
-                        'Updated',
-                        cell.b.rawLexeme ?? '—',
-                        bg,
-                        color,
-                        sourceCell: cell.b,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+Widget _singleValueBox({
+  required String label,
+  required Color labelColor,
+  required Color bg,
+  required Widget child,
+}) => Container(
+  width: double.infinity,
+  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+  decoration: BoxDecoration(
+    color: bg,
+    borderRadius: BorderRadius.circular(12),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: TextStyle(
+          fontFamily: DytavaTypography.primaryFont,
+          fontSize: 11.5,
+          color: labelColor,
+          fontWeight: FontWeight.w600,
         ),
       ),
-    );
+      const SizedBox(height: 4),
+      child,
+    ],
+  ),
+);
+
+bool _isCellEmpty(SourceCell cell) {
+  if (cell.kind == CellKind.missing) return true;
+  if (cell.kind == CellKind.image) {
+    return cell.imageBytes == null || cell.imageBytes!.isEmpty;
+  }
+  return cell.rawLexeme == null || cell.rawLexeme!.trim().isEmpty;
+}
+
+bool _isNumericOrAtomic(String a, String b) {
+  final sA = a.trim();
+  final sB = b.trim();
+  if (sA.isEmpty || sB.isEmpty) return false;
+
+  // Numeric, currency, percentage, accounting format
+  final numPattern = RegExp(
+    r'^([\$€£¥₫]|USD|VND|EUR)?\s*[-+(]?[0-9]+([.,][0-9]+)*[)]?\s*([%đ₫]|USD|VND|EUR)?$',
+    caseSensitive: false,
+  );
+  if (numPattern.hasMatch(sA) && numPattern.hasMatch(sB)) return true;
+
+  // Booleans
+  final boolA = sA.toLowerCase();
+  final boolB = sB.toLowerCase();
+  if ((boolA == 'true' || boolA == 'false') &&
+      (boolB == 'true' || boolB == 'false')) {
+    return true;
   }
 
-  String _structuralLabel(StructuralChange change) {
-    if (!change.kind.startsWith('ROW_')) return change.recordId;
-    final info =
-        flow.displayedResult?.recordInfo(change.side, change.recordId) ??
-        flow.result?.recordInfo(change.side, change.recordId);
-    if (info != null) {
-      return '${info.$1 ?? 'Sheet'} · Row ${info.$2 + 2}';
+  // Dates or times (e.g. 2026-11-24, 24/11/2026, 10:45)
+  final dateTimePattern = RegExp(
+    r'^(\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}|\d{1,2}:\d{2}(:\d{2})?)$',
+  );
+  if (dateTimePattern.hasMatch(sA) && dateTimePattern.hasMatch(sB)) {
+    return true;
+  }
+
+  // Formulas
+  if (sA.startsWith('=') && sB.startsWith('=')) return true;
+
+  // Short atomic tokens (<= 4 chars without spaces)
+  if (!sA.contains(' ') &&
+      !sB.contains(' ') &&
+      sA.length <= 4 &&
+      sB.length <= 4) {
+    return true;
+  }
+
+  return false;
+}
+
+class _DiffOp {
+  final int type; // 0: equal, -1: delete, 1: insert
+  final String text;
+  const _DiffOp(this.type, this.text);
+}
+
+class _DiffHunk {
+  final String prefix;
+  final List<_DiffOp> ops;
+  final String suffix;
+  const _DiffHunk({
+    required this.prefix,
+    required this.ops,
+    required this.suffix,
+  });
+}
+
+List<_DiffOp> _diffChars(String a, String b) {
+  if (a.isEmpty && b.isEmpty) return const [];
+  if (a.isEmpty) return [_DiffOp(1, b)];
+  if (b.isEmpty) return [_DiffOp(-1, a)];
+
+  final runesA = a.runes.toList(growable: false);
+  final runesB = b.runes.toList(growable: false);
+
+  var prefix = 0;
+  while (prefix < runesA.length &&
+      prefix < runesB.length &&
+      runesA[prefix] == runesB[prefix]) {
+    prefix++;
+  }
+
+  var suffix = 0;
+  while (suffix < runesA.length - prefix &&
+      suffix < runesB.length - prefix &&
+      runesA[runesA.length - 1 - suffix] == runesB[runesB.length - 1 - suffix]) {
+    suffix++;
+  }
+
+  final midA = runesA.sublist(prefix, runesA.length - suffix);
+  final midB = runesB.sublist(prefix, runesB.length - suffix);
+
+  final ops = <_DiffOp>[];
+  if (prefix > 0) {
+    ops.add(_DiffOp(0, String.fromCharCodes(runesA.sublist(0, prefix))));
+  }
+
+  if (midA.length * midB.length > 250000) {
+    if (midA.isNotEmpty) ops.add(_DiffOp(-1, String.fromCharCodes(midA)));
+    if (midB.isNotEmpty) ops.add(_DiffOp(1, String.fromCharCodes(midB)));
+  } else {
+    final m = midA.length;
+    final n = midB.length;
+    final dp = List.generate(m + 1, (_) => Int32List(n + 1));
+    for (var i = 1; i <= m; i++) {
+      for (var j = 1; j <= n; j++) {
+        dp[i][j] = midA[i - 1] == midB[j - 1]
+            ? dp[i - 1][j - 1] + 1
+            : (dp[i - 1][j] > dp[i][j - 1] ? dp[i - 1][j] : dp[i][j - 1]);
+      }
     }
-    return 'Unpaired row';
+
+    var i = m;
+    var j = n;
+    final midOps = <_DiffOp>[];
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && midA[i - 1] == midB[j - 1]) {
+        midOps.add(_DiffOp(0, String.fromCharCode(midA[--i])));
+        j--;
+      } else if (j > 0 && (i == 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        midOps.add(_DiffOp(1, String.fromCharCode(midB[--j])));
+      } else {
+        midOps.add(_DiffOp(-1, String.fromCharCode(midA[--i])));
+      }
+    }
+
+    _DiffOp? current;
+    for (final op in midOps.reversed) {
+      if (current == null) {
+        current = op;
+      } else if (current.type == op.type) {
+        current = _DiffOp(current.type, current.text + op.text);
+      } else {
+        ops.add(current);
+        current = op;
+      }
+    }
+    if (current != null) ops.add(current);
   }
 
-  Widget _structuralCard(StructuralChange change) {
-    final isAdded = change.kind.contains('ADDED');
-    return WorkflowSectionCard(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                _structuralLabel(change),
-                style: DytavaTypography.titleSmall,
-              ),
-            ),
-            _badge(
-              isAdded ? 'Added' : 'Removed',
-              isAdded ? DytavaColors.primary : DytavaColors.removed,
-              isAdded ? DytavaColors.primaryLight : DytavaColors.removedBg,
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '${change.kind.replaceAll('_', ' ').toLowerCase()} · File ${change.side.name.toUpperCase()}',
-          style: DytavaTypography.bodySmall,
-        ),
-      ],
-    );
+  if (suffix > 0) {
+    ops.add(_DiffOp(0, String.fromCharCodes(runesA.sublist(runesA.length - suffix))));
   }
+
+  final merged = <_DiffOp>[];
+  for (final op in ops) {
+    if (merged.isNotEmpty && merged.last.type == op.type) {
+      final last = merged.removeLast();
+      merged.add(_DiffOp(last.type, last.text + op.text));
+    } else {
+      merged.add(op);
+    }
+  }
+  return merged;
+}
+
+String _extractWordPrefix(String text, {int maxChars = 14}) {
+  if (text.isEmpty) return '';
+  // Include trailing characters of the current word plus up to maxChars of immediate context
+  final slice = text.length > maxChars ? text.substring(text.length - maxChars) : text;
+  if (text.length <= maxChars) return slice;
+  final spaceIdx = slice.indexOf(' ');
+  if (spaceIdx != -1 && spaceIdx < slice.length - 1) {
+    return slice.substring(spaceIdx + 1);
+  }
+  return slice;
+}
+
+String _extractWordSuffix(String text, {int maxChars = 14}) {
+  if (text.isEmpty) return '';
+  final slice = text.length > maxChars ? text.substring(0, maxChars) : text;
+  if (text.length <= maxChars) return slice;
+  final spaceIdx = slice.lastIndexOf(' ');
+  if (spaceIdx > 0) {
+    return slice.substring(0, spaceIdx);
+  }
+  return slice;
+}
+
+List<InlineSpan> _computeTextDiffSpans(String a, String b) {
+  const deletedStyle = TextStyle(
+    color: Color(0xFFDC2626),
+    decoration: TextDecoration.lineThrough,
+    decorationColor: Color(0xFFDC2626),
+    decorationThickness: 2.0,
+    fontStyle: FontStyle.italic,
+    fontWeight: FontWeight.w700,
+  );
+  const insertedStyle = TextStyle(
+    color: Color(0xFF15803D),
+    fontStyle: FontStyle.italic,
+    fontWeight: FontWeight.w700,
+  );
+  const italicStyle = TextStyle(
+    color: Color(0xFF8D5411),
+    fontStyle: FontStyle.italic,
+    fontWeight: FontWeight.w700,
+  );
+  const separatorStyle = TextStyle(
+    color: Color(0xFF8D5411),
+    fontWeight: FontWeight.w800,
+    fontStyle: FontStyle.normal,
+  );
+
+  if (a == b) {
+    return [TextSpan(text: b, style: italicStyle)];
+  }
+
+  final ops = _diffChars(a, b);
+  final changeIndices = <int>[];
+  for (var i = 0; i < ops.length; i++) {
+    if (ops[i].type != 0) changeIndices.add(i);
+  }
+
+  if (changeIndices.isEmpty) {
+    return [TextSpan(text: b, style: italicStyle)];
+  }
+
+  // Group change operations into distinct change points (hunks).
+  // Changes separated by whitespace or > 3 unchanged characters become separate hunks
+  // so multiple change points are clearly separated by " | ".
+  final hunks = <_DiffHunk>[];
+  var k = 0;
+  while (k < changeIndices.length) {
+    final startIdx = changeIndices[k];
+    var endIdx = startIdx;
+    while (k + 1 < changeIndices.length) {
+      final nextIdx = changeIndices[k + 1];
+      var gapText = '';
+      for (var g = endIdx + 1; g < nextIdx; g++) {
+        gapText += ops[g].text;
+      }
+      final hasWhitespace = gapText.contains(RegExp(r'\s'));
+      if (!hasWhitespace && gapText.length <= 3) {
+        endIdx = nextIdx;
+        k++;
+      } else {
+        break;
+      }
+    }
+
+    var prefix = '';
+    if (startIdx > 0 && ops[startIdx - 1].type == 0) {
+      prefix = _extractWordPrefix(ops[startIdx - 1].text);
+    }
+
+    var suffix = '';
+    if (endIdx + 1 < ops.length && ops[endIdx + 1].type == 0) {
+      suffix = _extractWordSuffix(ops[endIdx + 1].text);
+    }
+
+    hunks.add(
+      _DiffHunk(
+        prefix: prefix,
+        ops: ops.sublist(startIdx, endIdx + 1),
+        suffix: suffix,
+      ),
+    );
+    k++;
+  }
+
+  // Single change point in a short string -> render full string with inline diff
+  if (hunks.length == 1 && a.length <= 48 && b.length <= 48) {
+    final spans = <InlineSpan>[];
+    for (final op in ops) {
+      if (op.type == 0) {
+        spans.add(TextSpan(text: op.text, style: italicStyle));
+      } else if (op.type == -1) {
+        spans.add(TextSpan(text: op.text, style: deletedStyle));
+      } else if (op.type == 1) {
+        spans.add(TextSpan(text: op.text, style: insertedStyle));
+      }
+    }
+    return spans;
+  }
+
+  // Prioritize changed segments; separate multiple change points with " | "
+  final resultSpans = <InlineSpan>[];
+  for (var hIdx = 0; hIdx < hunks.length; hIdx++) {
+    if (hIdx > 0) {
+      resultSpans.add(const TextSpan(text: ' | ', style: separatorStyle));
+    }
+    final h = hunks[hIdx];
+    if (h.prefix.isNotEmpty) {
+      resultSpans.add(TextSpan(text: h.prefix, style: italicStyle));
+    }
+    for (final op in h.ops) {
+      if (op.type == -1) {
+        resultSpans.add(TextSpan(text: op.text, style: deletedStyle));
+      } else if (op.type == 1) {
+        resultSpans.add(TextSpan(text: op.text, style: insertedStyle));
+      } else {
+        resultSpans.add(TextSpan(text: op.text, style: italicStyle));
+      }
+    }
+    if (h.suffix.isNotEmpty) {
+      resultSpans.add(TextSpan(text: h.suffix, style: italicStyle));
+    }
+  }
+
+  return resultSpans;
+}
+
+Widget _buildInlineTextDiff(String a, String b) {
+  final spans = _computeTextDiffSpans(a, b);
+  return RichText(
+    text: TextSpan(
+      style: const TextStyle(
+        fontFamily: DytavaTypography.primaryFont,
+        fontSize: 15,
+        color: Color(0xFF8D5411),
+        fontStyle: FontStyle.italic,
+        fontWeight: FontWeight.w700,
+        height: 1.35,
+      ),
+      children: spans,
+    ),
+  );
 }
 
 final _refPattern = RegExp(r'^(.*)!R(\d+)/');
@@ -794,12 +1727,19 @@ String _cellLocation(
   CellDifference cell,
   SourceSide side,
 ) {
-  final location = side == SourceSide.a ? cell.locationA : cell.locationB;
+  final effectiveSide = (side == SourceSide.a &&
+          (cell.locationA == null || cell.locationA!.isEmpty) &&
+          cell.locationB != null &&
+          cell.locationB!.isNotEmpty)
+      ? SourceSide.b
+      : side;
+  final location =
+      effectiveSide == SourceSide.a ? cell.locationA : cell.locationB;
   final plan = flow.displayedResult?.planForCell(cell) ??
       flow.result?.planForCell(cell) ??
       flow.result!.plan;
-  final source = side == SourceSide.a ? plan.a : plan.b;
-  final field = side == SourceSide.a
+  final source = effectiveSide == SourceSide.a ? plan.a : plan.b;
+  final field = effectiveSide == SourceSide.a
       ? cell.mapping.fieldA
       : cell.mapping.fieldB;
   var column = source.fields.indexWhere((f) => f.id == field) + 1;
@@ -823,29 +1763,6 @@ String _cellLocation(
       ? field
       : '${source.sheetName ?? 'Sheet1'} · $letters${int.parse(row) + 1}';
 }
-
-(String, Color, Color) _statusStyle(DecisionStatus status) => switch (status) {
-  DecisionStatus.different => (
-    'Modified',
-    const Color(0xFFB45309),
-    const Color(0xFFFEF3C7),
-  ),
-  DecisionStatus.unresolved => (
-    'Unresolved',
-    const Color(0xFFB45309),
-    const Color(0xFFFEF3C7),
-  ),
-  DecisionStatus.equivalent => (
-    'Equivalent',
-    DytavaColors.primary,
-    const Color(0xFFE8F5E9),
-  ),
-  DecisionStatus.exact => (
-    'Same',
-    const Color(0xFF64748B),
-    const Color(0xFFF1F5F2),
-  ),
-};
 
 Widget _badge(String label, Color color, Color bg) => Container(
   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
@@ -1159,21 +2076,10 @@ class DifferenceDetailScreenView extends StatelessWidget {
         expand: false,
         builder: (ctx, scrollController) => SingleChildScrollView(
           controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
               Row(
                 children: [
                   const Icon(
@@ -1182,9 +2088,9 @@ class DifferenceDetailScreenView extends StatelessWidget {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  const Text(
-                    'Comparison details',
-                    style: TextStyle(
+                  Text(
+                    context.l10n.comparisonDetails,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1E293B),
@@ -1198,41 +2104,41 @@ class DifferenceDetailScreenView extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 14),
-              _techRow('Rule reference', cell.decision.ruleId),
-              _techRow('Comparison type', _ruleTypeLabel(cell)),
-              _techRow('Matching mode', switch (flow.config.mode) {
-                MatchingMode.positional => 'By position',
-                MatchingMode.key => 'By key column',
-                MatchingMode.orderedSequence => 'Sequence alignment',
+              _techRow(context.l10n.ruleReference, cell.decision.ruleId),
+              _techRow(context.l10n.comparisonType, _ruleTypeLabel(cell)),
+              _techRow(context.l10n.matchingMode, switch (flow.config.mode) {
+                MatchingMode.positional => context.l10n.byPosition,
+                MatchingMode.key => context.l10n.byKeyColumn,
+                MatchingMode.orderedSequence => context.l10n.sequenceAlignment,
               }),
               if (cell.a.kind == CellKind.image)
                 _techRow(
-                  'Original image placement',
+                  context.l10n.originalImagePlacement,
                   cell.a.imagePlacement == 'drawingAnchor'
-                      ? 'Place over Cells (Drawing Anchor)'
-                      : 'Place in Cell (RichData)',
+                      ? context.l10n.placeOverCellsBadge
+                      : context.l10n.placeInCellBadge,
                 ),
               if (cell.b.kind == CellKind.image)
                 _techRow(
-                  'Updated image placement',
+                  context.l10n.updatedImagePlacement,
                   cell.b.imagePlacement == 'drawingAnchor'
-                      ? 'Place over Cells (Drawing Anchor)'
-                      : 'Place in Cell (RichData)',
+                      ? context.l10n.placeOverCellsBadge
+                      : context.l10n.placeInCellBadge,
                 ),
               _techRow(
-                'Original source',
-                '${flow.slot(SourceSide.a).artifact?.label ?? "File A"} · ${_cellLocation(flow, cell, SourceSide.a)}',
+                context.l10n.originalSource,
+                '${flow.slot(SourceSide.a).artifact?.label ?? (context.l10n.isVietnamese ? "Tệp A" : "File A")} · ${_cellLocation(flow, cell, SourceSide.a)}',
               ),
               _techRow(
-                'Updated source',
-                '${flow.slot(SourceSide.b).artifact?.label ?? "File B"} · ${_cellLocation(flow, cell, SourceSide.b)}',
+                context.l10n.updatedSource,
+                '${flow.slot(SourceSide.b).artifact?.label ?? (context.l10n.isVietnamese ? "Tệp B" : "File B")} · ${_cellLocation(flow, cell, SourceSide.b)}',
               ),
               _techRow(
-                'Original normalized',
+                context.l10n.originalNormalized,
                 cell.decision.left?.label ?? '—',
               ),
               _techRow(
-                'Updated normalized',
+                context.l10n.updatedNormalized,
                 cell.decision.right?.label ?? '—',
               ),
               if (cell.a.rawLexeme != null &&
@@ -1245,9 +2151,9 @@ class DifferenceDetailScreenView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Character difference:',
-                        style: TextStyle(
+                      Text(
+                        context.l10n.characterDifference,
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF64748B),
@@ -1525,7 +2431,7 @@ class DifferenceDetailScreenView extends StatelessWidget {
                     // ORIGINAL · A
                     Expanded(
                       child: _sideValueBox(
-                        label: 'ORIGINAL · A',
+                        label: '${context.l10n.isVietnamese ? "GỐC" : "ORIGINAL"} · A',
                         cell: cell.a,
                         canonical: cell.decision.left,
                         accentColor: const Color(0xFF64748B),
@@ -1537,7 +2443,7 @@ class DifferenceDetailScreenView extends StatelessWidget {
                     // UPDATED · B
                     Expanded(
                       child: _sideValueBox(
-                        label: 'UPDATED · B',
+                        label: '${context.l10n.isVietnamese ? "CẬP NHẬT" : "UPDATED"} · B',
                         cell: cell.b,
                         canonical: cell.decision.right,
                         accentColor: DytavaColors.primary,
@@ -1584,7 +2490,7 @@ class DifferenceDetailScreenView extends StatelessWidget {
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        'Numeric difference: ${numDelta.label}',
+                        context.l10n.numericDifference(numDelta.label),
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
@@ -1606,7 +2512,7 @@ class DifferenceDetailScreenView extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () => _openComparisonDetailsSheet(context, cell),
                 icon: const Icon(Icons.tune_rounded, size: 16),
-                label: const Text('Comparison details'),
+                label: Text(context.l10n.comparisonDetails),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF334155),
                   side: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -1632,9 +2538,9 @@ class DifferenceDetailScreenView extends StatelessWidget {
                   size: 15,
                   color: DytavaColors.textSecondary,
                 ),
-                label: const Text(
-                  'Back to differences',
-                  style: TextStyle(
+                label: Text(
+                  context.l10n.backToDifferences,
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: DytavaColors.textSecondary,
@@ -1669,12 +2575,12 @@ class DifferenceDetailScreenView extends StatelessWidget {
                   fontSize: 13,
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.arrow_back_rounded, size: 16),
-                  SizedBox(width: 4),
-                  Text('Previous'),
+                  const Icon(Icons.arrow_back_rounded, size: 16),
+                  const SizedBox(width: 4),
+                  Text(context.l10n.previous),
                 ],
               ),
             ),
@@ -1727,12 +2633,12 @@ class DifferenceDetailScreenView extends StatelessWidget {
                   fontSize: 13,
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Next'),
-                  SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_rounded, size: 16),
+                  Text(context.l10n.next),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward_rounded, size: 16),
                 ],
               ),
             ),
@@ -1790,22 +2696,13 @@ class _QuickNavBottomSheetState extends State<_QuickNavBottomSheet> {
       expand: false,
       builder: (ctx, scrollController) => Column(
         children: [
-          Container(
-            width: 36,
-            height: 4,
-            margin: const EdgeInsets.only(top: 12, bottom: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFCBD5E1),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                const Text(
-                  'Jump to difference',
-                  style: TextStyle(
+                Text(
+                  context.l10n.jumpToDifference,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF1E293B),
@@ -1813,7 +2710,7 @@ class _QuickNavBottomSheetState extends State<_QuickNavBottomSheet> {
                 ),
                 const Spacer(),
                 Text(
-                  '${widget.list.length} total',
+                  context.l10n.totalCount(widget.list.length),
                   style: const TextStyle(
                     fontSize: 12.5,
                     color: Color(0xFF64748B),
@@ -1828,7 +2725,9 @@ class _QuickNavBottomSheetState extends State<_QuickNavBottomSheet> {
             child: TextField(
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
-                hintText: 'Search cell, sheet, or value...',
+                hintText: context.l10n.isVietnamese
+                    ? 'Tìm ô, sheet, hoặc giá trị...'
+                    : 'Search cell, sheet, or value...',
                 hintStyle: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF94A3B8),
@@ -1973,162 +2872,334 @@ class ExportScreenView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const SizedBox(height: 12),
-      const Text('Export report', style: DytavaTypography.displayMedium),
-      const SizedBox(height: 10),
-      Text(
-        'Include ${flow.result!.cells.length} compared cells across the workbook.',
-        style: DytavaTypography.bodyMedium,
-      ),
-      const SizedBox(height: 24),
-      RadioGroup<ExportKind>(
-        groupValue: exportKind,
-        onChanged: (value) {
-          if (value != null) onKindChanged(value);
-        },
-        child: Column(
-          children: [
-            for (final kind in [ExportKind.csvDiff, ExportKind.jsonReport])
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: RadioListTile<ExportKind>(
-                  value: kind,
-                  enabled: !flow.busy,
-                  tileColor: DytavaColors.background,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  title: Text(
-                    kind == ExportKind.csvDiff ? 'CSV' : 'JSON',
-                    style: DytavaTypography.titleSmall,
-                  ),
-                  subtitle: Text(
-                    kind == ExportKind.csvDiff
-                        ? 'Flat list of compared cells'
-                        : 'Complete comparison report and evidence',
-                    style: DytavaTypography.bodySmall,
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final hasReceipt = flow.receipt != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 4),
+        Text(
+          l10n.exportReport,
+          style: const TextStyle(
+            fontFamily: DytavaTypography.primaryFont,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.includeComparedCells(flow.result!.cells.length),
+          style: const TextStyle(
+            fontFamily: DytavaTypography.primaryFont,
+            fontSize: 13,
+            color: Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(height: 14),
+        RadioGroup<ExportKind>(
+          groupValue: exportKind,
+          onChanged: (value) {
+            if (value != null) onKindChanged(value);
+          },
+          child: Column(
+            children: [
+              for (final kind in [ExportKind.csvDiff, ExportKind.jsonReport])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Material(
+                    color: exportKind == kind
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFF8FAF9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(
+                        color: exportKind == kind
+                            ? DytavaColors.primary
+                            : const Color(0xFFE2E8F0),
+                        width: exportKind == kind ? 1.4 : 1.0,
+                      ),
+                    ),
+                    child: RadioListTile<ExportKind>(
+                      value: kind,
+                      enabled: !flow.busy,
+                      dense: true,
+                      visualDensity: VisualDensity.compact,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      controlAffinity: ListTileControlAffinity.trailing,
+                      activeColor: DytavaColors.primary,
+                      title: Text(
+                        kind == ExportKind.csvDiff ? 'CSV' : 'JSON',
+                        style: TextStyle(
+                          fontFamily: DytavaTypography.primaryFont,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: exportKind == kind
+                              ? DytavaColors.primaryDark
+                              : const Color(0xFF1E293B),
+                        ),
+                      ),
+                      subtitle: Text(
+                        kind == ExportKind.csvDiff
+                            ? l10n.csvSubtitle
+                            : l10n.jsonSubtitle,
+                        style: const TextStyle(
+                          fontFamily: DytavaTypography.primaryFont,
+                          fontSize: 11.5,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
-      ),
-      const SizedBox(height: 16),
-      DropdownButtonFormField<ExportSelection>(
-        isExpanded: true,
-        initialValue: selection,
-        decoration: const InputDecoration(labelText: 'Report scope'),
-        items: const [
-          DropdownMenuItem(
-            value: ExportSelection.fullComparison,
-            child: Text('Full comparison'),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<ExportSelection>(
+          isExpanded: true,
+          initialValue: selection,
+          decoration: InputDecoration(
+            labelText: l10n.reportScope,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-          DropdownMenuItem(
-            value: ExportSelection.differencesOnly,
-            child: Text('Differences and unresolved'),
-          ),
-        ],
-        onChanged: flow.busy
-            ? null
-            : (v) {
-                if (v != null) onSelectionChanged(v);
-              },
-      ),
-      const SizedBox(height: 16),
-      CheckboxListTile(
-        contentPadding: EdgeInsets.zero,
-        title: const Text(
-          'Confirm format and report scope',
-          style: DytavaTypography.bodyMedium,
-        ),
-        value: scopeConfirmed,
-        onChanged: flow.busy
-            ? null
-            : (v) => onScopeConfirmedChanged(v ?? false),
-      ),
-      WorkflowPrimaryButton(
-        label: 'Prepare report',
-        onPressed:
-            scopeConfirmed && flow.exporter.supports(exportKind) && !flow.busy
-            ? onRunExportPreview
-            : null,
-      ),
-      if (flow.issue != null) WorkflowIssueList(issues: [flow.issue!]),
-      if (flow.exportState?.active == true) ...[
-        const SizedBox(height: 12),
-        const LinearProgressIndicator(),
-        TextButton(
-          onPressed: flow.exportState == ExportState.cancelling
-              ? null
-              : flow.cancelExport,
-          child: const Text('Cancel export'),
-        ),
-      ],
-      if (flow.receipt != null) ...[
-        const SizedBox(height: 16),
-        const Text('Report ready', style: DytavaTypography.titleMedium),
-        const SizedBox(height: 12),
-        if (flow.receipt!.fileName != null)
-          WorkflowPrimaryButton(
-            label: 'Save to device',
-            iconAsset: DytavaIcons.export,
-            onPressed: () => _save(context),
-          ),
-        ExpansionTile(
-          tilePadding: EdgeInsets.zero,
-          title: const Text(
-            'Preview report',
-            style: DytavaTypography.titleSmall,
-          ),
-          children: [
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 240),
-              child: SingleChildScrollView(
-                child: SelectableText(
-                  flow.receipt!.previewText.length > 20000
-                      ? '${flow.receipt!.previewText.substring(0, 20000)}\n… Preview limited to 20,000 characters. The saved file includes all data.'
-                      : flow.receipt!.previewText,
-                  style: DytavaTypography.dataSmall,
-                ),
-              ),
+          items: [
+            DropdownMenuItem(
+              value: ExportSelection.fullComparison,
+              child: Text(l10n.fullComparison),
+            ),
+            DropdownMenuItem(
+              value: ExportSelection.differencesOnly,
+              child: Text(l10n.differencesAndUnresolved),
             ),
           ],
+          onChanged: flow.busy
+              ? null
+              : (v) {
+                  if (v != null) onSelectionChanged(v);
+                },
+        ),
+        const SizedBox(height: 10),
+        if (!hasReceipt) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Material(
+              color: scopeConfirmed
+                  ? const Color(0xFFE8F5E9)
+                  : const Color(0xFFF8FAF9),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: scopeConfirmed
+                      ? DytavaColors.primary
+                      : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: CheckboxListTile(
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                activeColor: DytavaColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                title: Text(
+                  l10n.confirmFormatAndReportScope,
+                  style: const TextStyle(
+                    fontFamily: DytavaTypography.primaryFont,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                value: scopeConfirmed,
+                onChanged: flow.busy
+                    ? null
+                    : (v) => onScopeConfirmedChanged(v ?? false),
+              ),
+            ),
+          ),
+          WorkflowPrimaryButton(
+            label: l10n.prepareReport,
+            onPressed: scopeConfirmed &&
+                    flow.exporter.supports(exportKind) &&
+                    !flow.busy
+                ? onRunExportPreview
+                : null,
+          ),
+        ],
+        if (flow.issue != null) WorkflowIssueList(issues: [flow.issue!]),
+        if (flow.exportState?.active == true) ...[
+          const SizedBox(height: 10),
+          const LinearProgressIndicator(),
+          TextButton(
+            onPressed: flow.exportState == ExportState.cancelling
+                ? null
+                : flow.cancelExport,
+            child: Text(l10n.cancelExport),
+          ),
+        ],
+        if (hasReceipt)
+          DytavaFadeSlide(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: DytavaColors.primary,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.reportReady,
+                          style: const TextStyle(
+                            fontFamily: DytavaTypography.primaryFont,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF065F46),
+                          ),
+                        ),
+                      ),
+                      if (flow.receipt!.fileName != null)
+                        Flexible(
+                          child: Text(
+                            flow.receipt!.fileName!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: DytavaTypography.primaryFont,
+                              fontSize: 11.5,
+                              color: Color(0xFF047857),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                WorkflowPrimaryButton(
+                  label: l10n.saveToDevice,
+                  iconAsset: DytavaIcons.export,
+                  onPressed: () => _save(context),
+                ),
+                Theme(
+                  data: Theme.of(context).copyWith(
+                    dividerColor: Colors.transparent,
+                  ),
+                  child: ExpansionTile(
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                    dense: true,
+                    visualDensity: VisualDensity.compact,
+                    title: Text(
+                      l10n.previewReport,
+                      style: const TextStyle(
+                        fontFamily: DytavaTypography.primaryFont,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        constraints: const BoxConstraints(maxHeight: 160),
+                        child: SingleChildScrollView(
+                          child: SelectableText(
+                            flow.receipt!.previewText.length > 20000
+                                ? '${flow.receipt!.previewText.substring(0, 20000)}\n… Preview limited to 20,000 characters. The saved file includes all data.'
+                                : flow.receipt!.previewText,
+                            style: DytavaTypography.dataSmall,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 4),
+        TextButton(
+          onPressed: flow.busy ? null : onBackToResults,
+          child: Text(
+            l10n.cancel,
+            style: const TextStyle(
+              fontFamily: DytavaTypography.primaryFont,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
+            ),
+          ),
         ),
       ],
-      TextButton(
-        onPressed: flow.busy ? null : onBackToResults,
-        child: const Text('Cancel'),
-      ),
-    ],
-  );
+    );
+  }
 
   Future<void> _save(BuildContext context) async {
+    final l10n = context.l10n;
     final receipt = flow.receipt!;
+    final fileName = receipt.fileName ??
+        (exportKind == ExportKind.csvDiff
+            ? 'dytava-differences.csv'
+            : 'dytava-report.json');
     try {
       final uri = await FilePicker.saveFile(
-        fileName: receipt.fileName!,
+        fileName: fileName,
         bytes: Uint8List.fromList(utf8.encode(receipt.previewText)),
-        mimeType: receipt.fileName!.endsWith('.csv')
+        mimeType: fileName.endsWith('.csv')
             ? 'text/csv'
             : 'application/json',
       );
+      // Không tự động đóng modal sau khi lưu thành công để người dùng có thể xuất thêm định dạng khác hoặc xem lại báo cáo
       if (context.mounted && uri != null) {
         DytavaToast.success(
           context,
-          'Report saved to your device.',
-          title: 'Report saved',
+          l10n.reportSavedToast,
+          title: l10n.reportSavedTitle,
         );
       }
     } catch (_) {
       if (context.mounted) {
         DytavaToast.error(
           context,
-          'Choose another location and try again.',
-          title: 'Unable to save report',
+          l10n.chooseAnotherLocationRetry,
+          title: l10n.unableToSaveReport,
         );
       }
     }

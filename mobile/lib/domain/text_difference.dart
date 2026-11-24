@@ -46,17 +46,21 @@ final class TextDifference {
     );
   }
 
-  String get description =>
-      'Vị trí khác biệt đầu tiên: ký tự Unicode thứ $position. '
-      'A: ${_describe(partA)}; B: ${_describe(partB)}.';
+  String get description => localizedDescription(true);
 
-  static String _describe(String part) => switch (part) {
-    '' => 'không có ký tự (∅)',
-    ' ' => 'dấu cách (U+0020)',
+  String localizedDescription([bool isVietnamese = true]) => isVietnamese
+      ? 'Vị trí khác biệt đầu tiên: ký tự Unicode thứ $position. '
+          'A: ${_describe(partA, true)}; B: ${_describe(partB, true)}.'
+      : 'First difference at Unicode character #$position. '
+          'A: ${_describe(partA, false)}; B: ${_describe(partB, false)}.';
+
+  static String _describe(String part, [bool isVietnamese = true]) => switch (part) {
+    '' => isVietnamese ? 'không có ký tự (∅)' : 'no character (∅)',
+    ' ' => isVietnamese ? 'dấu cách (U+0020)' : 'space (U+0020)',
     '\t' => 'tab (U+0009)',
-    '\n' => 'xuống dòng (U+000A)',
-    '\r' => 'về đầu dòng (U+000D)',
-    '\u00a0' => 'dấu cách không ngắt (U+00A0)',
+    '\n' => isVietnamese ? 'xuống dòng (U+000A)' : 'newline (U+000A)',
+    '\r' => isVietnamese ? 'về đầu dòng (U+000D)' : 'carriage return (U+000D)',
+    '\u00a0' => isVietnamese ? 'dấu cách không ngắt (U+00A0)' : 'non-breaking space (U+00A0)',
     _ =>
       part.runes.length == 1
           ? '“${visibleText(part)}” (U+${part.runes.single.toRadixString(16).toUpperCase().padLeft(4, '0')})'

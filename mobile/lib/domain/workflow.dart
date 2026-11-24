@@ -50,20 +50,26 @@ enum ComparisonDirection { aToB, bToA }
 enum ComparisonTaskMode { compareFiles, compareColumns, reconcile }
 
 extension ComparisonTaskModeInfo on ComparisonTaskMode {
-  String get label => switch (this) {
-    ComparisonTaskMode.compareFiles => 'So sánh hai tệp',
-    ComparisonTaskMode.compareColumns => 'So sánh hai cột',
-    ComparisonTaskMode.reconcile => 'Đối soát theo ID',
+  String localizedLabel(bool isVietnamese) => switch (this) {
+    ComparisonTaskMode.compareFiles => isVietnamese ? 'So sánh hai tệp' : 'Compare two files',
+    ComparisonTaskMode.compareColumns => isVietnamese ? 'So sánh hai cột' : 'Compare two columns',
+    ComparisonTaskMode.reconcile => isVietnamese ? 'Đối soát theo ID' : 'Reconcile by ID',
   };
 
-  String get shortDescription => switch (this) {
-    ComparisonTaskMode.compareFiles =>
-      'Xem các ô khác nhau và hàng thêm/xóa trên toàn bộ bảng.',
-    ComparisonTaskMode.compareColumns =>
-      'Tìm giá trị trùng và giá trị chỉ xuất hiện ở một phía.',
-    ComparisonTaskMode.reconcile =>
-      'So khớp bản ghi theo mã định danh (ID), không cần VLOOKUP.',
+  String localizedShortDescription(bool isVietnamese) => switch (this) {
+    ComparisonTaskMode.compareFiles => isVietnamese
+        ? 'Xem các ô khác nhau và hàng thêm/xóa trên toàn bộ bảng.'
+        : 'View different cells and added/removed rows across the sheet.',
+    ComparisonTaskMode.compareColumns => isVietnamese
+        ? 'Tìm giá trị trùng và giá trị chỉ xuất hiện ở một phía.'
+        : 'Find matches and values that appear only on one side.',
+    ComparisonTaskMode.reconcile => isVietnamese
+        ? 'So khớp bản ghi theo mã định danh (ID), không cần VLOOKUP.'
+        : 'Match records by identifier (ID) without needing VLOOKUP.',
   };
+
+  String get label => localizedLabel(true);
+  String get shortDescription => localizedShortDescription(true);
 }
 
 final class SmartProposal {

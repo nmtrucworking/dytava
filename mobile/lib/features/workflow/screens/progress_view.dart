@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../application/workflow_controller.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
+import '../../../l10n/app_localizations.dart';
 import '../widgets/workflow_common_widgets.dart';
 
 class ProgressScreenView extends StatefulWidget {
@@ -106,7 +107,7 @@ class _ProgressScreenViewState extends State<ProgressScreenView>
                             const SizedBox(height: 4),
                             Text(
                               active
-                                  ? 'IN PROGRESS'
+                                  ? context.l10n.inProgressUpper
                                   : flow.jobState.name.toUpperCase(),
                               style: DytavaTypography.labelSmall.copyWith(
                                 color: DytavaColors.primary,
@@ -124,30 +125,30 @@ class _ProgressScreenViewState extends State<ProgressScreenView>
             const SizedBox(height: 24),
             Text(
               flow.jobState == JobState.failed
-                  ? 'Comparison failed'
+                  ? context.l10n.comparisonFailed
                   : flow.jobState == JobState.cancelled
-                  ? 'Comparison cancelled'
-                  : 'Comparing your data',
+                  ? context.l10n.comparisonCancelled
+                  : context.l10n.comparingYourData,
               textAlign: TextAlign.center,
               style: DytavaTypography.displayMedium,
             ),
             const SizedBox(height: 10),
-            const Text(
-              'Matching sheets, columns, keys and values.',
+            Text(
+              context.l10n.matchingSheetsColumnsKeys,
               textAlign: TextAlign.center,
               style: DytavaTypography.bodyMedium,
             ),
             const SizedBox(height: 30),
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Checking sheets and records',
+                    context.l10n.checkingSheetsRecords,
                     style: DytavaTypography.bodySmall,
                   ),
                 ),
                 Text(
-                  value == null ? 'Working…' : '${(value * 100).round()}%',
+                  value == null ? context.l10n.working : '${(value * 100).round()}%',
                   style: DytavaTypography.bodySmall.copyWith(
                     color: DytavaColors.primary,
                   ),
@@ -216,22 +217,24 @@ class _ProgressScreenViewState extends State<ProgressScreenView>
                 children: [
                   _stage(
                     1,
-                    'Read and validate files',
-                    'Source workbooks recognized',
+                    context.l10n.stageReadFiles,
+                    context.l10n.stageReadFilesDesc,
                     !validating,
                     validating,
                   ),
                   _stage(
                     2,
-                    'Match and compare records',
-                    'Checking structure and cell values',
+                    context.l10n.stageMatchRecords,
+                    context.l10n.stageMatchRecordsDesc,
                     flow.jobState == JobState.completed,
                     !validating && active,
                   ),
                   _stage(
                     3,
-                    'Prepare results',
-                    flow.jobState == JobState.completed ? 'Ready' : 'Up next',
+                    context.l10n.stagePrepareResults,
+                    flow.jobState == JobState.completed
+                        ? context.l10n.ready
+                        : context.l10n.upNext,
                     flow.jobState == JobState.completed,
                     false,
                   ),
@@ -253,13 +256,13 @@ class _ProgressScreenViewState extends State<ProgressScreenView>
                               : flow.cancelComparison,
                           child: Text(
                             flow.jobState == JobState.cancelling
-                                ? 'Cancelling…'
-                                : 'Cancel comparison',
+                                ? context.l10n.cancelling
+                                : context.l10n.cancelComparison,
                           ),
                         )
                       else
                         WorkflowPrimaryButton(
-                          label: 'Back to setup',
+                          label: context.l10n.backToSetup,
                           onPressed: widget.onBackToPolicyOrSources,
                         ),
                       if (flow.jobState == JobState.failed ||
@@ -268,7 +271,7 @@ class _ProgressScreenViewState extends State<ProgressScreenView>
                           onPressed: flow.startBlockers.isEmpty
                               ? flow.runComparison
                               : null,
-                          child: const Text('Try again'),
+                          child: Text(context.l10n.tryAgain),
                         ),
                     ],
                   ),

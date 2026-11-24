@@ -13,6 +13,7 @@ import '../../../ocr/domain/ocr_models.dart';
 import '../../../ocr/domain/ocr_session.dart';
 import '../../../ocr/infrastructure/ocr_capture_service.dart';
 import '../widgets/workflow_common_widgets.dart';
+import '../../../l10n/app_localizations.dart';
 
 class PreviewScreenView extends StatelessWidget {
   final WorkflowController flow;
@@ -27,6 +28,7 @@ class PreviewScreenView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final source = flow.slot(flow.activeSide);
     final snapshot = source.snapshot;
     final info = source.artifact == null
@@ -43,13 +45,13 @@ class PreviewScreenView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
-            'Check your workbooks',
+          Text(
+            l10n.checkYourWorkbooks,
             style: DytavaTypography.displayMedium,
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Preview values and types before comparing.',
+          Text(
+            l10n.previewValuesAndTypes,
             style: DytavaTypography.bodyMedium,
           ),
           const SizedBox(height: 16),
@@ -57,14 +59,17 @@ class PreviewScreenView extends StatelessWidget {
             children: [
               for (final side in SourceSide.values) ...[
                 Text(
-                  '${side.name.toUpperCase()}  ${flow.slot(side).artifact?.label ?? 'No file selected'}',
+                  '${side.name.toUpperCase()}  ${flow.slot(side).artifact?.label ?? l10n.noFileSelected}',
                   style: DytavaTypography.titleSmall,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   flow.slot(side).snapshot == null
-                      ? 'Awaiting import'
-                      : '${flow.slot(side).snapshot!.records.length} rows · ${flow.slot(side).snapshot!.fields.length} columns',
+                      ? l10n.awaitingImport
+                      : l10n.rowsAndColumns(
+                          flow.slot(side).snapshot!.records.length,
+                          flow.slot(side).snapshot!.fields.length,
+                        ),
                   style: DytavaTypography.bodySmall,
                 ),
                 if (side == SourceSide.a) const SizedBox(height: 12),
@@ -98,12 +103,12 @@ class PreviewScreenView extends StatelessWidget {
             WorkflowSectionCard(
               children: [
                 Text(
-                  '${snapshot.sheetName ?? 'Sheet'} · ${source.side == SourceSide.a ? 'Original / A' : 'Updated / B'}',
+                  '${snapshot.sheetName ?? l10n.sheet} · ${source.side == SourceSide.a ? (l10n.isVietnamese ? 'Gốc / A' : 'Original / A') : (l10n.isVietnamese ? 'Cập nhật / B' : 'Updated / B')}',
                   style: DytavaTypography.titleSmall,
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  '${snapshot.records.length} rows · ${snapshot.fields.length} columns',
+                  l10n.rowsAndColumns(snapshot.records.length, snapshot.fields.length),
                   style: DytavaTypography.bodySmall,
                 ),
                 const SizedBox(height: 12),
@@ -175,8 +180,8 @@ class PreviewScreenView extends StatelessWidget {
                                               child: Text(
                                                 cellObj.imagePlacement ==
                                                         'drawingAnchor'
-                                                    ? 'Ảnh thủ công'
-                                                    : 'Ảnh trong ô',
+                                                    ? l10n.placeOverCells
+                                                    : l10n.placeInCellBadge,
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: DytavaTypography.dataSmall,
@@ -202,7 +207,7 @@ class PreviewScreenView extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Previewing ${snapshot.records.length.clamp(0, 5)} of ${snapshot.records.length} rows.',
+                  l10n.previewRowsCount(snapshot.records.length.clamp(0, 5), snapshot.records.length),
                   style: DytavaTypography.bodySmall,
                 ),
               ],
@@ -211,11 +216,11 @@ class PreviewScreenView extends StatelessWidget {
           WorkflowSectionCard(
             color: DytavaColors.primaryLight,
             border: Border.all(color: Colors.transparent),
-            children: const [
-              Text('Quick Compare', style: DytavaTypography.titleSmall),
-              SizedBox(height: 8),
+            children: [
+              Text(l10n.quickCompareTitle, style: DytavaTypography.titleSmall),
+              const SizedBox(height: 8),
               Text(
-                'Auto-detects sheet pairs, columns and row keys.',
+                l10n.autoDetectSheetsColumns,
                 style: DytavaTypography.bodyMedium,
               ),
             ],
@@ -234,21 +239,21 @@ class PreviewScreenView extends StatelessWidget {
                 onPressed: source.cancelling
                     ? null
                     : () => flow.cancelImport(source.side),
-                child: const Text('Cancel import'),
+                child: Text(l10n.cancelImport),
               ),
             ],
             if (source.state == InputState.selected ||
                 source.state == InputState.failed ||
                 source.state == InputState.cancelled)
               WorkflowPrimaryButton(
-                label: 'Read and validate file',
+                label: l10n.stageReadFiles,
                 onPressed: () => flow.importSource(source.side),
               ),
             if (source.state == InputState.needsReview)
               WorkflowPrimaryButton(
                 label: source.review!.cells.isEmpty
-                    ? 'Confirm range and header'
-                    : 'Review recognition',
+                    ? l10n.confirmRangeAndHeader
+                    : l10n.reviewRecognition,
                 onPressed: source.review!.cells.isEmpty
                     ? () => flow.confirmImport(
                         source.side,
@@ -257,7 +262,7 @@ class PreviewScreenView extends StatelessWidget {
                     : onOpenOcrReview,
               ),
             WorkflowSecondaryButton(
-              label: 'Back to import files',
+              label: l10n.backToImportFiles,
               iconAsset: DytavaIcons.back,
               onPressed: source.busy ? null : onBackToSources,
             ),
@@ -342,6 +347,7 @@ class OcrReviewScreenView extends StatelessWidget {
   }
 
   Widget _buildFixtureReview(BuildContext context, SourceSlot source) {
+    final l10n = context.l10n;
     final cells = source.review?.cells ?? const <ReviewCell>[];
     final allReviewed =
         cells.isNotEmpty && cells.every((c) => reviewedCells.contains(c.id));
@@ -349,30 +355,30 @@ class OcrReviewScreenView extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Check before importing.',
+          Text(
+            l10n.checkBeforeImporting,
             style: DytavaTypography.displayMedium,
           ),
           const SizedBox(height: 12),
           Text(
-            source.artifact?.label ?? 'Bảng tính ảnh',
+            source.artifact?.label ?? l10n.imageSpreadsheet,
             style: DytavaTypography.bodyMedium,
           ),
           const SizedBox(height: 16),
           WorkflowSectionCard(
             color: DytavaColors.modifiedBg,
             border: Border.all(color: Colors.transparent),
-            children: const [
-              Text('Kiểm tra OCR', style: DytavaTypography.titleSmall),
-              SizedBox(height: 8),
+            children: [
+              Text(l10n.checkOcrTitle, style: DytavaTypography.titleSmall),
+              const SizedBox(height: 8),
               Text(
-                'Xác nhận các ô cần kiểm tra trước khi tiến hành so sánh.',
+                l10n.reviewOcrHint,
                 style: DytavaTypography.bodySmall,
               ),
             ],
           ),
           Text(
-            '${cells.length - reviewedCells.length} cells need review',
+            l10n.cellsNeedReviewCount(cells.length - reviewedCells.length),
             style: DytavaTypography.titleSmall.copyWith(
               color: DytavaColors.modified,
             ),
@@ -384,7 +390,7 @@ class OcrReviewScreenView extends StatelessWidget {
                 Text(cell.id, style: DytavaTypography.titleSmall),
                 const SizedBox(height: 8),
                 Text(
-                  'Recognized text: ${cell.recognizedText}',
+                  l10n.recognizedTextLabel(cell.recognizedText),
                   style: DytavaTypography.bodyMedium,
                 ),
                 const SizedBox(height: 8),
@@ -392,8 +398,8 @@ class OcrReviewScreenView extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   value: reviewedCells.contains(cell.id),
                   onChanged: (_) => onToggleCell(cell.id),
-                  title: const Text(
-                    'Confirm this value',
+                  title: Text(
+                    l10n.confirmThisValue,
                     style: DytavaTypography.titleSmall,
                   ),
                 ),
@@ -407,15 +413,15 @@ class OcrReviewScreenView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Uncertain cells must be confirmed before import.',
+            Text(
+              l10n.uncertainCellsNotice,
               style: DytavaTypography.bodySmall,
             ),
             const SizedBox(height: 8),
             WorkflowPrimaryButton(
               label: allReviewed
-                  ? 'Import reviewed values'
-                  : 'Confirm ${cells.length - reviewedCells.length} cells to continue',
+                  ? l10n.importReviewedValues
+                  : l10n.confirmCellsToContinue(cells.length - reviewedCells.length),
               onPressed: allReviewed ? onConfirmReviewed : null,
             ),
           ],
@@ -721,7 +727,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
           child: WorkflowPrimaryButton(
             key: const ValueKey('ocr-confirm-bbox-scan-button'),
-            label: 'Quét bảng',
+            label: context.l10n.scanTable,
             onPressed: () => session.confirmTableBboxAndRecognize(
               normalizedBbox: _bbox,
               quarterTurns: _quarterTurns,
@@ -759,6 +765,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
     BuildContext context,
     OcrSession session,
   ) {
+    final l10n = context.l10n;
     final isTableDetected =
         session.detectionState == OcrDetectionState.tableDetected;
     return WorkflowScreenLayout(
@@ -768,17 +775,15 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
           _buildEmptyStructureState(
             context,
             session,
-            title: 'Chưa phát hiện bảng dữ liệu',
-            description:
-                'Không tìm thấy cấu trúc hàng và cột trong vùng ảnh đã chọn.',
+            title: l10n.noTableDetected,
+            description: l10n.noTableFoundDesc,
           ),
         OcrDetectionState.textWithoutTable =>
           _buildEmptyStructureState(
             context,
             session,
-            title: 'Chưa phát hiện bảng dữ liệu',
-            description:
-                'Đã nhận diện văn bản nhưng chưa xác định được hàng và cột.',
+            title: l10n.noTableDetected,
+            description: l10n.textFoundNoTableDesc,
           ),
         OcrDetectionState.processingFailed =>
           _buildProcessingFailedState(context, session),
@@ -790,7 +795,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
               child: WorkflowPrimaryButton(
                 key: const ValueKey('ocr-approve-and-import-button'),
-                label: 'Dùng bảng này',
+                label: l10n.useThisTable,
                 onPressed: session.grid.cellCount > 0
                     ? () => _approveAndImport(context, session)
                     : null,
@@ -806,6 +811,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
     required String title,
     required String description,
   }) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -852,12 +858,12 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
               const SizedBox(height: 20),
               WorkflowPrimaryButton(
                 key: const ValueKey('ocr-select-another-image'),
-                label: 'Chọn ảnh khác',
+                label: l10n.chooseAnotherImage,
                 onPressed: widget.onSelectAnotherImage,
               ),
               WorkflowSecondaryButton(
                 key: const ValueKey('ocr-create-manual-table'),
-                label: 'Tạo bảng thủ công',
+                label: l10n.createManualTable,
                 onPressed: () => session.createManualTable(rows: 3, columns: 2),
               ),
             ],
@@ -871,6 +877,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
     BuildContext context,
     OcrSession session,
   ) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -895,9 +902,9 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Không thể nhận diện ảnh này',
-                style: TextStyle(
+              Text(
+                l10n.cannotRecognizeImage,
+                style: const TextStyle(
                   fontFamily: DytavaTypography.primaryFont,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -906,7 +913,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
               ),
               const SizedBox(height: 8),
               Text(
-                session.error ?? 'Hãy thử khoanh lại vùng bảng hoặc chọn ảnh khác.',
+                session.error ?? l10n.cannotRecognizeImageDesc,
                 style: const TextStyle(
                   fontFamily: DytavaTypography.primaryFont,
                   fontSize: 14.5,
@@ -917,12 +924,12 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
               const SizedBox(height: 20),
               WorkflowPrimaryButton(
                 key: const ValueKey('ocr-retry-recognition'),
-                label: 'Khoanh lại vùng bảng',
+                label: l10n.reselectAreaLong,
                 onPressed: session.returnToPreprocess,
               ),
               WorkflowSecondaryButton(
                 key: const ValueKey('ocr-failed-select-another'),
-                label: 'Chọn ảnh khác',
+                label: l10n.chooseAnotherImage,
                 onPressed: widget.onSelectAnotherImage,
               ),
             ],
@@ -971,10 +978,10 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                       ),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Xem ảnh nguồn',
-                  style: TextStyle(
+                  context.l10n.viewSourceImage,
+                  style: const TextStyle(
                     fontFamily: DytavaTypography.primaryFont,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -989,9 +996,9 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
                 onPressed: session.returnToPreprocess,
-                child: const Text(
-                  'Khoanh lại',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                child: Text(
+                  context.l10n.reselectArea,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -1002,6 +1009,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
   }
 
   Widget _buildCleanEditableTable(BuildContext context, OcrSession session) {
+    final l10n = context.l10n;
     final grid = session.grid;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1012,7 +1020,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
           children: [
             Expanded(
               child: Text(
-                '${grid.rowCount} hàng × ${grid.columnCount} cột',
+                l10n.rowColFormat(grid.rowCount, grid.columnCount),
                 style: const TextStyle(
                   fontFamily: DytavaTypography.primaryFont,
                   fontSize: 16,
@@ -1029,9 +1037,9 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
               ),
               onPressed: () => _openStructureAdjustmentSheet(context, session),
               icon: const Icon(Icons.tune_rounded, size: 17),
-              label: const Text(
-                'Cấu trúc',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+              label: Text(
+                l10n.tableStructure,
+                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -1061,9 +1069,9 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                     label: Text(
                       grid.hasHeader && grid.rowCount > 0
                           ? (session.currentText(OcrCellRef(0, c)).isEmpty
-                                ? 'Cột ${c + 1}'
+                                ? l10n.columnNumber(c + 1)
                                 : session.currentText(OcrCellRef(0, c)))
-                          : 'Cột ${c + 1}',
+                          : l10n.columnNumber(c + 1),
                       style: DytavaTypography.labelSmall,
                     ),
                   ),
@@ -1079,7 +1087,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                     cells: [
                       DataCell(
                         Text(
-                          grid.hasHeader && r == 0 ? 'Tiêu đề' : '${r + 1}',
+                          grid.hasHeader && r == 0 ? l10n.headerLabel : '${r + 1}',
                           style: DytavaTypography.labelSmall,
                         ),
                       ),
@@ -1201,9 +1209,9 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Cấu trúc bảng',
-                    style: TextStyle(
+                  Text(
+                    context.l10n.tableStructureTitle,
+                    style: const TextStyle(
                       fontFamily: DytavaTypography.primaryFont,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -1213,10 +1221,10 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Số cột',
-                          style: TextStyle(
+                          context.l10n.columnCountLabel,
+                          style: const TextStyle(
                             fontFamily: DytavaTypography.primaryFont,
                             fontSize: 15,
                             color: DytavaColors.textPrimary,
@@ -1252,9 +1260,9 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     activeThumbColor: DytavaColors.primary,
-                    title: const Text(
-                      'Hàng đầu là tiêu đề',
-                      style: TextStyle(
+                    title: Text(
+                      context.l10n.firstRowIsHeader,
+                      style: const TextStyle(
                         fontFamily: DytavaTypography.primaryFont,
                         fontSize: 15,
                         color: DytavaColors.textPrimary,
@@ -1272,13 +1280,13 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                         key: const ValueKey('ocr-add-row'),
                         onPressed: () => session.insertRow(grid.rowCount),
                         icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Thêm hàng'),
+                        label: Text(context.l10n.addRow),
                       ),
                       OutlinedButton.icon(
                         key: const ValueKey('ocr-add-col'),
                         onPressed: () => session.insertColumn(grid.columnCount),
                         icon: const Icon(Icons.view_column_outlined, size: 18),
-                        label: const Text('Thêm cột'),
+                        label: Text(context.l10n.addColumn),
                       ),
                       if (grid.columnCount > 1)
                         OutlinedButton.icon(
@@ -1286,13 +1294,13 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                           onPressed: () =>
                               session.mergeColumnRight(grid.columnCount - 2),
                           icon: const Icon(Icons.merge_type, size: 18),
-                          label: const Text('Gộp 2 cột cuối'),
+                          label: Text(context.l10n.mergeLastTwoCols),
                         ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   WorkflowPrimaryButton(
-                    label: 'Xong',
+                    label: context.l10n.done,
                     onPressed: () => Navigator.pop(sheetContext),
                   ),
                 ],
@@ -1309,6 +1317,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
     OcrSession session,
     OcrCellRef ref,
   ) async {
+    final l10n = context.l10n;
     final cell = session.grid.cells[ref.row][ref.column];
     final controller = TextEditingController(text: session.currentText(ref));
     final isHeader = session.grid.hasHeader && ref.row == 0;
@@ -1337,8 +1346,8 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                 Expanded(
                   child: Text(
                     isHeader
-                        ? 'Tiêu đề Cột ${ref.column + 1}'
-                        : 'Hàng ${ref.row + 1}, Cột ${ref.column + 1}',
+                        ? l10n.headerColumnCoordinates(ref.column + 1)
+                        : l10n.cellCoordinates(ref.row + 1, ref.column + 1),
                     style: const TextStyle(
                       fontFamily: DytavaTypography.primaryFont,
                       fontSize: 18,
@@ -1354,7 +1363,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                       session.splitCellRight(ref);
                       Navigator.pop(sheetContext);
                     },
-                    child: const Text('Tách cột'),
+                    child: Text(l10n.splitColumn),
                   ),
               ],
             ),
@@ -1364,7 +1373,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
               controller: controller,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: 'Nhập giá trị',
+                hintText: l10n.enterValueHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1377,7 +1386,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
             const SizedBox(height: 16),
             WorkflowPrimaryButton(
               key: ValueKey('ocr-sheet-save-$ref'),
-              label: 'Lưu',
+              label: l10n.save,
               onPressed: () {
                 session.editCellText(ref, controller.text);
                 Navigator.pop(sheetContext);
@@ -1415,7 +1424,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
         DytavaToast.error(
           context,
           '$e',
-          title: 'Không thể nạp bảng OCR',
+          title: context.l10n.cannotLoadOcrTable,
         );
       }
     }

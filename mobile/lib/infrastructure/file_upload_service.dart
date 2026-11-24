@@ -183,6 +183,28 @@ abstract final class MobileFileUploadService {
 
   static String? sha256Of(String ref) => _files[ref]?.sha256Digest;
 
+  /// Returns estimated byte size of currently loaded in-memory files.
+  static int estimatedMemoryBytes() {
+    int total = 0;
+    for (final file in _files.values) {
+      total += file.name.length * 2;
+      for (final table in file.tables.values) {
+        for (final h in table.headers) {
+          total += h.length * 2;
+        }
+        for (final row in table.rows) {
+          for (final cell in row) {
+            total += cell.length * 2 + 8;
+          }
+        }
+        for (final sc in table.specialCells.values) {
+          total += (sc.imageBytes?.length ?? 0) + (sc.rawLexeme?.length ?? 0) * 2;
+        }
+      }
+    }
+    return total;
+  }
+
   static UploadedFileInfo selectSheet(String ref, String name) {
     if (ref == 'fixture:a' || ref == 'fixture:b') {
       _selected[ref] = name;
@@ -798,13 +820,22 @@ abstract final class MobileFileUploadService {
         if (values.isNotEmpty) sparse[ri] = values;
       }
       if (specialContent != null) {
+        final baseMaxCol = width > 0 ? width - 1 : 0;
         for (final entryCell in specialContent.cells.entries) {
           final parsedAddr = _parseCellAddress(entryCell.key);
           if (parsedAddr == null) continue;
           final ri = parsedAddr.row;
-          final col = parsedAddr.col;
+          var col = parsedAddr.col;
           if (ri > maxRows + 1 || col >= maxColumns) continue;
           if (mergedNonAnchors.contains((ri, col))) continue;
+          // If a floating Place over Cells image is anchored far beyond the
+          // sheet's actual column span (e.g. S2 on an 8-column table), clamp it
+          // so we don't invent dozens of blank columns.
+          if (entryCell.value.imagePlacement == 'drawingAnchor' &&
+              baseMaxCol > 0 &&
+              col > baseMaxCol + 1) {
+            col = baseMaxCol;
+          }
           if (!sparseSpecial.containsKey('$ri,$col')) {
             final rowMap = sparse.putIfAbsent(ri, () => <int, String>{});
             final lex = entryCell.value.rawLexeme ?? '';
@@ -848,7 +879,11 @@ abstract final class MobileFileUploadService {
         if (row.every((v) => v.isNotEmpty) &&
             row.toSet().length == row.length &&
             numeric < (row.length / 2).ceil() &&
-            !sparseSpecial.keys.any((k) => k.startsWith('$r,')) &&
+            !sparseSpecial.entries.any(
+              (e) =>
+                  e.key.startsWith('$r,') &&
+                  e.value.imagePlacement != 'drawingAnchor',
+            ) &&
             sparse[r + 1]?.values.any((v) => v.isNotEmpty) == true) {
           header = r;
           headers = row;
@@ -861,7 +896,11 @@ abstract final class MobileFileUploadService {
           headers.removeLast();
         }
       }
-      if (sparseSpecial.keys.any((k) => k.startsWith('1,'))) {
+      if (sparseSpecial.entries.any(
+        (e) =>
+            e.key.startsWith('1,') &&
+            e.value.imagePlacement != 'drawingAnchor',
+      )) {
         header = 0;
         headers = List.filled(width, '', growable: true);
       }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Figma 19:1003. Play the two-second identity timeline once on app launch.
 class DytavaLaunchScreen extends StatefulWidget {
@@ -105,7 +106,7 @@ class _DytavaLaunchScreenState extends State<DytavaLaunchScreen>
                             .29,
                             6,
                             Text(
-                              'Excel Compare',
+                              context.l10n.appSubtitle,
                               style: DytavaTypography.bodyLarge.copyWith(
                                 color: DytavaColors.primaryLight,
                                 fontWeight: FontWeight.w500,
@@ -119,7 +120,7 @@ class _DytavaLaunchScreenState extends State<DytavaLaunchScreen>
                             .33,
                             6,
                             Text(
-                              'Two spreadsheets. One clear view.',
+                              context.l10n.appTagline,
                               style: DytavaTypography.bodyMedium.copyWith(
                                 color: Colors.white,
                               ),
@@ -137,7 +138,7 @@ class _DytavaLaunchScreenState extends State<DytavaLaunchScreen>
                         child: Column(
                           children: [
                             Text(
-                              'Opening your workspace',
+                              context.l10n.openingWorkspace,
                               style: DytavaTypography.bodySmall.copyWith(
                                 color: Colors.white,
                               ),

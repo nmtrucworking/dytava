@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Mobile-native synchronized Table View for a single active sheet pair.
 ///
@@ -305,8 +306,8 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                     children: [
                       Text(
                         sourceCell.imagePlacement == 'drawingAnchor'
-                            ? 'Ảnh thủ công'
-                            : 'Ảnh trong ô',
+                            ? context.l10n.placeOverCells
+                            : context.l10n.placeInCellBadge,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DytavaTypography.labelSmall.copyWith(
@@ -365,7 +366,7 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Text(
-              'Nguồn ${side.name.toUpperCase()}',
+              side == SourceSide.a ? context.l10n.sourceA : context.l10n.sourceB,
               style: const TextStyle(
                 fontFamily: DytavaTypography.primaryFont,
                 fontSize: 13,
@@ -523,7 +524,9 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                 size: 15,
               ),
               label: Text(
-                _landscapeLocked ? 'Màn hình dọc' : 'Xoay ngang',
+                _landscapeLocked
+                    ? (context.l10n.isVietnamese ? 'Màn hình dọc' : 'Portrait')
+                    : (context.l10n.isVietnamese ? 'Xoay ngang' : 'Landscape'),
                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
@@ -533,7 +536,7 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                 children: [
                   IconButton(
                     key: const ValueKey('table-view-prev-diff-button'),
-                    tooltip: 'Điểm khác trước',
+                    tooltip: context.l10n.previousDifference,
                     visualDensity: VisualDensity.compact,
                     onPressed: () => _jumpToDifference(_activeDiffCursor - 1),
                     icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
@@ -552,7 +555,7 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Khác biệt ${_activeDiffCursor + 1}/${_diffLocations.length}',
+                        context.l10n.diffIndexRatio(_activeDiffCursor + 1, _diffLocations.length),
                         style: const TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
@@ -563,7 +566,7 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                   ),
                   IconButton(
                     key: const ValueKey('table-view-next-diff-button'),
-                    tooltip: 'Điểm khác tiếp theo',
+                    tooltip: context.l10n.nextDifference,
                     visualDensity: VisualDensity.compact,
                     onPressed: () => _jumpToDifference(_activeDiffCursor + 1),
                     icon: const Icon(
@@ -577,9 +580,9 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
         ),
         const SizedBox(height: 8),
         if (visible.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(20),
-            child: Text('Không có dòng dữ liệu.'),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(context.l10n.noRowsData),
           )
         else
           GestureDetector(
@@ -620,9 +623,9 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                           _recomputeDiffLocations();
                         })
                       : null,
-                  child: const Text(
-                    'Trang trước',
-                    style: TextStyle(fontSize: 12),
+                  child: Text(
+                    context.l10n.previousPage,
+                    style: const TextStyle(fontSize: 12),
                   ),
                 ),
                 Expanded(
@@ -645,9 +648,9 @@ class _MobileAlignedGridState extends State<MobileAlignedGrid> {
                           _recomputeDiffLocations();
                         })
                       : null,
-                  child: const Text(
-                    'Trang sau',
-                    style: TextStyle(fontSize: 12),
+                  child: Text(
+                    context.l10n.nextPage,
+                    style: const TextStyle(fontSize: 12),
                   ),
                 ),
               ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../dytava_colors.dart';
 import '../dytava_typography.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Một phân đoạn trên dải Difference Fingerprint
 class FingerprintSegment {
@@ -62,6 +63,7 @@ class DifferenceFingerprint extends StatelessWidget {
     final total = matched + differentCount + unresolvedCount;
     final safeTotal = total > 0 ? total : 1;
 
+    final l10n = AppLocalizations.current;
     final segs = <FingerprintSegment>[];
     if (matched > 0) {
       segs.add(
@@ -69,7 +71,7 @@ class DifferenceFingerprint extends StatelessWidget {
           weight: matched / safeTotal,
           count: matched,
           verdict: FingerprintVerdict.matched,
-          label: 'Trùng khớp',
+          label: l10n.matchingVerdict,
         ),
       );
     }
@@ -79,7 +81,7 @@ class DifferenceFingerprint extends StatelessWidget {
           weight: differentCount / safeTotal,
           count: differentCount,
           verdict: FingerprintVerdict.difference,
-          label: 'Sai khác',
+          label: l10n.differentVerdict,
         ),
       );
     }
@@ -89,7 +91,7 @@ class DifferenceFingerprint extends StatelessWidget {
           weight: unresolvedCount / safeTotal,
           count: unresolvedCount,
           verdict: FingerprintVerdict.review,
-          label: 'Cần xem xét',
+          label: l10n.needsReviewVerdict,
         ),
       );
     }
@@ -148,7 +150,7 @@ class DifferenceFingerprint extends StatelessWidget {
             runSpacing: 4,
             children: [
               Text(
-                'BẢN ĐỒ SAI KHÁC (FINGERPRINT)',
+                context.l10n.differenceFingerprint,
                 style: DytavaTypography.precisionTag.copyWith(
                   letterSpacing: 1.1,
                   fontSize: 10.5,
@@ -168,7 +170,7 @@ class DifferenceFingerprint extends StatelessWidget {
                       ),
                     ),
                     TextSpan(
-                      text: 'mật độ sai lệch',
+                      text: context.l10n.differenceDensity,
                       style: DytavaTypography.bodySmall.copyWith(
                         fontSize: 11,
                         color: DytavaColors.precisionNeutral,
@@ -194,7 +196,7 @@ class DifferenceFingerprint extends StatelessWidget {
               child: segments.isEmpty
                   ? Center(
                       child: Text(
-                        'Chưa có dữ liệu đối chiếu',
+                        context.l10n.isVietnamese ? 'Chưa có dữ liệu đối chiếu' : 'No comparison data',
                         style: DytavaTypography.bodySmall.copyWith(
                           fontSize: 10,
                           color: DytavaColors.precisionNeutral,
@@ -219,18 +221,18 @@ class DifferenceFingerprint extends StatelessWidget {
             runSpacing: 6,
             children: [
               _buildLegendItem(
-                label: 'Trùng khớp',
+                label: context.l10n.matchingVerdict,
                 count: matchCount,
                 color: const Color(0xFF94A3B8),
               ),
               _buildLegendItem(
-                label: 'Sai khác',
+                label: context.l10n.differentVerdict,
                 count: diffCount,
                 color: DytavaColors.differenceCoral,
               ),
               if (reviewCount > 0)
                 _buildLegendItem(
-                  label: 'Cần xem xét',
+                  label: context.l10n.needsReviewVerdict,
                   count: reviewCount,
                   color: DytavaColors.amber,
                 ),

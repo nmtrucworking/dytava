@@ -6,6 +6,7 @@ import '../../../design_system/design_system.dart';
 import '../../../domain/workflow.dart';
 import '../widgets/sheet_mapping_review.dart';
 import '../widgets/workflow_common_widgets.dart';
+import '../../../l10n/app_localizations.dart';
 
 class MappingScreenView extends StatelessWidget {
   final WorkflowController flow;
@@ -30,7 +31,7 @@ class MappingScreenView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 4),
-          const Text('Match your columns', style: DytavaTypography.titleLarge),
+          Text(context.l10n.matchYourColumns, style: DytavaTypography.titleLarge),
           const SizedBox(height: 2),
           Text(
             '${a.sheetName ?? 'Original'} → ${b.sheetName ?? 'Updated'}',
@@ -71,9 +72,9 @@ class MappingScreenView extends StatelessWidget {
                                   color: DytavaColors.primary,
                                 ),
                                 items: [
-                                  const DropdownMenuItem(
+                                  DropdownMenuItem(
                                     value: '',
-                                    child: Text('Unpaired'),
+                                    child: Text(context.l10n.unpaired),
                                   ),
                                   for (final target in b.fields)
                                     DropdownMenuItem(
@@ -126,15 +127,19 @@ class MappingScreenView extends StatelessWidget {
                       ),
                       Text(
                         chosen[field.id] == field.id
-                            ? 'Exact name'
-                            : 'Confirm the corresponding column',
+                            ? (context.l10n.isVietnamese
+                                  ? 'Trùng tên chính xác'
+                                  : 'Exact name')
+                            : (context.l10n.isVietnamese
+                                  ? 'Xác nhận cột tương ứng'
+                                  : 'Confirm the corresponding column'),
                         style: DytavaTypography.bodySmall,
                       ),
                     ],
                   ),
                 TextButton(
                   onPressed: flow.busy ? null : onAutoMap,
-                  child: const Text('Auto match columns →'),
+                  child: Text(context.l10n.autoMatchColumns),
                 ),
                 WorkflowSectionCard(
                   children: [
@@ -143,8 +148,10 @@ class MappingScreenView extends StatelessWidget {
                       style: DytavaTypography.titleSmall,
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Unpaired columns are tracked as structural changes.',
+                    Text(
+                      context.l10n.isVietnamese
+                          ? 'Các cột chưa ghép sẽ được theo dõi như thay đổi cấu trúc.'
+                          : 'Unpaired columns are tracked as structural changes.',
                       style: DytavaTypography.bodySmall,
                     ),
                   ],
@@ -203,13 +210,15 @@ class PolicyScreenView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 4),
-          const Text(
-            'Ready for a clear view.',
+          Text(
+            context.l10n.readyForAClearView,
             style: DytavaTypography.titleLarge,
           ),
           const SizedBox(height: 2),
-          const Text(
-            'Review the proposed matches and comparison rules.',
+          Text(
+            context.l10n.isVietnamese
+                ? 'Xem xét gợi ý ghép cặp và quy tắc đối chiếu.'
+                : 'Review the proposed matches and comparison rules.',
             style: DytavaTypography.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -228,13 +237,13 @@ class PolicyScreenView extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${a.records.length} → ${b.records.length} rows',
+                '${a.records.length} → ${b.records.length} ${context.l10n.rows}',
                 style: DytavaTypography.bodySmall,
               ),
             ],
           ),
           SheetMappingReview(flow: flow),
-        _expand('Columns', '${config.mappings.length} pairs · Edit', [
+        _expand(context.l10n.isVietnamese ? 'Cột' : 'Columns', '${config.mappings.length} pairs · Edit', [
           for (final m in config.mappings)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -245,25 +254,25 @@ class PolicyScreenView extends StatelessWidget {
             ),
           TextButton(
             onPressed: () => flow.navigate(WorkflowScreen.mapping),
-            child: const Text('Edit column mapping →'),
+            child: Text(context.l10n.editColumnMapping),
           ),
         ]),
-        _expand('Comparison task', flow.taskMode.label, [
+        _expand(context.l10n.isVietnamese ? 'Tác vụ đối chiếu' : 'Comparison task', flow.taskMode.localizedLabel(context.l10n.isVietnamese), [
           DropdownButtonFormField<ComparisonTaskMode>(
             initialValue: flow.taskMode,
             isExpanded: true,
-            items: const [
+            items: [
               DropdownMenuItem(
                 value: ComparisonTaskMode.compareFiles,
-                child: Text('Compare files'),
+                child: Text(context.l10n.compareFiles),
               ),
               DropdownMenuItem(
                 value: ComparisonTaskMode.compareColumns,
-                child: Text('Compare columns'),
+                child: Text(context.l10n.compareColumns),
               ),
               DropdownMenuItem(
                 value: ComparisonTaskMode.reconcile,
-                child: Text('Reconcile by ID'),
+                child: Text(context.l10n.reconcileById),
               ),
             ],
             onChanged: (value) {
@@ -277,29 +286,31 @@ class PolicyScreenView extends StatelessWidget {
           ),
         ]),
         _expand(
-          'Row matching',
+          context.l10n.isVietnamese ? 'Ghép hàng' : 'Row matching',
           switch (config.mode) {
-            MatchingMode.key => 'By key column',
-            MatchingMode.positional => 'By position',
-            MatchingMode.orderedSequence => 'Sequence alignment',
+            MatchingMode.key => context.l10n.byKeyColumn,
+            MatchingMode.positional => context.l10n.byPosition,
+            MatchingMode.orderedSequence => context.l10n.sequenceAlignment,
           },
           [
             DropdownButtonFormField<MatchingMode>(
               initialValue: config.mode,
               isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Match rows'),
-              items: const [
+              decoration: InputDecoration(
+                labelText: context.l10n.isVietnamese ? 'Ghép hàng' : 'Match rows',
+              ),
+              items: [
                 DropdownMenuItem(
                   value: MatchingMode.positional,
-                  child: Text('By position'),
+                  child: Text(context.l10n.byPosition),
                 ),
                 DropdownMenuItem(
                   value: MatchingMode.key,
-                  child: Text('By key column'),
+                  child: Text(context.l10n.byKeyColumn),
                 ),
                 DropdownMenuItem(
                   value: MatchingMode.orderedSequence,
-                  child: Text('Sequence alignment'),
+                  child: Text(context.l10n.sequenceAlignment),
                 ),
               ],
               onChanged: (v) {
@@ -453,9 +464,15 @@ class PolicyScreenView extends StatelessWidget {
                       labelText:
                           'Decimal separator · ${side.name.toUpperCase()}',
                     ),
-                    items: const [
-                      DropdownMenuItem(value: '.', child: Text('Dot (1.25)')),
-                      DropdownMenuItem(value: ',', child: Text('Comma (1,25)')),
+                    items: [
+                      DropdownMenuItem(
+                        value: '.',
+                        child: Text(context.l10n.dotDecimal),
+                      ),
+                      DropdownMenuItem(
+                        value: ',',
+                        child: Text(context.l10n.commaDecimal),
+                      ),
                     ],
                     onChanged: (value) {
                       if (value == null) return;
@@ -480,8 +497,10 @@ class PolicyScreenView extends StatelessWidget {
             ],
             TextFormField(
               initialValue: config.rules[m.fieldA]?.tolerance ?? '0',
-              decoration: const InputDecoration(
-                labelText: 'Absolute tolerance',
+              decoration: InputDecoration(
+                labelText: context.l10n.isVietnamese
+                    ? 'Độ lệch tuyệt đối'
+                    : 'Absolute tolerance',
               ),
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
@@ -507,10 +526,14 @@ class PolicyScreenView extends StatelessWidget {
           ],
         ]),
         _expand(
-          'File order',
+          context.l10n.isVietnamese ? 'Thứ tự tệp' : 'File order',
           config.direction == ComparisonDirection.aToB
-              ? 'Original A → Updated B'
-              : 'Original B → Updated A',
+              ? (context.l10n.isVietnamese
+                    ? 'Bản gốc A → Bản cập nhật B'
+                    : 'Original A → Updated B')
+              : (context.l10n.isVietnamese
+                    ? 'Bản gốc B → Bản cập nhật A'
+                    : 'Original B → Updated A'),
           [
             DropdownButtonFormField<ComparisonDirection>(
               initialValue: config.direction,
@@ -538,14 +561,18 @@ class PolicyScreenView extends StatelessWidget {
         if (flow.proposal?.isHighConfidence == false)
           WorkflowSectionCard(
             color: DytavaColors.modifiedBg,
-            children: const [
+            children: [
               Text(
-                'Review the proposed matches',
+                context.l10n.isVietnamese
+                    ? 'Xem xét gợi ý ghép cặp'
+                    : 'Review the proposed matches',
                 style: DytavaTypography.titleSmall,
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
-                'Some matches need your confirmation. Unmatched records will stay unresolved.',
+                context.l10n.isVietnamese
+                    ? 'Một số kết quả cần bạn xác nhận. Các bản ghi chưa khớp sẽ ở trạng thái chưa giải quyết.'
+                    : 'Some matches need your confirmation. Unmatched records will stay unresolved.',
                 style: DytavaTypography.bodySmall,
               ),
             ],
@@ -558,20 +585,22 @@ class PolicyScreenView extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Confirm these settings to start your comparison.',
+                  Text(
+                    context.l10n.confirmSettingsToStart,
                     style: DytavaTypography.bodySmall,
                   ),
                   if (invalidTolerance) ...[
                     const SizedBox(height: 4),
-                    const Text(
-                      'Enter a valid non-negative tolerance.',
+                    Text(
+                      context.l10n.isVietnamese
+                          ? 'Nhập độ lệch không âm hợp lệ.'
+                          : 'Enter a valid non-negative tolerance.',
                       style: DytavaTypography.bodySmall,
                     ),
                   ],
                   const SizedBox(height: 8),
                   WorkflowPrimaryButton(
-                    label: 'Start comparison',
+                    label: context.l10n.startComparison,
                     onPressed:
                         flow.busy ||
                                 flow.sheetMapping?.complete == false ||

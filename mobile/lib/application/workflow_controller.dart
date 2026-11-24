@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show Locale;
 
 import '../domain/smart_proposal_engine.dart';
 import '../domain/workflow.dart';
@@ -9,6 +10,7 @@ import '../domain/workbook_comparison.dart';
 import '../infrastructure/database/comparison_database.dart';
 import '../infrastructure/file_upload_service.dart';
 import '../ocr/infrastructure/ocr_capture_service.dart';
+import '../l10n/app_localizations.dart';
 
 export '../infrastructure/database/comparison_database.dart' show SavedSessionSummary;
 
@@ -60,6 +62,18 @@ final class WorkflowController extends ChangeNotifier {
   ExportReceipt? receipt;
   WorkflowIssue? issue;
   String phase = '';
+  Locale _locale = const Locale('en');
+  Locale get locale => _locale;
+  void setLocale(Locale loc) {
+    if (_locale == loc) return;
+    _locale = loc;
+    AppLocalizations.current = AppLocalizations(loc);
+    _emit();
+  }
+  void toggleLocale() {
+    setLocale(_locale.languageCode == 'vi' ? const Locale('en') : const Locale('vi'));
+  }
+  AppLocalizations get l10n => AppLocalizations(_locale);
   int progressDone = 0;
   int? progressTotal;
   DecisionStatus? resultFilter;
@@ -163,9 +177,9 @@ final class WorkflowController extends ChangeNotifier {
 
   WorkflowIssue _safe(Object error) => error is WorkflowIssue
       ? error
-      : const WorkflowIssue(
+      : WorkflowIssue(
           'ACTIVITY_FAILED',
-          'Tác vụ thất bại. Hãy kiểm tra lại nguồn và cấu hình.',
+          l10n.activityFailed,
         );
   void _invalidate({bool source = false, bool revoked = false}) {
     _planRevision++;
@@ -200,9 +214,9 @@ final class WorkflowController extends ChangeNotifier {
         format.isImage &&
         other.artifact?.format.isImage == true;
     if (isFixtureImagePair) {
-      issue = const WorkflowIssue(
+      issue = WorkflowIssue(
         'IMAGE_PAIR_UNSUPPORTED',
-        'P0 chỉ cho phép một nguồn ảnh; phía còn lại phải là bảng.',
+        l10n.imagePairUnsupported,
       );
       _emit();
       return;
@@ -301,9 +315,9 @@ final class WorkflowController extends ChangeNotifier {
     }
     if (old.state == InputState.failed && old.issue?.retryable != true) return;
     if (old.attempt >= maxAttempts) {
-      issue = const WorkflowIssue(
+      issue = WorkflowIssue(
         'RETRY_LIMIT',
-        'Đã hết số lần thử. Hãy chọn lại nguồn.',
+        l10n.retryLimitExceeded,
       );
       _emit();
       return;
@@ -367,9 +381,9 @@ final class WorkflowController extends ChangeNotifier {
             snapshot.binding != binding ||
             !snapshot.fullValidation ||
             (old.artifact!.format.isImage && !snapshot.ocrReviewed)) {
-          throw const WorkflowIssue(
+          throw WorkflowIssue(
             'SNAPSHOT_NOT_VALIDATED',
-            'Nguồn chưa có bằng chứng xác thực đầy đủ.',
+            l10n.snapshotNotValidated,
           );
         }
         set(InputState.previewReady, snapshot: snapshot);
@@ -501,9 +515,9 @@ final class WorkflowController extends ChangeNotifier {
       return;
     }
     if (old.review!.cells.any((c) => !reviewedCells.contains(c.id))) {
-      issue = const WorkflowIssue(
+      issue = WorkflowIssue(
         'OCR_REVIEW_REQUIRED',
-        'Cần xác nhận mọi ô trong phạm vi ảnh.',
+        l10n.ocrReviewRequired,
       );
       _emit();
       return;
@@ -571,9 +585,9 @@ final class WorkflowController extends ChangeNotifier {
       state: InputState.failed,
       artifact: old.artifact,
       generation: old.generation + 1,
-      issue: const WorkflowIssue(
+      issue: WorkflowIssue(
         'INP-ERR-006',
-        'Quyền truy cập nguồn đã bị thu hồi.',
+        l10n.accessRevoked,
       ),
     );
     _invalidate(source: true, revoked: true);
@@ -646,9 +660,9 @@ final class WorkflowController extends ChangeNotifier {
     final blockers = <WorkflowIssue>[];
     if (sheetMapping?.complete == false) {
       blockers.add(
-        const WorkflowIssue(
+        WorkflowIssue(
           'SHEET_MAPPING_REQUIRED',
-          'Cần chọn các cặp sheet chưa xác định được.',
+          l10n.sheetMappingRequired,
         ),
       );
     }
@@ -657,7 +671,7 @@ final class WorkflowController extends ChangeNotifier {
         blockers.add(
           WorkflowIssue(
             'INPUT_NOT_READY',
-            'Nguồn ${side.name.toUpperCase()} chưa PREVIEW_READY.',
+            l10n.inputNotReady(side.name.toUpperCase()),
           ),
         );
       }
@@ -665,33 +679,33 @@ final class WorkflowController extends ChangeNotifier {
     if (!config.mappingConfirmed ||
         (config.mappings.isEmpty && !structuralWorkbookOnly)) {
       blockers.add(
-        const WorkflowIssue(
+        WorkflowIssue(
           'MAPPING_CONFIRMATION_REQUIRED',
-          'Cần xác nhận ánh xạ ít nhất một cặp cột.',
+          l10n.mappingConfirmationRequired,
         ),
       );
     }
     if (!config.modeConfirmed) {
       blockers.add(
-        const WorkflowIssue(
+        WorkflowIssue(
           'MODE_CONFIRMATION_REQUIRED',
-          'Cần xác nhận chế độ ghép hàng.',
+          l10n.modeConfirmationRequired,
         ),
       );
     }
     if (!config.policyConfirmed) {
       blockers.add(
-        const WorkflowIssue(
+        WorkflowIssue(
           'POLICY_CONFIRMATION_REQUIRED',
-          'Cần xác nhận chính sách cho từng cột.',
+          l10n.policyConfirmationRequired,
         ),
       );
     }
     if (!config.directionConfirmed) {
       blockers.add(
-        const WorkflowIssue(
+        WorkflowIssue(
           'DIRECTION_CONFIRMATION_REQUIRED',
-          'Cần xác nhận chiều so sánh.',
+          l10n.directionConfirmationRequired,
         ),
       );
     }
@@ -706,9 +720,9 @@ final class WorkflowController extends ChangeNotifier {
                   config.rules[k]?.trim != false,
             ))) {
       blockers.add(
-        const WorkflowIssue(
+        WorkflowIssue(
           'KEY_INVALID',
-          'Khóa cần là tuple cột IDENTIFIER, không trim hoặc tolerance.',
+          l10n.keyInvalid,
         ),
       );
     }
@@ -723,9 +737,9 @@ final class WorkflowController extends ChangeNotifier {
             (m) => !a.contains(m.fieldA) || !b.contains(m.fieldB),
           )) {
         blockers.add(
-          const WorkflowIssue(
+          WorkflowIssue(
             'MAPPING_INVALID',
-            'Ánh xạ phải là 1:1 giữa các Field ID hiện hành.',
+            l10n.mappingInvalid,
           ),
         );
       }
@@ -737,9 +751,9 @@ final class WorkflowController extends ChangeNotifier {
         rule.compile(mapping.fieldA);
       } on FormatException {
         blockers.add(
-          const WorkflowIssue(
+          WorkflowIssue(
             'POLICY_INVALID',
-            'Thiếu hoặc sai cấu hình kiểu dữ liệu, locale hoặc tolerance.',
+            l10n.policyInvalid,
           ),
         );
       }
@@ -756,9 +770,9 @@ final class WorkflowController extends ChangeNotifier {
       return;
     }
     if (_jobAttempts >= maxAttempts) {
-      issue = const WorkflowIssue(
+      issue = WorkflowIssue(
         'RETRY_LIMIT',
-        'Đã hết số lần thử. Hãy kiểm tra lại cấu hình.',
+        l10n.retryLimitConfig,
       );
       _emit();
       return;
@@ -777,7 +791,7 @@ final class WorkflowController extends ChangeNotifier {
     validity = ResultValidity.stale;
     receipt = null;
     issue = null;
-    phase = 'Xác thực cấu hình';
+    phase = l10n.validatingConfigPhase;
     progressDone = 0;
     progressTotal = null;
     jobState = JobState.validating;
@@ -800,9 +814,9 @@ final class WorkflowController extends ChangeNotifier {
         if (done < 0 ||
             (total != null && (total < done || total < 0)) ||
             (p == phase && done < progressDone)) {
-          throw const WorkflowIssue(
+          throw WorkflowIssue(
             'PROGRESS_INVALID',
-            'Tiến trình tác vụ không hợp lệ.',
+            l10n.progressInvalid,
           );
         }
         phase = p;
@@ -812,9 +826,9 @@ final class WorkflowController extends ChangeNotifier {
       });
       if (!current()) return;
       if (!identical(output.plan, plan) || output.id.isEmpty) {
-        throw const WorkflowIssue(
+        throw WorkflowIssue(
           'RESULT_BINDING_INVALID',
-          'Kết quả không thuộc cấu hình hiện hành.',
+          l10n.resultBindingInvalid,
         );
       }
       result = output;
@@ -829,8 +843,8 @@ final class WorkflowController extends ChangeNotifier {
       unawaited(
         ComparisonDatabase.instance.saveSession(
           result: output,
-          labelA: slot(SourceSide.a).artifact?.label ?? 'Nguồn A',
-          labelB: slot(SourceSide.b).artifact?.label ?? 'Nguồn B',
+          labelA: slot(SourceSide.a).artifact?.label ?? l10n.sourceA,
+          labelB: slot(SourceSide.b).artifact?.label ?? l10n.sourceB,
           formatA: slot(SourceSide.a).artifact?.format ?? SourceFormat.csv,
           formatB: slot(SourceSide.b).artifact?.format ?? SourceFormat.csv,
           config: config,
@@ -931,25 +945,25 @@ final class WorkflowController extends ChangeNotifier {
   Future<void> exportResult(ExportRequest request) async {
     if (!usable || _export != null || _comparison != null) return;
     if (!resultCurrent) {
-      issue = const WorkflowIssue(
+      issue = WorkflowIssue(
         'RESULT_NOT_CURRENT',
-        'Cần so sánh lại trước khi xuất.',
+        l10n.resultNotCurrent,
       );
       _emit();
       return;
     }
     if (!exporter.supports(request.kind)) {
-      issue = const WorkflowIssue(
+      issue = WorkflowIssue(
         'EXPORT_CAPABILITY_DISABLED',
-        'Định dạng này chưa có bộ xuất được kiểm chứng trên mobile.',
+        l10n.exportDisabled,
       );
       _emit();
       return;
     }
     if (_exportAttempts >= maxAttempts) {
-      issue = const WorkflowIssue(
+      issue = WorkflowIssue(
         'RETRY_LIMIT',
-        'Đã hết số lần thử xuất trong phiên này.',
+        l10n.exportRetriesExceeded,
       );
       _emit();
       return;
@@ -967,9 +981,9 @@ final class WorkflowController extends ChangeNotifier {
     void check() {
       work.cancel.check();
       if (!resultCurrent || !identical(result, output)) {
-        throw const WorkflowIssue(
+        throw WorkflowIssue(
           'RESULT_NOT_CURRENT',
-          'Kết quả đã mất hiệu lực; cần so sánh lại.',
+          l10n.resultStale,
         );
       }
     }
@@ -1005,9 +1019,9 @@ final class WorkflowController extends ChangeNotifier {
           exportState = ExportState.cancelled;
         }
       } catch (_) {
-        issue = const WorkflowIssue(
+        issue = WorkflowIssue(
           'CLEANUP_FAILED',
-          'Không thể hoàn tất dọn dữ liệu tạm.',
+          l10n.cleanupFailed,
         );
         if (exportState != ExportState.completed) {
           exportState = ExportState.failed;
@@ -1039,6 +1053,32 @@ final class WorkflowController extends ChangeNotifier {
   /// Returns total count of persisted sessions in SQLite.
   Future<int> countSavedSessions() =>
       ComparisonDatabase.instance.countSessions();
+
+  /// Returns total local storage usage in bytes (persisted SQLite sessions + active in-memory session).
+  Future<int> getLocalStorageUsageBytes() async {
+    int total = await ComparisonDatabase.instance.getStorageUsageBytes();
+    total += MobileFileUploadService.estimatedMemoryBytes();
+    total += OcrCaptureService.estimatedMemoryBytes();
+    for (final side in SourceSide.values) {
+      final snap = slot(side).snapshot;
+      if (snap != null) {
+        total += snap.records.length * snap.fields.length * 32;
+      }
+    }
+    return total;
+  }
+
+  /// Formats byte count into a clean human-readable string (e.g. "0 KB", "24.5 KB", "1.2 MB").
+  static String formatStorageBytes(int bytes) {
+    if (bytes <= 0) return '0 KB';
+    if (bytes < 1024) return '< 1 KB';
+    final kb = bytes / 1024;
+    if (kb < 1024) {
+      return '${kb >= 100 ? kb.toStringAsFixed(0) : kb.toStringAsFixed(1)} KB';
+    }
+    final mb = kb / 1024;
+    return '${mb.toStringAsFixed(1)} MB';
+  }
 
   /// Queries persisted sessions from SQLite for the Home and History screens.
   Future<List<SavedSessionSummary>> getRecentSavedSessions({
@@ -1139,9 +1179,9 @@ final class WorkflowController extends ChangeNotifier {
         state: InputState.selected,
         generation: slot(entry.key).generation + 1,
         artifact: artifact,
-        issue: const WorkflowIssue(
+        issue: WorkflowIssue(
           'INP-ERR-018',
-          'Nguồn khôi phục cần được xác thực lại.',
+          l10n.sourceRevalidationRequired,
         ),
       );
     }

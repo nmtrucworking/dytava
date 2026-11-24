@@ -11,10 +11,10 @@
             "id": "70adf10ea0cb0d10",
             "type": "leaf",
             "state": {
-              "type": "empty",
+              "type": "graph",
               "state": {},
-              "icon": "lucide-file",
-              "title": "Tab mới"
+              "icon": "lucide-git-fork",
+              "title": "Xem biểu đồ"
             }
           }
         ]
@@ -79,7 +79,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 388.046875
+    "width": 200
   },
   "right": {
     "id": "a962ed24de38192c",
@@ -185,8 +185,9 @@
       "bases:Tạo cơ sở mới": false
     }
   },
-  "active": "43965cded4c76d2d",
+  "active": "70adf10ea0cb0d10",
   "lastOpenFiles": [
+    "Chưa đặt tên.canvas",
     "testing/text-difference-evidence.json",
     "testing/mobile-flow-evidence.json",
     "guides/MOBILE_IMPLEMENTATION.md",
@@ -231,7 +232,6 @@
     "specs/engine/README.md",
     "project/Optical Character Recognition (OCR).md",
     "specs/input/11_streaming_snapshot_contract.md",
-    "specs/engine",
-    "project/DYTAVA_UDG_v3/assets/14-test.dot"
+    "specs/engine"
   ]
 }

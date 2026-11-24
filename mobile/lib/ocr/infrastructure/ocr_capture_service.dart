@@ -106,6 +106,15 @@ abstract final class OcrCaptureService {
   static String? sha256Of(String privateRef) =>
       _sessions[privateRef]?.artifactSha256;
 
+  /// Returns estimated byte size of currently loaded OCR image sessions.
+  static int estimatedMemoryBytes() {
+    int total = 0;
+    for (final s in _sessions.values) {
+      total += s.rawBytes.length;
+    }
+    return total;
+  }
+
   static OcrReviewedTable? finalizedTable(String privateRef) =>
       _finalized[privateRef];
 

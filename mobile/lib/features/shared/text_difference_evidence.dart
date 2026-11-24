@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../design_system/design_system.dart';
 import '../../domain/text_difference.dart';
 import '../../domain/word_difference.dart';
+import '../../l10n/app_localizations.dart';
 
 /// A lazy, small-text diagnostic aid; not the production streaming highlighter.
 class TextDifferenceEvidence extends StatelessWidget {
@@ -36,8 +37,8 @@ class TextDifferenceEvidence extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (a.length > maxCodeUnits || b.length > maxCodeUnits) {
-      return const Text(
-        'Không tô vùng khác biệt: chuỗi vượt giới hạn hiển thị của màn hình thử nghiệm. Kết luận so sánh được giữ nguyên.',
+      return Text(
+        context.l10n.textDiffExceedsLimit,
       );
     }
     final words = WordDifference.between(a, b);
@@ -47,7 +48,7 @@ class TextDifferenceEvidence extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (words.similarity != null)
-          Text('Độ tương đồng: ${words.similarity}%'),
+          Text(context.l10n.similarityRatio(words.similarity.toString())),
         for (final side in [(words.a, 'A'), (words.b, 'B')])
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
@@ -71,19 +72,18 @@ class TextDifferenceEvidence extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 12),
-        const Text(
-          'Khác biệt trong chuỗi',
+        Text(
+          context.l10n.differenceInString,
           style: DytavaTypography.titleMedium,
         ),
-        Text(difference.description),
-        const Text(
-          'Vị trí tính trên chuỗi sau chuẩn hóa; vùng khác nằm trong ⟦ ⟧.',
+        Text(difference.localizedDescription(context.l10n.isVietnamese)),
+        Text(
+          context.l10n.diffPositionNote,
         ),
         _side(difference, 'A', difference.partA),
         _side(difference, 'B', difference.partB),
-        const Text(
-          '␠ dấu cách · ⇥ tab · ↵ xuống dòng · ␍ về đầu dòng · '
-          '⍽ dấu cách không ngắt · ∅ đoạn trống',
+        Text(
+          context.l10n.diffLegend,
         ),
       ],
     );

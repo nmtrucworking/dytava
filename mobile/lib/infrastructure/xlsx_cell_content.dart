@@ -297,15 +297,47 @@ _inspectSheetDrawings(
             anchorCell = '${colLetters(col)}${row + 1}';
           }
         }
-        final blip = all(anchor, 'blip').firstOrNull;
-        final embedId = blip?.attributes
-            .where((a) => a.name.local == 'embed')
-            .firstOrNull
-            ?.value;
-        final mediaRel = embedId != null ? drawingRels[embedId] : null;
+        String? embedId;
+        for (final blip in [
+          ...all(anchor, 'blip'),
+          ...all(anchor, 'svgBlip'),
+          ...all(anchor, 'imagedata'),
+        ]) {
+          final candidate = blip.attributes
+              .where(
+                (a) =>
+                    a.name.local == 'embed' ||
+                    a.name.local == 'link' ||
+                    a.name.local == 'id',
+              )
+              .firstOrNull
+              ?.value;
+          if (candidate != null && candidate.isNotEmpty) {
+            embedId = candidate;
+            if (drawingRels.containsKey(candidate)) break;
+          }
+        }
+        var mediaRel = embedId != null ? drawingRels[embedId] : null;
+        if (mediaRel == null && all(anchor, 'pic').isNotEmpty) {
+          mediaRel = drawingRels.values
+              .where((r) => r.type.endsWith('/image') && r.path != null)
+              .firstOrNull;
+        }
         final mediaPath = mediaRel?.path;
         final mediaFile =
-            mediaPath != null ? archive.findFile(mediaPath) : null;
+            (mediaPath != null ? archive.findFile(mediaPath) : null) ??
+            (mediaPath == null
+                ? null
+                : (() {
+                    final baseName = mediaPath.split('/').last.toLowerCase();
+                    return archive.files
+                        .where(
+                          (f) =>
+                              f.name.toLowerCase() == mediaPath.toLowerCase() ||
+                              f.name.toLowerCase() == 'xl/media/$baseName',
+                        )
+                        .firstOrNull;
+                  })());
         if (mediaFile != null && mediaFile.size > 0) {
           final cell = imageCache.putIfAbsent(
             'drawingAnchor:$mediaPath:${anchorCell ?? "free"}',

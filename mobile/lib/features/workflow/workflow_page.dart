@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:excelcompare_core/excelcompare_core.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +14,7 @@ import '../../domain/workflow.dart';
 import '../../infrastructure/file_upload_service.dart';
 import '../../ocr/domain/ocr_session.dart';
 import '../../ocr/infrastructure/ocr_capture_service.dart';
+import '../../l10n/app_localizations.dart';
 import 'screens/home_screen_view.dart';
 import 'screens/mapping_and_policy_view.dart';
 import 'screens/preview_and_ocr_view.dart';
@@ -274,42 +277,54 @@ class _WorkflowPageState extends State<WorkflowPage>
 
   Future<void> _openExport() async {
     _scopeConfirmed = false;
+    flow.receipt = null;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (sheetContext) => StatefulBuilder(
         builder: (context, update) => AnimatedBuilder(
           animation: flow,
-          builder: (context, _) => ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(context).height * 0.8,
-            ),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                24,
-                0,
-                24,
-                24 + MediaQuery.viewInsetsOf(context).bottom,
+          builder: (context, _) => SafeArea(
+            top: false,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.85,
               ),
-              child: ExportScreenView(
-                flow: flow,
-                exportKind: _exportKind,
-                selection: _selection,
-                scopeConfirmed: _scopeConfirmed,
-                onKindChanged: (kind) => update(() {
-                  _exportKind = kind;
-                  _scopeConfirmed = false;
-                }),
-                onSelectionChanged: (selection) => update(() {
-                  _selection = selection;
-                  _scopeConfirmed = false;
-                }),
-                onScopeConfirmedChanged: (value) =>
-                    update(() => _scopeConfirmed = value),
-                onRunExportPreview: () =>
-                    flow.exportResult(ExportRequest(_exportKind, _selection)),
-                onBackToResults: () => Navigator.pop(sheetContext),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  0,
+                  20,
+                  16 + MediaQuery.viewInsetsOf(context).bottom,
+                ),
+                child: ExportScreenView(
+                  flow: flow,
+                  exportKind: _exportKind,
+                  selection: _selection,
+                  scopeConfirmed: _scopeConfirmed,
+                  onKindChanged: (kind) => update(() {
+                    _exportKind = kind;
+                    _scopeConfirmed = false;
+                    flow.receipt = null;
+                  }),
+                  onSelectionChanged: (selection) => update(() {
+                    _selection = selection;
+                    _scopeConfirmed = false;
+                    flow.receipt = null;
+                  }),
+                  onScopeConfirmedChanged: (value) =>
+                      update(() => _scopeConfirmed = value),
+                  onRunExportPreview: () =>
+                      flow.exportResult(ExportRequest(_exportKind, _selection)),
+                  onBackToResults: () => Navigator.pop(sheetContext),
+                ),
               ),
             ),
           ),
@@ -329,35 +344,41 @@ class _WorkflowPageState extends State<WorkflowPage>
     _applyApprovedConfigAndRun();
   }
 
-  String _appBarTitle() {
-    if (_auxView == _AuxiliaryView.history) return 'Recent comparisons';
-    if (_auxView == _AuxiliaryView.presets) return 'Mẫu quy tắc';
-    if (_auxView == _AuxiliaryView.settings) return 'App settings';
+  String _appBarTitle(BuildContext context) {
+    final hasExplicitLocale = Localizations.of<AppLocalizations>(context, AppLocalizations) != null;
+    final l10n = hasExplicitLocale
+        ? context.l10n
+        : (flow.screen == WorkflowScreen.ocrReview
+            ? AppLocalizations(const Locale('vi'))
+            : context.l10n);
+    if (_auxView == _AuxiliaryView.history) return l10n.titleHistory;
+    if (_auxView == _AuxiliaryView.presets) return l10n.titlePresets;
+    if (_auxView == _AuxiliaryView.settings) return l10n.titleSettings;
     if (flow.screen == WorkflowScreen.ocrReview) {
       final ref = flow.slot(flow.activeSide).artifact?.privateRef ?? '';
       final ocrSession = OcrCaptureService.session(ref);
       if (ocrSession != null) {
         return switch (ocrSession.stage) {
-          OcrPipelineStage.preprocess => 'Chọn vùng bảng',
-          OcrPipelineStage.recognizing => 'Đang quét bảng',
+          OcrPipelineStage.preprocess => l10n.ocrStagePreprocess,
+          OcrPipelineStage.recognizing => l10n.ocrStageRecognizing,
           OcrPipelineStage.gridStructure ||
           OcrPipelineStage.cellReview =>
-            'Kiểm tra bảng',
+            l10n.ocrStageReview,
         };
       }
-      return 'OCR review';
+      return l10n.titleOcr;
     }
-    const titles = [
-      'Dytava',
-      'Import files',
-      'File preview',
-      'OCR review',
-      'Column mapping',
-      'Review comparison',
-      'Comparing files',
-      'Comparison results',
-      'Change details',
-      'Export report',
+    final titles = [
+      l10n.titleHome,
+      l10n.titleImport,
+      l10n.titlePreview,
+      l10n.titleOcr,
+      l10n.titleMapping,
+      l10n.titleReview,
+      l10n.titleComparing,
+      l10n.titleResults,
+      l10n.titleDetail,
+      l10n.titleExport,
     ];
     return titles[flow.screen.index];
   }
@@ -407,7 +428,7 @@ class _WorkflowPageState extends State<WorkflowPage>
                                 ),
                               ),
                               Text(
-                                'Excel Compare',
+                                context.l10n.appSubtitle,
                                 style: DytavaTypography.bodySmall.copyWith(
                                   fontSize: 10.5,
                                   color: DytavaColors.textSecondary,
@@ -420,7 +441,7 @@ class _WorkflowPageState extends State<WorkflowPage>
                     ],
                   )
                 : Text(
-                    _appBarTitle(),
+                    _appBarTitle(context),
                     style: DytavaTypography.titleLarge.copyWith(
                       fontSize: 16.5,
                       fontWeight: FontWeight.w700,
@@ -436,7 +457,7 @@ class _WorkflowPageState extends State<WorkflowPage>
                     padding: const EdgeInsets.only(left: 12),
                     child: Center(
                       child: IconButton(
-                        tooltip: 'Back',
+                        tooltip: context.l10n.back,
                         onPressed: flow.busy ? null : _back,
                         style: IconButton.styleFrom(
                           backgroundColor: DytavaColors.primaryLight,
@@ -459,7 +480,7 @@ class _WorkflowPageState extends State<WorkflowPage>
                   padding: const EdgeInsets.only(right: 12),
                   child: Center(
                     child: IconButton(
-                      tooltip: 'Comparison settings',
+                      tooltip: context.l10n.comparisonSettingsTooltip,
                       onPressed: () =>
                           setState(() => _auxView = _AuxiliaryView.settings),
                       style: IconButton.styleFrom(
@@ -477,27 +498,6 @@ class _WorkflowPageState extends State<WorkflowPage>
                     ),
                   ),
                 ),
-              if (_auxView == _AuxiliaryView.history)
-                Padding(
-                  padding: const EdgeInsets.only(right: 14),
-                  child: Center(
-                    child: Text(
-                      _historyCount == null
-                          ? (flow.lastSavedSession == null && !flow.resultCurrent
-                              ? 'No saved comparisons'
-                              : 'Saved comparisons')
-                          : (_historyCount == 0
-                              ? 'No saved comparisons'
-                              : '$_historyCount saved comparison${_historyCount == 1 ? '' : 's'}'),
-                      style: const TextStyle(
-                        fontFamily: DytavaTypography.primaryFont,
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
               if (!isRootHome &&
                   !isOcrScreen &&
                   flow.screen != WorkflowScreen.progress &&
@@ -505,43 +505,12 @@ class _WorkflowPageState extends State<WorkflowPage>
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: Center(
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF1F5F2),
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: PopupMenuButton<String>(
-                        tooltip: 'Session actions',
-                        padding: EdgeInsets.zero,
-                        iconSize: 18,
-                        icon: const Icon(
-                          Icons.more_vert_rounded,
-                          size: 18,
-                          color: Color(0xFF334155),
-                        ),
-                        onSelected: (action) async {
-                          if (action == 'home') {
-                            _go(WorkflowScreen.home);
-                          } else {
-                            await flow.closeSession();
-                          }
-                        },
-                        itemBuilder: (_) => [
-                          PopupMenuItem(
-                            value: 'home',
-                            enabled: !flow.busy,
-                            child: const Text('Home'),
-                          ),
-                          PopupMenuItem(
-                            value: 'close',
-                            enabled: flow.usable && !flow.busy,
-                            child: const Text('Close comparison'),
-                          ),
-                        ],
-                      ),
+                    child: _MoreSessionPopoverButton(
+                      flow: flow,
+                      onGoHome: () => _go(WorkflowScreen.home),
+                      onCloseSession: () async {
+                        await flow.closeSession();
+                      },
                     ),
                   ),
                 ),
@@ -567,7 +536,7 @@ class _WorkflowPageState extends State<WorkflowPage>
               SafeArea(
                 bottom: false,
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
+                  duration: const Duration(milliseconds: 280),
                   switchInCurve: Curves.easeOutCubic,
                   switchOutCurve: Curves.easeInCubic,
                   layoutBuilder: (currentChild, previousChildren) {
@@ -586,15 +555,23 @@ class _WorkflowPageState extends State<WorkflowPage>
                       opacity: curved,
                       child: SlideTransition(
                         position: Tween<Offset>(
-                          begin: const Offset(0, 0.02),
+                          begin: const Offset(0, 0.025),
                           end: Offset.zero,
                         ).animate(curved),
-                        child: child,
+                        child: ScaleTransition(
+                          scale: Tween<double>(
+                            begin: 0.985,
+                            end: 1.0,
+                          ).animate(curved),
+                          child: child,
+                        ),
                       ),
                     );
                   },
                   child: KeyedSubtree(
-                    key: ValueKey('${flow.screen.name}-aux-${_auxView.name}'),
+                    key: ValueKey(
+                      '${flow.screen.name}-aux-${_auxView.name}-lang-${flow.locale.languageCode}',
+                    ),
                     child: _buildScreenContent(constraints),
                   ),
                 ),
@@ -619,7 +596,9 @@ class _WorkflowPageState extends State<WorkflowPage>
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                'Tap to compare',
+                                context.l10n.isVietnamese
+                                    ? 'Chạm để đối chiếu'
+                                    : 'Tap to compare',
                                 style: DytavaTypography.titleLarge.copyWith(
                                   fontSize: 14.5,
                                   fontWeight: FontWeight.w700,
@@ -627,7 +606,9 @@ class _WorkflowPageState extends State<WorkflowPage>
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Select two files to begin',
+                                context.l10n.isVietnamese
+                                    ? 'Chọn hai tệp để bắt đầu'
+                                    : 'Select two files to begin',
                                 style: DytavaTypography.bodySmall.copyWith(
                                   fontSize: 11,
                                   color: const Color(0xFF64748B),
@@ -782,11 +763,10 @@ class _WorkflowPageState extends State<WorkflowPage>
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(padHorizontal),
-              child: const WorkflowSectionCard(
+              child: WorkflowSectionCard(
                 children: [
                   WorkflowInfoBanner(
-                    text:
-                        'Nguồn đã thay đổi; cần xác thực lại trước khi cấu hình.',
+                    text: context.l10n.sourcesChangedRevalidate,
                     iconAsset: DytavaIcons.warning,
                     color: DytavaColors.unresolved,
                     bgColor: DytavaColors.softAmber,
@@ -797,7 +777,7 @@ class _WorkflowPageState extends State<WorkflowPage>
           ),
           StickyBottomBar(
             child: WorkflowSecondaryButton(
-              label: 'Về nguồn A/B',
+              label: context.l10n.backToSources,
               iconAsset: DytavaIcons.back,
               onPressed: () => _go(WorkflowScreen.sources),
             ),
@@ -1022,4 +1002,719 @@ class _WorkflowPageState extends State<WorkflowPage>
 
     return content;
   }
+}
+
+/// Nút More mở Popover radial:
+/// - Bình thường biểu tượng 3 chấm đứng thẳng 0 độ (0°), khi mở popover xoay mượt sang 45 độ (45°), khi đóng xoay về 0 độ.
+/// - Khi mở popover: Icon `+` xuất hiện trước tiên ở góc trên phải,
+///   3 icons còn lại (Đóng phiên / Power, Chuyển ngôn ngữ / Globe, Về trang chủ / Home)
+///   lần lượt xuất hiện theo đường tròn từ trên xuống dưới.
+class _MoreSessionPopoverButton extends StatefulWidget {
+  final WorkflowController flow;
+  final VoidCallback onGoHome;
+  final Future<void> Function() onCloseSession;
+
+  const _MoreSessionPopoverButton({
+    required this.flow,
+    required this.onGoHome,
+    required this.onCloseSession,
+  });
+
+  @override
+  State<_MoreSessionPopoverButton> createState() =>
+      _MoreSessionPopoverButtonState();
+}
+
+class _MoreSessionPopoverButtonState extends State<_MoreSessionPopoverButton> {
+  bool _isOpen = false;
+
+  Future<void> _openPopover(BuildContext context) async {
+    final buttonBox = context.findRenderObject() as RenderBox?;
+    final overlayBox =
+        Overlay.maybeOf(context)?.context.findRenderObject() as RenderBox?;
+    Offset anchor = const Offset(340, 88);
+    if (buttonBox != null && overlayBox != null) {
+      final pos = buttonBox.localToGlobal(Offset.zero, ancestor: overlayBox);
+      anchor = Offset(
+        pos.dx + buttonBox.size.width,
+        pos.dy + buttonBox.size.height + 10,
+      );
+    }
+
+    setState(() => _isOpen = true);
+    try {
+      await Navigator.of(context).push(
+        PageRouteBuilder<void>(
+          opaque: false,
+          barrierDismissible: true,
+          barrierColor: Colors.transparent,
+          barrierLabel: 'Dismiss more menu',
+          transitionDuration: const Duration(milliseconds: 440),
+          reverseTransitionDuration: const Duration(milliseconds: 220),
+          pageBuilder: (routeContext, animation, secondaryAnimation) {
+            return _RadialMorePopoverOverlay(
+              flow: widget.flow,
+              anchor: anchor,
+              animation: animation,
+              onDismiss: () => Navigator.of(routeContext).pop(),
+              onGoHome: () {
+                Navigator.of(routeContext).pop();
+                widget.onGoHome();
+              },
+              onCloseSession: () async {
+                Navigator.of(routeContext).pop();
+                await widget.onCloseSession();
+              },
+            );
+          },
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isOpen = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: _isOpen ? const Color(0xFFEDF7F0) : Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: _isOpen ? const Color(0xFFB7DFC6) : const Color(0xFFE2EAE5),
+          width: 1.1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: _isOpen ? 0.08 : 0.04),
+            blurRadius: _isOpen ? 10 : 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          key: const ValueKey('more-popover-trigger'),
+          customBorder: const CircleBorder(),
+          onTap: () {
+            DytavaAudioFeedback.playClick();
+            _openPopover(context);
+          },
+          child: Tooltip(
+            message: 'Session actions',
+            child: Center(
+              child: AnimatedRotation(
+                turns: _isOpen ? 0.125 : 0.0, // 0° khi đóng, 45° (1/8 vòng) khi mở
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutBack,
+                child: Icon(
+                  Icons.more_vert_rounded,
+                  size: 18,
+                  color: _isOpen
+                      ? DytavaColors.primaryDark
+                      : const Color(0xFF1F2937),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RadialMorePopoverOverlay extends StatelessWidget {
+  final WorkflowController flow;
+  final Offset anchor;
+  final Animation<double> animation;
+  final VoidCallback onDismiss;
+  final VoidCallback onGoHome;
+  final Future<void> Function() onCloseSession;
+
+  const _RadialMorePopoverOverlay({
+    required this.flow,
+    required this.anchor,
+    required this.animation,
+    required this.onDismiss,
+    required this.onGoHome,
+    required this.onCloseSession,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    const double cardWidth = 188;
+    const double cardHeight = 184;
+    final double right = (screenSize.width - anchor.dx).clamp(
+      12.0,
+      math.max(12.0, screenSize.width - cardWidth - 12.0),
+    );
+    final double top = anchor.dy.clamp(
+      56.0,
+      math.max(56.0, screenSize.height - cardHeight - 24.0),
+    );
+
+    // 1. Khung nền kính mờ
+    final cardOpacity = CurvedAnimation(
+      parent: animation,
+      curve: const Interval(0.0, 0.35, curve: Curves.easeOutCubic),
+    );
+    final cardScale = Tween<double>(begin: 0.90, end: 1.0).animate(
+      CurvedAnimation(
+        parent: animation,
+        curve: const Interval(0.0, 0.45, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    // 2. Icon + xuất hiện đầu tiên
+    final plusAnim = CurvedAnimation(
+      parent: animation,
+      curve: const Interval(0.04, 0.36, curve: Curves.easeOutBack),
+    );
+
+    // 3. 3 icons còn lại lần lượt xuất hiện theo đường tròn từ trên xuống:
+    // (1) Power / Close session (trên cùng của cung tròn)
+    final item1Anim = CurvedAnimation(
+      parent: animation,
+      curve: const Interval(0.22, 0.58, curve: Curves.easeOutBack),
+    );
+    // (2) Language toggle (giữa cung tròn)
+    final item2Anim = CurvedAnimation(
+      parent: animation,
+      curve: const Interval(0.38, 0.76, curve: Curves.easeOutBack),
+    );
+    // (3) Home (dưới cùng của cung tròn)
+    final item3Anim = CurvedAnimation(
+      parent: animation,
+      curve: const Interval(0.54, 0.96, curve: Curves.easeOutBack),
+    );
+
+    // Tâm đường tròn là vị trí icon + ở góc trên phải của thẻ (bán kính R ≈ 104px đều nhau)
+    const Offset plusCenter = Offset(142, 46);
+    const Offset powerCenter = Offset(38, 46);
+    const Offset langCenter = Offset(66, 108);
+    const Offset homeCenter = Offset(142, 144);
+
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onDismiss,
+              child: const ColoredBox(color: Colors.transparent),
+            ),
+          ),
+          Positioned(
+            top: top,
+            right: right,
+            width: cardWidth,
+            height: cardHeight,
+            child: AnimatedBuilder(
+              animation: Listenable.merge([animation, flow]),
+              builder: (context, _) {
+                final isVi = flow.locale.languageCode == 'vi';
+                final langCodeLabel = isVi ? 'VN' : 'EN';
+                return FadeTransition(
+                  opacity: cardOpacity,
+                  child: ScaleTransition(
+                    scale: cardScale,
+                    alignment: Alignment.topRight,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF14532D).withValues(alpha: 0.14),
+                            blurRadius: 28,
+                            spreadRadius: 1,
+                            offset: const Offset(0, 12),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFFEAF5EE).withValues(alpha: 0.88),
+                                  const Color(0xFFDDF0E4).withValues(alpha: 0.82),
+                                ],
+                                begin: Alignment.topRight,
+                                end: Alignment.bottomLeft,
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.92),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                // Đường dẫn cung tròn trang trí mảnh tinh tế nối từ tâm
+                                Positioned.fill(
+                                  child: IgnorePointer(
+                                    child: CustomPaint(
+                                      painter: _RadialArcGuidePainter(
+                                        progress: item3Anim.value.clamp(0.0, 1.0),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Icon 1 (Top of arc): Power / Close session
+                                _buildArcAnimatedItem(
+                                  origin: plusCenter,
+                                  target: powerCenter,
+                                  progress: item1Anim.value,
+                                  size: const Size(48, 48),
+                                  child: Semantics(
+                                    button: true,
+                                    label: context.l10n.close,
+                                    child: _PopoverCircularActionButton(
+                                      buttonKey: const ValueKey('popover-close-session'),
+                                      tooltip: context.l10n.close,
+                                      onTap: flow.usable && !flow.busy
+                                          ? () {
+                                              DytavaAudioFeedback.playClick();
+                                              onCloseSession();
+                                            }
+                                          : null,
+                                      child: const _PowerGlyph(),
+                                    ),
+                                  ),
+                                ),
+
+                                // Icon 2 (Middle of arc): Switch Language (Globe + VN/EN)
+                                _buildArcAnimatedItem(
+                                  origin: plusCenter,
+                                  target: langCenter,
+                                  progress: item2Anim.value,
+                                  size: const Size(68, 48),
+                                  child: Semantics(
+                                    button: true,
+                                    label: context.l10n.languageTitle,
+                                    child: _PopoverCircularActionButton(
+                                      buttonKey: const ValueKey('app-language-toggle'),
+                                      tooltip: context.l10n.languageTitle,
+                                      isPill: true,
+                                      onTap: () {
+                                        DytavaAudioFeedback.playClick();
+                                        flow.toggleLocale();
+                                      },
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const _GlobeGlyph(),
+                                          const SizedBox(width: 3),
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 1),
+                                            child: AnimatedSwitcher(
+                                              duration: const Duration(milliseconds: 180),
+                                              transitionBuilder: (child, anim) =>
+                                                  ScaleTransition(
+                                                    scale: anim,
+                                                    child: FadeTransition(
+                                                      opacity: anim,
+                                                      child: child,
+                                                    ),
+                                                  ),
+                                              child: Text(
+                                                langCodeLabel,
+                                                key: ValueKey(langCodeLabel),
+                                                style: const TextStyle(
+                                                  fontFamily: DytavaTypography.primaryFont,
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Color(0xFF14633A),
+                                                  letterSpacing: 0.2,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Icon 3 (Bottom of arc): Home
+                                _buildArcAnimatedItem(
+                                  origin: plusCenter,
+                                  target: homeCenter,
+                                  progress: item3Anim.value,
+                                  size: const Size(48, 48),
+                                  child: Semantics(
+                                    button: true,
+                                    label: context.l10n.titleHome,
+                                    child: _PopoverCircularActionButton(
+                                      buttonKey: const ValueKey('popover-home'),
+                                      tooltip: context.l10n.titleHome,
+                                      onTap: !flow.busy
+                                          ? () {
+                                              DytavaAudioFeedback.playClick();
+                                              onGoHome();
+                                            }
+                                          : null,
+                                      child: const _HomeReturnGlyph(),
+                                    ),
+                                  ),
+                                ),
+
+                                // Anchor Icon + (Appears first at top-right)
+                                Positioned(
+                                  left: plusCenter.dx - 25,
+                                  top: plusCenter.dy - 25,
+                                  width: 50,
+                                  height: 50,
+                                  child: Opacity(
+                                    opacity: plusAnim.value.clamp(0.0, 1.0),
+                                    child: Transform.scale(
+                                      scale: 0.4 + 0.6 * plusAnim.value.clamp(0.0, 1.15),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE5F3EA).withValues(alpha: 0.92),
+                                          borderRadius: BorderRadius.circular(15),
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 1.5,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0xFF14532D).withValues(alpha: 0.08),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Material(
+                                          type: MaterialType.transparency,
+                                          child: InkWell(
+                                            key: const ValueKey('popover-plus'),
+                                            borderRadius: BorderRadius.circular(15),
+                                            onTap: () {
+                                              DytavaAudioFeedback.playClick();
+                                              onDismiss();
+                                            },
+                                            child: const Center(
+                                              child: _PlusGlyph(),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Di chuyển icon dọc theo cung tròn từ [origin] (icon +) tới vị trí [target] theo chiều từ trên xuống
+  Widget _buildArcAnimatedItem({
+    required Offset origin,
+    required Offset target,
+    required double progress,
+    required Size size,
+    required Widget child,
+  }) {
+    final p = progress.clamp(0.0, 1.12);
+    final opacity = progress.clamp(0.0, 1.0);
+
+    // Quỹ đạo cung tròn quét từ đỉnh (góc pi) xuống vị trí đích trên cung tròn quanh tâm origin
+    final dx = target.dx - origin.dx;
+    final dy = target.dy - origin.dy;
+    final targetRadius = math.sqrt(dx * dx + dy * dy);
+    final targetAngle = math.atan2(dy, dx);
+    const startAngle = math.pi;
+
+    final currentAngle = startAngle + (targetAngle - startAngle) * p;
+    final currentRadius = targetRadius * (0.28 + 0.72 * p);
+
+    final cx = origin.dx + currentRadius * math.cos(currentAngle);
+    final cy = origin.dy + currentRadius * math.sin(currentAngle);
+
+    return Positioned(
+      left: cx - size.width / 2,
+      top: cy - size.height / 2,
+      width: size.width,
+      height: size.height,
+      child: Opacity(
+        opacity: opacity,
+        child: Transform.scale(
+          scale: 0.45 + 0.55 * p,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _PopoverCircularActionButton extends StatelessWidget {
+  final Key buttonKey;
+  final String tooltip;
+  final VoidCallback? onTap;
+  final Widget child;
+  final bool isPill;
+
+  const _PopoverCircularActionButton({
+    required this.buttonKey,
+    required this.tooltip,
+    required this.onTap,
+    required this.child,
+    this.isPill = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        key: buttonKey,
+        borderRadius: BorderRadius.circular(isPill ? 18 : 24),
+        onTap: onTap,
+        child: Tooltip(
+          message: tooltip,
+          child: Center(child: child),
+        ),
+      ),
+    );
+  }
+}
+
+class _RadialArcGuidePainter extends CustomPainter {
+  final double progress;
+  const _RadialArcGuidePainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress <= 0.05) return;
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.35 * progress)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final rect = Rect.fromCircle(center: const Offset(142, 46), radius: 100);
+    canvas.drawArc(
+      rect,
+      math.pi,
+      -math.pi * 0.5 * progress,
+      false,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _RadialArcGuidePainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
+
+class _PlusGlyph extends StatelessWidget {
+  const _PlusGlyph();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(22, 22),
+      painter: _PlusGlyphPainter(),
+    );
+  }
+}
+
+class _PlusGlyphPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF14633A)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    canvas.drawLine(Offset(cx, 3), Offset(cx, size.height - 3), paint);
+    canvas.drawLine(Offset(3, cy), Offset(size.width - 3, cy), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _PowerGlyph extends StatelessWidget {
+  const _PowerGlyph();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(28, 28),
+      painter: _PowerGlyphPainter(),
+    );
+  }
+}
+
+class _PowerGlyphPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF14633A)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.9
+      ..strokeCap = StrokeCap.round;
+
+    final cx = size.width / 2;
+    final cy = size.height / 2 + 1.5;
+    final r = size.width * 0.37;
+
+    // Vạch thẳng đứng ở đỉnh
+    canvas.drawLine(Offset(cx, 3.0), Offset(cx, cy - 1.5), paint);
+
+    // Cung tròn hở ở đỉnh
+    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
+    const gapAngle = 0.62;
+    canvas.drawArc(
+      rect,
+      -math.pi / 2 + gapAngle,
+      2 * math.pi - 2 * gapAngle,
+      false,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _GlobeGlyph extends StatelessWidget {
+  const _GlobeGlyph();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(28, 28),
+      painter: _GlobeGlyphPainter(),
+    );
+  }
+}
+
+class _GlobeGlyphPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF14633A)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.85
+      ..strokeCap = StrokeCap.round;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final r = size.width * 0.40;
+
+    // Đường tròn ngoài
+    canvas.drawCircle(center, r, paint);
+    // Kinh tuyến elip dọc
+    canvas.drawOval(
+      Rect.fromCenter(center: center, width: r * 1.05, height: r * 2),
+      paint,
+    );
+    // Trục dọc
+    canvas.drawLine(
+      Offset(center.dx, center.dy - r),
+      Offset(center.dx, center.dy + r),
+      paint,
+    );
+    // Vĩ tuyến ngang
+    canvas.drawLine(
+      Offset(center.dx - r, center.dy),
+      Offset(center.dx + r, center.dy),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Icon ngôi nhà kèm mũi tên quay về chuẩn theo ảnh thiết kế
+class _HomeReturnGlyph extends StatelessWidget {
+  const _HomeReturnGlyph();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(28, 28),
+      painter: _HomeReturnGlyphPainter(),
+    );
+  }
+}
+
+class _HomeReturnGlyphPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF14633A)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.95
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final w = size.width;
+    final h = size.height;
+
+    // Đường viền ngôi nhà mở góc phải dưới cho mũi tên đi vào
+    final housePath = Path()
+      ..moveTo(w * 0.82, h * 0.46)
+      ..lineTo(w * 0.82, h * 0.36)
+      ..lineTo(w * 0.50, h * 0.12)
+      ..lineTo(w * 0.16, h * 0.38)
+      ..lineTo(w * 0.16, h * 0.80)
+      ..quadraticBezierTo(w * 0.16, h * 0.86, w * 0.22, h * 0.86)
+      ..lineTo(w * 0.44, h * 0.86)
+      ..lineTo(w * 0.44, h * 0.56)
+      ..quadraticBezierTo(w * 0.44, h * 0.52, w * 0.48, h * 0.52)
+      ..lineTo(w * 0.60, h * 0.52);
+    canvas.drawPath(housePath, paint);
+
+    // Mũi tên hướng sang trái ở góc phải dưới
+    final arrowLine = Path()
+      ..moveTo(w * 0.86, h * 0.72)
+      ..lineTo(w * 0.56, h * 0.72);
+    canvas.drawPath(arrowLine, paint);
+
+    final arrowHead = Path()
+      ..moveTo(w * 0.67, h * 0.61)
+      ..lineTo(w * 0.55, h * 0.72)
+      ..lineTo(w * 0.67, h * 0.83);
+    canvas.drawPath(arrowHead, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

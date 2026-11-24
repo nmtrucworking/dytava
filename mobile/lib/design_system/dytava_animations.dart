@@ -2,22 +2,45 @@ import 'package:flutter/material.dart';
 
 import 'dytava_audio_feedback.dart';
 
-/// Hiệu ứng Fade In và Slide Up mượt mà, tải tức thì không giật lag
+/// Hiệu ứng Fade In, Slide Up và Scale nhẹ mượt mà, tôn trọng MediaQuery.disableAnimations
 class DytavaFadeSlide extends StatefulWidget {
   final Widget child;
   final Duration duration;
   final Duration delay;
   final Offset offset;
+  final double beginScale;
   final Curve curve;
 
   const DytavaFadeSlide({
     super.key,
     required this.child,
-    this.duration = const Duration(milliseconds: 220),
+    this.duration = const Duration(milliseconds: 280),
     this.delay = Duration.zero,
-    this.offset = const Offset(0, 8),
+    this.offset = const Offset(0, 10),
+    this.beginScale = 0.985,
     this.curve = Curves.easeOutCubic,
   });
+
+  /// Helper tạo hiệu ứng xuất hiện tuần tự (staggered) theo chỉ mục
+  factory DytavaFadeSlide.staggered({
+    Key? key,
+    required int index,
+    required Widget child,
+    Duration stepDelay = const Duration(milliseconds: 45),
+    Duration duration = const Duration(milliseconds: 280),
+    Offset offset = const Offset(0, 10),
+    double beginScale = 0.985,
+  }) {
+    final cappedIndex = index.clamp(0, 10);
+    return DytavaFadeSlide(
+      key: key,
+      delay: stepDelay * cappedIndex,
+      duration: duration,
+      offset: offset,
+      beginScale: beginScale,
+      child: child,
+    );
+  }
 
   @override
   State<DytavaFadeSlide> createState() => _DytavaFadeSlideState();
@@ -28,6 +51,8 @@ class _DytavaFadeSlideState extends State<DytavaFadeSlide>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _scaleAnimation;
+  bool _started = false;
 
   @override
   void initState() {
@@ -35,19 +60,34 @@ class _DytavaFadeSlideState extends State<DytavaFadeSlide>
     _controller = AnimationController(vsync: this, duration: widget.duration);
 
     final curved = CurvedAnimation(parent: _controller, curve: widget.curve);
-    _fadeAnimation = Tween<double>(begin: 0.15, end: 1.0).animate(curved);
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(curved);
     _slideAnimation = Tween<Offset>(
       begin: widget.offset,
       end: Offset.zero,
     ).animate(curved);
+    _scaleAnimation = Tween<double>(
+      begin: widget.beginScale,
+      end: 1.0,
+    ).animate(curved);
+  }
 
-    // Kích hoạt mượt mà theo ticker frame, không làm rỗng giao diện
-    if (widget.delay == Duration.zero) {
-      _controller.forward();
-    } else {
-      Future.delayed(widget.delay, () {
-        if (mounted) _controller.forward();
-      });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.maybeOf(context)?.disableAnimations == true) {
+      _controller.value = 1.0;
+      _started = true;
+      return;
+    }
+    if (!_started) {
+      _started = true;
+      if (widget.delay == Duration.zero) {
+        _controller.forward();
+      } else {
+        Future.delayed(widget.delay, () {
+          if (mounted) _controller.forward();
+        });
+      }
     }
   }
 
@@ -59,14 +99,20 @@ class _DytavaFadeSlideState extends State<DytavaFadeSlide>
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations == true) {
+      return widget.child;
+    }
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         return Opacity(
-          opacity: _fadeAnimation.value,
+          opacity: _fadeAnimation.value.clamp(0.0, 1.0),
           child: Transform.translate(
             offset: _slideAnimation.value,
-            child: child,
+            child: Transform.scale(
+              scale: _scaleAnimation.value,
+              child: child,
+            ),
           ),
         );
       },

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../dytava_colors.dart';
 import '../dytava_typography.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Thành phần nhận diện cốt lõi: **Focus Diff**
 ///
@@ -117,7 +118,7 @@ class FocusDiffCard extends StatelessWidget {
 
           // Side-by-side or Stacked Values: Old (A) vs New (B)
           _buildValueBlock(
-            label: 'NGUỒN A (THAM CHIẾU / CŨ)',
+            label: context.l10n.isVietnamese ? 'NGUỒN A (THAM CHIẾU / CŨ)' : 'SOURCE A (ORIGINAL / REFERENCE)',
             value: rawA,
             sourceRef: sourceRefA,
             isHighlight: false,
@@ -140,7 +141,7 @@ class FocusDiffCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'So sánh giá trị',
+                    context.l10n.isVietnamese ? 'So sánh giá trị' : 'Compare values',
                     style: DytavaTypography.bodySmall.copyWith(
                       fontSize: 10,
                       color: DytavaColors.precisionNeutral,
@@ -152,7 +153,7 @@ class FocusDiffCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _buildValueBlock(
-            label: 'NGUỒN B (ĐỐI CHIẾU / MỚI)',
+            label: context.l10n.isVietnamese ? 'NGUỒN B (ĐỐI CHIẾU / MỚI)' : 'SOURCE B (UPDATED / TARGET)',
             value: rawB,
             sourceRef: sourceRefB,
             isHighlight: true,
@@ -208,7 +209,7 @@ class FocusDiffCard extends StatelessWidget {
                       }
                     : null,
                 icon: const Icon(Icons.chevron_left_rounded, size: 20),
-                tooltip: 'Sai khác trước',
+                tooltip: context.l10n.previousDifference,
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -219,7 +220,7 @@ class FocusDiffCard extends StatelessWidget {
                 ),
               ),
               Text(
-                'Sai khác $currentIndex / $totalDiffs',
+                context.l10n.diffIndexRatio(currentIndex, totalDiffs),
                 style: DytavaTypography.dataSmall.copyWith(
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
@@ -234,7 +235,7 @@ class FocusDiffCard extends StatelessWidget {
                       }
                     : null,
                 icon: const Icon(Icons.chevron_right_rounded, size: 20),
-                tooltip: 'Sai khác tiếp theo',
+                tooltip: context.l10n.nextDifference,
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),

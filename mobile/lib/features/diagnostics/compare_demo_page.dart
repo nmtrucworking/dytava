@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/design_system.dart';
 import '../shared/text_difference_evidence.dart';
+import '../../l10n/app_localizations.dart';
 
 class CompareDemoPage extends StatefulWidget {
   const CompareDemoPage({super.key});
@@ -124,14 +125,13 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
                   DytavaIllustrations.onboardingCompare,
                   size: 180,
                 ),
-                const Text(
-                  'Hiểu rõ từng sai khác.',
+                Text(
+                  context.l10n.understandEveryDifference,
                   style: DytavaTypography.displayMedium,
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Thử so sánh hai giá trị theo quy tắc ngữ nghĩa. '
-                  'Dùng luồng chính để nhập tệp và xuất CSV/JSON.',
+                Text(
+                  context.l10n.understandDifferenceDesc,
                   style: DytavaTypography.bodyMedium,
                 ),
                 const SizedBox(height: 20),
@@ -141,13 +141,13 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            DytavaAsset(DytavaIcons.compare, size: 32),
-                            SizedBox(width: 10),
+                            const DytavaAsset(DytavaIcons.compare, size: 32),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'So sánh dữ liệu',
+                                context.l10n.semanticComparisonTitle,
                                 style: DytavaTypography.titleLarge,
                               ),
                             ),
@@ -155,13 +155,13 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
                         ),
                         const SizedBox(height: 20),
                         sourceField(
-                          'Giá trị nguồn A',
+                          context.l10n.sourceAValue,
                           left,
                           DytavaIcons.importData,
                         ),
                         const SizedBox(height: 16),
                         sourceField(
-                          'Giá trị nguồn B',
+                          context.l10n.sourceBValue,
                           right,
                           DytavaIcons.compare,
                         ),
@@ -169,19 +169,19 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
                         DropdownButtonFormField<SemanticType>(
                           initialValue: type,
                           isExpanded: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Kiểu dữ liệu ngữ nghĩa',
+                          decoration: InputDecoration(
+                            labelText: context.l10n.semanticDataType,
                           ),
                           items: SemanticType.values
                               .map(
                                 (item) => DropdownMenuItem(
                                   value: item,
                                   child: Text(switch (item) {
-                                    SemanticType.identifier => 'Mã định danh',
-                                    SemanticType.freeText => 'Văn bản',
-                                    SemanticType.decimal => 'Số thập phân',
-                                    SemanticType.boolean => 'Đúng / Sai',
-                                    SemanticType.percentage => 'Phần trăm',
+                                    SemanticType.identifier => context.l10n.typeIdentifier,
+                                    SemanticType.freeText => context.l10n.typeFreeText,
+                                    SemanticType.decimal => context.l10n.typeDecimal,
+                                    SemanticType.boolean => context.l10n.typeBoolean,
+                                    SemanticType.percentage => context.l10n.typePercentage,
                                   }),
                                 ),
                               )
@@ -199,15 +199,15 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
                         if (type == SemanticType.freeText ||
                             type == SemanticType.identifier) ...[
                           const SizedBox(height: 12),
-                          const Text(
-                            'Quy tắc chuỗi: bỏ khoảng trắng đầu/cuối; giữ khoảng trắng giữa các từ, phân biệt hoa/thường và dấu.',
+                          Text(
+                            context.l10n.stringRuleExplanation,
                           ),
                         ],
                         const SizedBox(height: 20),
                         FilledButton.icon(
                           onPressed: compare,
                           icon: const DytavaAsset(DytavaIcons.compare),
-                          label: const Text('So sánh'),
+                          label: Text(context.l10n.compareAction),
                         ),
                       ],
                     ),
@@ -225,7 +225,7 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
                           Center(child: badge),
                           const SizedBox(height: 16),
                           Text(
-                            'Trạng thái: $status',
+                            '${context.l10n.statusPrefix} $status',
                             style: DytavaTypography.titleLarge,
                           ),
                           const SizedBox(height: 8),
@@ -264,7 +264,7 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
                           Semantics(
                             liveRegion: true,
                             child: Text(
-                              'Cấu hình không hợp lệ: $error',
+                              '${context.l10n.invalidConfig} $error',
                               style: const TextStyle(color: DytavaColors.red),
                             ),
                           ),
@@ -275,17 +275,17 @@ class _CompareDemoPageState extends State<CompareDemoPage> {
                 else
                   const DytavaEmptyState(),
                 const SizedBox(height: 20),
-                const Row(
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    DytavaAsset(
+                    const DytavaAsset(
                       DytavaIcons.privacy,
                       size: 24,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Giá trị được xử lý tại thiết bị.',
+                        context.l10n.onThisDeviceValue,
                         style: DytavaTypography.bodyMedium,
                       ),
                     ),
