@@ -481,11 +481,11 @@ class _WorkflowPageState extends State<WorkflowPage>
                   ),
             backgroundColor: DytavaColors.background,
             elevation: 0,
-            leadingWidth: 46,
+            leadingWidth: 56,
             leading: isRootHome || flow.screen == WorkflowScreen.progress
                 ? null
                 : Padding(
-                    padding: const EdgeInsets.only(left: 12),
+                    padding: const EdgeInsets.only(left: 8),
                     child: Center(
                       child: IconButton(
                         tooltip: context.l10n.back,
@@ -493,13 +493,13 @@ class _WorkflowPageState extends State<WorkflowPage>
                         style: IconButton.styleFrom(
                           backgroundColor: DytavaColors.primaryLight,
                           padding: EdgeInsets.zero,
-                          fixedSize: const Size(32, 32),
-                          minimumSize: const Size(32, 32),
+                          fixedSize: const Size(44, 44),
+                          minimumSize: const Size(44, 44),
                           shape: const CircleBorder(),
                         ),
                         icon: const Icon(
                           Icons.chevron_left_rounded,
-                          size: 20,
+                          size: 22,
                           color: DytavaColors.primary,
                         ),
                       ),
@@ -517,13 +517,13 @@ class _WorkflowPageState extends State<WorkflowPage>
                       style: IconButton.styleFrom(
                         backgroundColor: const Color(0xFFF1F5F2),
                         padding: EdgeInsets.zero,
-                        fixedSize: const Size(32, 32),
-                        minimumSize: const Size(32, 32),
+                        fixedSize: const Size(44, 44),
+                        minimumSize: const Size(44, 44),
                         shape: const CircleBorder(),
                       ),
                       icon: const Icon(
                         Icons.settings_outlined,
-                        size: 18,
+                        size: 20,
                         color: Color(0xFF334155),
                       ),
                     ),
@@ -1115,8 +1115,8 @@ class _MoreSessionPopoverButtonState extends State<_MoreSessionPopoverButton> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
-      width: 34,
-      height: 34,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
         color: _isOpen ? const Color(0xFFEDF7F0) : Colors.white,
         shape: BoxShape.circle,

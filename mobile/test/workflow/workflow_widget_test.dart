@@ -56,6 +56,10 @@ void main() {
     expect(flow.resultCurrent, isTrue);
     expect(find.text('RESULTS READY'), findsOneWidget);
     expect(find.text('Modified 1'), findsOneWidget);
+    // Demo fixture has exactly 1 unresolved cell (002: 'abc' vs '9') and 0 unresolvedRecords.
+    // Verify UNRESOLVED count is 1 (not double-counted as 2):
+    expect(find.text('Needs review 1'), findsOneWidget);
+    expect(find.text('Needs review 2'), findsNothing);
     await tap(tester, 'Modified 1');
     final modified = flow.result!.cells.firstWhere(
       (c) => c.decision.status == DecisionStatus.different,
@@ -414,6 +418,25 @@ void main() {
       await tester.pumpAndSettle();
       expect(selectedCellId, isNotNull);
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  test(
+    'getLocalStorageUsageBytes strictly reports persistent SQLite storage and is separated from getActiveSessionMemoryBytes',
+    () async {
+      final flow = createDemoWorkflow();
+      addTearDown(flow.dispose);
+      await flow.clearAllSavedSessions();
+
+      // Load active session into RAM without saving to SQLite
+      flow.setAutoSaveHistory(false);
+      addTearDown(() => flow.setAutoSaveHistory(true));
+      await prepare(flow);
+
+      final persistentBytes = await flow.getLocalStorageUsageBytes();
+      final activeRamBytes = flow.getActiveSessionMemoryBytes();
+      expect(persistentBytes, equals(0));
+      expect(activeRamBytes, greaterThan(0));
     },
   );
 }

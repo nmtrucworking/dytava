@@ -162,6 +162,54 @@ void main() {
       final updated = OcrTableReconstructor.recomputeRisks(grid);
       expect(updated.cells[4][7].recognizedText, '38');
       expect(updated.cells[4][7].risks, contains(OcrRisk.numericFormat));
+
+      // All 6 remaining SPSS decimal errors („00, 013, 10, 13, „88, 38) are flagged
+      // with OcrRisk.numericFormat without mutating raw text:
+      final allSixDecimalAnomalyRows = <List<String?>>[
+        ['Dim', 'Eigenvalue', '(Constant)', 'AN', 'GC', 'DV', 'TN'],
+        ['1', '6,932', '0,00', '0,00', '0,00', '0,00', '0,00'],
+        ['2', '0,104', '0,00', '0,04', '„00', '0,01', '0,01'],
+        ['3', '013', '0,01', '0,52', '0,05', '0,04', '0,19'],
+        ['4', '0,011', '0,00', '0,02', '0,81', '0,11', '0,01'],
+        ['5', '0,008', '10', '0,08', '0,01', '0,04', '0,41'],
+        ['6', '0,004', '0,87', '0,21', '0,12', '0,02', '0,00'],
+        ['7', '0,003', '0,02', '13', '0,01', '„88', '38'],
+      ];
+      final sampleGrid = OcrTableReconstructor.recomputeRisks(
+        OcrGrid(
+          [
+            for (final row in allSixDecimalAnomalyRows)
+              [
+                for (final cellText in row)
+                  OcrCell(
+                    recognizedText: cellText,
+                    confidence: 0.99,
+                    tokenCount: cellText == null ? 0 : 1,
+                  ),
+              ],
+          ],
+          hasHeader: true,
+        ),
+      );
+      expect(sampleGrid.cells[2][4].recognizedText, '„00');
+      expect(sampleGrid.cells[2][4].risks, contains(OcrRisk.numericFormat));
+      expect(sampleGrid.cells[3][1].recognizedText, '013');
+      expect(sampleGrid.cells[3][1].risks, contains(OcrRisk.numericFormat));
+      expect(sampleGrid.cells[5][2].recognizedText, '10');
+      expect(sampleGrid.cells[5][2].risks, contains(OcrRisk.numericFormat));
+      expect(sampleGrid.cells[7][3].recognizedText, '13');
+      expect(sampleGrid.cells[7][3].risks, contains(OcrRisk.numericFormat));
+      expect(sampleGrid.cells[7][5].recognizedText, '„88');
+      expect(sampleGrid.cells[7][5].risks, contains(OcrRisk.numericFormat));
+      expect(sampleGrid.cells[7][6].recognizedText, '38');
+      expect(sampleGrid.cells[7][6].risks, contains(OcrRisk.numericFormat));
+      // Dimension column (integer 1..7) is never falsely flagged as numericFormat
+      for (var r = 1; r <= 7; r++) {
+        expect(
+          sampleGrid.cells[r][0].risks,
+          isNot(contains(OcrRisk.numericFormat)),
+        );
+      }
     },
   );
   for (final failPreprocess in [false, true]) {
@@ -290,6 +338,160 @@ void main() {
       expect(session.processed!.geometry.corners[2].y, closeTo(790, 2));
     },
   );
+
+  group('Multi-image OCR Corpus (Invoices, Financial Ledgers, Rotated Scans)', () {
+    OcrToken tok(
+      String text,
+      double x,
+      double y,
+      double w,
+      int line, {
+      double conf = 0.96,
+    }) => OcrToken(
+      text: text,
+      polygon: [
+        OcrPoint(x, y),
+        OcrPoint(x + w, y),
+        OcrPoint(x + w, y + 18),
+        OcrPoint(x, y + 18),
+      ],
+      confidence: conf,
+      lineIndex: line,
+    );
+
+    test(
+      'Corpus 1: Vietnamese Commercial Invoice (Hóa đơn GTGT) with currency symbols, diacritics, and sparse discount cells',
+      () {
+        const cols = [20.0, 110.0, 320.0, 410.0, 520.0, 640.0];
+        final tokens = <OcrToken>[
+          tok('HÓA ĐƠN GIÁ TRỊ GIA TĂNG', 240, 10, 220, 0),
+          tok('Mã SP', cols[0], 45, 50, 1),
+          tok('Tên hàng hóa, dịch vụ', cols[1], 45, 160, 1),
+          tok('ĐVT', cols[2], 45, 40, 1),
+          tok('SL', cols[3], 45, 30, 1),
+          tok('Đơn giá (₫)', cols[4], 45, 85, 1),
+          tok('Thành tiền (₫)', cols[5], 45, 100, 1),
+          // Row 1
+          tok('SP-001', cols[0], 80, 55, 2),
+          tok('Nguyễn Văn An - Gói tư vấn ERP', cols[1], 80, 185, 2),
+          tok('Gói', cols[2], 80, 35, 2),
+          tok('1', cols[3], 80, 20, 2),
+          tok('15.500.000', cols[4], 80, 80, 2),
+          tok('15.500.000', cols[5], 80, 80, 2),
+          // Row 2 (missing ĐVT cell intentionally)
+          tok('SP-002', cols[0], 115, 55, 3),
+          tok('Phần mềm đối soát dữ liệu Dytava', cols[1], 115, 190, 3),
+          tok('2', cols[3], 115, 20, 3),
+          tok('4.250.000', cols[4], 115, 75, 3),
+          tok('8.500.000', cols[5], 115, 75, 3),
+          // Row 3
+          tok('SP-003', cols[0], 150, 55, 4),
+          tok('Bảo trì hệ thống năm 2026', cols[1], 150, 165, 4),
+          tok('Năm', cols[2], 150, 35, 4),
+          tok('1', cols[3], 150, 20, 4),
+          tok('2.000.000', cols[4], 150, 75, 4),
+          tok('2.000.000', cols[5], 150, 75, 4),
+        ];
+
+        final grid = OcrTableReconstructor.reconstruct(tokens);
+        expect(grid.columnCount, 6);
+        expect(grid.rowCount, 4); // Title banner pruned; 1 header + 3 items
+        expect(grid.hasHeader, isTrue);
+        expect(grid.cells[0][1].recognizedText, 'Tên hàng hóa, dịch vụ');
+        expect(
+          grid.cells[1][1].recognizedText,
+          'Nguyễn Văn An - Gói tư vấn ERP',
+        );
+        expect(grid.cells[2][2].recognizedText, isNull);
+        expect(
+          grid.cells[2][2].risks,
+          containsAll([OcrRisk.blank, OcrRisk.rowShape]),
+        );
+        expect(grid.cells[2][5].recognizedText, '8.500.000');
+      },
+    );
+
+    test(
+      'Corpus 2: Multi-level Accounting Trial Balance (Bảng cân đối phát sinh) with wrapped leaf headers and dropped decimal warning',
+      () {
+        const cols = [20.0, 120.0, 280.0, 400.0, 520.0, 640.0];
+        final tokens = <OcrToken>[
+          tok('BẢNG CÂN ĐỐI SỐ PHÁT SINH QUÝ IV/2026', 200, 10, 260, 0),
+          tok('Số dư đầu kỳ', 280, 40, 180, 1),
+          tok('Số phát sinh trong kỳ', 520, 40, 190, 1),
+          // Wrapped leaf header line 1
+          tok('Số hiệu', cols[0], 70, 55, 2),
+          tok('Tên tài khoản', cols[1], 70, 110, 2),
+          tok('Nợ', cols[2], 70, 35, 2),
+          tok('Có', cols[3], 70, 35, 2),
+          tok('Nợ', cols[4], 70, 35, 2),
+          tok('Có', cols[5], 70, 35, 2),
+          // Data rows with 2-decimal precision, plus one dropped-decimal outlier ("145" instead of "1,45")
+          tok('1111', cols[0], 105, 45, 3),
+          tok('Tiền mặt Việt Nam', cols[1], 105, 130, 3),
+          tok('120,50', cols[2], 105, 55, 3),
+          tok('0,00', cols[3], 105, 40, 3),
+          tok('85,25', cols[4], 105, 50, 3),
+          tok('40,10', cols[5], 105, 50, 3),
+          tok('1121', cols[0], 140, 45, 4),
+          tok('Tiền gửi ngân hàng', cols[1], 140, 130, 4),
+          tok('540,75', cols[2], 140, 55, 4),
+          tok('0,00', cols[3], 140, 40, 4),
+          tok('310,80', cols[4], 140, 55, 4),
+          tok('145', cols[5], 140, 45, 4), // Dropped decimal in 2-decimal column
+          tok('1311', cols[0], 175, 45, 5),
+          tok('Phải thu khách hàng', cols[1], 175, 135, 5),
+          tok('90,25', cols[2], 175, 50, 5),
+          tok('12,40', cols[3], 175, 45, 5),
+          tok('44,00', cols[4], 175, 50, 5),
+          tok('19,75', cols[5], 175, 50, 5),
+        ];
+
+        final grid = OcrTableReconstructor.reconstruct(tokens);
+        expect(grid.columnCount, 6);
+        expect(grid.rowCount, 4);
+        // Account codes 1111, 1121, 1311 in column 0 are integers -> no numericFormat risk
+        expect(
+          grid.cells[1][0].risks,
+          isNot(contains(OcrRisk.numericFormat)),
+        );
+        // "145" in column 5 (which has 2-decimal peers "40,10" and "19,75") is flagged with numericFormat
+        expect(grid.cells[2][5].recognizedText, '145');
+        expect(grid.cells[2][5].risks, contains(OcrRisk.numericFormat));
+      },
+    );
+
+    test(
+      'Corpus 3: Skewed / low-confidence Warehouse Inventory scan flags diacritic & lowConfidence risks without dropping tokens',
+      () {
+        const cols = [15.0, 120.0, 310.0, 430.0];
+        final tokens = <OcrToken>[
+          tok('Mã kho', cols[0], 20, 55, 0),
+          tok('Vật tư thiết bị', cols[1], 21, 130, 0),
+          tok('Tồn đầu', cols[2], 19, 60, 0),
+          tok('Tồn cuối', cols[3], 22, 65, 0),
+          tok('KHO-A1', cols[0], 58, 60, 1),
+          tok('Cảm biến nhiệt độ PT100', cols[1], 60, 165, 1, conf: 0.78),
+          tok('12,5', cols[2], 57, 45, 1),
+          tok('10,5', cols[3], 61, 45, 1),
+          tok('KHO-A2', cols[0], 96, 60, 2),
+          tok('Bộ điều khiển PLC S7', cols[1], 95, 155, 2, conf: 0.95),
+          tok('8,0', cols[2], 98, 40, 2),
+          tok('„5', cols[3], 97, 35, 2, conf: 0.94),
+        ];
+
+        final grid = OcrTableReconstructor.reconstruct(tokens);
+        expect(grid.columnCount, 4);
+        expect(grid.rowCount, 3);
+        expect(
+          grid.cells[1][1].risks,
+          containsAll([OcrRisk.lowConfidence, OcrRisk.diacritics]),
+        );
+        expect(grid.cells[2][3].recognizedText, '„5');
+        expect(grid.cells[2][3].risks, contains(OcrRisk.numericFormat));
+      },
+    );
+  });
 }
 
 class _RetryPort implements OcrRecognitionPort {

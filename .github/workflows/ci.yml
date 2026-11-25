@@ -31,7 +31,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.x'
+          cache: true
       - name: Install Core dependencies
         working-directory: packages/excelcompare_core
         run: dart pub get
@@ -50,9 +50,10 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
           channel: 'stable'
           cache: true
+      - name: Install Linux SQLite FFI Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-0 libsqlite3-dev
       - name: Install Dependencies
         working-directory: mobile
         run: flutter pub get

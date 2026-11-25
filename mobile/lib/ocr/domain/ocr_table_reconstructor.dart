@@ -551,32 +551,51 @@ abstract final class OcrTableReconstructor {
     return firstHasLabel && (bodyHasNumber || rows.length >= 2);
   }
 
-  /// Flag a possibly dropped decimal separator without guessing its value.
-  /// Two fractional peers of the same precision are required; identifier and
-  /// integer-only columns therefore remain untouched.
+  /// Flag a possibly dropped or malformed decimal separator (such as `013` for
+  /// `0,013`, `10`/`13`/`38` in a 2-decimal column, or low-quote artifacts like
+  /// `„00`, `„88`, `..12`, `,,45`) without guessing or mutating its value.
+  /// Two fractional peers are required for dropped-decimal integer outliers;
+  /// identifier and integer-only columns therefore remain untouched.
   static Set<(int, int)> _numericFormatOutliers(
     List<List<String?>> rows, {
     required bool hasHeader,
   }) {
     final risks = <(int, int)>{};
     if (rows.isEmpty) return risks;
-    final fraction = RegExp(r'^[+-]?0?[.,](\d+)$');
+    final fraction = RegExp(r'^[+-]?\d*[.,](\d+)$');
     final integer = RegExp(r'^\d{2,}$');
+    final leadingZeroMultiDigit = RegExp(r'^0\d+$');
+    final malformedDecimalPunct = RegExp(
+      r'^(?:[„‚“”‘’"\x27:;`]+\d+|[.,]{2,}\d+|\d+[„‚“”‘’;:]+|\d+[.,]{2,}\d*)$',
+    );
     final start = hasHeader ? 1 : 0;
     for (var c = 0; c < rows.first.length; c++) {
       final precisionCounts = <int, int>{};
+      var totalFractionalPeers = 0;
       for (var r = start; r < rows.length; r++) {
-        final match = fraction.firstMatch(rows[r][c]?.trim() ?? '');
+        final text = rows[r][c]?.trim() ?? '';
+        if (malformedDecimalPunct.hasMatch(text)) {
+          risks.add((r, c));
+        }
+        final match = fraction.firstMatch(text);
         if (match != null) {
           final digits = match[1]!.length;
           precisionCounts[digits] = (precisionCounts[digits] ?? 0) + 1;
+          totalFractionalPeers++;
         }
       }
       for (var r = start; r < rows.length; r++) {
         final text = rows[r][c]?.trim() ?? '';
-        if (integer.hasMatch(text) &&
-            (precisionCounts[text.length] ?? 0) >= 2) {
-          risks.add((r, c));
+        if (integer.hasMatch(text)) {
+          final sameLenPeers = precisionCounts[text.length] ?? 0;
+          final minusOnePeers = precisionCounts[text.length - 1] ?? 0;
+          final isLeadingZeroInDecimalCol =
+              leadingZeroMultiDigit.hasMatch(text) && totalFractionalPeers >= 2;
+          if (sameLenPeers >= 2 ||
+              minusOnePeers >= 2 ||
+              isLeadingZeroInDecimalCol) {
+            risks.add((r, c));
+          }
         }
       }
     }

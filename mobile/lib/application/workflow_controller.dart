@@ -840,6 +840,7 @@ final class WorkflowController extends ChangeNotifier {
       detailId = null;
       screen = WorkflowScreen.results;
       // Persist in SQLite asynchronously for multi-app resilience & crash recovery
+      storagePersistenceWarning = null;
       unawaited(
         ComparisonDatabase.instance.saveSession(
           result: output,
@@ -851,7 +852,14 @@ final class WorkflowController extends ChangeNotifier {
         ).then((_) async {
           _lastSavedSession = await ComparisonDatabase.instance.getActiveSessionSummary();
           _emit();
-        }).catchError((_) {}),
+        }).catchError((Object err) {
+          final msg = l10n.isVietnamese
+              ? 'Không thể lưu phiên đối chiếu vào SQLite cục bộ: $err'
+              : 'Could not save comparison session to local SQLite: $err';
+          ComparisonDatabase.instance.lastPersistenceWarning = msg;
+          storagePersistenceWarning = msg;
+          _emit();
+        }),
       );
     } on WorkCancelled {
       jobState = JobState.cancelled;
@@ -1044,6 +1052,31 @@ final class WorkflowController extends ChangeNotifier {
   SavedSessionSummary? _lastSavedSession;
   SavedSessionSummary? get lastSavedSession => _lastSavedSession;
 
+  /// Surfaced warning when a background SQLite write fails, instead of silently swallowing it.
+  String? storagePersistenceWarning;
+
+  bool get autoSaveHistory => ComparisonDatabase.instance.autoSaveHistory;
+  void setAutoSaveHistory(bool value) {
+    ComparisonDatabase.instance.autoSaveHistory = value;
+    _emit();
+  }
+
+  bool get persistRawCellValues => ComparisonDatabase.instance.persistRawCellValues;
+  void setPersistRawCellValues(bool value) {
+    ComparisonDatabase.instance.persistRawCellValues = value;
+    _emit();
+  }
+
+  int get maxRetainedSessions => ComparisonDatabase.instance.maxRetainedSessions;
+  Future<void> setMaxRetainedSessions(int value) async {
+    ComparisonDatabase.instance.maxRetainedSessions = value.clamp(1, 100);
+    await ComparisonDatabase.instance.pruneOldSessions(
+      maxKeep: ComparisonDatabase.instance.maxRetainedSessions,
+    );
+    await loadLastSavedSession();
+    _emit();
+  }
+
   /// Loads the most recent persisted session summary from SQLite.
   Future<void> loadLastSavedSession() async {
     _lastSavedSession = await ComparisonDatabase.instance.getActiveSessionSummary();
@@ -1054,10 +1087,13 @@ final class WorkflowController extends ChangeNotifier {
   Future<int> countSavedSessions() =>
       ComparisonDatabase.instance.countSessions();
 
-  /// Returns total local storage usage in bytes (persisted SQLite sessions + active in-memory session).
-  Future<int> getLocalStorageUsageBytes() async {
-    int total = await ComparisonDatabase.instance.getStorageUsageBytes();
-    total += MobileFileUploadService.estimatedMemoryBytes();
+  /// Returns persistent on-disk SQLite storage usage in bytes (saved comparisons and reports).
+  Future<int> getPersistentStorageUsageBytes() =>
+      ComparisonDatabase.instance.getStorageUsageBytes();
+
+  /// Returns estimated active session RAM usage in bytes (loaded workbooks, OCR images, and active snapshots).
+  int getActiveSessionMemoryBytes() {
+    int total = MobileFileUploadService.estimatedMemoryBytes();
     total += OcrCaptureService.estimatedMemoryBytes();
     for (final side in SourceSide.values) {
       final snap = slot(side).snapshot;
@@ -1065,7 +1101,23 @@ final class WorkflowController extends ChangeNotifier {
         total += snap.records.length * snap.fields.length * 32;
       }
     }
+    if (result != null) {
+      total += result!.cells.length * 64;
+    }
     return total;
+  }
+
+  /// Clears active in-memory files, OCR session buffers, and current comparison session from RAM.
+  Future<void> clearActiveSessionMemory() async {
+    await closeSession();
+    MobileFileUploadService.clear();
+    OcrCaptureService.clear();
+    _emit();
+  }
+
+  /// Returns persistent local storage usage in bytes (strictly persistent SQLite storage, separated from active RAM).
+  Future<int> getLocalStorageUsageBytes() async {
+    return await getPersistentStorageUsageBytes();
   }
 
   /// Formats byte count into a clean human-readable string (e.g. "0 KB", "24.5 KB", "1.2 MB").

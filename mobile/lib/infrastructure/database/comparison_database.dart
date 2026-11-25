@@ -58,6 +58,7 @@ final class SavedSessionSummary {
 /// 1. Devices under multi-app memory pressure (low RSS, WAL mode, bounded page cache).
 /// 2. Large spreadsheet files (batching inserts, chunked streaming, indexed pagination).
 /// 3. Zero UI jank (asynchronous non-blocking execution, fast keyset/windowed query).
+/// 4. Privacy & data retention controls (opt-out raw persistence, configurable max sessions).
 final class ComparisonDatabase {
   ComparisonDatabase._();
   static final ComparisonDatabase instance = ComparisonDatabase._();
@@ -65,6 +66,19 @@ final class ComparisonDatabase {
   Database? _db;
   DatabaseFactory? _factory;
   String? _dbPath;
+
+  /// Controls whether completed sessions are automatically saved to SQLite.
+  bool autoSaveHistory = true;
+
+  /// Controls whether raw cell values (`raw_a`, `raw_b`, `data_a_json`, `data_b_json`)
+  /// are persisted in SQLite. When false, only session summaries and anonymized structure are stored.
+  bool persistRawCellValues = true;
+
+  /// Maximum number of saved comparison sessions retained in SQLite.
+  int maxRetainedSessions = 10;
+
+  /// Last storage warning/error message if a background SQLite operation fails.
+  String? lastPersistenceWarning;
 
   /// Custom initialization for testing or explicit paths.
   Future<void> init({String? customPath, DatabaseFactory? customFactory}) async {
@@ -310,7 +324,8 @@ final class ComparisonDatabase {
     ''');
   }
 
-  /// Saves a complete [ComparisonResult] in batches of 1,000 rows.
+  /// Saves a complete [ComparisonResult] in batches of 1,000 rows, including full
+  /// workbook sheet pairs, field metadata, aligned rows, and configuration.
   ///
   /// Uses `noResult: true` on `batch.commit()` to avoid holding thousands
   /// of insert results in Dart heap, keeping memory footprint flat during large file writes.
@@ -323,7 +338,107 @@ final class ComparisonDatabase {
     required ComparisonConfiguration config,
     bool autoPrune = true,
   }) async {
+    if (!autoSaveHistory) return;
     final db = await database;
+    lastPersistenceWarning = null;
+
+    final cellSheetPairMap = <String, String?>{};
+    if (result.sheetResults.isNotEmpty) {
+      for (final sr in result.sheetResults) {
+        final pairId = sr.sheetPair?.id;
+        for (final c in sr.cells) {
+          cellSheetPairMap[c.id] = pairId;
+        }
+      }
+    }
+
+    Map<String, Object?> serializeSnapshotMeta(InputSnapshot snap) => {
+      'id': snap.id,
+      'sheet_name': snap.sheetName,
+      'full_validation': snap.fullValidation,
+      'ocr_reviewed': snap.ocrReviewed,
+      'warnings': snap.warnings,
+      'fields': [
+        for (final f in snap.fields) {'id': f.id, 'label': f.label},
+      ],
+      'record_ordinals': {
+        for (final r in snap.records) r.id: r.ordinal,
+      },
+    };
+
+    Map<String, Object?> serializeConfigMeta(ComparisonConfiguration cfg) => {
+      'mode': cfg.mode.name,
+      'direction': cfg.direction.name,
+      'keys': cfg.keys,
+      'mappings': [
+        for (final m in cfg.mappings) {'a': m.fieldA, 'b': m.fieldB},
+      ],
+      'rules': {
+        for (final e in cfg.rules.entries)
+          e.key: {
+            'type': e.value.type.name,
+            'trim': e.value.trim,
+            'separatorA': e.value.separatorA,
+            'separatorB': e.value.separatorB,
+            'tolerance': e.value.tolerance,
+            'webAuto': e.value.webAuto,
+          },
+      },
+      'webPolicy': {
+        'trimText': cfg.webPolicy.trimText,
+        'caseSensitiveText': cfg.webPolicy.caseSensitiveText,
+        'preserveLeadingZeros': cfg.webPolicy.preserveLeadingZeros,
+        'caseSensitiveIdentifier': cfg.webPolicy.caseSensitiveIdentifier,
+        'distinctNullZero': cfg.webPolicy.distinctNullZero,
+        'treatOrdinalAsMetadata': cfg.webPolicy.treatOrdinalAsMetadata,
+      },
+      'mappingConfirmed': cfg.mappingConfirmed,
+      'modeConfirmed': cfg.modeConfirmed,
+      'policyConfirmed': cfg.policyConfirmed,
+      'directionConfirmed': cfg.directionConfirmed,
+    };
+
+    final planPayload = {
+      'plan_id': result.plan.id,
+      'revision': result.plan.revision,
+      'warnings': result.warnings,
+      'persist_raw': persistRawCellValues,
+      'a': serializeSnapshotMeta(result.plan.a),
+      'b': serializeSnapshotMeta(result.plan.b),
+      'config': serializeConfigMeta(config),
+      'sheet_pair': result.sheetPair == null
+          ? null
+          : {
+              'a': result.sheetPair!.a,
+              'b': result.sheetPair!.b,
+              'nameA': result.sheetPair!.nameA,
+              'nameB': result.sheetPair!.nameB,
+              'method': result.sheetPair!.method,
+              'score': result.sheetPair!.score,
+            },
+      'sheets': [
+        for (final sr in result.sheetResults)
+          {
+            'id': sr.id,
+            'matched_records': sr.matchedRecords,
+            'duration_ms': sr.durationMs,
+            'warnings': sr.warnings,
+            'a': serializeSnapshotMeta(sr.plan.a),
+            'b': serializeSnapshotMeta(sr.plan.b),
+            'config': serializeConfigMeta(sr.plan.config),
+            'sheet_pair': sr.sheetPair == null
+                ? null
+                : {
+                    'a': sr.sheetPair!.a,
+                    'b': sr.sheetPair!.b,
+                    'nameA': sr.sheetPair!.nameA,
+                    'nameB': sr.sheetPair!.nameB,
+                    'method': sr.sheetPair!.method,
+                    'score': sr.sheetPair!.score,
+                  },
+          },
+      ],
+    };
 
     await db.transaction((txn) async {
       // Mark previous sessions as inactive
@@ -352,10 +467,7 @@ final class ComparisonDatabase {
           'duration_ms': result.durationMs,
           'created_at': DateTime.now().millisecondsSinceEpoch,
           'is_active': 1,
-          'plan_json': jsonEncode({
-            'plan_id': result.plan.id,
-            'revision': result.plan.revision,
-          }),
+          'plan_json': jsonEncode(planPayload),
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
@@ -389,22 +501,23 @@ final class ComparisonDatabase {
 
       for (var i = 0; i < result.cells.length; i++) {
         final c = result.cells[i];
+        final pairId = cellSheetPairMap[c.id] ?? result.sheetPair?.id;
         batch.insert(
           'cell_differences',
           {
             'id': c.id,
             'session_id': result.id,
-            'sheet_pair_id': result.sheetPair?.id,
+            'sheet_pair_id': pairId,
             'row_a': c.rowA,
             'row_b': c.rowB,
             'field_a': c.mapping.fieldA,
             'field_b': c.mapping.fieldB,
             'kind_a': c.a.kind.name,
             'kind_b': c.b.kind.name,
-            'raw_a': c.a.rawLexeme,
-            'raw_b': c.b.rawLexeme,
-            'normalized_a': c.decision.left?.label,
-            'normalized_b': c.decision.right?.label,
+            'raw_a': persistRawCellValues ? c.a.rawLexeme : null,
+            'raw_b': persistRawCellValues ? c.b.rawLexeme : null,
+            'normalized_a': persistRawCellValues ? c.decision.left?.label : null,
+            'normalized_b': persistRawCellValues ? c.decision.right?.label : null,
             'status': c.decision.status.name,
             'rule_id': c.decision.ruleId,
             'explanation': c.decision.explanation,
@@ -428,29 +541,45 @@ final class ComparisonDatabase {
         await batch.commit(noResult: true);
       }
 
-      // 3. Batch insert of aligned rows
+      // 3. Batch insert of aligned rows (including per-sheet pair IDs)
       batch = txn.batch();
       countInBatch = 0;
-      for (var i = 0; i < result.alignedRows.length; i++) {
-        final r = result.alignedRows[i];
+      final alignedSources = result.sheetResults.isNotEmpty
+          ? [
+              for (final sr in result.sheetResults)
+                for (final r in sr.alignedRows) (sr.sheetPair?.id, r),
+            ]
+          : [
+              for (final r in result.alignedRows) (result.sheetPair?.id, r),
+            ];
+      for (var i = 0; i < alignedSources.length; i++) {
+        final (pairId, r) = alignedSources[i];
         batch.insert('aligned_rows', {
           'session_id': result.id,
-          'sheet_pair_id': result.sheetPair?.id,
+          'sheet_pair_id': pairId,
           'row_order': i,
           'row_a_id': r.a?.id,
           'row_b_id': r.b?.id,
           'rationale': r.rationale,
           'status': r.status.name,
           'unresolved': r.unresolved ? 1 : 0,
-          'data_a_json': r.a == null
+          'data_a_json': (!persistRawCellValues || r.a == null)
               ? null
               : jsonEncode({
-                  for (final e in r.a!.cells.entries) e.key: e.value.rawLexeme,
+                  'ordinal': r.a!.ordinal,
+                  'cells': {
+                    for (final e in r.a!.cells.entries) e.key: e.value.rawLexeme,
+                  },
+                  'locations': r.a!.locations,
                 }),
-          'data_b_json': r.b == null
+          'data_b_json': (!persistRawCellValues || r.b == null)
               ? null
               : jsonEncode({
-                  for (final e in r.b!.cells.entries) e.key: e.value.rawLexeme,
+                  'ordinal': r.b!.ordinal,
+                  'cells': {
+                    for (final e in r.b!.cells.entries) e.key: e.value.rawLexeme,
+                  },
+                  'locations': r.b!.locations,
                 }),
         });
 
@@ -465,13 +594,21 @@ final class ComparisonDatabase {
         await batch.commit(noResult: true);
       }
 
-      // 4. Batch insert structural changes
-      if (result.structural.isNotEmpty) {
+      // 4. Batch insert structural changes (preserving sheet_pair_id)
+      final structuralSources = result.sheetResults.isNotEmpty
+          ? [
+              for (final sr in result.sheetResults)
+                for (final s in sr.structural) (sr.sheetPair?.id, s),
+            ]
+          : [
+              for (final s in result.structural) (result.sheetPair?.id, s),
+            ];
+      if (structuralSources.isNotEmpty) {
         batch = txn.batch();
-        for (final s in result.structural) {
+        for (final (pairId, s) in structuralSources) {
           batch.insert('structural_changes', {
             'session_id': result.id,
-            'sheet_pair_id': result.sheetPair?.id,
+            'sheet_pair_id': pairId,
             'kind': s.kind,
             'side': s.side.name,
             'record_id': s.recordId,
@@ -496,7 +633,7 @@ final class ComparisonDatabase {
     });
 
     if (autoPrune) {
-      await pruneOldSessions(maxKeep: 10);
+      await pruneOldSessions(maxKeep: maxRetainedSessions);
     }
   }
 
@@ -718,41 +855,72 @@ final class ComparisonDatabase {
     });
   }
 
-  /// Restores a previously saved comparison session into a [ComparisonResult].
-  /// Extremely useful when the OS kills the process under multi-app memory pressure.
+  /// Restores a previously saved comparison session into a complete [ComparisonResult],
+  /// including all cells (streamed in chunks without arbitrary 100k truncation),
+  /// aligned rows, workbook sheet results, field descriptors, and comparison configuration.
   Future<ComparisonResult?> loadSession(String sessionId, {FrozenPlan? fallbackPlan}) async {
     final db = await database;
     final sessions = await db.query(
       'comparison_sessions',
       where: 'session_id = ?',
+      whereArgs: [sessionId],
       limit: 1,
     );
     if (sessions.isEmpty) return null;
     final s = sessions.first;
 
-    // Load cells (up to 100,000 cells)
-    final cells = await queryCells(sessionId: sessionId, offset: 0, limit: 100000);
+    // 1. Load all cells in chunks of 10,000 without any artificial 100k ceiling
+    final totalStoredCells = await countCells(sessionId: sessionId);
+    final allCells = <CellDifference>[];
+    const chunkSize = 10000;
+    for (var offset = 0; offset < totalStoredCells; offset += chunkSize) {
+      final chunk = await queryCells(
+        sessionId: sessionId,
+        offset: offset,
+        limit: chunkSize,
+      );
+      if (chunk.isEmpty) break;
+      allCells.addAll(chunk);
+    }
 
-    // Load structural
+    // Group raw cell rows by sheet_pair_id when workbook sheets are present
+    final rawCellSheetRows = await db.query(
+      'cell_differences',
+      columns: ['id', 'sheet_pair_id'],
+      where: 'session_id = ?',
+      whereArgs: [sessionId],
+      orderBy: 'row_order ASC',
+    );
+    final cellIdToSheetPairId = <String, String?>{
+      for (final row in rawCellSheetRows)
+        row['id'] as String: row['sheet_pair_id'] as String?,
+    };
+
+    // 2. Load structural changes
     final sRows = await db.query(
       'structural_changes',
       where: 'session_id = ?',
       whereArgs: [sessionId],
     );
-    final structural = sRows.map((r) {
+    final structuralBySheet = <String?, List<StructuralChange>>{};
+    final allStructural = <StructuralChange>[];
+    for (final r in sRows) {
       final sideName = r['side'] as String;
       final side = SourceSide.values.firstWhere(
         (val) => val.name == sideName,
         orElse: () => SourceSide.a,
       );
-      return StructuralChange(
+      final sc = StructuralChange(
         r['kind'] as String,
         side,
         r['record_id'] as String,
       );
-    }).toList();
+      allStructural.add(sc);
+      final pairId = r['sheet_pair_id'] as String?;
+      structuralBySheet.putIfAbsent(pairId, () => []).add(sc);
+    }
 
-    // Load unresolved
+    // 3. Load unresolved records
     final uRows = await db.query(
       'unresolved_records',
       where: 'session_id = ?',
@@ -768,36 +936,389 @@ final class ComparisonDatabase {
       );
     }).toList();
 
-    final plan = fallbackPlan ?? FrozenPlan(
-      'restored-plan',
-      1,
-      InputSnapshot(
-        id: 'restored-a',
-        binding: const ImportBinding('restored-a', 1, 1, 1),
-        fields: const [],
-        records: const [],
-        fullValidation: true,
-        ocrReviewed: false,
-      ),
-      InputSnapshot(
-        id: 'restored-b',
-        binding: const ImportBinding('restored-b', 1, 1, 1),
-        fields: const [],
-        records: const [],
-        fullValidation: true,
-        ocrReviewed: false,
-      ),
-      ComparisonConfiguration(),
+    // 4. Load aligned rows and reconstruct TableRecords
+    final aRows = await db.query(
+      'aligned_rows',
+      where: 'session_id = ?',
+      whereArgs: [sessionId],
+      orderBy: 'row_order ASC',
     );
+
+    final cellsBySheetAndRowPair = <String, List<CellDifference>>{};
+    for (final c in allCells) {
+      final pairId = cellIdToSheetPairId[c.id] ?? '';
+      cellsBySheetAndRowPair
+          .putIfAbsent('$pairId|${c.rowA}|${c.rowB}', () => [])
+          .add(c);
+    }
+
+    TableRecord? parseStoredRecord(String? recordId, String? dataJson, int fallbackOrdinal) {
+      if (recordId == null) return null;
+      if (dataJson == null || dataJson.isEmpty) {
+        return TableRecord(recordId, fallbackOrdinal, const {}, const {});
+      }
+      try {
+        final decoded = jsonDecode(dataJson);
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('cells') && decoded['cells'] is Map) {
+            final ord = (decoded['ordinal'] as num?)?.toInt() ?? fallbackOrdinal;
+            final rawCells = decoded['cells'] as Map;
+            final rawLocs = decoded['locations'] as Map?;
+            return TableRecord(
+              recordId,
+              ord,
+              {
+                for (final e in rawCells.entries)
+                  e.key.toString(): SourceCell(
+                    e.value == null ? CellKind.missing : CellKind.text,
+                    rawLexeme: e.value?.toString(),
+                  ),
+              },
+              {
+                if (rawLocs != null)
+                  for (final e in rawLocs.entries)
+                    e.key.toString(): e.value?.toString() ?? '',
+              },
+            );
+          } else {
+            return TableRecord(
+              recordId,
+              fallbackOrdinal,
+              {
+                for (final e in decoded.entries)
+                  e.key: SourceCell(
+                    e.value == null ? CellKind.missing : CellKind.text,
+                    rawLexeme: e.value?.toString(),
+                  ),
+              },
+              const {},
+            );
+          }
+        }
+      } catch (_) {}
+      return TableRecord(recordId, fallbackOrdinal, const {}, const {});
+    }
+
+    final alignedBySheet = <String?, List<AlignedTableRow>>{};
+    final allAligned = <AlignedTableRow>[];
+    final recordsABySheet = <String?, List<TableRecord>>{};
+    final recordsBBySheet = <String?, List<TableRecord>>{};
+    for (var i = 0; i < aRows.length; i++) {
+      final r = aRows[i];
+      final pairId = r['sheet_pair_id'] as String?;
+      final rowAId = r['row_a_id'] as String?;
+      final rowBId = r['row_b_id'] as String?;
+      final recA = parseStoredRecord(rowAId, r['data_a_json'] as String?, i);
+      final recB = parseStoredRecord(rowBId, r['data_b_json'] as String?, i);
+      if (recA != null) {
+        recordsABySheet.putIfAbsent(pairId, () => []).add(recA);
+      }
+      if (recB != null) {
+        recordsBBySheet.putIfAbsent(pairId, () => []).add(recB);
+      }
+      final rowCells = (rowAId != null && rowBId != null)
+          ? (cellsBySheetAndRowPair['${pairId ?? ""}|$rowAId|$rowBId'] ?? const <CellDifference>[])
+          : const <CellDifference>[];
+      final alignedRow = AlignedTableRow(
+        recA,
+        recB,
+        (r['rationale'] as String?) ?? '',
+        rowCells,
+        unresolved: (r['unresolved'] as int? ?? 0) == 1,
+      );
+      allAligned.add(alignedRow);
+      alignedBySheet.putIfAbsent(pairId, () => []).add(alignedRow);
+    }
+
+    // 5. Parse plan_json metadata (fields, sheet pairs, configuration, warnings)
+    Map<String, dynamic>? planMeta;
+    final rawPlanJson = s['plan_json'] as String?;
+    if (rawPlanJson != null && rawPlanJson.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawPlanJson);
+        if (decoded is Map<String, dynamic>) {
+          planMeta = decoded;
+        }
+      } catch (_) {}
+    }
+
+    SheetPair? deserializeSheetPair(Object? raw) {
+      if (raw is! Map) return null;
+      return SheetPair(
+        (raw['a'] as num?)?.toInt(),
+        (raw['b'] as num?)?.toInt(),
+        raw['nameA'] as String?,
+        raw['nameB'] as String?,
+        (raw['method'] as String?) ?? 'restored',
+        (raw['score'] as num?)?.toDouble() ?? 1.0,
+      );
+    }
+
+    InputSnapshot deserializeSnapshot(
+      Object? raw,
+      String fallbackId,
+      List<TableRecord> fallbackRecords,
+      List<CellDifference> sheetCells,
+      bool isSideA,
+    ) {
+      final map = raw is Map ? raw : const <String, dynamic>{};
+      final rawFields = map['fields'];
+      final fields = <TableField>[];
+      if (rawFields is List) {
+        for (final f in rawFields) {
+          if (f is Map) {
+            final id = f['id']?.toString() ?? '';
+            final label = f['label']?.toString() ?? id;
+            if (id.isNotEmpty) fields.add(TableField(id, label));
+          }
+        }
+      }
+      if (fields.isEmpty) {
+        final seen = <String>{};
+        for (final c in sheetCells) {
+          final fid = isSideA ? c.mapping.fieldA : c.mapping.fieldB;
+          if (fid.isNotEmpty && seen.add(fid)) {
+            fields.add(TableField(fid, fid));
+          }
+        }
+      }
+      final recordMap = <String, TableRecord>{
+        for (final r in fallbackRecords) r.id: r,
+      };
+      final rawOrdinals = map['record_ordinals'];
+      if (rawOrdinals is Map) {
+        for (final e in rawOrdinals.entries) {
+          final rid = e.key.toString();
+          final ord = (e.value as num?)?.toInt() ?? 0;
+          recordMap.putIfAbsent(rid, () => TableRecord(rid, ord, const {}, const {}));
+        }
+      }
+      final warnings = (map['warnings'] is List)
+          ? (map['warnings'] as List).map((w) => w.toString()).toList()
+          : const <String>[];
+      return InputSnapshot(
+        id: map['id']?.toString() ?? fallbackId,
+        binding: ImportBinding(fallbackId, 1, 1, 1),
+        fields: fields,
+        records: recordMap.values,
+        fullValidation: (map['full_validation'] as bool?) ?? true,
+        ocrReviewed: (map['ocr_reviewed'] as bool?) ?? false,
+        sheetName: map['sheet_name'] as String?,
+        warnings: warnings,
+      );
+    }
+
+    ComparisonConfiguration deserializeConfig(Object? raw, List<CellDifference> sheetCells) {
+      if (raw is! Map) {
+        final seen = <String>{};
+        final mappings = <FieldMapping>[];
+        for (final c in sheetCells) {
+          final key = '${c.mapping.fieldA}->${c.mapping.fieldB}';
+          if (c.mapping.fieldA.isNotEmpty && c.mapping.fieldB.isNotEmpty && seen.add(key)) {
+            mappings.add(c.mapping);
+          }
+        }
+        return ComparisonConfiguration(
+          mappings: mappings,
+          mappingConfirmed: true,
+          modeConfirmed: true,
+          policyConfirmed: true,
+          directionConfirmed: true,
+        );
+      }
+      final modeName = raw['mode']?.toString() ?? '';
+      final mode = MatchingMode.values.firstWhere(
+        (m) => m.name == modeName,
+        orElse: () => MatchingMode.positional,
+      );
+      final dirName = raw['direction']?.toString() ?? '';
+      final direction = ComparisonDirection.values.firstWhere(
+        (d) => d.name == dirName,
+        orElse: () => ComparisonDirection.aToB,
+      );
+      final keys = (raw['keys'] is List)
+          ? (raw['keys'] as List).map((k) => k.toString()).toList()
+          : const <String>[];
+      final mappings = <FieldMapping>[];
+      if (raw['mappings'] is List) {
+        for (final m in raw['mappings'] as List) {
+          if (m is Map) {
+            mappings.add(
+              FieldMapping(
+                m['a']?.toString() ?? '',
+                m['b']?.toString() ?? '',
+              ),
+            );
+          }
+        }
+      }
+      final rules = <String, FieldRule>{};
+      if (raw['rules'] is Map) {
+        for (final e in (raw['rules'] as Map).entries) {
+          final rMap = e.value;
+          if (rMap is Map) {
+            final tName = rMap['type']?.toString() ?? '';
+            final semType = SemanticType.values.firstWhere(
+              (t) => t.name == tName,
+              orElse: () => SemanticType.freeText,
+            );
+            rules[e.key.toString()] = FieldRule(
+              type: semType,
+              trim: (rMap['trim'] as bool?) ?? false,
+              separatorA: rMap['separatorA']?.toString() ?? '.',
+              separatorB: rMap['separatorB']?.toString() ?? ',',
+              tolerance: rMap['tolerance']?.toString() ?? '0',
+              webAuto: (rMap['webAuto'] as bool?) ?? false,
+            );
+          }
+        }
+      }
+      final wpRaw = raw['webPolicy'];
+      final webPolicy = wpRaw is Map
+          ? WebComparisonPolicy(
+              trimText: (wpRaw['trimText'] as bool?) ?? true,
+              caseSensitiveText: (wpRaw['caseSensitiveText'] as bool?) ?? true,
+              preserveLeadingZeros: (wpRaw['preserveLeadingZeros'] as bool?) ?? true,
+              caseSensitiveIdentifier: (wpRaw['caseSensitiveIdentifier'] as bool?) ?? true,
+              distinctNullZero: (wpRaw['distinctNullZero'] as bool?) ?? true,
+              treatOrdinalAsMetadata: (wpRaw['treatOrdinalAsMetadata'] as bool?) ?? true,
+            )
+          : const WebComparisonPolicy();
+      return ComparisonConfiguration(
+        mappings: mappings,
+        rules: rules,
+        mode: mode,
+        keys: keys,
+        direction: direction,
+        webPolicy: webPolicy,
+        mappingConfirmed: (raw['mappingConfirmed'] as bool?) ?? true,
+        modeConfirmed: (raw['modeConfirmed'] as bool?) ?? true,
+        policyConfirmed: (raw['policyConfirmed'] as bool?) ?? true,
+        directionConfirmed: (raw['directionConfirmed'] as bool?) ?? true,
+      );
+    }
+
+    final topPlanId = planMeta?['plan_id']?.toString() ?? 'restored-plan';
+    final topRevision = (planMeta?['revision'] as num?)?.toInt() ?? 1;
+    final topWarnings = (planMeta?['warnings'] is List)
+        ? (planMeta!['warnings'] as List).map((w) => w.toString()).toList()
+        : const <String>[];
+    final topSheetPair = deserializeSheetPair(planMeta?['sheet_pair']);
+
+    final sheetResults = <ComparisonResult>[];
+    final rawSheets = planMeta?['sheets'];
+    if (rawSheets is List && rawSheets.isNotEmpty) {
+      final cellsByPair = <String?, List<CellDifference>>{};
+      for (final c in allCells) {
+        final pid = cellIdToSheetPairId[c.id];
+        cellsByPair.putIfAbsent(pid, () => []).add(c);
+      }
+      for (var i = 0; i < rawSheets.length; i++) {
+        final sMap = rawSheets[i];
+        if (sMap is! Map) continue;
+        final pair = deserializeSheetPair(sMap['sheet_pair']);
+        final pairId = pair?.id;
+        final sCells = cellsByPair[pairId] ?? const <CellDifference>[];
+        final sAligned = alignedBySheet[pairId] ?? const <AlignedTableRow>[];
+        final sStruct = structuralBySheet[pairId] ?? const <StructuralChange>[];
+        final snapA = deserializeSnapshot(
+          sMap['a'],
+          'restored-a-$i',
+          recordsABySheet[pairId] ?? const [],
+          sCells,
+          true,
+        );
+        final snapB = deserializeSnapshot(
+          sMap['b'],
+          'restored-b-$i',
+          recordsBBySheet[pairId] ?? const [],
+          sCells,
+          false,
+        );
+        final sCfg = deserializeConfig(sMap['config'], sCells);
+        final sPlan = FrozenPlan(
+          '$topPlanId-${pairId ?? i}',
+          topRevision,
+          snapA,
+          snapB,
+          sCfg,
+        );
+        final sWarnings = (sMap['warnings'] is List)
+            ? (sMap['warnings'] as List).map((w) => w.toString()).toList()
+            : const <String>[];
+        sheetResults.add(
+          ComparisonResult(
+            id: sMap['id']?.toString() ?? '$sessionId-sheet-$i',
+            plan: sPlan,
+            cells: sCells,
+            structural: sStruct,
+            unresolvedRecords: const [],
+            matchedRecords: (sMap['matched_records'] as num?)?.toInt() ?? sAligned.length,
+            alignedRows: sAligned,
+            durationMs: (sMap['duration_ms'] as num?)?.toInt() ?? 0,
+            sheetPair: pair,
+            warnings: sWarnings,
+          ),
+        );
+      }
+    }
+
+    final topSnapA = deserializeSnapshot(
+      planMeta?['a'],
+      'restored-a',
+      recordsABySheet[topSheetPair?.id] ?? recordsABySheet[null] ?? const [],
+      allCells,
+      true,
+    );
+    final topSnapB = deserializeSnapshot(
+      planMeta?['b'],
+      'restored-b',
+      recordsBBySheet[topSheetPair?.id] ?? recordsBBySheet[null] ?? const [],
+      allCells,
+      false,
+    );
+    final topConfig = deserializeConfig(planMeta?['config'], allCells);
+    final plan = fallbackPlan ??
+        FrozenPlan(
+          topPlanId,
+          topRevision,
+          InputSnapshot(
+            id: topSnapA.id,
+            binding: topSnapA.binding,
+            fields: topSnapA.fields,
+            records: topSnapA.records,
+            fullValidation: topSnapA.fullValidation,
+            ocrReviewed: topSnapA.ocrReviewed,
+            sheetName: topSnapA.sheetName,
+            workbookSheets: [for (final sr in sheetResults) sr.plan.a],
+            warnings: topSnapA.warnings,
+          ),
+          InputSnapshot(
+            id: topSnapB.id,
+            binding: topSnapB.binding,
+            fields: topSnapB.fields,
+            records: topSnapB.records,
+            fullValidation: topSnapB.fullValidation,
+            ocrReviewed: topSnapB.ocrReviewed,
+            sheetName: topSnapB.sheetName,
+            workbookSheets: [for (final sr in sheetResults) sr.plan.b],
+            warnings: topSnapB.warnings,
+          ),
+          topConfig,
+        );
 
     return ComparisonResult(
       id: sessionId,
       plan: plan,
-      cells: cells,
-      structural: structural,
+      cells: allCells,
+      structural: allStructural,
       unresolvedRecords: unresolved,
       matchedRecords: s['matched_records'] as int,
+      alignedRows: allAligned,
       durationMs: s['duration_ms'] as int,
+      sheetResults: sheetResults,
+      sheetPair: topSheetPair,
+      warnings: topWarnings,
     );
   }
 

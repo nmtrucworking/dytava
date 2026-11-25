@@ -311,4 +311,93 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test(
+    'PDF exporter preserves full Vietnamese Unicode, currency symbols (€, ₫), ± operators, and exports all >400 cells without truncation in both dytavaReportPdf and mergedDiffPdf',
+    () async {
+      final rowsA = <List<String>>[];
+      final rowsB = <List<String>>[];
+      for (var i = 0; i < 450; i++) {
+        rowsA.add([
+          'Mã sản phẩm ${i + 1}',
+          'Nguyễn Văn An — Đã thanh toán',
+          '100€ (10 ± 2)',
+        ]);
+        rowsB.add([
+          'Mã sản phẩm ${i + 1}',
+          'Nguyễn Văn An — Chờ đối soát #${i + 1}',
+          '${120 + i}€ (10 ± 2)',
+        ]);
+      }
+      final snapA = table('A', ['Mã sản phẩm', 'Khách hàng', 'Giá trị'], rowsA);
+      final snapB = table('B', ['Mã sản phẩm', 'Khách hàng', 'Giá trị'], rowsB);
+      final res = compare(
+        plan(snapA, snapB, mode: MatchingMode.positional),
+      );
+      expect(res.cells.length, 450 * 3);
+
+      final port = MobileExportPort();
+      expect(port.supports(ExportKind.dytavaReportPdf), isTrue);
+      expect(port.supports(ExportKind.mergedDiffPdf), isTrue);
+
+      final reportPdf = await renderMobileReportAsync(
+        res,
+        const ExportRequest(
+          ExportKind.dytavaReportPdf,
+          ExportSelection.differencesOnly,
+        ),
+      );
+      expect(reportPdf.selectedCellCount, 900); // 450 rows * 2 modified columns
+      expect(reportPdf.fileName, 'dytava-report.pdf');
+      expect(reportPdf.fileBytes, isNotNull);
+      expect(reportPdf.fileBytes!.length, greaterThan(4000));
+      // Preview text and PDF structure preserve Vietnamese diacritics, € and ± without 400-cell truncation
+      expect(reportPdf.previewText, contains('Nguyễn Văn An — Đã thanh toán'));
+      expect(reportPdf.previewText, contains('100€ (10 ± 2)'));
+      expect(reportPdf.previewText, contains('900. [DIFFERENT]'));
+      expect(reportPdf.previewText, isNot(contains('additional cells')));
+
+      final pdfString = latin1.decode(reportPdf.fileBytes!, allowInvalid: true);
+      expect(pdfString.startsWith('%PDF-'), isTrue);
+      // Verify embedded TrueType Unicode font and ToUnicode CMap in PDF binary
+      expect(pdfString, contains('/ToUnicode'));
+      expect(pdfString, contains('/FontDescriptor'));
+
+      // Verify Merged Diff PDF A/B
+      final mergedPdf = await renderMobileReportAsync(
+        res,
+        const ExportRequest(
+          ExportKind.mergedDiffPdf,
+          ExportSelection.differencesOnly,
+        ),
+      );
+      expect(mergedPdf.fileName, 'dytava-merged-diff.pdf');
+      expect(mergedPdf.fileBytes, isNotNull);
+      expect(mergedPdf.previewText, contains('DYTAVA - MERGED A/B TABLE DIFF REPORT'));
+      expect(mergedPdf.previewText, contains('Row 450 [DIFFERENT]'));
+      expect(mergedPdf.previewText, contains('Nguyễn Văn An — Đã thanh toán'));
+      final mergedBinaryStr = latin1.decode(mergedPdf.fileBytes!, allowInvalid: true);
+      expect(mergedBinaryStr, contains('/ToUnicode'));
+    },
+  );
+
+  test(
+    'processCsvByteStream parses multi-chunk UTF-8 CSV streams without full-file string buffering',
+    () async {
+      addTearDown(MobileFileUploadService.clear);
+      final chunks = <List<int>>[
+        utf8.encode('Mã SP,Tên hàng hóa,Đơn giá\nSP01,'),
+        utf8.encode('"Nguyễn Văn An\nGói ERP",150000\r\n'),
+        utf8.encode('SP02,Phần mềm Dytava,250000\n'),
+      ];
+      final info = await MobileFileUploadService.processCsvByteStream(
+        side: SourceSide.a,
+        fileName: 'streamed.csv',
+        byteStream: Stream.fromIterable(chunks),
+      );
+      expect(info.rowCount, 2);
+      expect(info.columnCount, 3);
+      expect(info.sha256Digest, isNotNull);
+    },
+  );
 }

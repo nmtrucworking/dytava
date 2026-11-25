@@ -93,8 +93,11 @@ class AppLocalizations {
   String get close => isVietnamese ? 'Đóng' : 'Close';
   String get exitApp => isVietnamese ? 'Thoát ứng dụng' : 'Exit app';
   String get pdfSubtitle => isVietnamese
-      ? 'Báo cáo tài liệu PDF trực quan dễ in ấn và chia sẻ'
-      : 'Printable PDF comparison document for sharing';
+      ? 'Báo cáo tài liệu PDF đầy đủ Unicode, không cắt bỏ dữ liệu'
+      : 'Full Unicode PDF comparison report without data truncation';
+  String get mergedPdfSubtitle => isVietnamese
+      ? 'Bảng hợp nhất A/B song song (Merged Diff PDF)'
+      : 'Side-by-side merged A/B table diff PDF';
   String get save => isVietnamese ? 'Lưu' : 'Save';
   String get delete => isVietnamese ? 'Xóa' : 'Delete';
   String get clearAll => isVietnamese ? 'Xóa tất cả' : 'Clear all';

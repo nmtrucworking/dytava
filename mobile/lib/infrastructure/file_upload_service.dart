@@ -16,6 +16,14 @@ import 'package:excelcompare_core/excelcompare_core.dart';
 import 'xlsx_cell_content.dart';
 import 'demo/demo_workflow_ports.dart';
 
+final class _DigestSink implements Sink<Digest> {
+  Digest? value;
+  @override
+  void add(Digest data) => value = data;
+  @override
+  void close() {}
+}
+
 final class UploadedFileInfo {
   const UploadedFileInfo({
     required this.fileName,
@@ -62,11 +70,108 @@ final class _ParsedFile {
 
 abstract final class MobileFileUploadService {
   static const maxFileBytes = 500 * 1024 * 1024,
+      mobileRecommendedMaxBytes = 50 * 1024 * 1024,
       maxRows = 1500000,
       maxColumns = 500,
       maxCells = 25000000;
   static final _files = <String, _ParsedFile>{};
   static final _selected = <String, String>{};
+
+  /// Stream-parses a CSV/TSV UTF-8 byte stream in chunks without materializing
+  /// the entire unparsed file string in a single monolithic buffer.
+  static Future<UploadedFileInfo> processCsvByteStream({
+    required SourceSide side,
+    required String fileName,
+    required Stream<List<int>> byteStream,
+    String? explicitDelimiter,
+  }) async {
+    final hashSink = _DigestSink();
+    final shaInput = sha256.startChunkedConversion(hashSink);
+    final lineBuffer = StringBuffer();
+    String? delimiter = explicitDelimiter;
+    List<String>? headers;
+    final rows = <List<String>>[];
+    int totalBytes = 0;
+
+    void consumeCompleteRecord(String recordText) {
+      if (recordText.trim().isEmpty) return;
+      delimiter ??= fileName.toLowerCase().endsWith('.tsv')
+          ? '\t'
+          : ('\t'.allMatches(recordText).length >=
+                        ','.allMatches(recordText).length &&
+                    '\t'.allMatches(recordText).length >=
+                        ';'.allMatches(recordText).length &&
+                    '\t'.allMatches(recordText).isNotEmpty
+                ? '\t'
+                : (';'.allMatches(recordText).length >
+                          ','.allMatches(recordText).length
+                      ? ';'
+                      : ','));
+      final decodedRows = CsvDecoder(
+        fieldDelimiter: delimiter!,
+        dynamicTyping: false,
+      ).convert(recordText);
+      for (final rawRow in decodedRows) {
+        final strRow = rawRow.map((v) => v.toString()).toList();
+        if (strRow.every((v) => v.trim().isEmpty)) continue;
+        if (headers == null) {
+          headers = strRow;
+        } else {
+          rows.add(strRow);
+          if (rows.length > maxRows) {
+            throw const FormatException('Tệp vượt giới hạn dòng, cột hoặc ô.');
+          }
+        }
+      }
+    }
+
+    var inQuotes = false;
+    await for (final chunk in byteStream) {
+      totalBytes += chunk.length;
+      if (totalBytes > maxFileBytes) {
+        throw const FormatException('Tệp phải có dữ liệu và không vượt 500 MB.');
+      }
+      shaInput.add(chunk);
+      final textChunk = utf8
+          .decode(chunk, allowMalformed: true)
+          .replaceFirst('\ufeff', '');
+      for (var i = 0; i < textChunk.length; i++) {
+        final ch = textChunk[i];
+        if (ch == '"') {
+          inQuotes = !inQuotes;
+          lineBuffer.write(ch);
+        } else if ((ch == '\n' || ch == '\r') && !inQuotes) {
+          if (ch == '\r' &&
+              i + 1 < textChunk.length &&
+              textChunk[i + 1] == '\n') {
+            i++;
+          }
+          consumeCompleteRecord(lineBuffer.toString());
+          lineBuffer.clear();
+        } else {
+          lineBuffer.write(ch);
+        }
+      }
+    }
+    if (lineBuffer.isNotEmpty) {
+      consumeCompleteRecord(lineBuffer.toString());
+      lineBuffer.clear();
+    }
+    shaInput.close();
+    if (totalBytes == 0 || headers == null) {
+      throw const FormatException('Tệp không có tiêu đề cột.');
+    }
+    final digest = hashSink.value.toString();
+    final ext = fileName.split('.').last.toLowerCase();
+    final format = ext == 'tsv' ? SourceFormat.tsv : SourceFormat.csv;
+    final parsedFile = _ParsedFile(
+      fileName,
+      format,
+      {'Data': _validate(headers!, rows, 1)},
+      sha256Digest: digest,
+    );
+    return _register(side, parsedFile);
+  }
   static Future<UploadedFileInfo?> pickAndProcessFile(SourceSide side) async {
     final files = await FilePicker.pickFiles(
       type: FileType.custom,
@@ -513,7 +618,9 @@ abstract final class MobileFileUploadService {
         'Data': _validate(headers, rows, 1),
       });
     }
-    final first = text.split(RegExp(r'\r?\n')).first;
+    final firstNewline = text.indexOf('\n');
+    final first = (firstNewline >= 0 ? text.substring(0, firstNewline) : text)
+        .replaceAll('\r', '');
     int count(String d) => d.allMatches(first).length;
     final delimiter = ext == 'tsv'
         ? '\t'
