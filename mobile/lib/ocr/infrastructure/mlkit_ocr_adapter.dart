@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
@@ -27,16 +28,21 @@ final class MlKitOcrRecognitionAdapter implements OcrRecognitionPort {
   @override
   Future<List<OcrToken>> recognize(OcrProcessedImage image) async {
     if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
-      throw UnsupportedError(
-        'ML Kit on-device OCR chỉ chạy trên Android/iOS.',
-      );
+      throw UnsupportedError('ML Kit on-device OCR chỉ chạy trên Android/iOS.');
     }
 
+    final nativeImage = await OcrImagePreprocessor.enhanceSmallText(image);
+    final scaleX =
+        (image.geometry.outputWidth - 1) /
+        (nativeImage.geometry.outputWidth - 1).clamp(1, double.infinity);
+    final scaleY =
+        (image.geometry.outputHeight - 1) /
+        (nativeImage.geometry.outputHeight - 1).clamp(1, double.infinity);
     final tempDir = await Directory.systemTemp.createTemp('dytava_ocr_');
     final tempFile = File('${tempDir.path}/frame.png');
     final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
     try {
-      await tempFile.writeAsBytes(image.pngBytes, flush: true);
+      await tempFile.writeAsBytes(nativeImage.pngBytes, flush: true);
       final inputImage = InputImage.fromFilePath(tempFile.path);
       final recognized = await recognizer.processImage(inputImage);
       final tokens = <OcrToken>[];
@@ -45,28 +51,14 @@ final class MlKitOcrRecognitionAdapter implements OcrRecognitionPort {
         for (final line in block.lines) {
           final currentLine = lineIndex++;
           for (final element in line.elements) {
-            final corners = element.cornerPoints;
-            final rect = element.boundingBox;
-            final polygon = corners.length >= 4
-                ? [
-                    for (final pt in corners)
-                      OcrPoint(pt.x.toDouble(), pt.y.toDouble()),
-                  ]
-                : [
-                    OcrPoint(rect.left, rect.top),
-                    OcrPoint(rect.right, rect.top),
-                    OcrPoint(rect.right, rect.bottom),
-                    OcrPoint(rect.left, rect.bottom),
-                  ];
-            tokens.add(
-              OcrToken(
-                text: element.text,
-                polygon: polygon,
-                confidence: element.confidence ?? line.confidence,
+            tokens.addAll(
+              tokensForElement(
+                element,
                 lineIndex: currentLine,
-                languages: element.recognizedLanguages.isNotEmpty
-                    ? element.recognizedLanguages
-                    : line.recognizedLanguages,
+                scaleX: scaleX,
+                scaleY: scaleY,
+                lineConfidence: line.confidence,
+                lineLanguages: line.recognizedLanguages,
               ),
             );
           }
@@ -81,6 +73,78 @@ final class MlKitOcrRecognitionAdapter implements OcrRecognitionPort {
         }
       } catch (_) {}
     }
+  }
+
+  /// ML Kit can join words across a table border into one element. Split only
+  /// where its actual symbol boxes show a large gap, preserving every character.
+  /// iOS provides no symbols, so its original element stays flagged for review.
+  static List<OcrToken> tokensForElement(
+    TextElement element, {
+    required int lineIndex,
+    double scaleX = 1,
+    double scaleY = 1,
+    double? lineConfidence,
+    List<String> lineLanguages = const [],
+  }) {
+    OcrPoint point(num x, num y) => OcrPoint(x * scaleX, y * scaleY);
+    final symbols = element.symbols;
+    final groups = <List<TextSymbol>>[];
+    if (symbols.length > 1 &&
+        symbols.map((s) => s.text).join() == element.text) {
+      final heights =
+          symbols.map((s) => s.boundingBox.height).where((h) => h > 0).toList()
+            ..sort();
+      final gapLimit = math.max(
+        8.0,
+        (heights.isEmpty ? 16 : heights[heights.length ~/ 2]) * 0.85,
+      );
+      for (final symbol in symbols) {
+        if (groups.isEmpty ||
+            symbol.boundingBox.left - groups.last.last.boundingBox.right >
+                gapLimit) {
+          groups.add([symbol]);
+        } else {
+          groups.last.add(symbol);
+        }
+      }
+    }
+    final languages = element.recognizedLanguages.isEmpty
+        ? lineLanguages
+        : element.recognizedLanguages;
+    if (groups.length > 1) {
+      return [
+        for (final group in groups)
+          OcrToken(
+            text: group.map((s) => s.text).join(),
+            polygon: OcrBox.fromPoints([
+              for (final s in group) ...[
+                point(s.boundingBox.left, s.boundingBox.top),
+                point(s.boundingBox.right, s.boundingBox.bottom),
+              ],
+            ]).corners,
+            confidence: element.confidence ?? lineConfidence,
+            lineIndex: lineIndex,
+            languages: languages,
+          ),
+      ];
+    }
+    final rect = element.boundingBox;
+    return [
+      OcrToken(
+        text: element.text,
+        polygon: element.cornerPoints.length >= 4
+            ? [for (final p in element.cornerPoints) point(p.x, p.y)]
+            : [
+                point(rect.left, rect.top),
+                point(rect.right, rect.top),
+                point(rect.right, rect.bottom),
+                point(rect.left, rect.bottom),
+              ],
+        confidence: element.confidence ?? lineConfidence,
+        lineIndex: lineIndex,
+        languages: languages,
+      ),
+    ];
   }
 }
 

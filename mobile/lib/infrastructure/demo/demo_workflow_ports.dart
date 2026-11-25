@@ -396,7 +396,8 @@ final class DemoComparisonPort implements ComparisonPort {
 /// Preview sink, never a user-owned file. No EX-1 success/capability claim.
 final class DemoExportPort implements ExportPort {
   @override
-  bool supports(ExportKind kind) => kind == ExportKind.jsonReport;
+  bool supports(ExportKind kind) =>
+      kind == ExportKind.jsonReport || kind == ExportKind.dytavaReportPdf;
   @override
   Future<PreparedExport> render(
     ComparisonResult result,
@@ -407,7 +408,7 @@ final class DemoExportPort implements ExportPort {
     if (!supports(request.kind)) {
       throw const WorkflowIssue(
         'EXPORT_CAPABILITY_DISABLED',
-        'Chỉ có preview JSON mẫu.',
+        'Chỉ có preview JSON hoặc PDF mẫu.',
       );
     }
     final cells = result.cells
@@ -418,6 +419,19 @@ final class DemoExportPort implements ExportPort {
               c.decision.status == DecisionStatus.unresolved,
         )
         .toList();
+    if (request.kind == ExportKind.dytavaReportPdf) {
+      final preview =
+          'DYTAVA - EXCEL COMPARE REPORT (PDF)\n'
+          'Result ID: ${result.id}\n'
+          'Selection: ${request.selection.name}\n'
+          'Selected Cells: ${cells.length}';
+      return PreparedExport(
+        preview,
+        cells.length,
+        fileName: 'dytava-report.pdf',
+        fileBytes: utf8.encode('%PDF-1.4\n$preview\n%%EOF\n'),
+      );
+    }
     final json = const JsonEncoder.withIndent('  ').convert({
       'format': 'dytava-fixture-preview/0.1',
       'preview_only': true,
@@ -463,6 +477,15 @@ final class DemoExportPort implements ExportPort {
   @override
   Future<void> verify(PreparedExport pending, Cancellation cancel) async {
     await _checkpoint(cancel);
+    if (pending.fileName?.endsWith('.pdf') == true) {
+      if (pending.previewText.isEmpty || pending.fileBytes == null) {
+        throw const WorkflowIssue(
+          'EXPORT_VERIFICATION_FAILED',
+          'Báo cáo PDF không hợp lệ.',
+        );
+      }
+      return;
+    }
     final body = jsonDecode(pending.previewText) as Map<String, dynamic>;
     if (body['preview_only'] != true ||
         (body['cells'] as List).length != pending.selectedCellCount) {
@@ -480,7 +503,13 @@ final class DemoExportPort implements ExportPort {
     Cancellation cancel,
   ) async {
     await _checkpoint(cancel);
-    return ExportReceipt(attemptId, pending.previewText, previewOnly: true);
+    return ExportReceipt(
+      attemptId,
+      pending.previewText,
+      previewOnly: true,
+      fileName: pending.fileName,
+      fileBytes: pending.fileBytes,
+    );
   }
 
   @override

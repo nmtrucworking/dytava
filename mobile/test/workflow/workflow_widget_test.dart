@@ -82,6 +82,16 @@ void main() {
     await tap(tester, 'Prepare report');
     expect(flow.receipt, isNotNull);
     expect(find.text('Report ready'), findsOneWidget);
+
+    // Switch to PDF format inside the kept-open Export modal and prepare PDF report
+    await tap(tester, 'PDF');
+    await tap(tester, 'Confirm format and report scope');
+    await tap(tester, 'Prepare report');
+    expect(flow.receipt, isNotNull);
+    expect(flow.receipt!.fileName, equals('dytava-report.pdf'));
+    expect(flow.receipt!.fileBytes, isNotNull);
+    expect(find.text('Report ready'), findsOneWidget);
+
     await tap(tester, 'Cancel');
     expect(find.text('Comparison results'), findsOneWidget);
     expect(tester.takeException(), isNull);

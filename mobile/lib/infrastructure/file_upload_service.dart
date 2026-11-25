@@ -682,15 +682,15 @@ abstract final class MobileFileUploadService {
         );
       }
       final mergedNonAnchors = <(int, int)>{};
-      for (final mc in elements(sheet, 'mergeCell')) {
-        final ref = mc.getAttribute('ref');
-        final range = _parseCellRange(ref);
-        if (range != null) {
-          for (var r = range.startRow; r <= range.endRow; r++) {
-            for (var c = range.startCol; c <= range.endCol; c++) {
-              if (r != range.startRow || c != range.startCol) {
-                mergedNonAnchors.add((r, c));
-              }
+      final mergeRanges = [
+        for (final mc in elements(sheet, 'mergeCell'))
+          ?_parseCellRange(mc.getAttribute('ref')),
+      ];
+      for (final range in mergeRanges) {
+        for (var r = range.startRow; r <= range.endRow; r++) {
+          for (var c = range.startCol; c <= range.endCol; c++) {
+            if (r != range.startRow || c != range.startCol) {
+              mergedNonAnchors.add((r, c));
             }
           }
         }
@@ -863,7 +863,41 @@ abstract final class MobileFileUploadService {
           List.generate(width, (c) => sparse[r]?[c] ?? '');
       var header = 1;
       List<String> headers = [];
+      // A vertically merged leaf beside a horizontal group identifies an
+      // explicit multi-row header. Keep leaf names, not the group caption,
+      // and exclude every header level from the data records.
+      for (final vertical in mergeRanges.where((m) =>
+          m.startCol == m.endCol && m.endRow > m.startRow && m.endRow <= 15)) {
+        final top = vertical.startRow;
+        final bottom = vertical.endRow;
+        if (!mergeRanges.any((m) => m.startRow == top &&
+            m.endRow < bottom && m.endCol > m.startCol)) {
+          continue;
+        }
+        if ([for (var r = top; r <= bottom; r++) ...rowAt(r)]
+            .any((v) => num.tryParse(v) != null)) {
+          continue;
+        }
+        final leaves = rowAt(bottom);
+        for (var c = 0; c < width; c++) {
+          if (leaves[c].isNotEmpty) continue;
+          for (final m in mergeRanges) {
+            if (m.startCol == c && m.endCol == c &&
+                m.startRow == top && m.endRow == bottom) {
+              leaves[c] = sparse[top]?[c] ?? '';
+            }
+          }
+        }
+        if (leaves.every((v) => v.trim().isNotEmpty) &&
+            leaves.toSet().length == leaves.length &&
+            sparse[bottom + 1]?.values.any((v) => num.tryParse(v) != null) == true) {
+          header = bottom;
+          headers = leaves;
+          break;
+        }
+      }
       for (var r = 1; r <= 15; r++) {
+        if (headers.isNotEmpty) break;
         final row = rowAt(r).map((v) => v.trim()).toList();
         while (row.isNotEmpty && row.last.isEmpty) {
           row.removeLast();

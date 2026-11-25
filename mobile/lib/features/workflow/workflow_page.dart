@@ -344,6 +344,37 @@ class _WorkflowPageState extends State<WorkflowPage>
     _applyApprovedConfigAndRun();
   }
 
+  void _applyPresetToFlow(String presetId) {
+    final policy = switch (presetId) {
+      'financial-reconcile-v1' => const WebComparisonPolicy(
+        trimText: true,
+        caseSensitiveText: false,
+        preserveLeadingZeros: false,
+      ),
+      'inventory-sku-strict' => const WebComparisonPolicy(
+        trimText: false,
+        caseSensitiveText: true,
+        preserveLeadingZeros: true,
+      ),
+      _ => const WebComparisonPolicy(
+        trimText: true,
+        caseSensitiveText: false,
+        preserveLeadingZeros: true,
+      ),
+    };
+    final mode = presetId == 'inventory-sku-strict'
+        ? MatchingMode.key
+        : MatchingMode.positional;
+    flow.configure(
+      flow.config.copyWith(
+        mode: mode,
+        modeConfirmed: true,
+        webPolicy: policy,
+        policyConfirmed: true,
+      ),
+    );
+  }
+
   String _appBarTitle(BuildContext context) {
     final hasExplicitLocale = Localizations.of<AppLocalizations>(context, AppLocalizations) != null;
     final l10n = hasExplicitLocale
@@ -508,8 +539,9 @@ class _WorkflowPageState extends State<WorkflowPage>
                     child: _MoreSessionPopoverButton(
                       flow: flow,
                       onGoHome: () => _go(WorkflowScreen.home),
-                      onCloseSession: () async {
+                      onExitApp: () async {
                         await flow.closeSession();
+                        await SystemNavigator.pop();
                       },
                     ),
                   ),
@@ -569,9 +601,7 @@ class _WorkflowPageState extends State<WorkflowPage>
                     );
                   },
                   child: KeyedSubtree(
-                    key: ValueKey(
-                      '${flow.screen.name}-aux-${_auxView.name}-lang-${flow.locale.languageCode}',
-                    ),
+                    key: ValueKey('${flow.screen.name}-aux-${_auxView.name}'),
                     child: _buildScreenContent(constraints),
                   ),
                 ),
@@ -736,8 +766,12 @@ class _WorkflowPageState extends State<WorkflowPage>
         physics: const ClampingScrollPhysics(),
         padding: EdgeInsets.symmetric(horizontal: padHorizontal, vertical: 12),
         child: WorkflowLearnAndPresetsView(
+          flow: flow,
           selectedPreset: _selectedPolicyPreset,
-          onSelectPreset: (id) => setState(() => _selectedPolicyPreset = id),
+          onSelectPreset: (id) {
+            setState(() => _selectedPolicyPreset = id);
+            _applyPresetToFlow(id);
+          },
         ),
       );
     }
@@ -1007,17 +1041,17 @@ class _WorkflowPageState extends State<WorkflowPage>
 /// Nút More mở Popover radial:
 /// - Bình thường biểu tượng 3 chấm đứng thẳng 0 độ (0°), khi mở popover xoay mượt sang 45 độ (45°), khi đóng xoay về 0 độ.
 /// - Khi mở popover: Icon `+` xuất hiện trước tiên ở góc trên phải,
-///   3 icons còn lại (Đóng phiên / Power, Chuyển ngôn ngữ / Globe, Về trang chủ / Home)
+///   3 icons còn lại (Thoát ứng dụng / Power ở trên cùng bên trái, Chuyển ngôn ngữ / Globe ở giữa, Về trang chủ / Home ở dưới cùng)
 ///   lần lượt xuất hiện theo đường tròn từ trên xuống dưới.
 class _MoreSessionPopoverButton extends StatefulWidget {
   final WorkflowController flow;
   final VoidCallback onGoHome;
-  final Future<void> Function() onCloseSession;
+  final Future<void> Function() onExitApp;
 
   const _MoreSessionPopoverButton({
     required this.flow,
     required this.onGoHome,
-    required this.onCloseSession,
+    required this.onExitApp,
   });
 
   @override
@@ -1061,9 +1095,9 @@ class _MoreSessionPopoverButtonState extends State<_MoreSessionPopoverButton> {
                 Navigator.of(routeContext).pop();
                 widget.onGoHome();
               },
-              onCloseSession: () async {
+              onExitApp: () async {
                 Navigator.of(routeContext).pop();
-                await widget.onCloseSession();
+                await widget.onExitApp();
               },
             );
           },
@@ -1136,7 +1170,7 @@ class _RadialMorePopoverOverlay extends StatelessWidget {
   final Animation<double> animation;
   final VoidCallback onDismiss;
   final VoidCallback onGoHome;
-  final Future<void> Function() onCloseSession;
+  final Future<void> Function() onExitApp;
 
   const _RadialMorePopoverOverlay({
     required this.flow,
@@ -1144,7 +1178,7 @@ class _RadialMorePopoverOverlay extends StatelessWidget {
     required this.animation,
     required this.onDismiss,
     required this.onGoHome,
-    required this.onCloseSession,
+    required this.onExitApp,
   });
 
   @override
@@ -1279,7 +1313,7 @@ class _RadialMorePopoverOverlay extends StatelessWidget {
                                   ),
                                 ),
 
-                                // Icon 1 (Top of arc): Power / Close session
+                                // Icon 1 (Top-left of arc): Power / Exit app
                                 _buildArcAnimatedItem(
                                   origin: plusCenter,
                                   target: powerCenter,
@@ -1287,16 +1321,14 @@ class _RadialMorePopoverOverlay extends StatelessWidget {
                                   size: const Size(48, 48),
                                   child: Semantics(
                                     button: true,
-                                    label: context.l10n.close,
+                                    label: context.l10n.exitApp,
                                     child: _PopoverCircularActionButton(
                                       buttonKey: const ValueKey('popover-close-session'),
-                                      tooltip: context.l10n.close,
-                                      onTap: flow.usable && !flow.busy
-                                          ? () {
-                                              DytavaAudioFeedback.playClick();
-                                              onCloseSession();
-                                            }
-                                          : null,
+                                      tooltip: context.l10n.exitApp,
+                                      onTap: () {
+                                        DytavaAudioFeedback.playClick();
+                                        onExitApp();
+                                      },
                                       child: const _PowerGlyph(),
                                     ),
                                   ),

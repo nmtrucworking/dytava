@@ -40,10 +40,7 @@ abstract final class OcrTableReconstructor {
     final prunedRows = _pruneBannerAndSuperHeaderRows(rawSegmentsPerRow);
     final segmentsPerRow = prunedRows.isEmpty ? rawSegmentsPerRow : prunedRows;
 
-    final columns = _inferColumns(
-      segmentsPerRow,
-      targetColumns: targetColumns,
-    );
+    final columns = _inferColumns(segmentsPerRow, targetColumns: targetColumns);
     final colCount = columns.length;
 
     final rawRows = <List<_CellDraft>>[];
@@ -73,12 +70,16 @@ abstract final class OcrTableReconstructor {
           if (_looksNumeric(text)) numericCount++;
         }
       }
-      colNumericRatio[c] =
-          nonHeaderTotal >= 2 ? numericCount / nonHeaderTotal : 0.0;
+      colNumericRatio[c] = nonHeaderTotal >= 2
+          ? numericCount / nonHeaderTotal
+          : 0.0;
     }
 
     final inferredHeader =
         hasHeader ?? _inferHasHeader(rawRows, colNumericRatio);
+    final numericFormatRisks = _numericFormatOutliers([
+      for (final row in rawRows) [for (final cell in row) cell.text],
+    ], hasHeader: inferredHeader);
 
     final cells = <List<OcrCell>>[];
     for (var r = 0; r < rawRows.length; r++) {
@@ -93,6 +94,9 @@ abstract final class OcrTableReconstructor {
         final text = draft.text;
         final conf = draft.confidence;
         final risks = <OcrRisk>{};
+        if (numericFormatRisks.contains((r, c))) {
+          risks.add(OcrRisk.numericFormat);
+        }
 
         if (text == null || text.isEmpty) {
           risks.add(OcrRisk.blank);
@@ -145,6 +149,10 @@ abstract final class OcrTableReconstructor {
     if (grid.rowCount == 0 || grid.columnCount == 0) return grid;
     final colCount = grid.columnCount;
     final rowCount = grid.rowCount;
+    final numericFormatRisks = _numericFormatOutliers([
+      for (final row in grid.cells)
+        [for (final cell in row) cell.recognizedText],
+    ], hasHeader: grid.hasHeader);
 
     final detectedCounts = [
       for (final r in grid.cells) r.where((c) => c.detected).length,
@@ -177,6 +185,7 @@ abstract final class OcrTableReconstructor {
         final text = cell.recognizedText;
         final conf = cell.confidence;
         final risks = <OcrRisk>{
+          if (numericFormatRisks.contains((r, c))) OcrRisk.numericFormat,
           if (cell.risks.contains(OcrRisk.spansColumns)) OcrRisk.spansColumns,
           if (cell.risks.contains(OcrRisk.multipleSegments))
             OcrRisk.multipleSegments,
@@ -217,13 +226,9 @@ abstract final class OcrTableReconstructor {
   }
 
   static List<List<OcrToken>> _groupIntoRows(List<OcrToken> tokens) {
-    final heights = tokens
-        .map((t) => t.box.height)
-        .where((h) => h > 0)
-        .toList()
+    final heights = tokens.map((t) => t.box.height).where((h) => h > 0).toList()
       ..sort();
-    final medianHeight =
-        heights.isEmpty ? 16.0 : heights[heights.length ~/ 2];
+    final medianHeight = heights.isEmpty ? 16.0 : heights[heights.length ~/ 2];
     final rowTolerance = math.max(6.0, medianHeight * 0.55);
 
     final sorted = [...tokens]
@@ -271,8 +276,7 @@ abstract final class OcrTableReconstructor {
   static List<_RowSegment> _mergeRowSegments(List<OcrToken> rowTokens) {
     if (rowTokens.isEmpty) return const [];
     final heights = rowTokens.map((t) => t.box.height).toList()..sort();
-    final medianHeight =
-        heights.isEmpty ? 16.0 : heights[heights.length ~/ 2];
+    final medianHeight = heights.isEmpty ? 16.0 : heights[heights.length ~/ 2];
     final mergeGap = math.max(8.0, medianHeight * 0.85);
 
     final segments = <_RowSegment>[];
@@ -335,69 +339,21 @@ abstract final class OcrTableReconstructor {
     final bands = <_ColumnBand>[
       for (final seg in seedRow) _ColumnBand(seg.box.left, seg.box.right),
     ];
-    final medianBandW = _medianWidth(bands);
-
+    // The densest row anchors the columns. Headers can be left-aligned while
+    // their numeric values are right-aligned: lack of glyph overlap inside
+    // this span is not evidence of an additional column.
     for (final row in rows) {
       for (final seg in row) {
-        // Ignore wide multi-column banner segments when expanding column bands
-        if (bands.length >= 3 && seg.box.width > medianBandW * 2.1) {
-          continue;
-        }
-        var best = -1;
-        var bestOverlap = 0.0;
-        for (var i = 0; i < bands.length; i++) {
-          final overlap = _horizontalOverlap(seg.box, bands[i]);
-          if (overlap > bestOverlap) {
-            bestOverlap = overlap;
-            best = i;
-          }
-        }
-        if (best >= 0 &&
-            bestOverlap >=
-                math.min(seg.box.width, bands[best].width) * 0.25) {
-          bands[best] = bands[best].expand(seg.box.left, seg.box.right);
-        } else {
-          var nearest = -1;
-          var nearestDist = double.infinity;
-          final cx = (seg.box.left + seg.box.right) / 2;
-          for (var i = 0; i < bands.length; i++) {
-            final dist = (cx - bands[i].center).abs();
-            if (dist < nearestDist) {
-              nearestDist = dist;
-              nearest = i;
-            }
-          }
-          if (nearest >= 0 &&
-              nearestDist <= math.max(20.0, bands[nearest].width * 0.55)) {
-            bands[nearest] = bands[nearest].expand(seg.box.left, seg.box.right);
-          } else {
-            bands.add(_ColumnBand(seg.box.left, seg.box.right));
-          }
+        bands.sort((a, b) => a.center.compareTo(b.center));
+        final outsideLeft = seg.box.right < bands.first.left - 20;
+        final outsideRight = seg.box.left > bands.last.right + 20;
+        if (outsideLeft || outsideRight) {
+          bands.add(_ColumnBand(seg.box.left, seg.box.right));
         }
       }
     }
-
     bands.sort((a, b) => a.center.compareTo(b.center));
-    final merged = <_ColumnBand>[bands.first];
-    for (var i = 1; i < bands.length; i++) {
-      final prev = merged.last;
-      final next = bands[i];
-      final overlap =
-          math.min(prev.right, next.right) - math.max(prev.left, next.left);
-      final minW = math.max(1.0, math.min(prev.width, next.width));
-      if (overlap / minW > 0.45) {
-        merged[merged.length - 1] = prev.expand(next.left, next.right);
-      } else {
-        merged.add(next);
-      }
-    }
-    return merged;
-  }
-
-  static double _medianWidth(List<_ColumnBand> bands) {
-    if (bands.isEmpty) return 40.0;
-    final widths = bands.map((b) => b.width).toList()..sort();
-    return widths[widths.length ~/ 2];
+    return bands;
   }
 
   /// Strips standalone title banners, multi-column super-header rows above the
@@ -418,10 +374,18 @@ abstract final class OcrTableReconstructor {
     var start = 0;
     while (start < rows.length - 2) {
       final row = rows[start];
-      final nextRow = rows[start + 1];
       final isSparseHeaderOrTitle = row.length <= math.max(2, bodyCols ~/ 2);
-      final nextIsMuchWider = nextRow.length >= bodyCols - 1 ||
-          (start + 2 < rows.length && rows[start + 2].length >= bodyCols - 1);
+      // Wrapped group captions may occupy more than two physical lines. Look
+      // ahead through text-only captions, stopping at the first numeric row.
+      final nextLeafOrData = rows
+          .skip(start + 1)
+          .firstWhere(
+            (r) =>
+                r.length >= bodyCols - 1 ||
+                r.any((s) => _looksNumeric(s.joinedText)),
+            orElse: () => const [],
+          );
+      final nextIsMuchWider = nextLeafOrData.length >= bodyCols - 1;
       final isAllText = row.every((s) => !_looksNumeric(s.joinedText));
       if (isSparseHeaderOrTitle && isAllText && nextIsMuchWider) {
         start++;
@@ -443,7 +407,56 @@ abstract final class OcrTableReconstructor {
       }
     }
 
-    return rows.sublist(start, end);
+    final retained = rows.sublist(start, end);
+    if (start > 0 &&
+        retained.isNotEmpty &&
+        retained.first.every((s) => !_looksNumeric(s.joinedText))) {
+      final columns = _inferColumns(retained);
+      final header = [...retained.first];
+      // Preserve a wrapped leaf label such as "Condition" above "Index".
+      // A group label spanning several columns remains excluded.
+      for (final prefix in rows[start - 1]) {
+        final c = _assignColumn(prefix, columns);
+        // A wrapped group caption must not contribute only its last word
+        // (e.g. "Coefficients") to the leaf label underneath ("Beta").
+        final wrappedGroup =
+            start >= 2 &&
+            rows[start - 2].any((above) {
+              final gap = prefix.box.top - above.box.bottom;
+              return _assignColumn(above, columns) == c &&
+                  gap >= 0 &&
+                  gap <= math.max(prefix.box.height, above.box.height) &&
+                  above.box.right >= prefix.box.left &&
+                  above.box.left <= prefix.box.right;
+            });
+        if (wrappedGroup) continue;
+        final left = c == 0
+            ? double.negativeInfinity
+            : (columns[c - 1].center + columns[c].center) / 2;
+        final right = c == columns.length - 1
+            ? double.infinity
+            : (columns[c].center + columns[c + 1].center) / 2;
+        final index = header.indexWhere((s) => _assignColumn(s, columns) == c);
+        if (index < 0 ||
+            prefix.box.left < left - 6 ||
+            prefix.box.right > right + 6) {
+          continue;
+        }
+        final leaf = header[index];
+        final gap = leaf.box.top - prefix.box.bottom;
+        if (gap >= 0 &&
+            gap <= math.max(leaf.box.height, prefix.box.height) &&
+            prefix.box.right >= leaf.box.left &&
+            prefix.box.left <= leaf.box.right) {
+          header[index] = _RowSegment([
+            ...prefix.tokens,
+            ...leaf.tokens,
+          ], prefix.box.union(leaf.box));
+        }
+      }
+      retained[0] = header;
+    }
+    return retained;
   }
 
   static List<_ColumnBand> _buildFixedColumns(
@@ -458,7 +471,9 @@ abstract final class OcrTableReconstructor {
       maxX = math.max(maxX, s.box.right);
     }
     if (count == 1 || maxX <= minX) {
-      return [_ColumnBand(minX.isFinite ? minX : 0, maxX.isFinite ? maxX : 100)];
+      return [
+        _ColumnBand(minX.isFinite ? minX : 0, maxX.isFinite ? maxX : 100),
+      ];
     }
 
     // Seed from the leaf/data row that already has `count` narrow segments
@@ -470,9 +485,7 @@ abstract final class OcrTableReconstructor {
         return maxWa.compareTo(maxWb);
       });
       final exactRow = exactCandidates.first;
-      return [
-        for (final s in exactRow) _ColumnBand(s.box.left, s.box.right),
-      ];
+      return [for (final s in exactRow) _ColumnBand(s.box.left, s.box.right)];
     }
 
     final step = (maxX - minX) / count;
@@ -513,8 +526,10 @@ abstract final class OcrTableReconstructor {
     return false;
   }
 
-  static double _horizontalOverlap(OcrBox box, _ColumnBand band) =>
-      math.max(0.0, math.min(box.right, band.right) - math.max(box.left, band.left));
+  static double _horizontalOverlap(OcrBox box, _ColumnBand band) => math.max(
+    0.0,
+    math.min(box.right, band.right) - math.max(box.left, band.left),
+  );
 
   static bool _inferHasHeader(
     List<List<_CellDraft>> rows,
@@ -534,6 +549,38 @@ abstract final class OcrTableReconstructor {
       }
     }
     return firstHasLabel && (bodyHasNumber || rows.length >= 2);
+  }
+
+  /// Flag a possibly dropped decimal separator without guessing its value.
+  /// Two fractional peers of the same precision are required; identifier and
+  /// integer-only columns therefore remain untouched.
+  static Set<(int, int)> _numericFormatOutliers(
+    List<List<String?>> rows, {
+    required bool hasHeader,
+  }) {
+    final risks = <(int, int)>{};
+    if (rows.isEmpty) return risks;
+    final fraction = RegExp(r'^[+-]?0?[.,](\d+)$');
+    final integer = RegExp(r'^\d{2,}$');
+    final start = hasHeader ? 1 : 0;
+    for (var c = 0; c < rows.first.length; c++) {
+      final precisionCounts = <int, int>{};
+      for (var r = start; r < rows.length; r++) {
+        final match = fraction.firstMatch(rows[r][c]?.trim() ?? '');
+        if (match != null) {
+          final digits = match[1]!.length;
+          precisionCounts[digits] = (precisionCounts[digits] ?? 0) + 1;
+        }
+      }
+      for (var r = start; r < rows.length; r++) {
+        final text = rows[r][c]?.trim() ?? '';
+        if (integer.hasMatch(text) &&
+            (precisionCounts[text.length] ?? 0) >= 2) {
+          risks.add((r, c));
+        }
+      }
+    }
+    return risks;
   }
 
   static final _numericPattern = RegExp(
@@ -600,7 +647,10 @@ final class _CellDraft {
 
   String? get text {
     if (tokens.isEmpty) return null;
-    final joined = tokens.map((t) => t.text.trim()).where((s) => s.isNotEmpty).join(' ');
+    final joined = tokens
+        .map((t) => t.text.trim())
+        .where((s) => s.isNotEmpty)
+        .join(' ');
     return joined.isEmpty ? null : joined;
   }
 

@@ -17,6 +17,39 @@ import '../domain/ocr_session.dart';
 abstract final class OcrImagePreprocessor {
   static const maxPixels = 12 * 1000 * 1000; // 12 MP ceiling (INP-ADR-004)
 
+  /// Enlarge small table text for recognition, without resampling the review
+  /// preview. The recognizer maps its tokens back to the original processed
+  /// coordinates. Keep both a side limit and the existing pixel ceiling.
+  static Future<OcrProcessedImage> enhanceSmallText(OcrProcessedImage image) {
+    final g = image.geometry;
+    if (math.max(g.outputWidth, g.outputHeight) > 1600 ||
+        g.outputWidth * g.outputHeight * 4 > maxPixels) {
+      return Future.value(image);
+    }
+    return Isolate.run(() {
+      final source = img.decodePng(image.pngBytes)!;
+      final scaled = img.copyResize(
+        source,
+        width: source.width * 2,
+        height: source.height * 2,
+        interpolation: img.Interpolation.cubic,
+      );
+      return OcrProcessedImage(
+        pngBytes: Uint8List.fromList(img.encodePng(scaled)),
+        geometry: OcrGeometry(
+          orientedWidth: g.orientedWidth,
+          orientedHeight: g.orientedHeight,
+          quarterTurns: g.quarterTurns,
+          flipHorizontal: g.flipHorizontal,
+          flipVertical: g.flipVertical,
+          corners: g.corners,
+          outputWidth: scaled.width,
+          outputHeight: scaled.height,
+        ),
+      );
+    });
+  }
+
   static Future<OcrProcessedImage> process(
     Uint8List rawBytes,
     OcrPreprocessSettings settings,
@@ -81,7 +114,8 @@ abstract final class OcrImagePreprocessor {
       OcrPoint(0, rh - 1),
     ];
 
-    final corners = _sanitizeCorners(settings.corners, rw, rh) ?? defaultCorners;
+    final corners =
+        _sanitizeCorners(settings.corners, rw, rh) ?? defaultCorners;
     final isFullFrame = _isFullFrame(corners, rw, rh);
 
     img.Image working;
@@ -111,10 +145,7 @@ abstract final class OcrImagePreprocessor {
     }
 
     if (settings.enhanceContrast) {
-      working = img.adjustColor(
-        working,
-        contrast: 1.18,
-      );
+      working = img.adjustColor(working, contrast: 1.18);
     }
 
     final geometry = OcrGeometry(
@@ -142,7 +173,9 @@ abstract final class OcrImagePreprocessor {
     if (corners == null || corners.length != 4) return null;
     for (final p in corners) {
       if (!p.x.isFinite || !p.y.isFinite) {
-        throw const FormatException('INP-ERR-014: Tọa độ vùng cắt không hợp lệ.');
+        throw const FormatException(
+          'INP-ERR-014: Tọa độ vùng cắt không hợp lệ.',
+        );
       }
     }
     return [

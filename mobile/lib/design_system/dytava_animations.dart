@@ -53,6 +53,7 @@ class _DytavaFadeSlideState extends State<DytavaFadeSlide>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
   bool _started = false;
+  bool _disableAnimations = false;
 
   @override
   void initState() {
@@ -74,7 +75,8 @@ class _DytavaFadeSlideState extends State<DytavaFadeSlide>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.maybeOf(context)?.disableAnimations == true) {
+    _disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations == true;
+    if (_disableAnimations) {
       _controller.value = 1.0;
       _started = true;
       return;
@@ -99,7 +101,7 @@ class _DytavaFadeSlideState extends State<DytavaFadeSlide>
 
   @override
   Widget build(BuildContext context) {
-    if (MediaQuery.maybeOf(context)?.disableAnimations == true) {
+    if (_disableAnimations) {
       return widget.child;
     }
     return AnimatedBuilder(

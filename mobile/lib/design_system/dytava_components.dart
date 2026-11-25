@@ -1395,94 +1395,207 @@ class _ConfigSummaryItem extends StatelessWidget {
   }
 }
 
-/// Thẻ quy tắc chuẩn hóa (Policy Card) chuẩn Brand Showcase Dytava
+/// Thẻ quy tắc chuẩn hóa (Policy Card) chuẩn Brand Showcase Dytava (Precision Green Palette)
 class DytavaPolicyCard extends StatelessWidget {
   final String policyId;
+  final String? title;
   final String subtitle;
+  final List<String> tags;
   final bool active;
   final VoidCallback? onTap;
 
   const DytavaPolicyCard({
     super.key,
     required this.policyId,
+    this.title,
     required this.subtitle,
+    this.tags = const [],
     this.active = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isVi = context.l10n.isVietnamese;
+    final activeText = isVi ? 'Đang dùng' : 'Active';
     return Semantics(
       button: onTap != null,
       selected: active,
       label:
-          'Mẫu quy tắc $policyId. $subtitle. ${active ? 'Đang dùng' : 'Chạm để chọn'}',
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-            color: active ? DytavaColors.purple : DytavaColors.border,
-            width: active ? 1.5 : 1,
+          '${title ?? policyId}. $subtitle. ${active ? activeText : (isVi ? 'Chạm để chọn' : 'Tap to select')}',
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          gradient: active
+              ? const LinearGradient(
+                  colors: [Color(0xFFFFFFFF), Color(0xFFEDF7F0)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: active ? null : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: active ? DytavaColors.primary : const Color(0xFFE2E8F0),
+            width: active ? 1.5 : 1.0,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: active
+                  ? DytavaColors.primary.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.025),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 56),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(18),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: DytavaColors.softPurple,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    alignment: Alignment.center,
-                    child: const BrandIcon(DytavaIcons.saveRule, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          policyId,
-                          style: DytavaTypography.dataMedium.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: DytavaColors.textPrimary,
-                          ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: active
+                              ? const Color(0xFFDDF0E5)
+                              : const Color(0xFFF1F5F2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(height: 2),
-                        Text(subtitle, style: DytavaTypography.bodySmall),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.tune_rounded,
+                          size: 20,
+                          color: active
+                              ? DytavaColors.primary
+                              : const Color(0xFF475569),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title ?? policyId,
+                              style: const TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              policyId,
+                              style: const TextStyle(
+                                fontFamily: 'IBM Plex Mono',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: DytavaColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: active
+                              ? DytavaColors.primary
+                              : const Color(0xFFEDF7F0),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (active) ...[
+                              const Icon(
+                                Icons.check_rounded,
+                                size: 13,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 3),
+                            ],
+                            Text(
+                              active
+                                  ? activeText
+                                  : (isVi ? 'Chọn' : 'Apply'),
+                              style: TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: active
+                                    ? Colors.white
+                                    : DytavaColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontFamily: DytavaTypography.primaryFont,
+                      fontSize: 12.5,
+                      color: Color(0xFF64748B),
+                      height: 1.4,
+                    ),
+                  ),
+                  if (tags.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final tag in tags)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 3.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: active
+                                  ? Colors.white.withValues(alpha: 0.9)
+                                  : const Color(0xFFF4F8F5),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: active
+                                    ? const Color(0xFFC8E3D2)
+                                    : const Color(0xFFE2EAE4),
+                              ),
+                            ),
+                            child: Text(
+                              tag,
+                              style: const TextStyle(
+                                fontFamily: DytavaTypography.primaryFont,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF334155),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
-                  ),
-                  if (active)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: DytavaColors.softPurple,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        'Đang dùng',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: DytavaColors.purple,
-                        ),
-                      ),
-                    )
-                  else
-                    const BrandIcon(DytavaIcons.forward, size: 18),
+                  ],
                 ],
               ),
             ),

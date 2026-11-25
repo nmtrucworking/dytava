@@ -29,9 +29,27 @@ void main() {
     expect(find.text('Import files'), findsOneWidget);
     expect(find.byKey(const ValueKey('more-popover-trigger')), findsOneWidget);
 
+    // Before opening popover, more icon rotation is 0 degrees (turns == 0.0)
+    final rotationBefore = tester.widget<AnimatedRotation>(
+      find.descendant(
+        of: find.byKey(const ValueKey('more-popover-trigger')),
+        matching: find.byType(AnimatedRotation),
+      ),
+    );
+    expect(rotationBefore.turns, equals(0.0));
+
     // Open More popover
     await tester.tap(find.byKey(const ValueKey('more-popover-trigger')));
     await tester.pumpAndSettle();
+
+    // While popover is open, more icon rotation is 45 degrees (turns == 0.125)
+    final rotationOpen = tester.widget<AnimatedRotation>(
+      find.descendant(
+        of: find.byKey(const ValueKey('more-popover-trigger')),
+        matching: find.byType(AnimatedRotation),
+      ),
+    );
+    expect(rotationOpen.turns, equals(0.125));
 
     expect(find.byKey(const ValueKey('popover-plus')), findsOneWidget);
     expect(find.byKey(const ValueKey('popover-close-session')), findsOneWidget);
@@ -60,9 +78,18 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('popover-plus')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('popover-plus')), findsNothing);
+
+    // After closing popover, more icon rotation returns to 0 degrees
+    final rotationAfter = tester.widget<AnimatedRotation>(
+      find.descendant(
+        of: find.byKey(const ValueKey('more-popover-trigger')),
+        matching: find.byType(AnimatedRotation),
+      ),
+    );
+    expect(rotationAfter.turns, equals(0.0));
   });
 
-  testWidgets('More popover animates + icon first, then 3 icons sequentially along circular arc, and App Settings matches new design', (
+  testWidgets('App Settings loads dynamic local storage and all tiles are interactive', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -76,7 +103,7 @@ void main() {
     await tester.pumpWidget(ExcelCompareApp(controller: flow));
     await tester.pumpAndSettle();
 
-    // Verify App Settings new UI
+    // Open App Settings
     await tester.tap(find.byTooltip('Comparison settings'));
     await tester.pumpAndSettle();
 
@@ -84,12 +111,52 @@ void main() {
     expect(find.text('Excel Compare · v0.1.0'), findsOneWidget);
     expect(find.text('Help & support'), findsOneWidget);
     expect(find.text('Quick'), findsOneWidget);
-    expect(find.text('12.4 MB'), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-local-storage-value')), findsOneWidget);
     expect(find.byKey(const ValueKey('settings-language-en')), findsOneWidget);
     expect(find.byKey(const ValueKey('settings-language-vi')), findsOneWidget);
 
-    // Switch language in App Settings
-    await tester.tap(find.byKey(const ValueKey('settings-language-vi')));
+    // 1. Tap Help & support -> opens interactive guide sheet
+    await tester.tap(find.byKey(const ValueKey('settings-help-support-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Done'), findsOneWidget);
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+
+    // 2. Tap Compare mode tile -> opens mode selector sheet
+    await tester.tap(find.byKey(const ValueKey('settings-compare-mode-tile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('By key column'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save settings'));
+    await tester.pumpAndSettle();
+    expect(find.text('By Key'), findsOneWidget);
+
+    // 3. Tap Local storage tile -> opens storage details & clear sheet
+    final localStorageTile = find.byKey(const ValueKey('settings-local-storage-tile'));
+    await tester.ensureVisible(localStorageTile);
+    await tester.pumpAndSettle();
+    await tester.tap(localStorageTile);
+    await tester.pumpAndSettle();
+    expect(find.text('Used storage'), findsOneWidget);
+    expect(find.text('Saved comparisons'), findsOneWidget);
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+
+    // 4. Tap Privacy tile -> opens privacy details sheet
+    final privacyTile = find.byKey(const ValueKey('settings-privacy-tile'));
+    await tester.ensureVisible(privacyTile);
+    await tester.pumpAndSettle();
+    await tester.tap(privacyTile);
+    await tester.pumpAndSettle();
+    expect(find.text('Done'), findsOneWidget);
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+
+    // 5. Switch language in App Settings
+    final viLangBtn = find.byKey(const ValueKey('settings-language-vi'));
+    await tester.ensureVisible(viLangBtn);
+    await tester.pumpAndSettle();
+    await tester.tap(viLangBtn);
     await tester.pumpAndSettle();
     expect(flow.locale.languageCode, equals('vi'));
     expect(find.text('NGÔN NGỮ'), findsOneWidget);
@@ -98,6 +165,18 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('settings-language-en')));
     await tester.pumpAndSettle();
     expect(flow.locale.languageCode, equals('en'));
+
+    // 6. Open Rule Presets page and verify mobile-first cards & selection
+    final presetsTile = find.byKey(const ValueKey('settings-rule-presets-tile'));
+    await tester.ensureVisible(presetsTile);
+    await tester.pumpAndSettle();
+    await tester.tap(presetsTile);
+    await tester.pumpAndSettle();
+    expect(find.text('COMPARISON RULE PRESETS'), findsOneWidget);
+    expect(find.text('AVAILABLE PRESETS'), findsOneWidget);
+    expect(find.byKey(const ValueKey('preset-card-financial-reconcile-v1')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('preset-card-financial-reconcile-v1')));
+    await tester.pumpAndSettle();
   });
 
   test('AppLocalizations dictionary completeness and fallback resolution', () {

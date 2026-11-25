@@ -213,6 +213,7 @@ enum OcrRisk {
   multipleSegments,
   rowShape,
   typeOutlier,
+  numericFormat,
   blank,
 }
 
@@ -224,22 +225,22 @@ extension OcrRiskInfo on OcrRisk {
     OcrRisk.multipleSegments => 'Nhiều cụm từ gộp',
     OcrRisk.rowShape => 'Hàng thiếu ô',
     OcrRisk.typeOutlier => 'Khác kiểu cột',
+    OcrRisk.numericFormat => 'Kiểm tra dấu thập phân',
     OcrRisk.blank => 'Ô trống / chưa nhận diện',
   };
 
   String get help => switch (this) {
+    OcrRisk.numericFormat => 'Chuỗi số khác định dạng thập phân của các ô cùng cột. Hãy đối chiếu ảnh gốc trước khi xác nhận.',
     OcrRisk.lowConfidence => 'Bộ nhận dạng chưa chắc chắn về chuỗi ký tự này.',
     OcrRisk.diacritics =>
       'Dấu thanh tiếng Việt có thể bị mờ, chồng dấu hoặc đặt sai nguyên âm.',
-    OcrRisk.spansColumns =>
-      'Văn bản nằm vắt qua ranh giới hai cột, cần kiểm tra có bị gộp cột không.',
+    OcrRisk.spansColumns => 'Văn bản nằm vắt qua ranh giới hai cột, cần kiểm tra có bị gộp cột không.',
     OcrRisk.multipleSegments =>
       'Nhiều cụm từ cách xa nhau đã được gộp vào cùng một ô.',
     OcrRisk.rowShape => 'Hàng này có số ô ít hơn các hàng còn lại trong bảng.',
     OcrRisk.typeOutlier =>
       'Đa số giá trị trong cột là số nhưng ô này chứa chữ (dễ nhầm O/0, l/1).',
-    OcrRisk.blank =>
-      'Không phát hiện ký tự tại vị trí này. Hãy xác nhận ô trống hoặc nhập bổ sung.',
+    OcrRisk.blank => 'Không phát hiện ký tự tại vị trí này. Hãy xác nhận ô trống hoặc nhập bổ sung.',
   };
 }
 
@@ -268,10 +269,7 @@ final class OcrCell {
       if (detected) recognizedText!,
       if (right.detected) right.recognizedText!,
     ];
-    final conf = [
-      ?confidence,
-      ?right.confidence,
-    ];
+    final conf = [?confidence, ?right.confidence];
     return OcrCell(
       recognizedText: texts.isEmpty ? null : texts.join(' '),
       confidence: conf.isEmpty ? null : conf.reduce(math.min),

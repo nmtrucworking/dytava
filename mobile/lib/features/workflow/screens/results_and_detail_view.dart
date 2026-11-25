@@ -2906,7 +2906,11 @@ class ExportScreenView extends StatelessWidget {
           },
           child: Column(
             children: [
-              for (final kind in [ExportKind.csvDiff, ExportKind.jsonReport])
+              for (final kind in [
+                ExportKind.csvDiff,
+                ExportKind.jsonReport,
+                ExportKind.dytavaReportPdf,
+              ])
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Material(
@@ -2937,7 +2941,13 @@ class ExportScreenView extends StatelessWidget {
                       controlAffinity: ListTileControlAffinity.trailing,
                       activeColor: DytavaColors.primary,
                       title: Text(
-                        kind == ExportKind.csvDiff ? 'CSV' : 'JSON',
+                        switch (kind) {
+                          ExportKind.csvDiff => 'CSV',
+                          ExportKind.jsonReport => 'JSON',
+                          ExportKind.dytavaReportPdf ||
+                          ExportKind.mergedDiffPdf =>
+                            'PDF',
+                        },
                         style: TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 14,
@@ -2948,9 +2958,13 @@ class ExportScreenView extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        kind == ExportKind.csvDiff
-                            ? l10n.csvSubtitle
-                            : l10n.jsonSubtitle,
+                        switch (kind) {
+                          ExportKind.csvDiff => l10n.csvSubtitle,
+                          ExportKind.jsonReport => l10n.jsonSubtitle,
+                          ExportKind.dytavaReportPdf ||
+                          ExportKind.mergedDiffPdf =>
+                            l10n.pdfSubtitle,
+                        },
                         style: const TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 11.5,
@@ -3175,16 +3189,26 @@ class ExportScreenView extends StatelessWidget {
     final l10n = context.l10n;
     final receipt = flow.receipt!;
     final fileName = receipt.fileName ??
-        (exportKind == ExportKind.csvDiff
-            ? 'dytava-differences.csv'
-            : 'dytava-report.json');
+        switch (exportKind) {
+          ExportKind.csvDiff => 'dytava-differences.csv',
+          ExportKind.jsonReport => 'dytava-report.json',
+          ExportKind.dytavaReportPdf ||
+          ExportKind.mergedDiffPdf =>
+            'dytava-report.pdf',
+        };
+    final bytes = receipt.fileBytes != null
+        ? Uint8List.fromList(receipt.fileBytes!)
+        : Uint8List.fromList(utf8.encode(receipt.previewText));
+    final mimeType = fileName.endsWith('.csv')
+        ? 'text/csv'
+        : fileName.endsWith('.pdf')
+        ? 'application/pdf'
+        : 'application/json';
     try {
       final uri = await FilePicker.saveFile(
         fileName: fileName,
-        bytes: Uint8List.fromList(utf8.encode(receipt.previewText)),
-        mimeType: fileName.endsWith('.csv')
-            ? 'text/csv'
-            : 'application/json',
+        bytes: bytes,
+        mimeType: mimeType,
       );
       // Không tự động đóng modal sau khi lưu thành công để người dùng có thể xuất thêm định dạng khác hoặc xem lại báo cáo
       if (context.mounted && uri != null) {

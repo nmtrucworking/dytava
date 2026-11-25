@@ -23,20 +23,12 @@ abstract interface class OcrRecognitionPort {
 }
 
 final class OcrProcessedImage {
-  const OcrProcessedImage({
-    required this.pngBytes,
-    required this.geometry,
-  });
+  const OcrProcessedImage({required this.pngBytes, required this.geometry});
   final Uint8List pngBytes;
   final OcrGeometry geometry;
 }
 
-enum OcrPipelineStage {
-  preprocess,
-  recognizing,
-  gridStructure,
-  cellReview,
-}
+enum OcrPipelineStage { preprocess, recognizing, gridStructure, cellReview }
 
 /// Manages the 6-step OCR workflow for a single captured/selected image:
 ///
@@ -141,28 +133,25 @@ final class OcrSession extends ChangeNotifier {
     bool? flipHorizontal,
     bool? flipVertical,
   }) async {
+    _clearRecognizedTable();
     _busy = true;
     _error = null;
     notifyListeners();
     try {
-      final turnsChanged =
-          quarterTurns != null && quarterTurns != _settings.quarterTurns;
-      final flipHChanged =
-          flipHorizontal != null && flipHorizontal != _settings.flipHorizontal;
-      final flipVChanged =
-          flipVertical != null && flipVertical != _settings.flipVertical;
-      if (turnsChanged || flipHChanged || flipVChanged) {
-        _settings = _settings.copyWith(
+      _processed = await port.preprocess(
+        rawBytes,
+        _settings.copyWith(
           quarterTurns: (quarterTurns ?? _settings.quarterTurns) % 4,
           flipHorizontal: flipHorizontal ?? _settings.flipHorizontal,
           flipVertical: flipVertical ?? _settings.flipVertical,
           clearCorners: true,
-        );
-        _processed = null;
-      }
-      _processed ??= await port.preprocess(
-        rawBytes,
-        _settings.copyWith(clearCorners: true),
+        ),
+      );
+      _settings = _settings.copyWith(
+        quarterTurns: (quarterTurns ?? _settings.quarterTurns) % 4,
+        flipHorizontal: flipHorizontal ?? _settings.flipHorizontal,
+        flipVertical: flipVertical ?? _settings.flipVertical,
+        clearCorners: true,
       );
       if (normalizedBbox != null) {
         final geom = _processed!.geometry;
@@ -198,6 +187,7 @@ final class OcrSession extends ChangeNotifier {
   /// `tableDetected`, `processingFailed`), and advances to the unified table
   /// review stage (`gridStructure`).
   Future<void> runRecognition({int? targetColumns}) async {
+    _clearRecognizedTable();
     _busy = true;
     _error = null;
     _tableRegionConfirmed = true;
@@ -262,8 +252,11 @@ final class OcrSession extends ChangeNotifier {
 
   void returnToPreprocess() {
     _tableRegionConfirmed = false;
+    _settings = _settings.copyWith(clearCorners: true);
+    _processed = null;
     _stage = OcrPipelineStage.preprocess;
     notifyListeners();
+    runPreprocessPreview();
   }
 
   // ===========================================================================
@@ -699,6 +692,8 @@ final class OcrSession extends ChangeNotifier {
   }
 
   bool get readyToNormalize =>
+      !_busy &&
+      _detectionState == OcrDetectionState.tableDetected &&
       _gridConfirmed &&
       totalCellCount > 0 &&
       confirmedCellCount == totalCellCount &&
@@ -783,11 +778,18 @@ final class OcrSession extends ChangeNotifier {
 
   void _invalidateExtraction() {
     _processed = null;
+    _clearRecognizedTable();
+    _tableRegionConfirmed = false;
+  }
+
+  void _clearRecognizedTable() {
     _tokens = const [];
     _grid = OcrGrid(const []);
+    _gridRevision++;
     _gridConfirmed = false;
     _editedTexts.clear();
     _receipts.clear();
+    _detectionState = OcrDetectionState.noTextDetected;
   }
 
   void _bumpGridRevision() {

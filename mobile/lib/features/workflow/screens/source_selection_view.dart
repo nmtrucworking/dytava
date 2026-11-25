@@ -346,13 +346,13 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
   }
 
   Future<void> _openChooseWorkbookModal(
-    BuildContext context,
+    BuildContext parentContext,
     SourceSide side,
   ) async {
     final isA = side == SourceSide.a;
 
     await showModalBottomSheet<void>(
-      context: context,
+      context: parentContext,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.white,
@@ -361,10 +361,11 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
       ),
       builder: (sheetContext) => AnimatedBuilder(
         animation: widget.flow,
-        builder: (context, _) {
+        builder: (sheetInnerContext, _) {
           final slot = widget.flow.slot(side);
           final artifact = slot.artifact;
           final hasFile = artifact != null;
+          final l10n = sheetInnerContext.l10n;
 
           return SafeArea(
             top: false,
@@ -373,7 +374,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                 20,
                 4,
                 20,
-                16 + MediaQuery.viewInsetsOf(context).bottom,
+                16 + MediaQuery.viewInsetsOf(sheetInnerContext).bottom,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -381,10 +382,10 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                 children: [
                   Text(
                     isA
-                        ? (context.l10n.isVietnamese
+                        ? (l10n.isVietnamese
                               ? 'Chọn tệp gốc (A)'
                               : 'Choose original file')
-                        : (context.l10n.isVietnamese
+                        : (l10n.isVietnamese
                               ? 'Chọn tệp cập nhật (B)'
                               : 'Choose updated file'),
                     style: const TextStyle(
@@ -396,7 +397,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    context.l10n.isVietnamese
+                    l10n.isVietnamese
                         ? 'Chọn một bảng tính để tiếp tục.'
                         : 'Choose a workbook to continue.',
                     style: const TextStyle(
@@ -444,7 +445,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${artifact.format.name.toUpperCase()} · ${slot.snapshot == null ? '245 KB' : '${slot.snapshot!.records.length} ${context.l10n.rows} · ${slot.snapshot!.fields.length} ${context.l10n.columns}'}',
+                            '${artifact.format.name.toUpperCase()} · ${slot.snapshot == null ? '245 KB' : '${slot.snapshot!.records.length} ${l10n.rows} · ${slot.snapshot!.fields.length} ${l10n.columns}'}',
                             style: const TextStyle(
                               fontFamily: DytavaTypography.primaryFont,
                               fontSize: 11.5,
@@ -460,7 +461,10 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                     height: 48,
                     child: ElevatedButton.icon(
                       onPressed: () async {
-                        final loaded = await _handleFileUpload(context, side);
+                        final loaded = await _handleFileUpload(
+                          parentContext,
+                          side,
+                        );
                         if (loaded && sheetContext.mounted) {
                           Navigator.pop(sheetContext);
                         }
@@ -476,10 +480,10 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                       icon: const Icon(Icons.file_upload_outlined, size: 20),
                       label: Text(
                         hasFile
-                            ? (context.l10n.isVietnamese
+                            ? (l10n.isVietnamese
                                   ? 'Tải tệp khác lên'
                                   : 'Upload another file')
-                            : (context.l10n.isVietnamese
+                            : (l10n.isVietnamese
                                   ? 'Tải tệp lên'
                                   : 'Upload File'),
                         style: const TextStyle(
@@ -496,7 +500,9 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         Navigator.pop(sheetContext);
-                        await _openOcrSourceSheet(context, side);
+                        if (parentContext.mounted) {
+                          await _openOcrSourceSheet(parentContext, side);
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF8BA598),
@@ -508,7 +514,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                       ),
                       icon: const Icon(Icons.document_scanner_outlined, size: 20),
                       label: Text(
-                        context.l10n.isVietnamese ? 'Quét ảnh' : 'Scan Image',
+                        l10n.isVietnamese ? 'Quét ảnh' : 'Scan Image',
                         style: const TextStyle(
                           fontFamily: DytavaTypography.primaryFont,
                           fontSize: 14.5,
@@ -521,7 +527,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                   TextButton(
                     onPressed: () => Navigator.pop(sheetContext),
                     child: Text(
-                      context.l10n.cancel,
+                      l10n.cancel,
                       style: const TextStyle(
                         fontFamily: DytavaTypography.primaryFont,
                         fontSize: 14,
@@ -1093,11 +1099,16 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
   }
 
   Future<bool> _handleFileUpload(BuildContext context, SourceSide side) async {
+    if (!mounted) return false;
+    final hostContext = this.context;
+    final l10n = hostContext.l10n;
+    final loadingMessage = l10n.selectingAndReadingFile;
+    final isVi = l10n.isVietnamese;
     final flow = widget.flow;
     final generation = flow.slot(side).generation;
-    final navigator = Navigator.of(context);
+    final navigator = Navigator.of(hostContext);
     final dialog = DialogRoute<void>(
-      context: context,
+      context: hostContext,
       barrierDismissible: false,
       builder: (_) => PopScope(
         canPop: false,
@@ -1110,7 +1121,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
                 child: CircularProgressIndicator(),
               ),
               const SizedBox(width: 16),
-              Expanded(child: Text(context.l10n.selectingAndReadingFile)),
+              Expanded(child: Text(loadingMessage)),
             ],
           ),
         ),
@@ -1120,7 +1131,7 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
     try {
       final info = await MobileFileUploadService.pickAndProcessFile(side);
       if (info == null) return false;
-      if (!context.mounted ||
+      if (!mounted ||
           !flow.usable ||
           flow.slot(side).generation != generation) {
         MobileFileUploadService.release(info.privateRef);
@@ -1137,22 +1148,22 @@ class _SourceSelectionViewState extends State<SourceSelectionView> {
       if (slotNow.state == InputState.needsReview) {
         await flow.confirmImport(side, expectedBinding: slotNow.binding);
       }
-      if (context.mounted && !flow.duplicateSourceFiles) {
+      if (mounted && !flow.duplicateSourceFiles) {
         DytavaToast.success(
-          context,
-          context.l10n.isVietnamese
+          this.context,
+          isVi
               ? 'Đã tải ${info.fileName}: ${info.rowCount} hàng × ${info.columnCount} cột.'
               : 'Loaded ${info.fileName}: ${info.rowCount} rows × ${info.columnCount} cols.',
-          title: context.l10n.isVietnamese ? 'Tải tệp thành công' : 'File loaded',
+          title: isVi ? 'Tải tệp thành công' : 'File loaded',
         );
       }
       return true;
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         DytavaToast.error(
-          context,
-          context.l10n.isVietnamese ? 'Lỗi tải tệp: $e' : 'File load error: $e',
-          title: context.l10n.isVietnamese ? 'Không thể nạp tệp' : 'Cannot load file',
+          this.context,
+          isVi ? 'Lỗi tải tệp: $e' : 'File load error: $e',
+          title: isVi ? 'Không thể nạp tệp' : 'Cannot load file',
         );
       }
       return false;

@@ -537,10 +537,12 @@ final class PreparedExport {
     this.previewText,
     this.selectedCellCount, {
     this.fileName,
+    this.fileBytes,
   });
   final String previewText;
   final int selectedCellCount;
   final String? fileName;
+  final List<int>? fileBytes;
 }
 
 final class ExportReceipt {
@@ -549,11 +551,13 @@ final class ExportReceipt {
     this.previewText, {
     required this.previewOnly,
     this.fileName,
+    this.fileBytes,
   });
   final String id;
   final String previewText;
   final bool previewOnly;
   final String? fileName;
+  final List<int>? fileBytes;
 }
 
 final class Cancellation {

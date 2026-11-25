@@ -453,13 +453,50 @@ class _OcrNativeTaskFlowView extends StatefulWidget {
 }
 
 class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
-  /// Normalized `[0, 1]` bounding box for the table region on the image.
-  Rect _bbox = const Rect.fromLTRB(0.06, 0.08, 0.94, 0.92);
+  /// Normalized `[0, 1]` bounding box for the table region on the image itself.
+  Rect _bbox = const Rect.fromLTRB(0.03, 0.04, 0.97, 0.96);
   int _quarterTurns = 0;
   bool _flipHorizontal = false;
   bool _flipVertical = false;
   final TransformationController _zoomController = TransformationController();
   double _zoomScale = 1.0;
+
+  /// Projects the overlay [_bbox] (which sits in the unzoomed fitted image
+  /// coordinate space `[0, 1]`) back through any active pan/zoom transform on
+  /// [_zoomController] into the true `[0, 1]` image coordinates.
+  Rect _resolveNormalizedImageBbox(Rect fittedImgRect) {
+    final matrix = _zoomController.value;
+    if (matrix.isIdentity() ||
+        fittedImgRect.width <= 0 ||
+        fittedImgRect.height <= 0) {
+      return _bbox;
+    }
+    final inv = Matrix4.tryInvert(matrix);
+    if (inv == null) return _bbox;
+    final screenLeft = fittedImgRect.left + _bbox.left * fittedImgRect.width;
+    final screenTop = fittedImgRect.top + _bbox.top * fittedImgRect.height;
+    final screenRight = fittedImgRect.left + _bbox.right * fittedImgRect.width;
+    final screenBottom = fittedImgRect.top + _bbox.bottom * fittedImgRect.height;
+    final tl = MatrixUtils.transformPoint(inv, Offset(screenLeft, screenTop));
+    final br = MatrixUtils.transformPoint(inv, Offset(screenRight, screenBottom));
+    final nl = ((tl.dx - fittedImgRect.left) / fittedImgRect.width).clamp(
+      0.0,
+      0.95,
+    );
+    final nt = ((tl.dy - fittedImgRect.top) / fittedImgRect.height).clamp(
+      0.0,
+      0.95,
+    );
+    final nr = ((br.dx - fittedImgRect.left) / fittedImgRect.width).clamp(
+      nl + 0.05,
+      1.0,
+    );
+    final nb = ((br.dy - fittedImgRect.top) / fittedImgRect.height).clamp(
+      nt + 0.05,
+      1.0,
+    );
+    return Rect.fromLTRB(nl, nt, nr, nb);
+  }
 
   @override
   void initState() {
@@ -582,6 +619,10 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
 
   Widget _buildFullViewportBboxView(BuildContext context, OcrSession session) {
     final imageBytes = session.processed?.pngBytes ?? session.rawBytes;
+    final geom = session.processed?.geometry;
+    final imageAspectRatio = geom != null && geom.outputHeight > 0
+        ? geom.outputWidth / geom.outputHeight
+        : null;
     return LayoutBuilder(
       builder: (context, constraints) {
         final canvasWidget = Padding(
@@ -592,6 +633,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                 child: _InteractiveTableBboxSelector(
                   key: const ValueKey('ocr-bbox-selector'),
                   imageBytes: imageBytes,
+                  imageAspectRatio: imageAspectRatio,
                   bbox: _bbox,
                   zoomController: _zoomController,
                   onChanged: (next) => setState(() => _bbox = next),
@@ -701,10 +743,10 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
                             _setZoom(1.0);
                             setState(() {
                               _bbox = const Rect.fromLTRB(
-                                0.06,
-                                0.08,
-                                0.94,
-                                0.92,
+                                0.03,
+                                0.04,
+                                0.97,
+                                0.96,
                               );
                             });
                           },
@@ -728,12 +770,26 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
           child: WorkflowPrimaryButton(
             key: const ValueKey('ocr-confirm-bbox-scan-button'),
             label: context.l10n.scanTable,
-            onPressed: () => session.confirmTableBboxAndRecognize(
-              normalizedBbox: _bbox,
-              quarterTurns: _quarterTurns,
-              flipHorizontal: _flipHorizontal,
-              flipVertical: _flipVertical,
-            ),
+            onPressed: () {
+              final maxW = (constraints.maxWidth - 32).clamp(1.0, 10000.0);
+              final maxH =
+                  ((constraints.hasBoundedHeight
+                              ? constraints.maxHeight - 76
+                              : 420.0) -
+                          12)
+                      .clamp(1.0, 10000.0);
+              final fitted = _InteractiveTableBboxSelectorState.computeFittedRect(
+                maxW,
+                maxH,
+                imageAspectRatio,
+              );
+              session.confirmTableBboxAndRecognize(
+                normalizedBbox: _resolveNormalizedImageBbox(fitted),
+                quarterTurns: _quarterTurns,
+                flipHorizontal: _flipHorizontal,
+                flipVertical: _flipVertical,
+              );
+            },
           ),
         );
 
@@ -1114,10 +1170,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
   ) {
     final text = session.currentText(ref);
     final cell = session.grid.cells[ref.row][ref.column];
-    final hasWarning =
-        cell.risks.contains(OcrRisk.lowConfidence) ||
-        cell.risks.contains(OcrRisk.diacritics) ||
-        cell.risks.contains(OcrRisk.spansColumns);
+    final hasWarning = cell.risks.isNotEmpty;
     return DataCell(
       ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 165),
@@ -1437,6 +1490,7 @@ class _OcrNativeTaskFlowViewState extends State<_OcrNativeTaskFlowView> {
 /// - Touch-drag corner L-brackets, edge bars, or pan inside the BBox.
 class _InteractiveTableBboxSelector extends StatefulWidget {
   final Uint8List imageBytes;
+  final double? imageAspectRatio;
   final Rect bbox;
   final ValueChanged<Rect> onChanged;
   final VoidCallback? onRotateGesture;
@@ -1445,6 +1499,7 @@ class _InteractiveTableBboxSelector extends StatefulWidget {
   const _InteractiveTableBboxSelector({
     super.key,
     required this.imageBytes,
+    this.imageAspectRatio,
     required this.bbox,
     required this.onChanged,
     this.onRotateGesture,
@@ -1458,8 +1513,33 @@ class _InteractiveTableBboxSelector extends StatefulWidget {
 
 class _InteractiveTableBboxSelectorState
     extends State<_InteractiveTableBboxSelector> {
-  static const _minSpan = 0.14;
+  static const _minSpan = 0.08;
+  static const _imagePadding = 8.0;
   bool _rotatedInGesture = false;
+
+  static Rect computeFittedRect(
+    double maxW,
+    double maxH,
+    double? ratio,
+  ) {
+    final availW = math.max(1.0, maxW - _imagePadding * 2);
+    final availH = math.max(1.0, maxH - _imagePadding * 2);
+    if (ratio == null || !ratio.isFinite || ratio <= 0) {
+      return Rect.fromLTWH(_imagePadding, _imagePadding, availW, availH);
+    }
+    double imgW = availW;
+    double imgH = imgW / ratio;
+    if (imgH > availH) {
+      imgH = availH;
+      imgW = imgH * ratio;
+    }
+    final offsetX = _imagePadding + (availW - imgW) / 2;
+    final offsetY = _imagePadding + (availH - imgH) / 2;
+    return Rect.fromLTWH(offsetX, offsetY, imgW, imgH);
+  }
+
+  Rect _fittedImageRect(double maxW, double maxH) =>
+      computeFittedRect(maxW, maxH, widget.imageAspectRatio);
 
   @override
   Widget build(BuildContext context) {
@@ -1471,13 +1551,16 @@ class _InteractiveTableBboxSelectorState
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final w = constraints.maxWidth;
-          final h = constraints.maxHeight;
+          final maxW = constraints.maxWidth;
+          final maxH = constraints.maxHeight;
+          final imgRect = _fittedImageRect(maxW, maxH);
+          final w = imgRect.width;
+          final h = imgRect.height;
           final bbox = widget.bbox;
-          final left = bbox.left * w;
-          final top = bbox.top * h;
-          final right = bbox.right * w;
-          final bottom = bbox.bottom * h;
+          final left = imgRect.left + bbox.left * w;
+          final top = imgRect.top + bbox.top * h;
+          final right = imgRect.left + bbox.right * w;
+          final bottom = imgRect.top + bbox.bottom * h;
 
           return GestureDetector(
             onScaleStart: (_) => _rotatedInGesture = false,
@@ -1499,7 +1582,7 @@ class _InteractiveTableBboxSelectorState
                   minScale: 1.0,
                   maxScale: 4.0,
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(_imagePadding),
                     child: Image.memory(
                       widget.imageBytes,
                       fit: BoxFit.contain,
@@ -1519,8 +1602,8 @@ class _InteractiveTableBboxSelectorState
                 Positioned(
                   left: left + 22,
                   top: top + 22,
-                  width: (right - left - 44).clamp(0.0, w),
-                  height: (bottom - top - 44).clamp(0.0, h),
+                  width: (right - left - 44).clamp(0.0, maxW),
+                  height: (bottom - top - 44).clamp(0.0, maxH),
                   child: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onPanUpdate: (details) {
@@ -1535,7 +1618,7 @@ class _InteractiveTableBboxSelectorState
                     onDoubleTap: () {
                       // Double-tap resets to full table bounds
                       widget.onChanged(
-                        const Rect.fromLTRB(0.06, 0.08, 0.94, 0.92),
+                        const Rect.fromLTRB(0.03, 0.04, 0.97, 0.96),
                       );
                     },
                   ),
@@ -1544,7 +1627,7 @@ class _InteractiveTableBboxSelectorState
                 Positioned(
                   left: left + 24,
                   top: top - 20,
-                  width: (right - left - 48).clamp(0.0, w),
+                  width: (right - left - 48).clamp(0.0, maxW),
                   height: 40,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -1562,7 +1645,7 @@ class _InteractiveTableBboxSelectorState
                 Positioned(
                   left: left + 24,
                   top: bottom - 20,
-                  width: (right - left - 48).clamp(0.0, w),
+                  width: (right - left - 48).clamp(0.0, maxW),
                   height: 40,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -1581,7 +1664,7 @@ class _InteractiveTableBboxSelectorState
                   left: left - 20,
                   top: top + 24,
                   width: 40,
-                  height: (bottom - top - 48).clamp(0.0, h),
+                  height: (bottom - top - 48).clamp(0.0, maxH),
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onPanUpdate: (d) {
@@ -1599,7 +1682,7 @@ class _InteractiveTableBboxSelectorState
                   left: right - 20,
                   top: top + 24,
                   width: 40,
-                  height: (bottom - top - 48).clamp(0.0, h),
+                  height: (bottom - top - 48).clamp(0.0, maxH),
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onPanUpdate: (d) {

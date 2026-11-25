@@ -22,23 +22,32 @@ class AppLocalizations {
       _AppLocalizationsDelegate();
 
   static AppLocalizations of(BuildContext context) {
-    final explicit = Localizations.of<AppLocalizations>(context, AppLocalizations);
-    if (explicit != null) return explicit;
+    if (context is Element && !context.mounted) {
+      return _current ?? AppLocalizations(const Locale('en'));
+    }
+    try {
+      final explicit = Localizations.of<AppLocalizations>(context, AppLocalizations);
+      if (explicit != null) return explicit;
+    } catch (_) {
+      return _current ?? AppLocalizations(const Locale('en'));
+    }
 
     bool isOcrOrDemo = false;
-    context.visitAncestorElements((element) {
-      final name = element.widget.runtimeType.toString();
-      if (name.contains('PreviewScreen') ||
-          name.contains('Ocr') ||
-          name.contains('CompareDemo') ||
-          name.contains('DifferenceFingerprint') ||
-          name.contains('FocusDiff') ||
-          name.contains('TextDifferenceEvidence')) {
-        isOcrOrDemo = true;
-        return false;
-      }
-      return true;
-    });
+    try {
+      context.visitAncestorElements((element) {
+        final name = element.widget.runtimeType.toString();
+        if (name.contains('PreviewScreen') ||
+            name.contains('Ocr') ||
+            name.contains('CompareDemo') ||
+            name.contains('DifferenceFingerprint') ||
+            name.contains('FocusDiff') ||
+            name.contains('TextDifferenceEvidence')) {
+          isOcrOrDemo = true;
+          return false;
+        }
+        return true;
+      });
+    } catch (_) {}
 
     final selfName = context.widget.runtimeType.toString();
     if (selfName.contains('PreviewScreen') ||
@@ -82,6 +91,10 @@ class AppLocalizations {
   String get cancel => isVietnamese ? 'Hủy' : 'Cancel';
   String get done => isVietnamese ? 'Xong' : 'Done';
   String get close => isVietnamese ? 'Đóng' : 'Close';
+  String get exitApp => isVietnamese ? 'Thoát ứng dụng' : 'Exit app';
+  String get pdfSubtitle => isVietnamese
+      ? 'Báo cáo tài liệu PDF trực quan dễ in ấn và chia sẻ'
+      : 'Printable PDF comparison document for sharing';
   String get save => isVietnamese ? 'Lưu' : 'Save';
   String get delete => isVietnamese ? 'Xóa' : 'Delete';
   String get clearAll => isVietnamese ? 'Xóa tất cả' : 'Clear all';
